@@ -78,15 +78,21 @@ describe("invite-user Edge Function authorization", () => {
       SEED_ACCOUNTS.supervisor.password
     )
 
-    // `example.com` (RFC 2606 reserved test domain) is used here — not
-    // `@raiar.local` — because the invite-user Edge Function calls the
-    // real `auth.admin.inviteUserByEmail`, which GoTrue actively rejects
-    // as an invalid address for the `.local` TLD (unlike admin.createUser,
-    // used for seeding in plan 02, which never sends mail and skips this
-    // check). This test consumes 1 of the hosted project's free-tier
-    // built-in-SMTP email quota (2/hour, not configurable without a
-    // separate paid SMTP provider — see 01-04-SUMMARY.md).
-    const testEmail = `invite-test-${Date.now()}@example.com`
+    // A real, MX-having domain (`gmail.com`) is required here — not
+    // `@raiar.local` and not `@example.com`. The invite-user Edge Function
+    // calls the real `auth.admin.inviteUserByEmail`, which GoTrue validates
+    // for BOTH format (`.local` is rejected as an invalid TLD) AND
+    // deliverability (a domain must resolve real MX records — the RFC 2606
+    // reserved `example.com` has none, so GoTrue rejects it as "invalid"
+    // too, confirmed at implementation time). `admin.createUser`, used for
+    // seeding in plan 02, never sends mail and skips both checks. The
+    // random local-part below never resolves to a real mailbox — GoTrue
+    // only needs the domain to accept mail at the SMTP level, it does not
+    // verify the mailbox exists. This test consumes 1 of the hosted
+    // project's free-tier built-in-SMTP email quota (2/hour, not
+    // configurable without a separate paid SMTP provider — see
+    // 01-04-SUMMARY.md).
+    const testEmail = `invite-test-${Date.now()}@gmail.com`
     const { data, error } = await supervisor.functions.invoke("invite-user", {
       body: {
         email: testEmail,
