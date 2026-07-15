@@ -17,7 +17,7 @@ Todo usuário do time consegue se cadastrar (via convite do Supervisor) e entrar
 - **D-01:** Não existe auto-cadastro aberto. O Supervisor cadastra o vendedor (nome, sobrenome, email, celular) de dentro do sistema, já logado — não é uma tela fora do login.
 - **D-02:** Ao criar a conta, o sistema envia um convite por e-mail (fluxo padrão do Supabase Auth) para o vendedor definir a própria senha. O Supervisor nunca sabe a senha de ninguém.
 - **D-03:** O primeiro Supervisor (o usuário/dono do projeto) é cadastrado diretamente no banco durante a implementação desta fase — não precisa de tela especial de "primeiro acesso". Claude deve pedir o email a ser usado quando for implementar este passo.
-- **D-04:** Desativar o acesso de um vendedor que saiu do time fica fora de escopo nesta fase — se precisar, é feito diretamente no banco por enquanto. Candidato a fase futura se virar necessidade recorrente.
+- **D-04 [informational]:** Desativar o acesso de um vendedor que saiu do time fica fora de escopo nesta fase — se precisar, é feito diretamente no banco por enquanto. Candidato a fase futura se virar necessidade recorrente. Also listed under Deferred Ideas below; no plan task expected.
 
 ### Atribuição de papel
 - **D-05:** No formulário de cadastro de usuário, o Supervisor escolhe explicitamente o papel (Supervisor ou Vendedor) — não há um papel padrão implícito.
