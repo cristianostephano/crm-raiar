@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { LogoutButton } from "@/components/auth/LogoutButton"
@@ -50,7 +51,17 @@ export default async function AppLayout({
           <span className="text-sm font-semibold">{fullName}</span>
           {roleLabel ? <Badge variant="secondary">{roleLabel}</Badge> : null}
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-4">
+          {profile?.role === "supervisor" ? (
+            <Link
+              href="/equipe"
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Gerenciar equipe
+            </Link>
+          ) : null}
+          <LogoutButton />
+        </div>
       </header>
       <main className="flex flex-1 flex-col">{children}</main>
     </div>
