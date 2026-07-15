@@ -78,7 +78,15 @@ describe("invite-user Edge Function authorization", () => {
       SEED_ACCOUNTS.supervisor.password
     )
 
-    const testEmail = `invite-test-${Date.now()}@raiar.local`
+    // `example.com` (RFC 2606 reserved test domain) is used here — not
+    // `@raiar.local` — because the invite-user Edge Function calls the
+    // real `auth.admin.inviteUserByEmail`, which GoTrue actively rejects
+    // as an invalid address for the `.local` TLD (unlike admin.createUser,
+    // used for seeding in plan 02, which never sends mail and skips this
+    // check). This test consumes 1 of the hosted project's free-tier
+    // built-in-SMTP email quota (2/hour, not configurable without a
+    // separate paid SMTP provider — see 01-04-SUMMARY.md).
+    const testEmail = `invite-test-${Date.now()}@example.com`
     const { data, error } = await supervisor.functions.invoke("invite-user", {
       body: {
         email: testEmail,
