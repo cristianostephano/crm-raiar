@@ -33,6 +33,8 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 - [ ] Ao marcar um card como perdido, é obrigatório registrar o motivo (lista de motivos editável pelo supervisor)
 - [ ] Card tem observação (texto livre) e tarefas (lista editável pelo supervisor), cada tarefa com sua própria data de conclusão
 - [ ] Cards parados/atrasados ficam visualmente destacados no kanban ao abrir a tela (sem envio de notificação ativa)
+- [ ] Histórico automático de mudanças por cliente (etapa, status, tarefas concluídas) — surgiu da pesquisa de domínio, reaproveita os mesmos dados do destaque visual
+- [ ] Busca e filtro na lista de clientes (por vendedor, categoria, produto, texto livre por razão social) — surgiu da pesquisa de domínio, essencial pra visão "todos os clientes" do supervisor não virar uma lista inutilizável
 - [ ] Supervisor faz CRUD de 4 listas editáveis: categoria do cliente, produtos consumidos, tipos de tarefa, motivos de perda
 - [ ] Autenticação via Supabase Auth com dois papéis (Supervisor, Vendedor); cadastro de usuário com email, nome, sobrenome, senha, celular
 - [ ] Dashboard gerencial: clientes por etapa do funil, ganhos x perdidos, desempenho por vendedor, taxa de conversão, prospecções por produto e por categoria

@@ -1,0 +1,130 @@
+# Requirements: CRM Raiar — Acompanhamento de Vendas
+
+**Defined:** 2026-07-14
+**Core Value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível
+
+## v1 Requirements
+
+### Authentication (Autenticação e Papéis)
+
+- [ ] **AUTH-01**: Usuário faz login via Supabase Auth com email e senha
+- [ ] **AUTH-02**: Cadastro de usuário com email, nome, sobrenome, senha, celular
+- [ ] **AUTH-03**: Sistema distingue dois papéis — Supervisor e Vendedor — com permissões diferentes
+- [ ] **AUTH-04**: Sessão do usuário persiste entre acessos (não precisa logar toda hora)
+
+### Client (Cadastro de Cliente PJ)
+
+- [ ] **CLI-01**: Vendedor cadastra cliente PJ com no mínimo razão social, endereço e responsável
+- [ ] **CLI-02**: Demais campos (categoria, contato, telefone, email, produtos consumidos, número de lojas) podem ser preenchidos depois, conforme a negociação avança
+- [ ] **CLI-03**: Supervisor pode cadastrar cliente e atribuir a um vendedor específico
+- [ ] **CLI-04**: Vendedor visualiza e edita apenas os próprios clientes (responsável = usuário logado)
+- [ ] **CLI-05**: Supervisor visualiza, edita e apaga todos os clientes de todos os vendedores
+- [ ] **CLI-06**: Vendedor pode editar os próprios clientes, mas não apagar (apagar é restrito ao supervisor)
+- [ ] **CLI-07**: Busca e filtro na lista de clientes (por vendedor, categoria, produto, texto livre por razão social)
+
+### Funnel (Funil de Vendas / Kanban)
+
+- [ ] **FUN-01**: Cada cliente tem um card no funil, com 7 etapas fixas (Aguardando contato → 1ª venda concluída)
+- [ ] **FUN-02**: Vendedor move os próprios cards entre etapas
+- [ ] **FUN-03**: Supervisor move qualquer card entre etapas
+- [ ] **FUN-04**: Card tem status_acompanhamento: em andamento, perdido, ou ganho
+- [ ] **FUN-05**: Status "ganho" só é permitido quando o card está na etapa "1ª venda concluída"
+- [ ] **FUN-06**: Ao marcar um card como perdido, o motivo da perda é obrigatório
+- [ ] **FUN-07**: Card tem campo de observação em texto livre
+- [ ] **FUN-08**: Card tem lista de tarefas, cada uma com sua própria data de conclusão
+- [ ] **FUN-09**: Cards parados/atrasados ficam visualmente destacados no kanban ao abrir a tela
+- [ ] **FUN-10**: Histórico automático de mudanças por cliente (etapa, status, tarefas concluídas) com data/hora
+
+### Admin (Listas Editáveis)
+
+- [ ] **ADM-01**: Supervisor cadastra/edita/remove categorias de cliente
+- [ ] **ADM-02**: Supervisor cadastra/edita/remove produtos consumidos
+- [ ] **ADM-03**: Supervisor cadastra/edita/remove tipos de tarefa
+- [ ] **ADM-04**: Supervisor cadastra/edita/remove motivos de perda
+
+### Dashboard
+
+- [ ] **DSH-01**: Dashboard mostra clientes por etapa do funil
+- [ ] **DSH-02**: Dashboard mostra ganhos x perdidos num período
+- [ ] **DSH-03**: Dashboard mostra desempenho por vendedor
+- [ ] **DSH-04**: Dashboard mostra taxa de conversão
+- [ ] **DSH-05**: Dashboard mostra prospecções por produto e por categoria
+- [ ] **DSH-06**: Vendedor vê uma versão do dashboard só com os próprios números
+- [ ] **DSH-07**: Supervisor vê o dashboard completo, com todos os vendedores
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Client
+
+- **CLI-V2-01**: Autocomplete de CEP no cadastro de endereço (reduz digitação)
+- **CLI-V2-02**: Exportação CSV da lista de clientes
+
+### Funnel
+
+- **FUN-V2-01**: Ações em lote no kanban (ex: reatribuir vários clientes de uma vez para outro vendedor)
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Notificações ativas (email, push) de tarefas atrasadas | Destaque visual no kanban já resolve o esquecimento no MVP, sem custo/complexidade de um serviço de notificação |
+| Colunas do funil editáveis por permissão | As 7 etapas ficam fixas no código no MVP, pra reduzir complexidade e validar a ideia primeiro |
+| Tela de importação de planilha de clientes | Migração da base do CRM atual é feita uma única vez, fora da interface |
+| App mobile nativo | Web responsivo é suficiente para o MVP |
+| Integrações externas (email, calendário, WhatsApp, sync com o CRM pago atual) | Cada integração é uma dependência externa e custo novo; não é o objetivo da migração |
+| Auditoria completa / trilha de compliance | Overkill para um time de 2 papéis sem exigência regulatória; o histórico leve (FUN-10) já cobre "quando isso mudou" |
+| Automação de marketing / e-mail em sequência | O time trabalha com prospecção manual (tarefas), não com fluxo de marketing/inbound |
+| Valor de negócio / forecasting ponderado por probabilidade | Não faz parte do modelo de negócio descrito — o funil acompanha a primeira venda, não valor recorrente |
+| Permissões granulares por campo | Duas permissões claras (dono do registro + papel) já resolvem; permissão por campo é fonte comum de bugs de RLS e difícil de manter por um operador não-técnico |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| AUTH-01 | TBD | Pending |
+| AUTH-02 | TBD | Pending |
+| AUTH-03 | TBD | Pending |
+| AUTH-04 | TBD | Pending |
+| CLI-01 | TBD | Pending |
+| CLI-02 | TBD | Pending |
+| CLI-03 | TBD | Pending |
+| CLI-04 | TBD | Pending |
+| CLI-05 | TBD | Pending |
+| CLI-06 | TBD | Pending |
+| CLI-07 | TBD | Pending |
+| FUN-01 | TBD | Pending |
+| FUN-02 | TBD | Pending |
+| FUN-03 | TBD | Pending |
+| FUN-04 | TBD | Pending |
+| FUN-05 | TBD | Pending |
+| FUN-06 | TBD | Pending |
+| FUN-07 | TBD | Pending |
+| FUN-08 | TBD | Pending |
+| FUN-09 | TBD | Pending |
+| FUN-10 | TBD | Pending |
+| ADM-01 | TBD | Pending |
+| ADM-02 | TBD | Pending |
+| ADM-03 | TBD | Pending |
+| ADM-04 | TBD | Pending |
+| DSH-01 | TBD | Pending |
+| DSH-02 | TBD | Pending |
+| DSH-03 | TBD | Pending |
+| DSH-04 | TBD | Pending |
+| DSH-05 | TBD | Pending |
+| DSH-06 | TBD | Pending |
+| DSH-07 | TBD | Pending |
+
+**Coverage:**
+- v1 requirements: 28 total
+- Mapped to phases: 0 (pending roadmap creation)
+- Unmapped: 28 ⚠️ (expected — roadmap creation fills this in next)
+
+---
+*Requirements defined: 2026-07-14*
+*Last updated: 2026-07-14 after initial definition*
