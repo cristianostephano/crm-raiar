@@ -25,10 +25,38 @@ const inviteBodySchema = z.object({
   role: z.enum(["supervisor", "vendedor"]),
 })
 
+// The browser (localhost:3000 in dev, the deployed app origin in
+// production) is always a different origin from *.supabase.co, so every
+// call from InviteUserForm.tsx is cross-origin and the browser sends a
+// CORS preflight OPTIONS request first. Without these headers on EVERY
+// response (including OPTIONS), the browser silently blocks the real POST
+// before it's ever sent — supabase-js then surfaces a generic
+// FunctionsFetchError with no HTTP status, which is exactly the "Não foi
+// possível enviar o convite" generic error a real Supervisor hit during
+// Task 4 verification, even though server-to-server calls (curl, this
+// project's own test suite) never see the problem, since CORS is a
+// browser-only enforcement mechanism.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+}
+
+function jsonResponse(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  })
+}
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders })
+  }
+
   const authHeader = req.headers.get("Authorization")
   if (!authHeader) {
-    return new Response("Unauthorized", { status: 401 })
+    return jsonResponse({ error: { code: "unauthorized" } }, 401)
   }
 
   // JWT-scoped client — used ONLY to establish who the caller is and read
@@ -43,7 +71,7 @@ Deno.serve(async (req) => {
     data: { user },
   } = await anonClient.auth.getUser()
   if (!user) {
-    return new Response("Unauthorized", { status: 401 })
+    return jsonResponse({ error: { code: "unauthorized" } }, 401)
   }
 
   const { data: profile } = await anonClient
@@ -55,7 +83,7 @@ Deno.serve(async (req) => {
   // The real authorization boundary (T-01-10): the CALLER's own role, read
   // server-side, independent of anything the client claims in the body.
   if (profile?.role !== "supervisor") {
-    return new Response("Forbidden", { status: 403 })
+    return jsonResponse({ error: { code: "forbidden" } }, 403)
   }
 
   // Body is only trusted AFTER the 403 gate, and re-validated server-side
@@ -65,15 +93,15 @@ Deno.serve(async (req) => {
   try {
     rawBody = await req.json()
   } catch {
-    return new Response("Invalid JSON body", { status: 400 })
+    return jsonResponse({ error: { code: "invalid_json" } }, 400)
   }
 
   const parsed = inviteBodySchema.safeParse(rawBody)
   if (!parsed.success) {
-    return new Response(JSON.stringify({ error: parsed.error.flatten() }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    })
+    return jsonResponse(
+      { error: { code: "invalid_body", details: parsed.error.flatten() } },
+      400
+    )
   }
   const { email, nome, sobrenome, celular, role } = parsed.data
 
@@ -95,10 +123,16 @@ Deno.serve(async (req) => {
   )
 
   if (error) {
-    return new Response(error.message, { status: 400 })
+    // Propagate GoTrue's real status/code instead of flattening every
+    // failure to a hardcoded 400 (the previous behavior made the client's
+    // duplicate-email-vs-generic branching impossible to reach correctly —
+    // confirmed a genuine duplicate invite returns status 422,
+    // code "email_exists", NOT 400).
+    return jsonResponse(
+      { error: { code: error.code ?? "invite_failed", message: error.message } },
+      error.status ?? 400
+    )
   }
 
-  return new Response(JSON.stringify({ ok: true, user: data.user }), {
-    headers: { "Content-Type": "application/json" },
-  })
+  return jsonResponse({ ok: true, user: data.user }, 200)
 })

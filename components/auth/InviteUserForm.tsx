@@ -141,8 +141,23 @@ function InviteUserFields({ onInvited }: { onInvited?: () => void }) {
       })
 
       if (error) {
-        const status = (error as { context?: Response })?.context?.status
-        setFormError(status === 400 ? DUPLICATE_EMAIL_ERROR : GENERIC_ERROR)
+        // The Edge Function returns a structured { error: { code, ... } }
+        // JSON body (see supabase/functions/invite-user/index.ts) — read
+        // the real code instead of guessing from the HTTP status. GoTrue's
+        // actual duplicate-email response is status 422 / code
+        // "email_exists", confirmed at implementation time; the Edge
+        // Function used to flatten every failure to a hardcoded 400,
+        // which made this branch unreachable for a real duplicate.
+        const context = (error as { context?: Response })?.context
+        let code: string | undefined
+        try {
+          const body = await context?.clone().json()
+          code = body?.error?.code
+        } catch {
+          // Non-JSON body (e.g. a network-level FunctionsFetchError with
+          // no context at all) — fall through to the generic message.
+        }
+        setFormError(code === "email_exists" ? DUPLICATE_EMAIL_ERROR : GENERIC_ERROR)
         return
       }
 
