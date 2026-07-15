@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Autenticação e Papéis
 status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-07-15T02:50:10.377Z"
+stopped_at: Phase 1 UI-SPEC approved
+last_updated: "2026-07-15T03:22:00.541Z"
 last_activity: 2026-07-14
 last_activity_desc: ROADMAP.md created, all 32 v1 requirements mapped to phases
 progress:
@@ -86,6 +86,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-15T02:50:10.367Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-autentica-o-e-pap-is/01-CONTEXT.md
+Last session: 2026-07-15T03:22:00.517Z
+Stopped at: Phase 1 UI-SPEC approved
+Resume file: .planning/phases/01-autentica-o-e-pap-is/01-UI-SPEC.md
