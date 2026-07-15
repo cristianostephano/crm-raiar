@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Autenticação e Papéis
 status: executing
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-15T11:34:18.672Z"
-last_activity: 2026-07-14
-last_activity_desc: ROADMAP.md created, all 32 v1 requirements mapped to phases
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-07-15T12:25:03.687Z"
+last_activity: 2026-07-15
+last_activity_desc: Phase 1 execution started
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 1
   percent: 0
 ---
 
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 
 ## Current Position
 
-Phase: 1 of 5 (Autenticação e Papéis)
-Plan: 0 of TBD in current phase
+Phase: 1 (Autenticação e Papéis) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-07-14 — ROADMAP.md created, all 32 v1 requirements mapped to phases
+Last activity: 2026-07-15 — Phase 1 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 30 | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Recent decisions affecting current work:
 - Roadmap: Auth & RLS foundation goes first (hard blocker — every table's RLS depends on profiles.role/is_supervisor()), Dashboard goes last (pure read layer over data other phases produce).
 - Roadmap: Search/filter (CLI-07) folded into Phase 2 (Client) and activity log (FUN-10) folded into Phase 3 (Kanban), rather than a standalone phase, to keep phases as complete vertical slices per standard granularity.
 - Open items flagged by research, still to confirm during Phase 1/2 discuss-phase: whether Vendedor can edit/delete own clients beyond creating (CLAUDE.md currently assumes "can edit, cannot delete" — already reflected in CLI-06), and whether kanban stage names become editable in a future version (currently fixed, out of scope for v1).
+- [Phase ?]: Standardize on NEXT_PUBLIC_SUPABASE_ANON_KEY (legacy JWT) for downstream Supabase clients, not the also-present NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY — Matches RESEARCH.md code examples and the 01-01 test helper
+- [Phase ?]: Pinned @vitejs/plugin-react to 5.2.0 instead of latest 6.0.3 — 6.0.3's optional @rolldown/plugin-babel peer requires @babel/core@^8, conflicting with @babel/core@7.29.7 already required by shadcn
+- [Phase ?]: Hand-wrote components/ui/form.tsx using React.cloneElement instead of Radix Slot — The base-nova shadcn registry style (built on @base-ui/react) has no form component yet; project has no Radix dependency to build on
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-15T03:22:00.517Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: .planning/phases/01-autentica-o-e-pap-is/01-UI-SPEC.md
+Last session: 2026-07-15T12:25:03.678Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None

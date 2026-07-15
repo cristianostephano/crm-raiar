@@ -7,10 +7,10 @@
 
 ### Authentication (Autenticação e Papéis)
 
-- [ ] **AUTH-01**: Usuário faz login via Supabase Auth com email e senha
+- [x] **AUTH-01**: Usuário faz login via Supabase Auth com email e senha
 - [ ] **AUTH-02**: Cadastro de usuário com email, nome, sobrenome, senha, celular
 - [ ] **AUTH-03**: Sistema distingue dois papéis — Supervisor e Vendedor — com permissões diferentes
-- [ ] **AUTH-04**: Sessão do usuário persiste entre acessos (não precisa logar toda hora)
+- [x] **AUTH-04**: Sessão do usuário persiste entre acessos (não precisa logar toda hora)
 
 ### Client (Cadastro de Cliente PJ)
 
@@ -87,10 +87,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Pending |
 | AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Complete |
 | CLI-01 | Phase 2 | Pending |
 | CLI-02 | Phase 2 | Pending |
 | CLI-03 | Phase 2 | Pending |
@@ -121,6 +121,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DSH-07 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 32 total (corrected during roadmap creation — the v1 requirement list above contains 32 items across AUTH/CLI/FUN/ADM/DSH; the previous "28 total" note in this file was stale/incorrect)
 - Mapped to phases: 32/32 ✓
 - Unmapped: 0 ✓
