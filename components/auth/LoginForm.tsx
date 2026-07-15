@@ -1,7 +1,6 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -31,7 +30,6 @@ const NETWORK_ERROR =
   "Não foi possível entrar agora. Verifique sua conexão e tente de novo em instantes."
 
 export function LoginForm() {
-  const router = useRouter()
   const [formError, setFormError] = useState<string | null>(null)
 
   const form = useForm<LoginFormValues>({
@@ -54,8 +52,12 @@ export function LoginForm() {
         return
       }
 
-      router.push("/")
-      router.refresh()
+      // Hard navigation (not next/navigation's router.push) so the request
+      // that renders app/(app)/layout.tsx is a real server round-trip that
+      // reads the just-set session cookie, instead of a soft client
+      // transition that can reuse a stale pre-login Router Cache entry for
+      // "/" (captured while still unauthenticated).
+      window.location.assign("/")
     } catch {
       setFormError(NETWORK_ERROR)
     }
