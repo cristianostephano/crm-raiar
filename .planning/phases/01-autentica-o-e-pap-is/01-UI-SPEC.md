@@ -54,12 +54,12 @@ Exceptions:
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 16px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium — closest available to the declared 2-weight cap; used only for form labels/table headers, not body text) | 1.5 |
+| Label | 14px | 600 (semibold) | 1.5 |
 | Heading | 20px | 600 (semibold) | 1.2 |
 | Display | 28px | 600 (semibold) | 1.2 |
 
 Notes:
-- Exactly 4 sizes (16/14/20/28) and effectively 2 weights for prose (400 regular, 600 semibold); Label's 500 is shadcn's default `Label` component weight and is reserved exclusively for form labels and table column headers — never used for emphasis in running text (use 600 for that).
+- Exactly 4 sizes (16/14/20/28) and exactly 2 weights project-wide (400 regular, 600 semibold) — no third weight value anywhere. shadcn's `Label` component ships a default weight of 500 (medium); override it to 600 (e.g. `className="font-semibold"` or the equivalent CSS variable) so form labels and table column headers match the same semibold weight used for headings, keeping the app to exactly 2 weights.
 - Heading (20px/600) is the login card title ("Entrar") and section titles inside "gerenciar equipe" (e.g. "Convidar novo membro"). Display (28px/600) is reserved for the page-level "Gerenciar equipe" title only.
 - Error/help text under form fields: 14px/400, not a separate role — uses Label's size at regular weight, in `--destructive` color for errors or `--muted-foreground` for help text.
 
@@ -71,10 +71,10 @@ Notes:
 |------|-------|-------|
 | Dominant (60%) | `--background` `oklch(1 0 0)` (white) / `oklch(0.145 0 0)` dark | Page background behind the login card and behind the "gerenciar equipe" content area |
 | Secondary (30%) | `--card` `oklch(1 0 0)` on `oklch(0.97 0 0)` `--secondary` panels (light gray) / dark-mode equivalents | Login card surface, "gerenciar equipe" table container, page header bar |
-| Accent (10%) | `--primary` `oklch(0.546 0.215 262.881)` (blue, light mode) / `oklch(0.623 0.188 259.815)` (blue, dark mode) | Reserved for: the "Entrar" button on login, the "Convidar" submit button in "gerenciar equipe", the active nav/role indicator, focus rings (`--ring`), and links ("Esqueci minha senha") |
+| Accent (10%) | `--primary` `oklch(0.546 0.215 262.881)` (blue, light mode) / `oklch(0.623 0.188 259.815)` (blue, dark mode) | Reserved for: the "Entrar" button on login, the "Convidar" submit button in "gerenciar equipe", focus rings (`--ring`), and links ("Esqueci minha senha"). Explicitly NOT used for the role badge/indicator (Supervisor/Vendedor) — see Screen-Specific Notes, which stays neutral/secondary. |
 | Destructive | `--destructive` `oklch(0.577 0.245 27.325)` (red, light mode) / `oklch(0.704 0.191 22.216)` (dark mode) | Reserved for: inline error messages ("Email ou senha inválidos"), invalid-field input borders, and any future destructive-action button (none exists in this phase's scope — see Copywriting Contract) |
 
-Accent reserved for: the "Entrar" primary button, the "Convidar" primary button, the role badge/nav item indicating the logged-in user is a Supervisor (subtle, not a solid blue fill — outline or soft-blue badge per shadcn `Badge` "secondary" variant tinted blue), the "Esqueci minha senha" link, and focus-visible rings on inputs/buttons. Never used for entire section backgrounds, large blocks of body text, or more than one button per screen (only one primary action per screen — everything else is a secondary/outline/ghost button or a plain link).
+Accent reserved for: the "Entrar" primary button, the "Convidar" primary button, the "Esqueci minha senha" link, and focus-visible rings on inputs/buttons. Never used for entire section backgrounds, large blocks of body text, role/status badges (including the logged-in user's role indicator — see Screen-Specific Notes, which stays neutral/secondary, not blue), or more than one button per screen (only one primary action per screen — everything else is a secondary/outline/ghost button or a plain link).
 
 ---
 
