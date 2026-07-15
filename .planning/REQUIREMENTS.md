@@ -87,44 +87,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| AUTH-04 | TBD | Pending |
-| CLI-01 | TBD | Pending |
-| CLI-02 | TBD | Pending |
-| CLI-03 | TBD | Pending |
-| CLI-04 | TBD | Pending |
-| CLI-05 | TBD | Pending |
-| CLI-06 | TBD | Pending |
-| CLI-07 | TBD | Pending |
-| FUN-01 | TBD | Pending |
-| FUN-02 | TBD | Pending |
-| FUN-03 | TBD | Pending |
-| FUN-04 | TBD | Pending |
-| FUN-05 | TBD | Pending |
-| FUN-06 | TBD | Pending |
-| FUN-07 | TBD | Pending |
-| FUN-08 | TBD | Pending |
-| FUN-09 | TBD | Pending |
-| FUN-10 | TBD | Pending |
-| ADM-01 | TBD | Pending |
-| ADM-02 | TBD | Pending |
-| ADM-03 | TBD | Pending |
-| ADM-04 | TBD | Pending |
-| DSH-01 | TBD | Pending |
-| DSH-02 | TBD | Pending |
-| DSH-03 | TBD | Pending |
-| DSH-04 | TBD | Pending |
-| DSH-05 | TBD | Pending |
-| DSH-06 | TBD | Pending |
-| DSH-07 | TBD | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| CLI-01 | Phase 2 | Pending |
+| CLI-02 | Phase 2 | Pending |
+| CLI-03 | Phase 2 | Pending |
+| CLI-04 | Phase 2 | Pending |
+| CLI-05 | Phase 2 | Pending |
+| CLI-06 | Phase 2 | Pending |
+| CLI-07 | Phase 2 | Pending |
+| FUN-01 | Phase 3 | Pending |
+| FUN-02 | Phase 3 | Pending |
+| FUN-03 | Phase 3 | Pending |
+| FUN-04 | Phase 3 | Pending |
+| FUN-05 | Phase 3 | Pending |
+| FUN-06 | Phase 3 | Pending |
+| FUN-07 | Phase 3 | Pending |
+| FUN-08 | Phase 3 | Pending |
+| FUN-09 | Phase 3 | Pending |
+| FUN-10 | Phase 3 | Pending |
+| ADM-01 | Phase 4 | Pending |
+| ADM-02 | Phase 4 | Pending |
+| ADM-03 | Phase 4 | Pending |
+| ADM-04 | Phase 4 | Pending |
+| DSH-01 | Phase 5 | Pending |
+| DSH-02 | Phase 5 | Pending |
+| DSH-03 | Phase 5 | Pending |
+| DSH-04 | Phase 5 | Pending |
+| DSH-05 | Phase 5 | Pending |
+| DSH-06 | Phase 5 | Pending |
+| DSH-07 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 28 ⚠️ (expected — roadmap creation fills this in next)
+- v1 requirements: 32 total (corrected during roadmap creation — the v1 requirement list above contains 32 items across AUTH/CLI/FUN/ADM/DSH; the previous "28 total" note in this file was stale/incorrect)
+- Mapped to phases: 32/32 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-14*
-*Last updated: 2026-07-14 after initial definition*
+*Last updated: 2026-07-14 after roadmap creation (traceability mapped to Phases 1-5)*
