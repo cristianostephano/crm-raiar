@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Autenticação e Papéis
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-07-15T12:25:03.687Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-07-15T12:50:33.649Z"
 last_activity: 2026-07-15
 last_activity_desc: Phase 1 execution started
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 1 (Autenticação e Papéis) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-07-15 — Phase 1 execution started
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01 P01 | 30 | 3 tasks | 15 files |
+| Phase 01 P02 | 45 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Standardize on NEXT_PUBLIC_SUPABASE_ANON_KEY (legacy JWT) for downstream Supabase clients, not the also-present NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY — Matches RESEARCH.md code examples and the 01-01 test helper
 - [Phase ?]: Pinned @vitejs/plugin-react to 5.2.0 instead of latest 6.0.3 — 6.0.3's optional @rolldown/plugin-babel peer requires @babel/core@^8, conflicting with @babel/core@7.29.7 already required by shadcn
 - [Phase ?]: Hand-wrote components/ui/form.tsx using React.cloneElement instead of Radix Slot — The base-nova shadcn registry style (built on @base-ui/react) has no form component yet; project has no Radix dependency to build on
+- [Phase 01-02]: First Supervisor account seeded with a known temporary password via admin.createUser (not the invite flow, since no Supervisor exists yet to invite the first one) - owner can rotate it later via 'Esqueci minha senha' once that flow ships
+- [Phase 01-02]: Vendedor A/B test accounts use fixed @raiar.local test emails, exported as SEED_ACCOUNTS from tests/auth/rls-roles.test.ts as the canonical seeded identities every future phase's RLS tests should reuse
+- [Phase 01-02]: RLS enablement (relrowsecurity) verified via the Supabase Management API's database/query SQL endpoint using the same personal access token needed for supabase link/db push, since supabase-js has no raw-SQL passthrough for pg_class
 
 ### Pending Todos
 
@@ -90,6 +94,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-15T12:25:03.678Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-07-15T12:50:33.637Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
