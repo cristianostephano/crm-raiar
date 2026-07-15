@@ -7,16 +7,14 @@ import { signInAs } from "../helpers/supabase-test-clients"
  * of this plan) via `admin.createUser` with `email_confirm: true` — no
  * invite email involved, since these are dedicated test/bootstrap accounts.
  *
- * `supervisor.email` is the real project-owner email supplied via the
- * Task 2 checkpoint (D-03 — Claude asks the owner for this at execution
- * time, no "first access" screen). It is filled in by Task 3 once known;
- * until then this test intentionally fails (RED), which is expected per
- * this task's TDD flow — it goes GREEN once Task 3 pushes the migration
- * and runs the seed script.
+ * `supervisor.email` is the real project-owner email confirmed via the
+ * Task 2 checkpoint (D-03 — no "first access" screen, Claude asks the
+ * owner for this at execution time). The owner can change this account's
+ * password later via "Esqueci minha senha" (D-08) once that flow is built.
  */
 export const SEED_ACCOUNTS = {
   supervisor: {
-    email: "PENDING_OWNER_EMAIL_SET_IN_TASK_3",
+    email: "cristiano.stephano@raiarorganicos.com.br",
     password: "TestSupervisor!2026",
   },
   vendedorA: {
