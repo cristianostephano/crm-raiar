@@ -24,19 +24,44 @@ import {
 } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
 
-// D-05: papel has no default — the Supervisor must explicitly choose it,
-// so `role` is required with no zod default() and no RHF defaultValue.
-const inviteSchema = z.object({
-  nome: z.string().min(1, "Informe o nome."),
-  sobrenome: z.string().min(1, "Informe o sobrenome."),
-  email: z.string().email("Informe um e-mail válido."),
-  celular: z.string().min(1, "Informe o celular."),
-  role: z.enum(["supervisor", "vendedor"], {
-    message: "Escolha o papel.",
-  }),
-})
+// D-05: papel has no default — the Supervisor must explicitly choose it.
+// `role` includes "" as a valid (but rejected) empty-state value: Base UI's
+// Select must be controlled from the very first render (an `undefined`
+// initial value makes it start uncontrolled, then switch to controlled the
+// moment a real string is set, which React/Base UI forbid mid-lifecycle —
+// see the "changing the uncontrolled value state" console error this fixes).
+// "" is the controlled empty state Base UI's Select recognizes as "nothing
+// selected" (falls back to the placeholder), so it satisfies both D-05 (no
+// pre-selected papel) and the controlled-from-mount requirement. The
+// `.refine` below still requires a real choice before submit succeeds.
+const inviteSchema = z
+  .object({
+    nome: z.string().min(1, "Informe o nome."),
+    sobrenome: z.string().min(1, "Informe o sobrenome."),
+    email: z.string().email("Informe um e-mail válido."),
+    celular: z.string().min(1, "Informe o celular."),
+    role: z.enum(["", "supervisor", "vendedor"]),
+  })
+  // superRefine (object-level) instead of chaining .refine() onto the
+  // `role` field itself: a per-field .refine() turns that field into a
+  // ZodEffects type, which broke @hookform/resolvers' generic inference
+  // against zod v4 here (zodResolver couldn't resolve a concrete
+  // FieldValues type). Rejecting "" at the object level keeps every field
+  // a plain ZodType, and z.infer resolves cleanly again.
+  .superRefine((data, ctx) => {
+    if (data.role === "") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Escolha o papel.",
+        path: ["role"],
+      })
+    }
+  })
 
 type InviteFormValues = z.infer<typeof inviteSchema>
+// After validation, `role` is guaranteed to be "supervisor" | "vendedor"
+// (the refine above rejects "" before submit can succeed).
+type InviteRole = "supervisor" | "vendedor"
 
 const DUPLICATE_EMAIL_ERROR = "Já existe uma conta com esse e-mail."
 const GENERIC_ERROR = "Não foi possível enviar o convite. Tente novamente."
@@ -93,7 +118,10 @@ function InviteUserFields({ onInvited }: { onInvited?: () => void }) {
       sobrenome: "",
       email: "",
       celular: "",
-      // role intentionally omitted — no pre-selected papel (D-05)
+      // "" (not undefined) — controlled from the very first render, and
+      // Base UI's Select treats "" as "nothing selected" so the papel
+      // placeholder still shows with no default pre-chosen (D-05).
+      role: "",
     },
   })
 
@@ -104,7 +132,12 @@ function InviteUserFields({ onInvited }: { onInvited?: () => void }) {
     try {
       const supabase = createClient()
       const { error } = await supabase.functions.invoke("invite-user", {
-        body: values,
+        body: {
+          ...values,
+          // Safe: zod's refine already rejected "" before submit could
+          // reach here, so `role` is guaranteed to be a real choice.
+          role: values.role as InviteRole,
+        },
       })
 
       if (error) {
@@ -119,7 +152,7 @@ function InviteUserFields({ onInvited }: { onInvited?: () => void }) {
         sobrenome: "",
         email: "",
         celular: "",
-        role: undefined,
+        role: "",
       })
       onInvited?.()
     } catch {
