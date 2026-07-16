@@ -62,7 +62,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   9. Cada card tem uma observação em texto livre e uma lista de tarefas (cada uma com sua data de conclusão), e cards parados ou atrasados aparecem visualmente destacados assim que a tela do kanban é aberta.
   10. Cada cliente tem um histórico visível de mudanças (etapa, status, tarefas concluídas) com data e hora, gerado automaticamente sem esforço manual.
 
-**Plans**: TBD
+**Plans**: 7 plans
+
+- [ ] 02-01-PLAN.md — Data model foundation: clientes + editable-list tables + funil, RLS + business-rule CHECK constraints (test-proven), migration pushed
+- [ ] 02-02-PLAN.md — Cadastro rápido: quick-create dialog + createCliente action + /clientes page + nav link
+- [ ] 02-03-PLAN.md — Kanban board render: 7 fixed columns + compact ClienteCard
+- [ ] 02-04-PLAN.md — Kanban drag-and-drop (dnd-kit) + mover card via RPC + stalled/overdue highlight
+- [ ] 02-05-PLAN.md — Busca, filtros, abas Todos/Incompletos + card badge/quick-actions
+- [ ] 02-06-PLAN.md — Detail Sheet (Dados do cliente): edição + apagar (supervisor-only)
+- [ ] 02-07-PLAN.md — Detail Sheet (Funil): status, observação, tarefas, histórico + modal de perda
+
 **UI hint**: yes
 
 ### Phase 3: Administração de Listas Editáveis
@@ -107,6 +116,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
-| 2. Cadastro e Funil de Vendas | 0/TBD | Not started | - |
+| 2. Cadastro e Funil de Vendas | 0/7 | Planned | - |
 | 3. Administração de Listas Editáveis | 0/TBD | Not started | - |
 | 4. Dashboard Gerencial | 0/TBD | Not started | - |
