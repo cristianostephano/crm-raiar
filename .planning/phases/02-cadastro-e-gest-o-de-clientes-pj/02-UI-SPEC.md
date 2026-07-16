@@ -70,12 +70,12 @@ Inherited base roles unchanged from Phase 1 (`--background`, `--card`/`--seconda
 |------|-------|-------|
 | Dominant (60%) | `--background` (white / `oklch(0.145 0 0)` dark) | Page background behind the kanban board and behind the client detail drawer |
 | Secondary (30%) | `--secondary` (light gray `oklch(0.97 0 0)`) / `--card` (white) | Kanban column header panels, card surfaces, top toolbar background, filters popover surface |
-| Accent (10%) | `--primary` blue (`oklch(0.546 0.215 262.881)` light / `oklch(0.623 0.188 259.815)` dark) | Reserved for: the "Novo cliente" primary button, the "Salvar" button in the client detail drawer, the "Cadastrar cliente" button in quick-create, the active "Todos"/"Incompletos" tab indicator, focus rings, the checked state of task checkboxes, and a small active-state dot on the "Filtros" button when ≥1 filter is applied. **Never** used for: status badges (em andamento/ganho/perdido), the "Incompleto" badge, the overdue highlight, or the categoria/produto badges on a card |
+| Accent (10%) | `--primary` blue (`oklch(0.546 0.215 262.881)` light / `oklch(0.623 0.188 259.815)` dark) | Reserved for: the "Novo cliente" primary button, the "Salvar alterações" button in the client detail drawer, the "Cadastrar cliente" button in quick-create, the active "Todos"/"Incompletos" tab indicator, focus rings, the checked state of task checkboxes, and a small active-state dot on the "Filtros" button when ≥1 filter is applied. **Never** used for: status badges (em andamento/ganho/perdido), the "Incompleto" badge, the overdue highlight, or the categoria/produto badges on a card |
 | Destructive | `--destructive` red (`oklch(0.577 0.245 27.325)` light / `oklch(0.704 0.191 22.216)` dark) | "Apagar cliente" button + its confirmation dialog, the "perdido" status badge, the "Confirmar perda" button inside the perdido-motivo modal, overdue task due-dates (text color only, not the card highlight itself — see Warning below), inline validation errors |
 | **Success (new, status-only)** | approx. Tailwind `green-600` `oklch(0.627 0.194 149.214)` light / `green-500` `oklch(0.723 0.219 149.579)` dark | Exclusively the "ganho" status badge on a card and in the status selector. Never a button color, never a background fill larger than a badge |
 | **Warning (new, status-only)** | approx. Tailwind `amber-500` `oklch(0.769 0.188 70.08)` light / `amber-400` `oklch(0.828 0.189 84.429)` dark | Exclusively the "parado/atrasado" visual highlight on a kanban card (4px left border + small `TriangleAlert` icon with tooltip) — required by FUN-09. Never a button color |
 
-Accent reserved for: "Novo cliente" button, "Salvar" button (client drawer), "Cadastrar cliente" button (quick-create), active tab indicator, input/button focus rings, checked task-checkboxes, and the "Filtros" active-state dot. Confirmed: at most one primary (blue-filled) button visible per screen — the drawer's "Salvar" and the "+ Adicionar tarefa" button never compete, since "+ Adicionar tarefa" is outline/ghost, not filled blue.
+Accent reserved for: "Novo cliente" button, "Salvar alterações" button (client drawer), "Cadastrar cliente" button (quick-create), active tab indicator, input/button focus rings, checked task-checkboxes, and the "Filtros" active-state dot. Confirmed: at most one primary (blue-filled) button visible per screen — the drawer's "Salvar alterações" and the "+ Adicionar tarefa" button never compete, since "+ Adicionar tarefa" is outline/ghost, not filled blue.
 
 ---
 
@@ -86,7 +86,7 @@ Accent reserved for: "Novo cliente" button, "Salvar" button (client drawer), "Ca
 | Primary CTA — open quick-create | "Novo cliente" |
 | Primary CTA — submit quick-create | "Cadastrar cliente" |
 | Helper caption under quick-create submit | "Você pode completar os demais dados depois, na tela do cliente." |
-| Primary CTA — save client detail drawer | "Salvar" |
+| Primary CTA — save client detail drawer | "Salvar alterações" |
 | Secondary CTA — add task inside drawer | "+ Adicionar tarefa" (outline button, not filled blue) |
 | Tabs | "Todos" / "Incompletos" |
 | Filters button | "Filtros" (outline button; small blue dot appears top-right when ≥1 filter active) |
@@ -150,9 +150,9 @@ No third-party registries declared this session — only the official shadcn reg
 - Section 2 — "Funil" (Heading, 20px/600, `Separator` above):
   - Status `Select`: "Em andamento" (default, neutral badge) / "Perdido" (red badge; selecting it opens the "Confirmar perda" modal requiring `motivo`, FUN-06) / "Ganho" (green badge; **disabled** with the Copywriting Contract's tooltip unless the card's current etapa is "1ª venda concluída", FUN-05 — this is a UI-level courtesy only, the real enforcement is a DB constraint/RLS check per the `supabase-conventions` skill).
   - Observação — `Textarea`, free text (FUN-07).
-  - Tarefas — checklist (FUN-08): each row = `Checkbox` (checked state uses `--primary` blue fill, an allowed "selected state" use) + tarefa tipo (14px/400) + `data_conclusao` via `Calendar`-backed `Popover` date picker (red 14px/400 text if the date has passed and the task is unchecked) + ghost delete icon. "+ Adicionar tarefa" outline button below the list (not filled blue — keeps "Salvar" the only primary action on this screen).
+  - Tarefas — checklist (FUN-08): each row = `Checkbox` (checked state uses `--primary` blue fill, an allowed "selected state" use) + tarefa tipo (14px/400) + `data_conclusao` via `Calendar`-backed `Popover` date picker (red 14px/400 text if the date has passed and the task is unchecked) + ghost delete icon. "+ Adicionar tarefa" outline button below the list (not filled blue — keeps "Salvar alterações" the only primary action on this screen).
   - Histórico — read-only vertical timeline (FUN-10): each entry = timestamp (14px/400, muted-foreground) + plain-language change description (14px/400, foreground), e.g. "16/07/2026 14:32 — Etapa alterada para \"Conversa realizada com comprador(a)\"." No color coding, no icons — kept deliberately plain since it's an automatic, non-interactive log.
-- Footer: "Salvar" primary button (`--primary` filled), pinned to the bottom of the `Sheet`.
+- Footer: "Salvar alterações" primary button (`--primary` filled), pinned to the bottom of the `Sheet`.
 
 ### Quick-Create (`Dialog`, triggered by "Novo cliente")
 
