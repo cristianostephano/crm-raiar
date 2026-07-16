@@ -63,13 +63,32 @@ Decimal phases appear between their surrounding integers in numeric order.
   10. Cada cliente tem um histórico visível de mudanças (etapa, status, tarefas concluídas) com data e hora, gerado automaticamente sem esforço manual.
 
 **Plans**: 7 plans
+**Wave 1**
 
 - [ ] 02-01-PLAN.md — Data model foundation: clientes + editable-list tables + funil, RLS + business-rule CHECK constraints (test-proven), migration pushed
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 02-02-PLAN.md — Cadastro rápido: quick-create dialog + createCliente action + /clientes page + nav link
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 02-03-PLAN.md — Kanban board render: 7 fixed columns + compact ClienteCard
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 02-04-PLAN.md — Kanban drag-and-drop (dnd-kit) + mover card via RPC + stalled/overdue highlight
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 02-05-PLAN.md — Busca, filtros, abas Todos/Incompletos + card badge/quick-actions
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 02-06-PLAN.md — Detail Sheet (Dados do cliente): edição + apagar (supervisor-only)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 02-07-PLAN.md — Detail Sheet (Funil): status, observação, tarefas, histórico + modal de perda
 
 **UI hint**: yes
