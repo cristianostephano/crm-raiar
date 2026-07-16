@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Autenticação e Papéis
 status: executing
-stopped_at: "01-05 Tasks 1-3 complete (code + automated tests); Task 4 (real email round-trip) deferred at owner's request"
-last_updated: "2026-07-16T20:30:00.000Z"
+stopped_at: 01-05 Tasks 1-3 complete (code + automated tests); Task 4 (real email round-trip) deferred at owner's request
+last_updated: "2026-07-16T21:03:58.488Z"
 last_activity: 2026-07-16
-last_activity_desc: 01-05 Tasks 1-3 complete; Task 4 manual email-verification checkpoint deferred, not approved
+last_activity_desc: 01-05 Tasks 1-3 (shared /auth/confirm callback, forgot/reset-password screens, updateUser round-trip test) committed; diagnosed and fixed a real bug (ForgotPasswordForm swallowing rate-limit errors) found while investigating the owner's "reset email never arrived" report; Task 4 itself deferred, not completed
 progress:
-  total_phases: 5
-  completed_phases: 0
+  total_phases: 4
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 25
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 1 (Autenticação e Papéis) — EXECUTING
-Plan: 5 of 5 (code complete; Task 4 manual verification deferred)
+Plan: 5 of 4 (code complete; Task 4 manual verification deferred)
 Status: Blocked — awaiting deferred manual verification (01-05 Task 4: real password-reset + invite-accept email round-trips). Not silently skipped; owner asked to close out the plan and revisit this specific check later.
 Last activity: 2026-07-16 — 01-05 Tasks 1-3 (shared /auth/confirm callback, forgot/reset-password screens, updateUser round-trip test) committed; diagnosed and fixed a real bug (ForgotPasswordForm swallowing rate-limit errors) found while investigating the owner's "reset email never arrived" report; Task 4 itself deferred, not completed
 
@@ -98,6 +98,10 @@ None yet.
 - Research flags two areas needing deeper research at plan time, not now: Phase 3 (fractional card-position strategy, mover_card_funil RPC validation, touch/mobile drag ergonomics) and Phase 5 (security_invoker view syntax/index strategy — LOW confidence sources in STACK.md).
 - REQUIREMENTS.md shows AUTH-02 (Supervisor invites Vendedor) already checked off as Complete, but the invite Edge Function + gerenciar-equipe screen that actually deliver it are still planned for 01-04 (not yet built) — pre-existing inconsistency, not introduced by 01-03; worth a quick correction pass before shipping the phase.
 - **OPEN — 01-05 Task 4 deferred (real email round-trip verification):** password-reset and invite-accept email round-trips have not been manually confirmed end-to-end yet. All code (shared `/auth/confirm` callback, forgot/reset-password screens, `updateUser` contract test) is implementation-complete and automated-test-covered, but AUTH-01/AUTH-02 must NOT be treated as fully manually-verified end-to-end until this is resumed and approved. The project owner's first real attempt (password reset to `cristiano.stephano@raiarorganicos.com.br`) did not arrive; diagnosis via `auth.flow_state` points to the free-tier mailer's known 2/hour rate limit (established in 01-04) most likely being exhausted by two prior real recovery attempts for a different account only ~24 seconds earlier — not a defect in this plan's code (though one real defect, silently-swallowed rate-limit errors, was found and fixed, commit `4e12455`). By the time this plan closed out, ~1.5h had passed since the last attempt, so the quota should be clear for a future retry. See `.planning/phases/01-autentica-o-e-pap-is/01-05-SUMMARY.md`'s "Open Item: Task 4" section for the exact resume steps.
+
+### Roadmap Evolution
+
+- Phase 2 edited: merged old Phase 3 (Funil de Vendas/Kanban) into Phase 2 (Cadastro), at owner's request, so cadastro+funil ship as one vertical slice; Admin and Dashboard phases renumbered 4->3, 5->4 accordingly
 
 ## Deferred Items
 
