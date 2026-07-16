@@ -24,12 +24,29 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
 // Deliberately non-revealing of whether the email exists (T-01-17 /
-// UI-SPEC Copywriting Contract) — shown on submit regardless of outcome.
+// UI-SPEC Copywriting Contract) — shown whenever the request itself
+// succeeded, regardless of whether the address is actually registered
+// (GoTrue's own /recover endpoint already returns success for unknown
+// emails, so this copy never needs to branch on "user not found").
 const SUCCESS_MESSAGE =
   "Se esse e-mail estiver cadastrado, enviamos um link para redefinir a senha."
 
+// Rate-limit error codes are an infra/quota signal, not an
+// account-existence signal (GoTrue never reveals "user not found" for
+// /recover) — safe to surface honestly instead of the generic success
+// copy, so the user knows to wait instead of assuming an email is coming.
+const RATE_LIMIT_ERROR_CODES = new Set([
+  "over_email_send_rate_limit",
+  "over_request_rate_limit",
+])
+const RATE_LIMIT_MESSAGE =
+  "Muitas tentativas em pouco tempo. Aguarde alguns minutos antes de tentar novamente."
+const GENERIC_ERROR_MESSAGE =
+  "Não foi possível enviar o link agora. Tente novamente em instantes."
+
 export function ForgotPasswordForm() {
   const [submitted, setSubmitted] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -37,13 +54,24 @@ export function ForgotPasswordForm() {
   })
 
   async function onSubmit(values: ForgotPasswordFormValues) {
+    setErrorMessage(null)
     const supabase = createClient()
-    // Errors are intentionally not surfaced to the caller — the same
-    // non-revealing success copy is shown whether or not the email exists
-    // or the send fails, so no branch on `error` here.
-    await supabase.auth.resetPasswordForEmail(values.email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
       redirectTo: `${window.location.origin}/auth/confirm`,
     })
+
+    // Only rate-limit-shaped errors are surfaced honestly — they carry no
+    // information about whether the email exists. Any other outcome
+    // (including "email doesn't exist", which GoTrue itself never reports)
+    // still shows the same non-revealing success copy.
+    if (error && RATE_LIMIT_ERROR_CODES.has(error.code ?? "")) {
+      setErrorMessage(RATE_LIMIT_MESSAGE)
+      return
+    }
+    if (error && error.status && error.status >= 500) {
+      setErrorMessage(GENERIC_ERROR_MESSAGE)
+      return
+    }
 
     setSubmitted(true)
   }
@@ -63,6 +91,15 @@ export function ForgotPasswordForm() {
         className="flex flex-col gap-4"
         noValidate
       >
+        {errorMessage ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {errorMessage}
+          </div>
+        ) : null}
+
         <FormField
           control={form.control}
           name="email"
