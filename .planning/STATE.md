@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Autenticação e Papéis
 status: executing
-stopped_at: Phase 2 context gathered (merged with former Phase 3 Kanban)
-last_updated: "2026-07-16T21:34:48.310Z"
+stopped_at: Phase 2 UI-SPEC approved
+last_updated: "2026-07-16T21:50:48.212Z"
 last_activity: 2026-07-16
 last_activity_desc: 01-05 Tasks 1-3 (shared /auth/confirm callback, forgot/reset-password screens, updateUser round-trip test) committed; diagnosed and fixed a real bug (ForgotPasswordForm swallowing rate-limit errors) found while investigating the owner's "reset email never arrived" report; Task 4 itself deferred, not completed
 progress:
@@ -113,6 +113,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-16T21:34:48.284Z
-Stopped at: Phase 2 context gathered (merged with former Phase 3 Kanban)
-Resume file: .planning/phases/02-cadastro-e-gest-o-de-clientes-pj/02-CONTEXT.md
+Last session: 2026-07-16T21:50:48.183Z
+Stopped at: Phase 2 UI-SPEC approved
+Resume file: .planning/phases/02-cadastro-e-gest-o-de-clientes-pj/02-UI-SPEC.md
