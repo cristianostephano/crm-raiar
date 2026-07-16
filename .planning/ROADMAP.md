@@ -34,13 +34,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. O sistema reconhece se o usuário logado é Supervisor ou Vendedor e reflete esse papel na interface (ex: menu ou perfil), aplicando permissões diferentes de acordo.
   4. Um Vendedor não consegue, nem manipulando a URL ou a API diretamente, acessar ou alterar dados de outro usuário — a regra é aplicada pelo banco de dados (RLS), não só escondida na tela.
 
-**Plans**: 4/5 plans executed
+**Plans**: 4/5 plans executed (01-05 code complete, Task 4 manual email-verification checkpoint deferred at owner's request — see 01-05-SUMMARY.md "Open Item: Task 4")
 
 - [x] 01-01-PLAN.md
 - [x] 01-02-PLAN.md
 - [x] 01-03-PLAN.md
 - [x] 01-04-PLAN.md
-- [ ] 01-05-PLAN.md
+- [ ] 01-05-PLAN.md (Tasks 1-3 done; Task 4 deferred, not approved)
 
 **UI hint**: yes
 
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Autenticação e Papéis | 4/5 | In Progress|  |
+| 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Gestão de Clientes PJ | 0/TBD | Not started | - |
 | 3. Funil de Vendas (Kanban) | 0/TBD | Not started | - |
 | 4. Administração de Listas Editáveis | 0/TBD | Not started | - |
