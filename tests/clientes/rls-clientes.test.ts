@@ -124,10 +124,15 @@ describe("RLS: clientes UPDATE WITH CHECK blocks responsavel reassignment", () =
       .eq("id", inserted!.id)
       .select("id")
 
-    // WITH CHECK on the UPDATE policy rejects the new row (responsavel would
-    // no longer equal the caller and the caller is not a supervisor), so the
-    // row is filtered out of the update entirely: 0 rows affected.
-    expect(updateError).toBeNull()
+    // The row matches the UPDATE policy's USING clause (responsavel is
+    // still Vendedor A), but the resulting new row fails WITH CHECK
+    // (responsavel would no longer equal the caller, and the caller is not
+    // a supervisor). Postgres rejects this with a 42501 RLS-violation
+    // error rather than silently filtering the row (that silent-filter
+    // behavior applies to USING on SELECT/DELETE, not to WITH CHECK on
+    // UPDATE/INSERT).
+    expect(updateError).not.toBeNull()
+    expect(updateError?.code).toBe("42501")
     expect(updateResult ?? []).toHaveLength(0)
   })
 })
