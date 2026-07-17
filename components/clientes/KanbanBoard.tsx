@@ -596,6 +596,7 @@ export function KanbanBoard({
         </div>
       ) : (
         <DndContext
+          id="clientes-kanban"
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
