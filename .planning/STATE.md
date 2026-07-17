@@ -6,14 +6,14 @@ current_phase: 2
 current_phase_name: Cadastro e Funil de Vendas
 status: executing
 stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-07-17T02:12:16.526Z"
+last_updated: "2026-07-17T02:32:10.881Z"
 last_activity: 2026-07-17
 last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 12
-  completed_plans: 7
+  completed_plans: 8
   percent: 25
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 2 (Cadastro e Funil de Vendas) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-07-17 — Phase 2 execution started
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P05 | 35min (Tasks 1-3; Task 4 deferred) | 3/4 tasks | 6 files |
 | Phase 02 P01 | 20min | 3 tasks | 4 files |
 | Phase 02 P02 | 20min | 2 tasks | 8 files |
+| Phase 02 P03 | ~15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 02-01]: historico has no user-facing INSERT policy - only SECURITY DEFINER triggers write it, keeping the audit trail tamper-proof from the API surface
 - [Phase 02-02]: createCliente() cannot be unit-invoked directly from Vitest (createClient() reads next/headers cookies(), needs a live Next.js request scope) - duplicate-razao_social behavior proven via a direct signed-in insert exercising the same schema, per the plan's own guidance
 - [Phase 02-02]: Vendedor's Responsavel field renders as a disabled read-only Input showing their name (not a disabled Select) - underlying form value stays pinned via defaultValues since field.onChange is never called in that branch
+- [Phase 02-03]: Quick-action icon row (phone/WhatsApp/calendar) deferred - no wiring target yet, left for a later plan to avoid dead UI
+- [Phase 02-03]: isOverdue TriangleAlert uses plain aria-label instead of Tooltip primitive - tooltip.tsx not installed yet and isOverdue is always false until 02-04 wires real data
 
 ### Pending Todos
 
@@ -120,6 +123,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-17T01:59:55.031Z
+Last session: 2026-07-17T02:30:21.897Z
 Stopped at: Completed 02-01-PLAN.md
 Resume file: None
