@@ -30,7 +30,7 @@
 - [x] **FUN-04**: Card tem status_acompanhamento: em andamento, perdido, ou ganho
 - [x] **FUN-05**: Status "ganho" só é permitido quando o card está na etapa "1ª venda concluída"
 - [x] **FUN-06**: Ao marcar um card como perdido, o motivo da perda é obrigatório
-- [ ] **FUN-07**: Card tem campo de observação em texto livre
+- [x] **FUN-07**: Card tem campo de observação em texto livre
 - [x] **FUN-08**: Card tem lista de tarefas, cada uma com sua própria data de conclusão
 - [x] **FUN-09**: Cards parados/atrasados ficam visualmente destacados no kanban ao abrir a tela
 - [x] **FUN-10**: Histórico automático de mudanças por cliente (etapa, status, tarefas concluídas) com data/hora
@@ -104,7 +104,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FUN-04 | Phase 2 | Complete |
 | FUN-05 | Phase 2 | Complete |
 | FUN-06 | Phase 2 | Complete |
-| FUN-07 | Phase 2 | Pending |
+| FUN-07 | Phase 2 | Complete |
 | FUN-08 | Phase 2 | Complete |
 | FUN-09 | Phase 2 | Complete |
 | FUN-10 | Phase 2 | Complete |

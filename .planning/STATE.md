@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 2
 current_phase_name: Cadastro e Funil de Vendas
-status: executing
-stopped_at: Completed 02-06-PLAN.md
-last_updated: "2026-07-17T15:25:38.179Z"
+status: verifying
+stopped_at: Completed 02-07-PLAN.md
+last_updated: "2026-07-17T17:09:02.590Z"
 last_activity: 2026-07-17
 last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 12
-  completed_plans: 11
-  percent: 25
+  completed_plans: 12
+  percent: 50
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 
 Phase: 2 (Cadastro e Funil de Vendas) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-17 — Phase 2 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -66,6 +66,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P04 | 50min | 2 tasks (+1 checkpoint) tasks | 8 files files |
 | Phase 02 P05 | ~40min | 2 tasks tasks | 10 files files |
 | Phase 02 P06 | ~50min | 2 tasks | 10 files |
+| Phase 02 P07 | 55min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 02-05: Drag is disabled (StaticClienteCard) whenever search/filters/Incompletos/a non-'Mais recentes' sort is active, since computeNovaPosicao would otherwise compute a fractional position against the wrong neighbor
 - [Phase ?]: [Phase 02-06]: categoriaId/produtoIds/vendedorId edit-Select options reuse KanbanBoard's in-memory-derived option lists (02-05 pattern) instead of a new full-catalog query
 - [Phase ?]: [Phase 02-06]: Extracted isClienteIncompleto/ClienteCompletudeInput into dependency-free lib/clientes/completude.ts so KanbanBoard (Client Component) can import the runtime function without pulling next/headers into the client bundle
+- [Phase ?]: [Phase 02-07]: marcarStatus always routes through mover_card_funil (never a raw clientes UPDATE) so the 02-01 CHECK constraints stay the real FUN-05/FUN-06 backstop; pre-checks only add friendlier error codes
+- [Phase ?]: [Phase 02-07]: Added atualizarDataTarefa beyond the plan's 3-action tarefas list, since the UI-SPEC's per-row Calendar-popover date picker would be a non-functional stub without it
+- [Phase ?]: [Phase 02-07]: PerdaMotivoDialog's Confirmar perda is genuinely HTML-disabled (not just validated on click) until a motivo is selected, matching FUN-06's acceptance criteria literally
 
 ### Pending Todos
 
@@ -133,6 +137,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-17T15:25:38.167Z
-Stopped at: Completed 02-06-PLAN.md
+Last session: 2026-07-17T17:09:02.581Z
+Stopped at: Completed 02-07-PLAN.md
 Resume file: None

@@ -14,7 +14,7 @@ O CRM Raiar nasce de dentro para fora: primeiro a fundação de login e permiss�
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Autenticação e Papéis** - Usuários fazem login via Supabase Auth e o sistema distingue Supervisor de Vendedor em toda a base de dados (RLS).
-- [ ] **Phase 2: Cadastro e Funil de Vendas** - Vendedores e supervisores cadastram, editam e encontram clientes PJ, e movem os clientes pelas 7 etapas do funil kanban, com o mínimo de fricção possível.
+- [x] **Phase 2: Cadastro e Funil de Vendas** - Vendedores e supervisores cadastram, editam e encontram clientes PJ, e movem os clientes pelas 7 etapas do funil kanban, com o mínimo de fricção possível. (completed 2026-07-17)
 - [ ] **Phase 3: Administração de Listas Editáveis** - Supervisor mantém categorias, produtos, tipos de tarefa e motivos de perda sem depender de alteração de código.
 - [ ] **Phase 4: Dashboard Gerencial** - Supervisor e vendedores acompanham os números do funil, cada um na medida da própria visão.
 
@@ -62,7 +62,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   9. Cada card tem uma observação em texto livre e uma lista de tarefas (cada uma com sua data de conclusão), e cards parados ou atrasados aparecem visualmente destacados assim que a tela do kanban é aberta.
   10. Cada cliente tem um histórico visível de mudanças (etapa, status, tarefas concluídas) com data e hora, gerado automaticamente sem esforço manual.
 
-**Plans**: 6/7 plans executed
+**Plans**: 7/7 plans complete
 **Wave 1**
 
 - [x] 02-01-PLAN.md — Data model foundation: clientes + editable-list tables + funil, RLS + business-rule CHECK constraints (test-proven), migration pushed
@@ -89,7 +89,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [ ] 02-07-PLAN.md — Detail Sheet (Funil): status, observação, tarefas, histórico + modal de perda
+- [x] 02-07-PLAN.md — Detail Sheet (Funil): status, observação, tarefas, histórico + modal de perda
 
 **UI hint**: yes
 
@@ -135,6 +135,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
-| 2. Cadastro e Funil de Vendas | 6/7 | In Progress|  |
+| 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
 | 3. Administração de Listas Editáveis | 0/TBD | Not started | - |
 | 4. Dashboard Gerencial | 0/TBD | Not started | - |
