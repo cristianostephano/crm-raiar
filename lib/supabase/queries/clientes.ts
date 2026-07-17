@@ -1,4 +1,5 @@
 import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
+import { staleReason, type TarefaAberta } from "@/lib/funil/staleness"
 import { createClient } from "@/lib/supabase/server"
 
 export type ClienteListItem = {
@@ -20,6 +21,16 @@ export type ClienteListItem = {
    * 02-04 drag handler to compute the single new midpoint position on drop,
    * never renumbering the whole column. */
   posicao: number
+  /** ISO timestamp of the last stage change — feeds lib/funil/staleness.ts's
+   * "parado" calculation (FUN-09), and is recomputed client-side after an
+   * optimistic drag (the trigger resets it to now() on a real etapa move). */
+  etapa_alterada_em: string
+  /** Open (not concluída) tarefas only — everything staleReason() needs to
+   * detect an overdue task (FUN-09), fetched once here so the highlight is
+   * visible on first render with no extra round-trip. */
+  tarefas_abertas: TarefaAberta[]
+  isOverdue: boolean
+  overdue_tooltip: string | null
 }
 
 export type ClientesAgrupadosPorEtapa = Record<EtapaKey, ClienteListItem[]>
@@ -45,6 +56,12 @@ type ClienteRow = {
   email: string | null
   numero_de_lojas: number | null
   posicao: number
+  etapa_alterada_em: string
+  tarefas: {
+    concluida: boolean
+    data_conclusao: string | null
+    tipos_tarefa: { nome: string } | null
+  }[] | null
 }
 
 /**
@@ -70,7 +87,7 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao"
+      "id, razao_social, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome))"
     )
     .order("posicao", { ascending: true })
 
@@ -82,8 +99,25 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
     ETAPA_KEYS.map((key) => [key, [] as ClienteListItem[]])
   ) as ClientesAgrupadosPorEtapa
 
+  const now = new Date()
+
   for (const row of (data ?? []) as unknown as ClienteRow[]) {
     const key = row.etapa
+
+    const tarefasAbertas: TarefaAberta[] = (row.tarefas ?? [])
+      .filter((tarefa) => !tarefa.concluida)
+      .map((tarefa) => ({
+        concluida: tarefa.concluida,
+        dataConclusao: tarefa.data_conclusao,
+        tipoNome: tarefa.tipos_tarefa?.nome ?? "",
+      }))
+
+    const reason = staleReason(
+      { etapaAlteradaEm: row.etapa_alterada_em },
+      tarefasAbertas,
+      now
+    )
+
     grouped[key].push({
       id: row.id,
       razao_social: row.razao_social,
@@ -102,6 +136,10 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
       email: row.email,
       numero_de_lojas: row.numero_de_lojas,
       posicao: row.posicao,
+      etapa_alterada_em: row.etapa_alterada_em,
+      tarefas_abertas: tarefasAbertas,
+      isOverdue: reason !== null,
+      overdue_tooltip: reason?.label ?? null,
     })
   }
 

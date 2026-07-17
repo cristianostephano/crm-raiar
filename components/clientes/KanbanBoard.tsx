@@ -24,6 +24,7 @@ import { moverCard } from "@/app/actions/funil"
 import { ClienteCard, type ClienteCardData } from "@/components/clientes/ClienteCard"
 import { Badge } from "@/components/ui/badge"
 import { ETAPAS, ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
+import { staleReason } from "@/lib/funil/staleness"
 import type {
   ClienteListItem,
   ClientesAgrupadosPorEtapa,
@@ -99,6 +100,8 @@ function DraggableClienteCard({
       <ClienteCard
         cliente={cardData}
         showResponsavel={showResponsavel}
+        isOverdue={cliente.isOverdue}
+        overdueTooltip={cliente.overdue_tooltip ?? undefined}
         dragHandleProps={
           { ...attributes, ...listeners } as HTMLAttributes<HTMLDivElement>
         }
@@ -195,10 +198,27 @@ export function KanbanBoard({
     const after = targetListWithoutMoving[targetIndex]?.posicao
     const novaPosicao = computeNovaPosicao(before, after)
 
+    // A real stage move resets etapa_alterada_em to now (mirrors the
+    // clientes_before_update trigger), so the "parado" highlight recomputes
+    // immediately instead of showing stale data until the next full reload —
+    // an overdue open tarefa can still keep the highlight on regardless.
+    const etapaAlteradaEm =
+      sourceEtapa === targetEtapa
+        ? moving.etapa_alterada_em
+        : new Date().toISOString()
+    const reason = staleReason(
+      { etapaAlteradaEm },
+      moving.tarefas_abertas,
+      new Date()
+    )
+
     const movedCliente: ClienteListItem = {
       ...moving,
       etapa: targetEtapa,
       posicao: novaPosicao,
+      etapa_alterada_em: etapaAlteradaEm,
+      isOverdue: reason !== null,
+      overdue_tooltip: reason?.label ?? null,
     }
 
     const newTargetList = [...targetListWithoutMoving]

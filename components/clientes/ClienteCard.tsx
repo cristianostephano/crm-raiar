@@ -5,6 +5,11 @@ import type { HTMLAttributes, KeyboardEvent } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { EtapaKey } from "@/lib/funil/etapas"
 import { cn } from "@/lib/utils"
 
@@ -96,10 +101,18 @@ export function ClienteCard({
             <Badge variant="outline">{cliente.categoriaNome}</Badge>
           ) : null}
           {isOverdue ? (
-            <TriangleAlert
-              className="size-3.5 shrink-0 text-amber-500"
-              aria-label={overdueTooltip ?? "Parado ou atrasado"}
-            />
+            <Tooltip>
+              <TooltipTrigger
+                className="inline-flex shrink-0 items-center bg-transparent p-0"
+                aria-label={overdueTooltip ?? "Parado ou atrasado"}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <TriangleAlert className="size-3.5 shrink-0 text-amber-500" />
+              </TooltipTrigger>
+              <TooltipContent>
+                {overdueTooltip ?? "Parado ou atrasado"}
+              </TooltipContent>
+            </Tooltip>
           ) : null}
         </div>
         {showResponsavel && cliente.responsavelNome ? (
