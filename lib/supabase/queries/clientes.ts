@@ -17,6 +17,9 @@ export type ClienteListItem = {
   telefone: string | null
   email: string | null
   numero_de_lojas: number | null
+  /** Produtos consumidos (multi-value, D-08/D-10 filter + D-02 completeness
+   * check) — joined via the cliente_produtos table. */
+  produtos: { id: string; nome: string }[]
   /** Fractional card-ordering value (Pitfall 5) — needed client-side by the
    * 02-04 drag handler to compute the single new midpoint position on drop,
    * never renumbering the whole column. */
@@ -31,6 +34,45 @@ export type ClienteListItem = {
   tarefas_abertas: TarefaAberta[]
   isOverdue: boolean
   overdue_tooltip: string | null
+  /** D-02: true when any optional field is blank — precomputed once here by
+   * isClienteIncompleto() so the "Incompleto" card badge and the
+   * "Incompletos" tab filter always agree (same function, same input). */
+  incompleto: boolean
+}
+
+/**
+ * Fields isClienteIncompleto() reads to decide "cadastro incompleto" (D-02)
+ * — a subset of ClienteListItem so callers other than this query module
+ * (e.g. a future edit-form save) can reuse the exact same predicate without
+ * needing the full row shape.
+ */
+export type ClienteCompletudeInput = {
+  categoria_id: string | null
+  contato: string | null
+  telefone: string | null
+  email: string | null
+  numero_de_lojas: number | null
+  produtos: { id: string; nome: string }[]
+}
+
+/**
+ * D-02: a cliente is "incompleto" when ANY optional field is blank —
+ * categoria, contato, telefone, email, número de lojas, or produtos
+ * consumidos (empty list). Returns false only when every optional field is
+ * filled. This is the SINGLE source of truth reused by both the
+ * "Incompleto" badge (ClienteCard) and the "Incompletos" tab filter
+ * (ClienteToolbar/KanbanBoard) — they read the same precomputed
+ * `incompleto` field below, so they can never disagree.
+ */
+export function isClienteIncompleto(cliente: ClienteCompletudeInput): boolean {
+  return (
+    !cliente.categoria_id ||
+    !cliente.contato ||
+    !cliente.telefone ||
+    !cliente.email ||
+    cliente.numero_de_lojas == null ||
+    cliente.produtos.length === 0
+  )
 }
 
 export type ClientesAgrupadosPorEtapa = Record<EtapaKey, ClienteListItem[]>
@@ -62,6 +104,10 @@ type ClienteRow = {
     data_conclusao: string | null
     tipos_tarefa: { nome: string } | null
   }[] | null
+  cliente_produtos: {
+    produto_id: string
+    produtos_consumidos: { nome: string } | null
+  }[] | null
 }
 
 /**
@@ -87,7 +133,7 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome))"
+      "id, razao_social, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome)), cliente_produtos(produto_id, produtos_consumidos(nome))"
     )
     .order("posicao", { ascending: true })
 
@@ -118,6 +164,22 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
       now
     )
 
+    const produtos = (row.cliente_produtos ?? [])
+      .filter((cp) => cp.produtos_consumidos !== null)
+      .map((cp) => ({
+        id: cp.produto_id,
+        nome: cp.produtos_consumidos!.nome,
+      }))
+
+    const completudeInput: ClienteCompletudeInput = {
+      categoria_id: row.categoria_id,
+      contato: row.contato,
+      telefone: row.telefone,
+      email: row.email,
+      numero_de_lojas: row.numero_de_lojas,
+      produtos,
+    }
+
     grouped[key].push({
       id: row.id,
       razao_social: row.razao_social,
@@ -135,11 +197,13 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
       telefone: row.telefone,
       email: row.email,
       numero_de_lojas: row.numero_de_lojas,
+      produtos,
       posicao: row.posicao,
       etapa_alterada_em: row.etapa_alterada_em,
       tarefas_abertas: tarefasAbertas,
       isOverdue: reason !== null,
       overdue_tooltip: reason?.label ?? null,
+      incompleto: isClienteIncompleto(completudeInput),
     })
   }
 
