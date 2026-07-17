@@ -80,6 +80,36 @@ export async function toggleTarefa(
   return { data: { id: data.id } }
 }
 
+/**
+ * Updates an existing tarefa's data_conclusao (FUN-08's per-row
+ * Calendar-in-Popover date picker — the UI-SPEC calls for every row's due
+ * date to be editable in place, not only settable at creation time). Same
+ * RLS-gated posture as toggleTarefa/removerTarefa above.
+ */
+export async function atualizarDataTarefa(
+  tarefaId: string,
+  dataConclusao: string | null
+): Promise<TarefaResult> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("tarefas")
+    .update({ data_conclusao: dataConclusao })
+    .eq("id", tarefaId)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    return { error: { code: "generic" } }
+  }
+  if (!data) {
+    return { error: { code: "nao_encontrada" } }
+  }
+
+  revalidatePath("/clientes")
+  return { data: { id: data.id } }
+}
+
 /** Removes a tarefa (FUN-08's ghost delete icon). Same RLS-gated posture as
  * toggleTarefa above. */
 export async function removerTarefa(tarefaId: string): Promise<TarefaResult> {
