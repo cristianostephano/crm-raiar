@@ -5,7 +5,11 @@ import {
   type TeamMember,
 } from "@/components/clientes/ClienteQuickCreateForm"
 import { KanbanBoard } from "@/components/clientes/KanbanBoard"
-import { getClientesAgrupadosPorEtapa } from "@/lib/supabase/queries/clientes"
+import {
+  getCategoriasAtivas,
+  getClientesAgrupadosPorEtapa,
+  getProdutosAtivos,
+} from "@/lib/supabase/queries/clientes"
 import { createClient } from "@/lib/supabase/server"
 
 /**
@@ -52,7 +56,11 @@ export default async function ClientesPage() {
     teamMembers = members ?? []
   }
 
-  const grouped = await getClientesAgrupadosPorEtapa()
+  const [grouped, categoriaOptions, produtoOptions] = await Promise.all([
+    getClientesAgrupadosPorEtapa(),
+    getCategoriasAtivas(),
+    getProdutosAtivos(),
+  ])
   const totalClientes = Object.values(grouped).reduce(
     (total, clientes) => total + clientes.length,
     0
@@ -81,6 +89,8 @@ export default async function ClientesPage() {
         <KanbanBoard
           grouped={grouped}
           callerRole={isSupervisor ? "supervisor" : "vendedor"}
+          categoriaOptions={categoriaOptions}
+          produtoOptions={produtoOptions}
         />
       )}
     </div>

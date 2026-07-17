@@ -409,3 +409,44 @@ export async function getMotivosPerdaAtivos(): Promise<LookupOption[]> {
   if (error || !data) return []
   return data
 }
+
+/**
+ * Full active categorias catalog, for the categoria Select in the client
+ * create/edit forms and the Filtros popover (CLI-02/D-08). Bugfix: this used
+ * to be derived from the already-loaded kanban card set (categoria_id/nome
+ * of clientes currently visible), which meant a brand-new cliente — or any
+ * categoria not yet assigned to a visible cliente — could never be selected
+ * (chicken-and-egg). Same full-catalog-lookup pattern as
+ * getTiposTarefaAtivos/getMotivosPerdaAtivos above; read-open to every
+ * authenticated user per the 02-01 RLS policy.
+ */
+export async function getCategoriasAtivas(): Promise<LookupOption[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("categorias")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome", { ascending: true })
+
+  if (error || !data) return []
+  return data
+}
+
+/**
+ * Full active produtos_consumidos catalog — same bugfix rationale and
+ * pattern as getCategoriasAtivas above, for the "Produtos consumidos"
+ * checklist in the client create/edit forms and the Filtros popover.
+ */
+export async function getProdutosAtivos(): Promise<LookupOption[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("produtos_consumidos")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome", { ascending: true })
+
+  if (error || !data) return []
+  return data
+}

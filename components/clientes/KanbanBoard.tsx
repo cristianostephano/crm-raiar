@@ -46,6 +46,7 @@ import type { UpdateClienteInput } from "@/lib/validations/cliente"
 import type {
   ClienteListItem,
   ClientesAgrupadosPorEtapa,
+  LookupOption,
 } from "@/lib/supabase/queries/clientes"
 
 /**
@@ -217,9 +218,18 @@ function DroppableColumn({
 export function KanbanBoard({
   grouped: initialGrouped,
   callerRole,
+  categoriaOptions,
+  produtoOptions,
 }: {
   grouped: ClientesAgrupadosPorEtapa
   callerRole: "supervisor" | "vendedor"
+  /** Full active categorias/produtos_consumidos catalogs (bugfix, real
+   * lookup-table queries — see getCategoriasAtivas/getProdutosAtivos), NOT
+   * derived from the already-loaded card set: a brand-new cliente (or any
+   * categoria/produto not yet assigned to a visible cliente) must still be
+   * selectable in the create/edit forms and the Filtros popover. */
+  categoriaOptions: LookupOption[]
+  produtoOptions: LookupOption[]
 }) {
   const showResponsavel = callerRole === "supervisor"
   const [grouped, setGrouped] = useState(initialGrouped)
@@ -248,33 +258,12 @@ export function KanbanBoard({
     [grouped]
   )
 
-  // Filter option lists are derived from the already-loaded card set, not a
-  // separate lookup query — the query already returns every field a filter
-  // needs (categoria/produto/cidade/estado/responsável).
-  const categoriaOptions = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const cliente of todosOsClientes) {
-      if (cliente.categoria_id && cliente.categoria_nome) {
-        map.set(cliente.categoria_id, cliente.categoria_nome)
-      }
-    }
-    return [...map.entries()]
-      .map(([id, nome]) => ({ id, nome }))
-      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
-  }, [todosOsClientes])
-
-  const produtoOptions = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const cliente of todosOsClientes) {
-      for (const produto of cliente.produtos) {
-        map.set(produto.id, produto.nome)
-      }
-    }
-    return [...map.entries()]
-      .map(([id, nome]) => ({ id, nome }))
-      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
-  }, [todosOsClientes])
-
+  // estadoOptions/vendedorOptions are still derived from the already-loaded
+  // card set (Pitfall 7) — unlike categoria/produto, there is no separate
+  // full-catalog lookup table for "estado" (free-text field on clientes)
+  // or "vendedor" (a Supervisor's own team, already fully represented in
+  // teamMembers elsewhere but not threaded here), and both are only ever
+  // useful as filter values that already appear on a visible cliente.
   const estadoOptions = useMemo(() => {
     const set = new Set<string>()
     for (const cliente of todosOsClientes) {
@@ -450,11 +439,11 @@ export function KanbanBoard({
    * Patches the edited cliente's card in-place from the Sheet's own
    * submitted values — mirrors handleDragEnd's local-state-first approach
    * rather than a full router.refresh() round-trip. categoria_nome/produtos
-   * are re-resolved from the same categoriaOptions/produtoOptions lists the
-   * Sheet was given (derived from this same `grouped` set), and `incompleto`
-   * is recomputed via the single shared isClienteIncompleto() predicate
-   * (02-05) so the "Incompleto" badge/tab never drifts from what was just
-   * saved.
+   * are re-resolved from the same categoriaOptions/produtoOptions lookup
+   * lists the Sheet was given (the full active catalogs, not derived from
+   * `grouped`), and `incompleto` is recomputed via the single shared
+   * isClienteIncompleto() predicate (02-05) so the "Incompleto" badge/tab
+   * never drifts from what was just saved.
    */
   function handleClienteSaved(values: UpdateClienteInput) {
     setGrouped((prev) => {

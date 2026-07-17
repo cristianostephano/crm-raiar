@@ -25,10 +25,14 @@ import {
  * only) vendedor/responsável. `null`/empty means "no filter applied" for
  * that dimension.
  *
- * All option lists (categoria/produto/estado/vendedor) are derived from the
- * already-loaded RLS-scoped card set by the caller (KanbanBoard) — no
- * separate lookup query — and filtering itself runs in-memory over that same
- * set (Pitfall 7): applying/clearing filters never triggers a new getClientes
+ * categoriaOptions/produtoOptions are the full active lookup-table catalogs
+ * (getCategoriasAtivas/getProdutosAtivos — bugfix: previously derived from
+ * the already-loaded card set, which meant a categoria/produto not yet
+ * assigned to any visible cliente could never be filtered by). estado/
+ * vendedor options are still derived from the already-loaded RLS-scoped card
+ * set by the caller (KanbanBoard) — there's no separate lookup table for
+ * either. Filtering itself always runs in-memory over the loaded card set
+ * (Pitfall 7): applying/clearing filters never triggers a new getClientes
  * call.
  */
 export type ClienteFiltros = {
