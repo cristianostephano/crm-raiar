@@ -17,23 +17,23 @@
 - [ ] **CLI-01**: Vendedor cadastra cliente PJ com no mínimo razão social, endereço e responsável
 - [ ] **CLI-02**: Demais campos (categoria, contato, telefone, email, produtos consumidos, número de lojas) podem ser preenchidos depois, conforme a negociação avança
 - [ ] **CLI-03**: Supervisor pode cadastrar cliente e atribuir a um vendedor específico
-- [ ] **CLI-04**: Vendedor visualiza e edita apenas os próprios clientes (responsável = usuário logado)
-- [ ] **CLI-05**: Supervisor visualiza, edita e apaga todos os clientes de todos os vendedores
-- [ ] **CLI-06**: Vendedor pode editar os próprios clientes, mas não apagar (apagar é restrito ao supervisor)
+- [x] **CLI-04**: Vendedor visualiza e edita apenas os próprios clientes (responsável = usuário logado)
+- [x] **CLI-05**: Supervisor visualiza, edita e apaga todos os clientes de todos os vendedores
+- [x] **CLI-06**: Vendedor pode editar os próprios clientes, mas não apagar (apagar é restrito ao supervisor)
 - [ ] **CLI-07**: Busca e filtro na lista de clientes (por vendedor, categoria, produto, texto livre por razão social)
 
 ### Funnel (Funil de Vendas / Kanban)
 
-- [ ] **FUN-01**: Cada cliente tem um card no funil, com 7 etapas fixas (Aguardando contato → 1ª venda concluída)
+- [x] **FUN-01**: Cada cliente tem um card no funil, com 7 etapas fixas (Aguardando contato → 1ª venda concluída)
 - [ ] **FUN-02**: Vendedor move os próprios cards entre etapas
 - [ ] **FUN-03**: Supervisor move qualquer card entre etapas
-- [ ] **FUN-04**: Card tem status_acompanhamento: em andamento, perdido, ou ganho
-- [ ] **FUN-05**: Status "ganho" só é permitido quando o card está na etapa "1ª venda concluída"
-- [ ] **FUN-06**: Ao marcar um card como perdido, o motivo da perda é obrigatório
+- [x] **FUN-04**: Card tem status_acompanhamento: em andamento, perdido, ou ganho
+- [x] **FUN-05**: Status "ganho" só é permitido quando o card está na etapa "1ª venda concluída"
+- [x] **FUN-06**: Ao marcar um card como perdido, o motivo da perda é obrigatório
 - [ ] **FUN-07**: Card tem campo de observação em texto livre
-- [ ] **FUN-08**: Card tem lista de tarefas, cada uma com sua própria data de conclusão
+- [x] **FUN-08**: Card tem lista de tarefas, cada uma com sua própria data de conclusão
 - [ ] **FUN-09**: Cards parados/atrasados ficam visualmente destacados no kanban ao abrir a tela
-- [ ] **FUN-10**: Histórico automático de mudanças por cliente (etapa, status, tarefas concluídas) com data/hora
+- [x] **FUN-10**: Histórico automático de mudanças por cliente (etapa, status, tarefas concluídas) com data/hora
 
 ### Admin (Listas Editáveis)
 
@@ -94,20 +94,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-01 | Phase 2 | Pending |
 | CLI-02 | Phase 2 | Pending |
 | CLI-03 | Phase 2 | Pending |
-| CLI-04 | Phase 2 | Pending |
-| CLI-05 | Phase 2 | Pending |
-| CLI-06 | Phase 2 | Pending |
+| CLI-04 | Phase 2 | Complete |
+| CLI-05 | Phase 2 | Complete |
+| CLI-06 | Phase 2 | Complete |
 | CLI-07 | Phase 2 | Pending |
-| FUN-01 | Phase 2 | Pending |
+| FUN-01 | Phase 2 | Complete |
 | FUN-02 | Phase 2 | Pending |
 | FUN-03 | Phase 2 | Pending |
-| FUN-04 | Phase 2 | Pending |
-| FUN-05 | Phase 2 | Pending |
-| FUN-06 | Phase 2 | Pending |
+| FUN-04 | Phase 2 | Complete |
+| FUN-05 | Phase 2 | Complete |
+| FUN-06 | Phase 2 | Complete |
 | FUN-07 | Phase 2 | Pending |
-| FUN-08 | Phase 2 | Pending |
+| FUN-08 | Phase 2 | Complete |
 | FUN-09 | Phase 2 | Pending |
-| FUN-10 | Phase 2 | Pending |
+| FUN-10 | Phase 2 | Complete |
 | ADM-01 | Phase 3 | Pending |
 | ADM-02 | Phase 3 | Pending |
 | ADM-03 | Phase 3 | Pending |

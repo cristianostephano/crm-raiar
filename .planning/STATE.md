@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 1
-current_phase_name: Autenticação e Papéis
+current_phase: 2
+current_phase_name: Cadastro e Funil de Vendas
 status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-07-16T21:50:48.212Z"
-last_activity: 2026-07-16
-last_activity_desc: 01-05 Tasks 1-3 (shared /auth/confirm callback, forgot/reset-password screens, updateUser round-trip test) committed; diagnosed and fixed a real bug (ForgotPasswordForm swallowing rate-limit errors) found while investigating the owner's "reset email never arrived" report; Task 4 itself deferred, not completed
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-07-17T01:22:54.983Z"
+last_activity: 2026-07-17
+last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 12
+  completed_plans: 6
   percent: 25
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-14)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 1 — Autenticação e Papéis
+**Current focus:** Phase 2 — Cadastro e Funil de Vendas
 
 ## Current Position
 
-Phase: 1 (Autenticação e Papéis) — EXECUTING
-Plan: 5 of 4 (code complete; Task 4 manual verification deferred)
-Status: Blocked — awaiting deferred manual verification (01-05 Task 4: real password-reset + invite-accept email round-trips). Not silently skipped; owner asked to close out the plan and revisit this specific check later.
-Last activity: 2026-07-16 — 01-05 Tasks 1-3 (shared /auth/confirm callback, forgot/reset-password screens, updateUser round-trip test) committed; diagnosed and fixed a real bug (ForgotPasswordForm swallowing rate-limit errors) found while investigating the owner's "reset email never arrived" report; Task 4 itself deferred, not completed
+Phase: 2 (Cadastro e Funil de Vendas) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-07-17 — Phase 2 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P03 | 90 | 4 tasks | 12 files |
 | Phase 01 P04 | 180min | 4 tasks | 10 files |
 | Phase 01 P05 | 35min (Tasks 1-3; Task 4 deferred) | 3/4 tasks | 6 files |
+| Phase 02 P01 | 20min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 01-05]: Shared /auth/confirm Route Handler (verifyOtp) serves BOTH the invite link and the password-reset link — one callback for both flows, per RESEARCH.md; future email-based Auth flows should reuse this same route
 - [Phase 01-05]: ForgotPasswordForm.tsx now distinguishes rate-limit errors (over_email_send_rate_limit / over_request_rate_limit) from the generic non-revealing success path shown for every other outcome (including "email doesn't exist," which GoTrue's /recover never reports anyway) — found as a real bug while diagnosing a real "reset email never arrived" report; does not violate the non-revealing security requirement since rate-limit codes carry no account-existence information
 - [Phase 01-05]: Task 4 (real email round-trip verification for password-reset AND invite-accept) explicitly DEFERRED at the project owner's request, not skipped or silently closed — see Blockers/Concerns below
+- [Phase 02-01]: A clientes row IS the funnel card (1:1 model) - etapa/status_acompanhamento/motivo_perda_id/observacao/posicao live directly on clientes, no separate cards/opportunities table
+- [Phase 02-01]: mover_card_funil RPC is NOT security definer - runs as the caller so RLS still applies to the underlying UPDATE
+- [Phase 02-01]: historico has no user-facing INSERT policy - only SECURITY DEFINER triggers write it, keeping the audit trail tamper-proof from the API surface
 
 ### Pending Todos
 
@@ -113,6 +117,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-16T21:50:48.183Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-cadastro-e-gest-o-de-clientes-pj/02-UI-SPEC.md
+Last session: 2026-07-17T01:22:54.974Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
