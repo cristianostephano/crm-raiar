@@ -14,9 +14,9 @@
 
 ### Client (Cadastro de Cliente PJ)
 
-- [ ] **CLI-01**: Vendedor cadastra cliente PJ com no mínimo razão social, endereço e responsável
-- [ ] **CLI-02**: Demais campos (categoria, contato, telefone, email, produtos consumidos, número de lojas) podem ser preenchidos depois, conforme a negociação avança
-- [ ] **CLI-03**: Supervisor pode cadastrar cliente e atribuir a um vendedor específico
+- [x] **CLI-01**: Vendedor cadastra cliente PJ com no mínimo razão social, endereço e responsável
+- [x] **CLI-02**: Demais campos (categoria, contato, telefone, email, produtos consumidos, número de lojas) podem ser preenchidos depois, conforme a negociação avança
+- [x] **CLI-03**: Supervisor pode cadastrar cliente e atribuir a um vendedor específico
 - [x] **CLI-04**: Vendedor visualiza e edita apenas os próprios clientes (responsável = usuário logado)
 - [x] **CLI-05**: Supervisor visualiza, edita e apaga todos os clientes de todos os vendedores
 - [x] **CLI-06**: Vendedor pode editar os próprios clientes, mas não apagar (apagar é restrito ao supervisor)
@@ -91,9 +91,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
-| CLI-01 | Phase 2 | Pending |
-| CLI-02 | Phase 2 | Pending |
-| CLI-03 | Phase 2 | Pending |
+| CLI-01 | Phase 2 | Complete |
+| CLI-02 | Phase 2 | Complete |
+| CLI-03 | Phase 2 | Complete |
 | CLI-04 | Phase 2 | Complete |
 | CLI-05 | Phase 2 | Complete |
 | CLI-06 | Phase 2 | Complete |
