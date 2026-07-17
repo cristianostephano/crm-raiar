@@ -18,13 +18,25 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { useState, type HTMLAttributes, type ReactNode } from "react"
+import { useMemo, useState, type HTMLAttributes, type ReactNode } from "react"
 
 import { moverCard } from "@/app/actions/funil"
 import { ClienteCard, type ClienteCardData } from "@/components/clientes/ClienteCard"
+import {
+  ClienteToolbar,
+  type SortOption,
+  type TabOption,
+} from "@/components/clientes/ClienteToolbar"
+import {
+  clienteAtendeFiltros,
+  contarFiltrosAtivos,
+  FILTROS_VAZIOS,
+  type ClienteFiltros,
+} from "@/components/clientes/FiltersPopover"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { ETAPAS, ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
-import { staleReason } from "@/lib/funil/staleness"
+import { diasParado, staleReason } from "@/lib/funil/staleness"
 import type {
   ClienteListItem,
   ClientesAgrupadosPorEtapa,
@@ -57,6 +69,34 @@ function computeNovaPosicao(before?: number, after?: number): number {
   return (before + after) / 2
 }
 
+/**
+ * "Ordenar por" (Claude's discretion on exact semantics, UI-SPEC copy only):
+ * "recentes" leaves the list in its natural drag-managed order (posicao
+ * ascending, i.e. does nothing here — the caller simply doesn't re-sort);
+ * "az" is alphabetical by razão social; "parado" surfaces the
+ * longest-stalled cards first using the same diasParado() the FUN-09
+ * highlight already uses, so the two never disagree on "how stalled".
+ */
+function sortClientes(
+  list: ClienteListItem[],
+  sortBy: SortOption,
+  now: Date
+): ClienteListItem[] {
+  if (sortBy === "az") {
+    return [...list].sort((a, b) =>
+      a.razao_social.localeCompare(b.razao_social, "pt-BR")
+    )
+  }
+  if (sortBy === "parado") {
+    return [...list].sort(
+      (a, b) =>
+        diasParado(b.etapa_alterada_em, now) -
+        diasParado(a.etapa_alterada_em, now)
+    )
+  }
+  return list
+}
+
 function findEtapaDoCartao(
   grouped: ClientesAgrupadosPorEtapa,
   clienteId: string
@@ -65,6 +105,20 @@ function findEtapaDoCartao(
     if (grouped[key].some((cliente) => cliente.id === clienteId)) return key
   }
   return null
+}
+
+function toCardData(cliente: ClienteListItem): ClienteCardData {
+  return {
+    id: cliente.id,
+    razaoSocial: cliente.razao_social,
+    categoriaNome: cliente.categoria_nome,
+    responsavelNome: cliente.responsavel_nome,
+    etapa: cliente.etapa,
+    statusAcompanhamento: cliente.status_acompanhamento,
+    cidade: cliente.cidade,
+    estado: cliente.estado,
+    telefone: cliente.telefone,
+  }
 }
 
 function DraggableClienteCard({
@@ -77,17 +131,6 @@ function DraggableClienteCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: cliente.id })
 
-  const cardData: ClienteCardData = {
-    id: cliente.id,
-    razaoSocial: cliente.razao_social,
-    categoriaNome: cliente.categoria_nome,
-    responsavelNome: cliente.responsavel_nome,
-    etapa: cliente.etapa,
-    statusAcompanhamento: cliente.status_acompanhamento,
-    cidade: cliente.cidade,
-    estado: cliente.estado,
-  }
-
   return (
     <div
       ref={setNodeRef}
@@ -98,8 +141,9 @@ function DraggableClienteCard({
       }}
     >
       <ClienteCard
-        cliente={cardData}
+        cliente={toCardData(cliente)}
         showResponsavel={showResponsavel}
+        incompleto={cliente.incompleto}
         isOverdue={cliente.isOverdue}
         overdueTooltip={cliente.overdue_tooltip ?? undefined}
         dragHandleProps={
@@ -107,6 +151,36 @@ function DraggableClienteCard({
         }
       />
     </div>
+  )
+}
+
+/**
+ * Plain (non-draggable) card used whenever the board isn't showing every
+ * card in its natural posicao order — search/filters/the "Incompletos" tab
+ * narrow which cards are visible per column, and a non-"recentes" sort
+ * re-orders them. In either case, a drag's fractional-midpoint math
+ * (computeNovaPosicao, handleDragEnd) would compute a position relative to
+ * the wrong neighbors (a hidden card, or a neighbor from a different sort
+ * order than the true manual order) — so dragging is disabled instead of
+ * silently corrupting card order. Dragging resumes once "Todos" + "Mais
+ * recentes" + no active search/filters is restored (see `dragDisabled`
+ * below).
+ */
+function StaticClienteCard({
+  cliente,
+  showResponsavel,
+}: {
+  cliente: ClienteListItem
+  showResponsavel: boolean
+}) {
+  return (
+    <ClienteCard
+      cliente={toCardData(cliente)}
+      showResponsavel={showResponsavel}
+      incompleto={cliente.incompleto}
+      isOverdue={cliente.isOverdue}
+      overdueTooltip={cliente.overdue_tooltip ?? undefined}
+    />
   )
 }
 
@@ -141,6 +215,111 @@ export function KanbanBoard({
     type: "success" | "error"
     text: string
   } | null>(null)
+
+  // D-07/D-08/D-09/D-01: search/filter/sort/tab state lives here, applied
+  // in-memory over the already-loaded `grouped` set (Pitfall 7) — none of
+  // these ever trigger a new getClientesAgrupadosPorEtapa() call.
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filtros, setFiltros] = useState<ClienteFiltros>(FILTROS_VAZIOS)
+  const [sortBy, setSortBy] = useState<SortOption>("recentes")
+  const [activeTab, setActiveTab] = useState<TabOption>("todos")
+
+  const todosOsClientes = useMemo(
+    () => ETAPA_KEYS.flatMap((key) => grouped[key]),
+    [grouped]
+  )
+
+  // Filter option lists are derived from the already-loaded card set, not a
+  // separate lookup query — the query already returns every field a filter
+  // needs (categoria/produto/cidade/estado/responsável).
+  const categoriaOptions = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const cliente of todosOsClientes) {
+      if (cliente.categoria_id && cliente.categoria_nome) {
+        map.set(cliente.categoria_id, cliente.categoria_nome)
+      }
+    }
+    return [...map.entries()]
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+  }, [todosOsClientes])
+
+  const produtoOptions = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const cliente of todosOsClientes) {
+      for (const produto of cliente.produtos) {
+        map.set(produto.id, produto.nome)
+      }
+    }
+    return [...map.entries()]
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+  }, [todosOsClientes])
+
+  const estadoOptions = useMemo(() => {
+    const set = new Set<string>()
+    for (const cliente of todosOsClientes) {
+      if (cliente.estado) set.add(cliente.estado)
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, "pt-BR"))
+  }, [todosOsClientes])
+
+  // Supervisor-only (D-09) — the toolbar never renders this option list for
+  // a Vendedor, but computing it is harmless either way (a Vendedor's own
+  // `grouped` set only ever contains their own clientes, T-02-16).
+  const vendedorOptions = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const cliente of todosOsClientes) {
+      if (cliente.responsavel_nome) {
+        map.set(cliente.responsavel, cliente.responsavel_nome)
+      }
+    }
+    return [...map.entries()]
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+  }, [todosOsClientes])
+
+  const normalizedSearch = searchQuery.trim().toLowerCase()
+  const filtrosAtivos = contarFiltrosAtivos(filtros)
+  const hasActiveFilters =
+    normalizedSearch !== "" || filtrosAtivos > 0 || activeTab === "incompletos"
+  // Dragging is only safe when the rendered order exactly matches
+  // `grouped`'s own posicao-ascending order — i.e. nothing is narrowing
+  // (search/filtros/Incompletos) or re-sorting the visible set. Otherwise
+  // computeNovaPosicao/handleDragEnd would compute a position against the
+  // wrong neighbors (see StaticClienteCard's doc comment).
+  const dragDisabled = hasActiveFilters || sortBy !== "recentes"
+
+  const filteredGrouped = useMemo(() => {
+    const now = new Date()
+    const result = {} as ClientesAgrupadosPorEtapa
+    for (const key of ETAPA_KEYS) {
+      let list = grouped[key]
+      if (activeTab === "incompletos") {
+        list = list.filter((cliente) => cliente.incompleto)
+      }
+      if (normalizedSearch) {
+        list = list.filter((cliente) =>
+          cliente.razao_social.toLowerCase().includes(normalizedSearch)
+        )
+      }
+      if (filtrosAtivos > 0) {
+        list = list.filter((cliente) => clienteAtendeFiltros(cliente, filtros))
+      }
+      result[key] = sortClientes(list, sortBy, now)
+    }
+    return result
+  }, [grouped, activeTab, normalizedSearch, filtrosAtivos, filtros, sortBy])
+
+  const totalFiltrado = ETAPA_KEYS.reduce(
+    (sum, key) => sum + filteredGrouped[key].length,
+    0
+  )
+
+  function limparFiltrosEBusca() {
+    setSearchQuery("")
+    setFiltros(FILTROS_VAZIOS)
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -244,15 +423,52 @@ export function KanbanBoard({
   }
 
   return (
-    <div className="relative flex flex-1 flex-col">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
+    <div className="relative flex flex-1 flex-col gap-4">
+      <ClienteToolbar
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        activeTab={activeTab}
+        onActiveTabChange={setActiveTab}
+        filtros={filtros}
+        onFiltrosApply={setFiltros}
+        onFiltrosClear={() => setFiltros(FILTROS_VAZIOS)}
+        categoriaOptions={categoriaOptions}
+        produtoOptions={produtoOptions}
+        estadoOptions={estadoOptions}
+        vendedorOptions={vendedorOptions}
+        isSupervisor={showResponsavel}
+      />
+
+      {totalFiltrado === 0 ? (
+        activeTab === "incompletos" &&
+        normalizedSearch === "" &&
+        filtrosAtivos === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
+            <p className="text-base font-semibold">
+              Nenhum cadastro incompleto! Todos os clientes estão com os
+              dados completos.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
+            <p className="text-base font-semibold">
+              Nenhum cliente encontrado com esses filtros.
+            </p>
+            <Button
+              type="button"
+              variant="link"
+              onClick={limparFiltrosEBusca}
+            >
+              Limpar filtros
+            </Button>
+          </div>
+        )
+      ) : dragDisabled ? (
         <div className="flex flex-1 gap-4 overflow-x-auto pb-2">
           {ETAPAS.map((etapa) => {
-            const clientes = grouped[etapa.key]
+            const clientes = filteredGrouped[etapa.key]
 
             return (
               <div
@@ -268,31 +484,75 @@ export function KanbanBoard({
                   </Badge>
                 </div>
 
-                <SortableContext
-                  items={clientes.map((c) => c.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <DroppableColumn etapaKey={etapa.key}>
-                    {clientes.length === 0 ? (
-                      <p className="px-1 text-sm text-muted-foreground">
-                        Nenhum cliente nesta etapa
-                      </p>
-                    ) : (
-                      clientes.map((cliente) => (
-                        <DraggableClienteCard
-                          key={cliente.id}
-                          cliente={cliente}
-                          showResponsavel={showResponsavel}
-                        />
-                      ))
-                    )}
-                  </DroppableColumn>
-                </SortableContext>
+                <div className="flex min-h-10 flex-col gap-2">
+                  {clientes.length === 0 ? (
+                    <p className="px-1 text-sm text-muted-foreground">
+                      Nenhum cliente nesta etapa
+                    </p>
+                  ) : (
+                    clientes.map((cliente) => (
+                      <StaticClienteCard
+                        key={cliente.id}
+                        cliente={cliente}
+                        showResponsavel={showResponsavel}
+                      />
+                    ))
+                  )}
+                </div>
               </div>
             )
           })}
         </div>
-      </DndContext>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex flex-1 gap-4 overflow-x-auto pb-2">
+            {ETAPAS.map((etapa) => {
+              const clientes = filteredGrouped[etapa.key]
+
+              return (
+                <div
+                  key={etapa.key}
+                  className="flex w-[280px] shrink-0 flex-col gap-2"
+                >
+                  <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
+                    <h2 className="truncate text-xl font-semibold">
+                      {etapa.label}
+                    </h2>
+                    <Badge variant="outline" className="shrink-0">
+                      {clientes.length}
+                    </Badge>
+                  </div>
+
+                  <SortableContext
+                    items={clientes.map((c) => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <DroppableColumn etapaKey={etapa.key}>
+                      {clientes.length === 0 ? (
+                        <p className="px-1 text-sm text-muted-foreground">
+                          Nenhum cliente nesta etapa
+                        </p>
+                      ) : (
+                        clientes.map((cliente) => (
+                          <DraggableClienteCard
+                            key={cliente.id}
+                            cliente={cliente}
+                            showResponsavel={showResponsavel}
+                          />
+                        ))
+                      )}
+                    </DroppableColumn>
+                  </SortableContext>
+                </div>
+              )
+            })}
+          </div>
+        </DndContext>
+      )}
 
       {toast ? (
         <div

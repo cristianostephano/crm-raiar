@@ -1,7 +1,7 @@
 "use client"
 
-import { TriangleAlert } from "lucide-react"
-import type { HTMLAttributes, KeyboardEvent } from "react"
+import { CalendarClock, MessageCircle, Phone, TriangleAlert } from "lucide-react"
+import type { HTMLAttributes, KeyboardEvent, ReactNode } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +26,104 @@ export type ClienteCardData = {
   statusAcompanhamento: "em_andamento" | "perdido" | "ganho"
   cidade: string
   estado: string
+  /** Feeds the quick-action row's tel:/wa.me links — null renders every
+   * quick-action icon disabled/muted (not hidden, D-03) so card layout
+   * never shifts between cards that do/don't have a phone number. */
+  telefone: string | null
+}
+
+function onlyDigits(value: string): string {
+  return value.replace(/\D/g, "")
+}
+
+/** Ghost, 44px-touch-target quick-action icon (tel:/wa.me shortcuts on the
+ * card, D-03's visual reference) — renders as a disabled/muted `span` (not
+ * hidden) when there is no href to follow, so the row's layout stays stable
+ * whether or not the client has a phone number on file. */
+function QuickActionIcon({
+  href,
+  label,
+  external = false,
+  children,
+}: {
+  href: string | null
+  label: string
+  external?: boolean
+  children: ReactNode
+}) {
+  const shared =
+    "flex size-11 shrink-0 items-center justify-center rounded-md transition-colors"
+
+  if (!href) {
+    return (
+      <span
+        className={cn(shared, "cursor-not-allowed text-muted-foreground/40")}
+        aria-hidden="true"
+      >
+        {children}
+      </span>
+    )
+  }
+
+  return (
+    <a
+      href={href}
+      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+      aria-label={label}
+      className={cn(
+        shared,
+        "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+      onClick={(event) => event.stopPropagation()}
+    >
+      {children}
+    </a>
+  )
+}
+
+/** Same disabled-not-hidden shape as QuickActionIcon, but for an in-app
+ * action (no href) — used by the schedule/CalendarClock quick action, which
+ * has no standalone destination yet and instead opens the same detail sheet
+ * `onOpen` already opens (02-06 wires the tarefa checklist inside it). */
+function QuickActionButton({
+  onAction,
+  label,
+  children,
+}: {
+  onAction: (() => void) | null
+  label: string
+  children: ReactNode
+}) {
+  const shared =
+    "flex size-11 shrink-0 items-center justify-center rounded-md transition-colors"
+
+  if (!onAction) {
+    return (
+      <span
+        className={cn(shared, "cursor-not-allowed text-muted-foreground/40")}
+        aria-hidden="true"
+      >
+        {children}
+      </span>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className={cn(
+        shared,
+        "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+      onClick={(event) => {
+        event.stopPropagation()
+        onAction()
+      }}
+    >
+      {children}
+    </button>
+  )
 }
 
 /**
@@ -123,6 +221,32 @@ export function ClienteCard({
         <p className="text-sm text-muted-foreground">
           {cliente.cidade}/{cliente.estado}
         </p>
+        <div className="-mx-1.5 -mb-1.5 flex items-center">
+          <QuickActionIcon
+            href={cliente.telefone ? `tel:${cliente.telefone}` : null}
+            label="Ligar para o cliente"
+          >
+            <Phone className="size-[18px]" />
+          </QuickActionIcon>
+          <QuickActionIcon
+            href={
+              cliente.telefone
+                ? `https://wa.me/55${onlyDigits(cliente.telefone)}`
+                : null
+            }
+            label="Conversar no WhatsApp"
+            external
+          >
+            <MessageCircle className="size-[18px]" />
+          </QuickActionIcon>
+          {/* No standalone schedule/tarefa quick-add exists yet — opens the
+           * same detail sheet `onOpen` opens (02-06 puts the tarefa
+           * checklist there), so it's disabled (not hidden) until a caller
+           * passes `onOpen`, exactly like a card with no onOpen at all. */}
+          <QuickActionButton onAction={onOpen ?? null} label="Agendar tarefa">
+            <CalendarClock className="size-[18px]" />
+          </QuickActionButton>
+        </div>
       </CardContent>
     </Card>
   )
