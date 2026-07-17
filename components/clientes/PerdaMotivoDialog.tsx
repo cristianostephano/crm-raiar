@@ -97,6 +97,9 @@ export function PerdaMotivoDialog({
   }
 
   async function handleConfirm() {
+    // The button itself is `disabled` (see below) whenever no motivo is
+    // selected, so this only guards a stray Enter-key submit — kept as a
+    // defense-in-depth check, not the primary gate.
     if (!selectedMotivoId) {
       setValidationError(REQUIRED_MOTIVO_MESSAGE)
       return
@@ -162,6 +165,10 @@ export function PerdaMotivoDialog({
             <p role="alert" className="text-sm text-destructive">
               {validationError}
             </p>
+          ) : !isLoading && !loadError && !selectedMotivoId ? (
+            <p className="text-sm text-muted-foreground">
+              {REQUIRED_MOTIVO_MESSAGE}
+            </p>
           ) : null}
         </div>
 
@@ -184,7 +191,7 @@ export function PerdaMotivoDialog({
             type="button"
             variant="destructive"
             onClick={handleConfirm}
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmitting || isLoading || !selectedMotivoId}
           >
             {isSubmitting ? "Salvando..." : "Confirmar perda"}
           </Button>
