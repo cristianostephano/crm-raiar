@@ -90,6 +90,20 @@ const STATUS_OPTIONS: { value: StatusAcompanhamento; label: string }[] = [
   { value: "ganho", label: "Ganho" },
 ]
 
+// Base UI's <Select.Value> only resolves a human-readable label for a
+// value that's already selected when the Select first mounts by looking it
+// up in Select.Root's `items` prop — without it, it falls back to rendering
+// the raw value (UUID / sentinel / enum key) until the popup has been
+// opened at least once and its SelectItems have registered themselves. This
+// Sheet always opens with a pre-selected value (an existing cliente's
+// responsavel/categoriaId/statusAcompanhamento), so every Select here needs
+// its own `items` lookup — unlike InviteUserForm's "papel" Select, which
+// always starts unselected ("") and never hits this path.
+const STATUS_ITEMS = STATUS_OPTIONS.map((option) => ({
+  value: option.value,
+  label: option.label,
+}))
+
 // Sentinel Select value meaning "nenhuma categoria" — "" is reserved for
 // Base UI's own uncontrolled/placeholder state (same convention as
 // FiltersPopover's SEM_FILTRO), but categoriaId is genuinely optional here
@@ -632,6 +646,10 @@ export function ClienteDetailSheet({
                           <Select
                             value={field.value}
                             onValueChange={(value) => field.onChange(value)}
+                            items={vendedorOptions.map((vendedor) => ({
+                              value: vendedor.id,
+                              label: vendedor.nome,
+                            }))}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Selecione o responsável" />
@@ -673,6 +691,13 @@ export function ClienteDetailSheet({
                           onValueChange={(value) =>
                             field.onChange(value === SEM_CATEGORIA ? "" : value)
                           }
+                          items={[
+                            { value: SEM_CATEGORIA, label: "Nenhuma" },
+                            ...categoriaOptions.map((categoria) => ({
+                              value: categoria.id,
+                              label: categoria.nome,
+                            })),
+                          ]}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Selecione a categoria" />
@@ -799,6 +824,7 @@ export function ClienteDetailSheet({
                       <Select
                         value={cliente.statusAcompanhamento}
                         onValueChange={handleStatusSelect}
+                        items={STATUS_ITEMS}
                       >
                         <SelectTrigger
                           id="cliente-status-select"
