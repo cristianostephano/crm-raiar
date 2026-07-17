@@ -107,7 +107,22 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Supervisor cadastra, edita e remove motivos de perda, refletido na tela de marcar um card como perdido.
   5. Vendedor não consegue acessar nenhuma dessas telas de administração — a restrição é aplicada pelo sistema (RLS/permissão), não só ocultada do menu.
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Espinha: rota Configurações protegida (Supervisor-only) + abas + aba Categoria com "Adicionar" + Server Actions/validação + teste de contrato RLS das 4 tabelas (ADM-01)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 03-02-PLAN.md — CRUD completo na aba Categoria: editar inline (D-04), desativar/reativar soft-delete (D-03), toggle "Mostrar inativos" + Switch (ADM-01)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 03-03-PLAN.md — Ligar as outras 3 abas (Produtos/Tipos de tarefa/Motivos de perda) reusando o componente + checkpoint humano de reflexo downstream (ADM-02, ADM-03, ADM-04)
+
+**Nota de schema:** nenhuma migração criada — a constraint `unique(nome)` e as políticas RLS de escrita Supervisor-only já existiam nas 4 tabelas desde a migração 0002 (Fase 2).
+
 **UI hint**: yes
 
 ### Phase 4: Dashboard Gerencial
@@ -136,5 +151,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
-| 3. Administração de Listas Editáveis | 0/TBD | Not started | - |
+| 3. Administração de Listas Editáveis | 0/3 | Not started | - |
 | 4. Dashboard Gerencial | 0/TBD | Not started | - |
