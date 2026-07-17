@@ -22,6 +22,7 @@ import { useMemo, useState, type HTMLAttributes, type ReactNode } from "react"
 
 import { moverCard } from "@/app/actions/funil"
 import { ClienteCard, type ClienteCardData } from "@/components/clientes/ClienteCard"
+import { ClienteDetailSheet } from "@/components/clientes/ClienteDetailSheet"
 import {
   ClienteToolbar,
   type SortOption,
@@ -35,8 +36,13 @@ import {
 } from "@/components/clientes/FiltersPopover"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  isClienteIncompleto,
+  type ClienteCompletudeInput,
+} from "@/lib/clientes/completude"
 import { ETAPAS, ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import { diasParado, staleReason } from "@/lib/funil/staleness"
+import type { UpdateClienteInput } from "@/lib/validations/cliente"
 import type {
   ClienteListItem,
   ClientesAgrupadosPorEtapa,
@@ -124,9 +130,11 @@ function toCardData(cliente: ClienteListItem): ClienteCardData {
 function DraggableClienteCard({
   cliente,
   showResponsavel,
+  onOpen,
 }: {
   cliente: ClienteListItem
   showResponsavel: boolean
+  onOpen: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: cliente.id })
@@ -146,6 +154,7 @@ function DraggableClienteCard({
         incompleto={cliente.incompleto}
         isOverdue={cliente.isOverdue}
         overdueTooltip={cliente.overdue_tooltip ?? undefined}
+        onOpen={onOpen}
         dragHandleProps={
           { ...attributes, ...listeners } as HTMLAttributes<HTMLDivElement>
         }
@@ -169,9 +178,11 @@ function DraggableClienteCard({
 function StaticClienteCard({
   cliente,
   showResponsavel,
+  onOpen,
 }: {
   cliente: ClienteListItem
   showResponsavel: boolean
+  onOpen: () => void
 }) {
   return (
     <ClienteCard
@@ -180,6 +191,7 @@ function StaticClienteCard({
       incompleto={cliente.incompleto}
       isOverdue={cliente.isOverdue}
       overdueTooltip={cliente.overdue_tooltip ?? undefined}
+      onOpen={onOpen}
     />
   )
 }
@@ -215,6 +227,13 @@ export function KanbanBoard({
     type: "success" | "error"
     text: string
   } | null>(null)
+
+  // 02-06: card click (never drag, see ClienteCard's onOpen/dragHandleProps
+  // split) opens the detail Sheet for this cliente.
+  const [selectedClienteId, setSelectedClienteId] = useState<string | null>(
+    null
+  )
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   // D-07/D-08/D-09/D-01: search/filter/sort/tab state lives here, applied
   // in-memory over the already-loaded `grouped` set (Pitfall 7) — none of
@@ -422,6 +441,88 @@ export function KanbanBoard({
     showToast("success", `Card movido para "${etapaLabel}".`)
   }
 
+  function handleOpenCliente(clienteId: string) {
+    setSelectedClienteId(clienteId)
+    setSheetOpen(true)
+  }
+
+  /**
+   * Patches the edited cliente's card in-place from the Sheet's own
+   * submitted values — mirrors handleDragEnd's local-state-first approach
+   * rather than a full router.refresh() round-trip. categoria_nome/produtos
+   * are re-resolved from the same categoriaOptions/produtoOptions lists the
+   * Sheet was given (derived from this same `grouped` set), and `incompleto`
+   * is recomputed via the single shared isClienteIncompleto() predicate
+   * (02-05) so the "Incompleto" badge/tab never drifts from what was just
+   * saved.
+   */
+  function handleClienteSaved(values: UpdateClienteInput) {
+    setGrouped((prev) => {
+      const etapaKey = findEtapaDoCartao(prev, values.id)
+      if (!etapaKey) return prev
+
+      const existing = prev[etapaKey].find((c) => c.id === values.id)
+      if (!existing) return prev
+
+      const categoriaNome = values.categoriaId
+        ? (categoriaOptions.find((c) => c.id === values.categoriaId)?.nome ??
+          null)
+        : null
+
+      const produtos = (values.produtoIds ?? [])
+        .map((produtoId) => produtoOptions.find((p) => p.id === produtoId))
+        .filter((p): p is { id: string; nome: string } => Boolean(p))
+
+      const responsavelNome =
+        vendedorOptions.find((v) => v.id === values.responsavel)?.nome ??
+        existing.responsavel_nome
+
+      const completudeInput: ClienteCompletudeInput = {
+        categoria_id: values.categoriaId || null,
+        contato: values.contato || null,
+        telefone: values.telefone || null,
+        email: values.email || null,
+        numero_de_lojas: values.numeroDeLojas ?? null,
+        produtos,
+      }
+
+      const updatedCliente: ClienteListItem = {
+        ...existing,
+        razao_social: values.razaoSocial,
+        categoria_id: values.categoriaId || null,
+        categoria_nome: categoriaNome,
+        responsavel: values.responsavel,
+        responsavel_nome: responsavelNome,
+        cidade: values.cidade,
+        estado: values.estado,
+        contato: values.contato || null,
+        telefone: values.telefone || null,
+        email: values.email || null,
+        numero_de_lojas: values.numeroDeLojas ?? null,
+        produtos,
+        incompleto: isClienteIncompleto(completudeInput),
+      }
+
+      return {
+        ...prev,
+        [etapaKey]: prev[etapaKey].map((c) =>
+          c.id === values.id ? updatedCliente : c
+        ),
+      }
+    })
+  }
+
+  function handleClienteDeleted(clienteId: string) {
+    setGrouped((prev) => {
+      const etapaKey = findEtapaDoCartao(prev, clienteId)
+      if (!etapaKey) return prev
+      return {
+        ...prev,
+        [etapaKey]: prev[etapaKey].filter((c) => c.id !== clienteId),
+      }
+    })
+  }
+
   return (
     <div className="relative flex flex-1 flex-col gap-4">
       <ClienteToolbar
@@ -495,6 +596,7 @@ export function KanbanBoard({
                         key={cliente.id}
                         cliente={cliente}
                         showResponsavel={showResponsavel}
+                        onOpen={() => handleOpenCliente(cliente.id)}
                       />
                     ))
                   )}
@@ -542,6 +644,7 @@ export function KanbanBoard({
                             key={cliente.id}
                             cliente={cliente}
                             showResponsavel={showResponsavel}
+                            onOpen={() => handleOpenCliente(cliente.id)}
                           />
                         ))
                       )}
@@ -567,6 +670,18 @@ export function KanbanBoard({
           {toast.text}
         </div>
       ) : null}
+
+      <ClienteDetailSheet
+        clienteId={selectedClienteId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        isSupervisor={showResponsavel}
+        categoriaOptions={categoriaOptions}
+        produtoOptions={produtoOptions}
+        vendedorOptions={vendedorOptions}
+        onSaved={handleClienteSaved}
+        onDeleted={handleClienteDeleted}
+      />
     </div>
   )
 }

@@ -1,6 +1,17 @@
+import {
+  isClienteIncompleto,
+  type ClienteCompletudeInput,
+} from "@/lib/clientes/completude"
 import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import { staleReason, type TarefaAberta } from "@/lib/funil/staleness"
 import { createClient } from "@/lib/supabase/server"
+
+// Re-exported so every existing import path (this module used to define
+// both symbols directly) keeps working unchanged — see
+// lib/clientes/completude.ts's header comment for why the implementation
+// moved to a dependency-free module (Client Components need to import the
+// runtime function without pulling in next/headers).
+export { isClienteIncompleto, type ClienteCompletudeInput }
 
 export type ClienteListItem = {
   id: string
@@ -38,41 +49,6 @@ export type ClienteListItem = {
    * isClienteIncompleto() so the "Incompleto" card badge and the
    * "Incompletos" tab filter always agree (same function, same input). */
   incompleto: boolean
-}
-
-/**
- * Fields isClienteIncompleto() reads to decide "cadastro incompleto" (D-02)
- * — a subset of ClienteListItem so callers other than this query module
- * (e.g. a future edit-form save) can reuse the exact same predicate without
- * needing the full row shape.
- */
-export type ClienteCompletudeInput = {
-  categoria_id: string | null
-  contato: string | null
-  telefone: string | null
-  email: string | null
-  numero_de_lojas: number | null
-  produtos: { id: string; nome: string }[]
-}
-
-/**
- * D-02: a cliente is "incompleto" when ANY optional field is blank —
- * categoria, contato, telefone, email, número de lojas, or produtos
- * consumidos (empty list). Returns false only when every optional field is
- * filled. This is the SINGLE source of truth reused by both the
- * "Incompleto" badge (ClienteCard) and the "Incompletos" tab filter
- * (ClienteToolbar/KanbanBoard) — they read the same precomputed
- * `incompleto` field below, so they can never disagree.
- */
-export function isClienteIncompleto(cliente: ClienteCompletudeInput): boolean {
-  return (
-    !cliente.categoria_id ||
-    !cliente.contato ||
-    !cliente.telefone ||
-    !cliente.email ||
-    cliente.numero_de_lojas == null ||
-    cliente.produtos.length === 0
-  )
 }
 
 export type ClientesAgrupadosPorEtapa = Record<EtapaKey, ClienteListItem[]>
