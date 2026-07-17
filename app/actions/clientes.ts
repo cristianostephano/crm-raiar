@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache"
 
-import { createClienteSchema, type CreateClienteInput } from "@/lib/validations/cliente"
+import {
+  createClienteSchema,
+  updateClienteSchema,
+  type CreateClienteInput,
+  type UpdateClienteInput,
+} from "@/lib/validations/cliente"
 import { createClient } from "@/lib/supabase/server"
+import { getClienteById, type ClienteDetalhe } from "@/lib/supabase/queries/clientes"
 
 export type CreateClienteErrorCode =
   | "validation"
@@ -88,4 +94,215 @@ export async function createCliente(
 
   revalidatePath("/clientes")
   return { data: { id: inserted!.id } }
+}
+
+export type GetClienteDetalheErrorCode = "unauthenticated" | "not_found"
+
+export type GetClienteDetalheResult =
+  | { data: ClienteDetalhe; error?: undefined }
+  | { data?: undefined; error: { code: GetClienteDetalheErrorCode } }
+
+/**
+ * Thin Server Action wrapper around lib/supabase/queries/clientes.ts's
+ * getClienteById() (T-02-21) — KanbanBoard is a Client Component, and
+ * getClienteById() reads via lib/supabase/server.ts's createClient(), which
+ * needs next/headers' cookies() (a live Next.js request scope). A Client
+ * Component can only reach that through a Server Action, not by importing
+ * the query function directly.
+ */
+export async function getClienteDetalhe(
+  id: string
+): Promise<GetClienteDetalheResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  const cliente = await getClienteById(id)
+  if (!cliente) {
+    return { error: { code: "not_found" } }
+  }
+
+  return { data: cliente }
+}
+
+export type UpdateClienteErrorCode =
+  | "validation"
+  | "unauthenticated"
+  | "not_found"
+  | "duplicate_razao_social"
+  | "generic"
+
+export type UpdateClienteResult =
+  | { data: { id: string }; error?: undefined }
+  | { data?: undefined; error: { code: UpdateClienteErrorCode } }
+
+/**
+ * Edits an existing cliente (CLI-02/CLI-05/CLI-06). Re-validates with
+ * updateClienteSchema server-side — never trusts the client-side validation
+ * (mirrors createCliente's T-02-07 discipline).
+ */
+export async function updateCliente(
+  values: UpdateClienteInput
+): Promise<UpdateClienteResult> {
+  const parsed = updateClienteSchema.safeParse(values)
+  if (!parsed.success) {
+    return { error: { code: "validation" } }
+  }
+
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  const isSupervisor = callerProfile?.role === "supervisor"
+
+  // Defense in depth (T-02-19): a Vendedor's client-sent responsavel change
+  // is always stripped/overridden with their own uid, even though the
+  // clientes UPDATE ... WITH CHECK RLS policy from 02-01 already rejects a
+  // Vendedor reassigning responsavel at the database level. Only a
+  // Supervisor may assign a different responsavel.
+  const responsavel = isSupervisor ? parsed.data.responsavel : user.id
+
+  const { data: updated, error } = await supabase
+    .from("clientes")
+    .update({
+      razao_social: parsed.data.razaoSocial,
+      cep: parsed.data.cep,
+      rua: parsed.data.rua,
+      numero: parsed.data.numero,
+      complemento: parsed.data.complemento || null,
+      cidade: parsed.data.cidade,
+      estado: parsed.data.estado,
+      responsavel,
+      categoria_id: parsed.data.categoriaId || null,
+      contato: parsed.data.contato || null,
+      telefone: parsed.data.telefone || null,
+      email: parsed.data.email || null,
+      numero_de_lojas: parsed.data.numeroDeLojas ?? null,
+    })
+    .eq("id", parsed.data.id)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    // D-06: same 23505 -> duplicate_razao_social mapping as createCliente.
+    if (error.code === "23505") {
+      return { error: { code: "duplicate_razao_social" } }
+    }
+    return { error: { code: "generic" } }
+  }
+
+  if (!updated) {
+    // 0 rows: either the id doesn't exist, or RLS's USING clause filtered it
+    // out (a Vendedor editing a non-owned cliente) — never distinguish
+    // which, same non-revealing posture as duplicate_razao_social.
+    return { error: { code: "not_found" } }
+  }
+
+  // Multi-value produtos consumidos (CLI-02): replace the whole
+  // cliente_produtos set for this cliente rather than diffing adds/removes —
+  // simple and safe at MVP scale (a handful of produtos per cliente). Each
+  // statement is still gated by cliente_produtos' own parent-EXISTS RLS
+  // policy (Pitfall 3 — a joined table's RLS is independent of clientes').
+  const produtoIds = parsed.data.produtoIds ?? []
+
+  const { error: deleteProdutosError } = await supabase
+    .from("cliente_produtos")
+    .delete()
+    .eq("cliente_id", parsed.data.id)
+
+  if (deleteProdutosError) {
+    return { error: { code: "generic" } }
+  }
+
+  if (produtoIds.length > 0) {
+    const { error: insertProdutosError } = await supabase
+      .from("cliente_produtos")
+      .insert(
+        produtoIds.map((produtoId) => ({
+          cliente_id: parsed.data.id,
+          produto_id: produtoId,
+        }))
+      )
+
+    if (insertProdutosError) {
+      return { error: { code: "generic" } }
+    }
+  }
+
+  revalidatePath("/clientes")
+  return { data: { id: updated.id } }
+}
+
+export type DeleteClienteErrorCode = "unauthenticated" | "forbidden" | "generic"
+
+export type DeleteClienteResult =
+  | { data: { id: string }; error?: undefined }
+  | { data?: undefined; error: { code: DeleteClienteErrorCode } }
+
+/**
+ * Deletes a cliente (CLI-05/CLI-06). Supervisor-only: a non-Supervisor
+ * caller is rejected here, before the DELETE is even attempted, but this
+ * app-layer check is UX only — clientes' DELETE RLS policy from 02-01
+ * (`using (is_supervisor())`) is the real boundary (T-02-18); a Vendedor
+ * calling this Server Action directly (bypassing the hidden UI button)
+ * would still be a no-op even if this check were somehow skipped.
+ */
+export async function deleteCliente(id: string): Promise<DeleteClienteResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  const isSupervisor = callerProfile?.role === "supervisor"
+
+  if (!isSupervisor) {
+    return { error: { code: "forbidden" } }
+  }
+
+  const { data: deleted, error } = await supabase
+    .from("clientes")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    return { error: { code: "generic" } }
+  }
+
+  if (!deleted) {
+    return { error: { code: "generic" } }
+  }
+
+  revalidatePath("/clientes")
+  return { data: { id: deleted.id } }
 }

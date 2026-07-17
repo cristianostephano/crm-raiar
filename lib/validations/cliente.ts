@@ -53,3 +53,53 @@ export const createClienteSchema = z
   })
 
 export type CreateClienteInput = z.infer<typeof createClienteSchema>
+
+/**
+ * Shared zod schema for editing an existing cliente (CLI-02/CLI-05/CLI-06),
+ * used by both ClienteDetailSheet.tsx (react-hook-form + zodResolver) and
+ * updateCliente's server-side re-validation in app/actions/clientes.ts.
+ *
+ * Same required/optional split as createClienteSchema (razão social,
+ * endereço incl. D-11 cidade/estado, and responsavel are required; every
+ * other field can be completed later, per CLI-02), plus the row `id` being
+ * edited. `responsavel` keeps the same ""-sentinel + object-level
+ * `.superRefine` trick as createClienteSchema/InviteUserForm's `role` — a
+ * per-field `.refine()` would turn it into a ZodEffects type and break
+ * @hookform/resolvers' generic inference against zod v4 (02-PATTERNS.md).
+ * A Vendedor's form renders this field read-only (own name, non-editable),
+ * so it always submits their own uid — but updateCliente() still strips any
+ * client-sent responsavel change server-side for a non-Supervisor caller
+ * (defense in depth; the real boundary is the UPDATE ... WITH CHECK RLS
+ * policy from 02-01).
+ */
+export const updateClienteSchema = z
+  .object({
+    id: z.string().min(1),
+    razaoSocial: z.string().min(1, "Informe a razão social."),
+    cep: z.string().min(1, "Informe o CEP."),
+    rua: z.string().min(1, "Informe a rua."),
+    numero: z.string().min(1, "Informe o número."),
+    complemento: z.string().optional(),
+    cidade: z.string().min(1, "Informe a cidade."),
+    estado: z.string().min(1, "Informe o estado."),
+    responsavel: z.string(),
+    categoriaId: z.string().optional(),
+    contato: z.string().optional(),
+    telefone: z.string().optional(),
+    email: z
+      .union([z.literal(""), z.string().email("Informe um e-mail válido.")])
+      .optional(),
+    numeroDeLojas: z.number().int().nonnegative().optional(),
+    produtoIds: z.array(z.string()).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.responsavel === "") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecione o responsável.",
+        path: ["responsavel"],
+      })
+    }
+  })
+
+export type UpdateClienteInput = z.infer<typeof updateClienteSchema>

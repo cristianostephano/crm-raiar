@@ -78,6 +78,99 @@ export function isClienteIncompleto(cliente: ClienteCompletudeInput): boolean {
 export type ClientesAgrupadosPorEtapa = Record<EtapaKey, ClienteListItem[]>
 
 /**
+ * Full editable shape for the client detail Sheet (CLI-02/CLI-05/CLI-06) —
+ * every field ClienteDetailSheet's form needs, including the raw endereço
+ * breakdown (cep/rua/numero/complemento) the card-list's ClienteListItem
+ * doesn't carry, and `produtoIds` (not `produtos` name+id pairs) since the
+ * edit form's multi-select checklist only needs to know which ids are
+ * checked.
+ */
+export type ClienteDetalhe = {
+  id: string
+  razaoSocial: string
+  cep: string
+  rua: string
+  numero: string
+  complemento: string | null
+  cidade: string
+  estado: string
+  responsavel: string
+  responsavelNome: string | null
+  categoriaId: string | null
+  contato: string | null
+  telefone: string | null
+  email: string | null
+  numeroDeLojas: number | null
+  produtoIds: string[]
+}
+
+type ClienteDetalheRow = {
+  id: string
+  razao_social: string
+  cep: string
+  rua: string
+  numero: string
+  complemento: string | null
+  cidade: string
+  estado: string
+  responsavel: string
+  profiles: { nome: string; sobrenome: string } | null
+  categoria_id: string | null
+  contato: string | null
+  telefone: string | null
+  email: string | null
+  numero_de_lojas: number | null
+  cliente_produtos: { produto_id: string }[] | null
+}
+
+/**
+ * Reads a single cliente for the detail/edit Sheet (T-02-21). RLS on
+ * `clientes` (the same `is_supervisor() or responsavel = auth.uid()` SELECT
+ * policy from 02-01) is the real boundary here — a Vendedor requesting a
+ * non-owned id simply gets no matching row back (`maybeSingle()` resolves to
+ * `null`), not an error, so this returns `null` for both "doesn't exist" and
+ * "exists but isn't visible to this caller" (never reveals which).
+ */
+export async function getClienteById(
+  id: string
+): Promise<ClienteDetalhe | null> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .select(
+      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id)"
+    )
+    .eq("id", id)
+    .maybeSingle()
+
+  if (error || !data) return null
+
+  const row = data as unknown as ClienteDetalheRow
+
+  return {
+    id: row.id,
+    razaoSocial: row.razao_social,
+    cep: row.cep,
+    rua: row.rua,
+    numero: row.numero,
+    complemento: row.complemento,
+    cidade: row.cidade,
+    estado: row.estado,
+    responsavel: row.responsavel,
+    responsavelNome: row.profiles
+      ? `${row.profiles.nome} ${row.profiles.sobrenome}`
+      : null,
+    categoriaId: row.categoria_id,
+    contato: row.contato,
+    telefone: row.telefone,
+    email: row.email,
+    numeroDeLojas: row.numero_de_lojas,
+    produtoIds: (row.cliente_produtos ?? []).map((cp) => cp.produto_id),
+  }
+}
+
+/**
  * Raw shape returned by the embedded-select query below — `categorias`/
  * `profiles` are to-one embeds (each FK lives on `clientes` itself), so
  * PostgREST returns a single nested object, never an array, per relationship.
