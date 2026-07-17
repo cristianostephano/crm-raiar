@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 2
 current_phase_name: Cadastro e Funil de Vendas
 status: executing
-stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-07-17T14:17:16.043Z"
+stopped_at: Completed 02-06-PLAN.md
+last_updated: "2026-07-17T15:25:38.179Z"
 last_activity: 2026-07-17
 last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   percent: 25
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 2 (Cadastro e Funil de Vendas) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-07-17 — Phase 2 execution started
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P03 | ~15min | 2 tasks | 4 files |
 | Phase 02 P04 | 50min | 2 tasks (+1 checkpoint) tasks | 8 files files |
 | Phase 02 P05 | ~40min | 2 tasks tasks | 10 files files |
+| Phase 02 P06 | ~50min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,8 @@ Recent decisions affecting current work:
 - [Phase ?]: 02-05: isClienteIncompleto lives in lib/supabase/queries/clientes.ts (colocated with ClienteListItem), precomputed once per row as ClienteListItem.incompleto so the Incompleto badge and Incompletos tab can never disagree
 - [Phase ?]: 02-05: Filter option lists (categoria/produto/estado/vendedor) are derived in-memory from the already-loaded card set, not a separate lookup query, keeping filtering fully local (Pitfall 7)
 - [Phase ?]: 02-05: Drag is disabled (StaticClienteCard) whenever search/filters/Incompletos/a non-'Mais recentes' sort is active, since computeNovaPosicao would otherwise compute a fractional position against the wrong neighbor
+- [Phase ?]: [Phase 02-06]: categoriaId/produtoIds/vendedorId edit-Select options reuse KanbanBoard's in-memory-derived option lists (02-05 pattern) instead of a new full-catalog query
+- [Phase ?]: [Phase 02-06]: Extracted isClienteIncompleto/ClienteCompletudeInput into dependency-free lib/clientes/completude.ts so KanbanBoard (Client Component) can import the runtime function without pulling next/headers into the client bundle
 
 ### Pending Todos
 
@@ -130,6 +133,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-17T14:17:16.029Z
-Stopped at: Completed 02-05-PLAN.md
+Last session: 2026-07-17T15:25:38.167Z
+Stopped at: Completed 02-06-PLAN.md
 Resume file: None
