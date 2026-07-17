@@ -52,6 +52,12 @@ export default async function AppLayout({
           {roleLabel ? <Badge variant="secondary">{roleLabel}</Badge> : null}
         </div>
         <div className="flex items-center gap-4">
+          <Link
+            href="/clientes"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Clientes
+          </Link>
           {profile?.role === "supervisor" ? (
             <Link
               href="/equipe"
