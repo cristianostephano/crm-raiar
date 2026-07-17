@@ -196,6 +196,9 @@ export async function updateCliente(
       telefone: parsed.data.telefone || null,
       email: parsed.data.email || null,
       numero_de_lojas: parsed.data.numeroDeLojas ?? null,
+      // FUN-07: saved together with the rest of "Salvar alterações" — no
+      // separate salvarObservacao action.
+      observacao: parsed.data.observacao || null,
     })
     .eq("id", parsed.data.id)
     .select("id")

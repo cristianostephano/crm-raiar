@@ -61,6 +61,8 @@ export type ClientesAgrupadosPorEtapa = Record<EtapaKey, ClienteListItem[]>
  * edit form's multi-select checklist only needs to know which ids are
  * checked.
  */
+export type StatusAcompanhamento = "em_andamento" | "perdido" | "ganho"
+
 export type ClienteDetalhe = {
   id: string
   razaoSocial: string
@@ -78,6 +80,13 @@ export type ClienteDetalhe = {
   email: string | null
   numeroDeLojas: number | null
   produtoIds: string[]
+  /** Funil section fields (02-07) — etapa/statusAcompanhamento/motivoPerdaId
+   * drive the status Select's current value and the Ganho-disabled-unless-
+   * ETAPA_FINAL courtesy (FUN-05); observacao is the free-text field (FUN-07). */
+  etapa: EtapaKey
+  statusAcompanhamento: StatusAcompanhamento
+  motivoPerdaId: string | null
+  observacao: string | null
 }
 
 type ClienteDetalheRow = {
@@ -97,6 +106,10 @@ type ClienteDetalheRow = {
   email: string | null
   numero_de_lojas: number | null
   cliente_produtos: { produto_id: string }[] | null
+  etapa: EtapaKey
+  status_acompanhamento: StatusAcompanhamento
+  motivo_perda_id: string | null
+  observacao: string | null
 }
 
 /**
@@ -115,7 +128,7 @@ export async function getClienteById(
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id)"
+      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao"
     )
     .eq("id", id)
     .maybeSingle()
@@ -143,6 +156,10 @@ export async function getClienteById(
     email: row.email,
     numeroDeLojas: row.numero_de_lojas,
     produtoIds: (row.cliente_produtos ?? []).map((cp) => cp.produto_id),
+    etapa: row.etapa,
+    statusAcompanhamento: row.status_acompanhamento,
+    motivoPerdaId: row.motivo_perda_id,
+    observacao: row.observacao,
   }
 }
 
@@ -277,4 +294,118 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
   }
 
   return grouped
+}
+
+/**
+ * Single tarefa row for the Funil section's checklist (FUN-08). RLS on
+ * `tarefas` (the parent-cliente EXISTS gate from 02-01) is the real
+ * boundary — a Vendedor requesting a non-owned clienteId simply gets an
+ * empty array back, same non-revealing posture as getClienteById.
+ */
+export type Tarefa = {
+  id: string
+  tipoTarefaId: string
+  tipoNome: string
+  dataConclusao: string | null
+  concluida: boolean
+}
+
+type TarefaRow = {
+  id: string
+  tipo_tarefa_id: string
+  data_conclusao: string | null
+  concluida: boolean
+  tipos_tarefa: { nome: string } | null
+}
+
+export async function getTarefas(clienteId: string): Promise<Tarefa[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("tarefas")
+    .select("id, tipo_tarefa_id, data_conclusao, concluida, tipos_tarefa(nome)")
+    .eq("cliente_id", clienteId)
+    .order("criado_em", { ascending: true })
+
+  if (error || !data) return []
+
+  return (data as unknown as TarefaRow[]).map((row) => ({
+    id: row.id,
+    tipoTarefaId: row.tipo_tarefa_id,
+    tipoNome: row.tipos_tarefa?.nome ?? "",
+    dataConclusao: row.data_conclusao,
+    concluida: row.concluida,
+  }))
+}
+
+/**
+ * Read-only histórico timeline (FUN-10) — newest first. There is
+ * deliberately no `insertHistorico`-style write function anywhere in this
+ * codebase: only the 02-01 SECURITY DEFINER triggers ever write to
+ * `historico` (T-02-25), this is purely a reader.
+ */
+export type HistoricoEntry = {
+  id: string
+  descricao: string
+  criadoEm: string
+}
+
+export async function getHistorico(clienteId: string): Promise<HistoricoEntry[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("historico")
+    .select("id, descricao, criado_em")
+    .eq("cliente_id", clienteId)
+    .order("criado_em", { ascending: false })
+
+  if (error || !data) return []
+
+  return data.map((row) => ({
+    id: row.id,
+    descricao: row.descricao,
+    criadoEm: row.criado_em,
+  }))
+}
+
+/** Lookup-table option shape shared by tipos_tarefa/motivos_perda selects. */
+export type LookupOption = { id: string; nome: string }
+
+/**
+ * Full active tipos_tarefa catalog, for the "+ Adicionar tarefa" tipo
+ * Select (FUN-08). Unlike categoria/produto/vendedor options elsewhere in
+ * this phase, tipos_tarefa never appears in the already-loaded kanban card
+ * set (only OPEN tarefas' tipo name is embedded there), so this is a real
+ * full-catalog lookup — read-open to every authenticated user per the 02-01
+ * RLS policy.
+ */
+export async function getTiposTarefaAtivos(): Promise<LookupOption[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("tipos_tarefa")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome", { ascending: true })
+
+  if (error || !data) return []
+  return data
+}
+
+/**
+ * Full active motivos_perda catalog, for PerdaMotivoDialog's required
+ * "Motivo da perda" Select (FUN-06) — same full-catalog-lookup reasoning as
+ * getTiposTarefaAtivos above.
+ */
+export async function getMotivosPerdaAtivos(): Promise<LookupOption[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("motivos_perda")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome", { ascending: true })
+
+  if (error || !data) return []
+  return data
 }

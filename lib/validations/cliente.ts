@@ -91,6 +91,10 @@ export const updateClienteSchema = z
       .optional(),
     numeroDeLojas: z.number().int().nonnegative().optional(),
     produtoIds: z.array(z.string()).optional(),
+    // FUN-07: free-text observação, folded into updateCliente rather than a
+    // separate "salvarObservacao" action — saved together with the rest of
+    // "Salvar alterações" (02-07).
+    observacao: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.responsavel === "") {
