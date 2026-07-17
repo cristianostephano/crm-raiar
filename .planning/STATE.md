@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 2
 current_phase_name: Cadastro e Funil de Vendas
 status: executing
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-07-17T11:48:15.843Z"
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-07-17T14:17:16.043Z"
 last_activity: 2026-07-17
 last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
   percent: 25
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 2 (Cadastro e Funil de Vendas) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-07-17 — Phase 2 execution started
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P02 | 20min | 2 tasks | 8 files |
 | Phase 02 P03 | ~15min | 2 tasks | 4 files |
 | Phase 02 P04 | 50min | 2 tasks (+1 checkpoint) tasks | 8 files files |
+| Phase 02 P05 | ~40min | 2 tasks tasks | 10 files files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 02-03]: isOverdue TriangleAlert uses plain aria-label instead of Tooltip primitive - tooltip.tsx not installed yet and isOverdue is always false until 02-04 wires real data
 - [Phase 02-04]: No toast library installed - built a small local transient banner in KanbanBoard instead of adding an unapproved new npm dependency (e.g. sonner) mid-task — Task 1's install list only covered dnd-kit + date-fns + shadcn tooltip; adding sonner would need its own legitimacy checkpoint and the plan gave no signal it was expected
 - [Phase 02-04]: moverCard's pre-check SELECT (needed for the ganho guard) is scoped by the same RLS policy as the UPDATE, so it also mitigates T-02-13 (cross-vendedor move) with no extra code — A non-owned clienteId returns no row from the SELECT and the action fails closed before ever calling the RPC
+- [Phase ?]: 02-05: isClienteIncompleto lives in lib/supabase/queries/clientes.ts (colocated with ClienteListItem), precomputed once per row as ClienteListItem.incompleto so the Incompleto badge and Incompletos tab can never disagree
+- [Phase ?]: 02-05: Filter option lists (categoria/produto/estado/vendedor) are derived in-memory from the already-loaded card set, not a separate lookup query, keeping filtering fully local (Pitfall 7)
+- [Phase ?]: 02-05: Drag is disabled (StaticClienteCard) whenever search/filters/Incompletos/a non-'Mais recentes' sort is active, since computeNovaPosicao would otherwise compute a fractional position against the wrong neighbor
 
 ### Pending Todos
 
@@ -126,6 +130,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-17T11:48:15.835Z
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-07-17T14:17:16.029Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None

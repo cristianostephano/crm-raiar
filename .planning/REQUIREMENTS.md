@@ -20,7 +20,7 @@
 - [x] **CLI-04**: Vendedor visualiza e edita apenas os próprios clientes (responsável = usuário logado)
 - [x] **CLI-05**: Supervisor visualiza, edita e apaga todos os clientes de todos os vendedores
 - [x] **CLI-06**: Vendedor pode editar os próprios clientes, mas não apagar (apagar é restrito ao supervisor)
-- [ ] **CLI-07**: Busca e filtro na lista de clientes (por vendedor, categoria, produto, texto livre por razão social)
+- [x] **CLI-07**: Busca e filtro na lista de clientes (por vendedor, categoria, produto, texto livre por razão social)
 
 ### Funnel (Funil de Vendas / Kanban)
 
@@ -97,7 +97,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-04 | Phase 2 | Complete |
 | CLI-05 | Phase 2 | Complete |
 | CLI-06 | Phase 2 | Complete |
-| CLI-07 | Phase 2 | Pending |
+| CLI-07 | Phase 2 | Complete |
 | FUN-01 | Phase 2 | Complete |
 | FUN-02 | Phase 2 | Complete |
 | FUN-03 | Phase 2 | Complete |
