@@ -4,8 +4,7 @@ import {
   ClienteQuickCreateForm,
   type TeamMember,
 } from "@/components/clientes/ClienteQuickCreateForm"
-import { Badge } from "@/components/ui/badge"
-import { ETAPAS } from "@/lib/funil/etapas"
+import { KanbanBoard } from "@/components/clientes/KanbanBoard"
 import { getClientesAgrupadosPorEtapa } from "@/lib/supabase/queries/clientes"
 import { createClient } from "@/lib/supabase/server"
 
@@ -19,8 +18,8 @@ import { createClient } from "@/lib/supabase/server"
  * (e.g. showing the responsável Select only to a Supervisor) are UX only
  * (T-02-09).
  *
- * This plan renders clients grouped in a simple list per funil stage — the
- * full drag-and-drop kanban board comes in 02-03.
+ * Renders the 7-column compact kanban board (KanbanBoard, D-05) — clients
+ * grouped by funil stage. No drag-and-drop yet (that lands in 02-04).
  */
 export default async function ClientesPage() {
   const supabase = await createClient()
@@ -79,40 +78,10 @@ export default async function ClientesPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {ETAPAS.map((etapa) => {
-            const clientes = grouped[etapa.key]
-            return (
-              <div key={etapa.key} className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold">{etapa.label}</h2>
-                  <Badge variant="outline">{clientes.length}</Badge>
-                </div>
-                {clientes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum cliente nesta etapa
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {clientes.map((cliente) => (
-                      <div
-                        key={cliente.id}
-                        className="flex items-center justify-between rounded-lg border p-3"
-                      >
-                        <span className="text-base font-semibold">
-                          {cliente.razao_social}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {cliente.cidade}/{cliente.estado}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        <KanbanBoard
+          grouped={grouped}
+          callerRole={isSupervisor ? "supervisor" : "vendedor"}
+        />
       )}
     </div>
   )
