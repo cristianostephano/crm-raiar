@@ -16,6 +16,10 @@ export type ClienteListItem = {
   telefone: string | null
   email: string | null
   numero_de_lojas: number | null
+  /** Fractional card-ordering value (Pitfall 5) — needed client-side by the
+   * 02-04 drag handler to compute the single new midpoint position on drop,
+   * never renumbering the whole column. */
+  posicao: number
 }
 
 export type ClientesAgrupadosPorEtapa = Record<EtapaKey, ClienteListItem[]>
@@ -40,6 +44,7 @@ type ClienteRow = {
   telefone: string | null
   email: string | null
   numero_de_lojas: number | null
+  posicao: number
 }
 
 /**
@@ -65,7 +70,7 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas"
+      "id, razao_social, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao"
     )
     .order("posicao", { ascending: true })
 
@@ -96,6 +101,7 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
       telefone: row.telefone,
       email: row.email,
       numero_de_lojas: row.numero_de_lojas,
+      posicao: row.posicao,
     })
   }
 
