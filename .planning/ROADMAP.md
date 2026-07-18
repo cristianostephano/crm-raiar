@@ -107,7 +107,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Supervisor cadastra, edita e remove motivos de perda, refletido na tela de marcar um card como perdido.
   5. Vendedor não consegue acessar nenhuma dessas telas de administração — a restrição é aplicada pelo sistema (RLS/permissão), não só ocultada do menu.
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 **Wave 1**
 
@@ -115,7 +115,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 03-02-PLAN.md — CRUD completo na aba Categoria: editar inline (D-04), desativar/reativar soft-delete (D-03), toggle "Mostrar inativos" + Switch (ADM-01)
+- [x] 03-02-PLAN.md — CRUD completo na aba Categoria: editar inline (D-04), desativar/reativar soft-delete (D-03), toggle "Mostrar inativos" + Switch (ADM-01)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -151,5 +151,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
-| 3. Administração de Listas Editáveis | 1/3 | In Progress|  |
+| 3. Administração de Listas Editáveis | 2/3 | In Progress|  |
 | 4. Dashboard Gerencial | 0/TBD | Not started | - |

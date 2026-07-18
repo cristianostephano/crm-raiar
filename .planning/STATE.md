@@ -6,14 +6,14 @@ current_phase: 3
 current_phase_name: Administração de Listas Editáveis
 status: executing
 stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-07-18T00:09:56.054Z"
+last_updated: "2026-07-18T01:15:58.238Z"
 last_activity: 2026-07-17
 last_activity_desc: Phase 3 execution started
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 3 (Administração de Listas Editáveis) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-07-17 — Phase 3 execution started
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P06 | ~50min | 2 tasks | 10 files |
 | Phase 02 P07 | 55min | 2 tasks | 12 files |
 | Phase 03 P01 | 35min | 3 tasks | 7 files |
+| Phase 03 P02 | 20min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 02-07]: PerdaMotivoDialog's Confirmar perda is genuinely HTML-disabled (not just validated on click) until a motivo is selected, matching FUN-06's acceptance criteria literally
 - [Phase ?]: [Phase 03-01]: getListaValores lives in app/actions/listas.ts (not lib/supabase/queries/clientes.ts) - it's a distinct admin read (active+inactive) that must not be confused with the existing ativo=true-only cadastro readers
 - [Phase ?]: [Phase 03-01]: EditableListTab's pluralAtivoLabel is passed fully-formed by the caller (not derived) since Portuguese gender/number agreement differs per tab (categorias ativas vs produtos ativos)
+- [Phase 03]: [Phase 03-02]: Row-scoped errors (duplicate-name on edit, generic failure on deactivate) render inline in their own context (edit Input / deactivate Dialog) rather than the shared top banner, matching PerdaMotivoDialog's own-dialog-owns-its-error precedent
+- [Phase 03]: [Phase 03-02]: Reactivate has no confirmation dialog (only deactivate does) - D-03 treats reactivation as the deliberately low-friction reversal path
 
 ### Pending Todos
 
@@ -140,6 +143,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-18T00:09:37.660Z
+Last session: 2026-07-18T00:54:15.964Z
 Stopped at: Phase 3 UI-SPEC approved
 Resume file: .planning/phases/03-administra-o-de-listas-edit-veis/03-UI-SPEC.md
