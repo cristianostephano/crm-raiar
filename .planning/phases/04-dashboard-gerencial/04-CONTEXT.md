@@ -28,6 +28,11 @@ Supervisor e Vendedor enxergam a saúde do funil em números, cada um na medida 
 ### Escopo por papel (já confirmado no PROJECT.md/REQUIREMENTS.md, reafirmado aqui)
 - **D-07:** Vendedor vê uma versão do dashboard só com os próprios números (não vê desempenho por vendedor, já que só existe ele mesmo na visão dele). Supervisor vê o dashboard completo, com todos os vendedores.
 
+### Definições precisas por métrica (esclarecidas após a pesquisa técnica)
+- **D-08:** "Clientes por etapa do funil" (DSH-01) é uma foto do momento atual — **não** é filtrado pelo período escolhido. Mostra onde a carteira está parada agora, independente do filtro de data.
+- **D-09:** "Prospecção por produto e por categoria" (DSH-05), quando o filtro de período é aplicado, conta pela **data de cadastro do cliente** (não pela data de mudança de status).
+- **D-10:** "Desempenho por vendedor" (DSH-03) reaproveita os mesmos números de ganhos x perdidos x conversão de DSH-02, só que agrupados por vendedor (uma barra por vendedor) em vez de somados — mesma base de dado (`historico`, filtrado por data de mudança de status), só quebrado por `responsavel`.
+
 ### Claude's Discretion
 - Biblioteca de gráficos: usar Recharts via o componente Chart do shadcn/ui, já definido em `.claude/CLAUDE.md`.
 - Layout exato da tela (ordem dos blocos, grid responsivo).
