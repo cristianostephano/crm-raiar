@@ -56,7 +56,17 @@ export function ConfiguracoesTabs() {
         ))}
       </TabsList>
       {TABS.map((tab) => (
-        <TabsContent key={tab.tabela} value={tab.tabela}>
+        // keepMounted: without it, Base UI's TabsPanel unmounts the inactive
+        // panel entirely (TabsPanel.js `shouldRender = keepMounted ||
+        // mounted`), so every tab click threw away EditableListTab's fetched
+        // state and re-ran getListaValores from scratch — a real ~1-2s
+        // "Carregando..." flash on every switch that manual testing read as
+        // the tab not switching at all (found during Task 2's checkpoint
+        // verification). keepMounted renders all 4 EditableListTab instances
+        // once and toggles visibility via the `hidden` attribute instead, so
+        // each tab fetches its ~handful of rows once and switching is
+        // instant afterwards — negligible cost at this data volume.
+        <TabsContent key={tab.tabela} value={tab.tabela} keepMounted>
           <EditableListTab
             tabela={tab.tabela}
             inputPlaceholder={tab.inputPlaceholder}
