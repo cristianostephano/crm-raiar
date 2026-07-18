@@ -139,7 +139,25 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Dashboard mostra prospecções agrupadas por produto e por categoria.
   5. Vendedor abre o dashboard e vê só os próprios números; Supervisor abre o mesmo dashboard e vê os números de todo o time.
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+**Wave 1** *(parallel — no file overlap)*
+
+- [ ] 04-01-PLAN.md — Backend: 5 SECURITY-INVOKER aggregate SQL functions (`0003_dashboard_aggregates.sql`) + query/action layer + período util + full behavior/RLS test suite + [BLOCKING] `supabase db push` (DSH-01..07)
+- [ ] 04-02-PLAN.md — Instala o componente Chart do shadcn (recharts) atrás de checkpoint humano de legitimidade + override `--chart-1` para o azul `--primary` (DSH-01, DSH-03, DSH-05)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 04-03-PLAN.md — Tela `/dashboard` + link no menu (D-03) + orquestrador + filtro de período (D-01) + gráfico "Clientes por etapa" (D-04/D-08) (DSH-01, DSH-06, DSH-07)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 04-04-PLAN.md — KPIs em destaque: Ganhos / Perdidos / Taxa de conversão, reagindo ao período (D-05/D-02) (DSH-02, DSH-04)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 04-05-PLAN.md — "Desempenho por vendedor" (barras horizontais, só Supervisor, D-06/D-10) + "Prospecção por produto/categoria" (D-09) + checkpoint humano final (DSH-03, DSH-05, DSH-07)
+
 **UI hint**: yes
 
 ## Progress
@@ -152,4 +170,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
-| 4. Dashboard Gerencial | 0/TBD | Not started | - |
+| 4. Dashboard Gerencial | 0/5 | Planned | - |
