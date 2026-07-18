@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Autenticação e Papéis** - Usuários fazem login via Supabase Auth e o sistema distingue Supervisor de Vendedor em toda a base de dados (RLS).
 - [x] **Phase 2: Cadastro e Funil de Vendas** - Vendedores e supervisores cadastram, editam e encontram clientes PJ, e movem os clientes pelas 7 etapas do funil kanban, com o mínimo de fricção possível. (completed 2026-07-17)
-- [ ] **Phase 3: Administração de Listas Editáveis** - Supervisor mantém categorias, produtos, tipos de tarefa e motivos de perda sem depender de alteração de código.
+- [x] **Phase 3: Administração de Listas Editáveis** - Supervisor mantém categorias, produtos, tipos de tarefa e motivos de perda sem depender de alteração de código. (completed 2026-07-18)
 - [ ] **Phase 4: Dashboard Gerencial** - Supervisor e vendedores acompanham os números do funil, cada um na medida da própria visão.
 
 ## Phase Details
@@ -107,7 +107,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Supervisor cadastra, edita e remove motivos de perda, refletido na tela de marcar um card como perdido.
   5. Vendedor não consegue acessar nenhuma dessas telas de administração — a restrição é aplicada pelo sistema (RLS/permissão), não só ocultada do menu.
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 **Wave 1**
 
@@ -119,7 +119,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 03-03-PLAN.md — Ligar as outras 3 abas (Produtos/Tipos de tarefa/Motivos de perda) reusando o componente + checkpoint humano de reflexo downstream (ADM-02, ADM-03, ADM-04)
+- [x] 03-03-PLAN.md — Ligar as outras 3 abas (Produtos/Tipos de tarefa/Motivos de perda) reusando o componente + checkpoint humano de reflexo downstream (ADM-02, ADM-03, ADM-04)
 
 **Nota de schema:** nenhuma migração criada — a constraint `unique(nome)` e as políticas RLS de escrita Supervisor-only já existiam nas 4 tabelas desde a migração 0002 (Fase 2).
 
@@ -151,5 +151,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
-| 3. Administração de Listas Editáveis | 2/3 | In Progress|  |
+| 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
 | 4. Dashboard Gerencial | 0/TBD | Not started | - |
