@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache"
 
 import {
   createListaValorSchema,
+  updateListaValorSchema,
   type CreateListaValorInput,
+  type UpdateListaValorInput,
 } from "@/lib/validations/lista"
 import { createClient } from "@/lib/supabase/server"
 
@@ -132,4 +134,147 @@ export async function createListaValor(
   revalidatePath("/clientes")
 
   return { data: inserted! }
+}
+
+export type UpdateListaValorErrorCode =
+  | "validation"
+  | "unauthenticated"
+  | "forbidden"
+  | "duplicate_nome"
+  | "not_found"
+  | "generic"
+
+export type UpdateListaValorResult =
+  | { data: { id: string; nome: string }; error?: undefined }
+  | { data?: undefined; error: { code: UpdateListaValorErrorCode } }
+
+/**
+ * Renames an existing value in place (D-04, this plan's "editar" slice) —
+ * deliberately an UPDATE on the same row, never a delete+recreate, so a
+ * cliente already referencing this row's id keeps pointing at it. Same
+ * Supervisor-only defense-in-depth + duplicate-mapping shape as
+ * createListaValor.
+ */
+export async function updateListaValor(
+  tabela: ListaTabela,
+  values: UpdateListaValorInput
+): Promise<UpdateListaValorResult> {
+  const parsed = updateListaValorSchema.safeParse(values)
+  if (!parsed.success) {
+    return { error: { code: "validation" } }
+  }
+
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  const isSupervisor = callerProfile?.role === "supervisor"
+
+  if (!isSupervisor) {
+    return { error: { code: "forbidden" } }
+  }
+
+  const { data: updated, error } = await supabase
+    .from(tabela)
+    .update({ nome: parsed.data.nome })
+    .eq("id", parsed.data.id)
+    .select("id, nome")
+    .maybeSingle()
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: { code: "duplicate_nome" } }
+    }
+    return { error: { code: "generic" } }
+  }
+
+  if (!updated) {
+    // 0 rows: either the id doesn't exist, or RLS's USING clause filtered it
+    // out — never distinguish which, same non-revealing posture as
+    // updateCliente's not_found mapping.
+    return { error: { code: "not_found" } }
+  }
+
+  revalidatePath("/configuracoes")
+  revalidatePath("/clientes")
+
+  return { data: updated }
+}
+
+export type SetListaValorAtivoErrorCode =
+  | "unauthenticated"
+  | "forbidden"
+  | "not_found"
+  | "generic"
+
+export type SetListaValorAtivoResult =
+  | { data: { id: string }; error?: undefined }
+  | { data?: undefined; error: { code: SetListaValorAtivoErrorCode } }
+
+/**
+ * Soft-delete toggle (D-03, this plan's "desativar"/"reativar" slice): only
+ * ever `.update({ ativo })`, NEVER `.delete()` — a DELETE RLS policy exists
+ * on these 4 tables as a migration-0002 residue, but this action never
+ * triggers it, so a cliente already referencing a deactivated value keeps
+ * working normally (D-03). Same Supervisor-only defense-in-depth as every
+ * other write on these tables.
+ */
+export async function setListaValorAtivo(
+  tabela: ListaTabela,
+  id: string,
+  ativo: boolean
+): Promise<SetListaValorAtivoResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  const isSupervisor = callerProfile?.role === "supervisor"
+
+  if (!isSupervisor) {
+    return { error: { code: "forbidden" } }
+  }
+
+  const { data: updated, error } = await supabase
+    .from(tabela)
+    .update({ ativo })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    return { error: { code: "generic" } }
+  }
+
+  if (!updated) {
+    return { error: { code: "not_found" } }
+  }
+
+  revalidatePath("/configuracoes")
+  revalidatePath("/clientes")
+
+  return { data: updated }
 }
