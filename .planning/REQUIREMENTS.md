@@ -37,7 +37,7 @@
 
 ### Admin (Listas Editáveis)
 
-- [ ] **ADM-01**: Supervisor cadastra/edita/remove categorias de cliente
+- [x] **ADM-01**: Supervisor cadastra/edita/remove categorias de cliente
 - [ ] **ADM-02**: Supervisor cadastra/edita/remove produtos consumidos
 - [ ] **ADM-03**: Supervisor cadastra/edita/remove tipos de tarefa
 - [ ] **ADM-04**: Supervisor cadastra/edita/remove motivos de perda
@@ -108,7 +108,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FUN-08 | Phase 2 | Complete |
 | FUN-09 | Phase 2 | Complete |
 | FUN-10 | Phase 2 | Complete |
-| ADM-01 | Phase 3 | Pending |
+| ADM-01 | Phase 3 | Complete |
 | ADM-02 | Phase 3 | Pending |
 | ADM-03 | Phase 3 | Pending |
 | ADM-04 | Phase 3 | Pending |

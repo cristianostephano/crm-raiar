@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: Cadastro e Funil de Vendas
+current_phase: 3
+current_phase_name: Administração de Listas Editáveis
 status: executing
 stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-07-17T23:50:50.985Z"
+last_updated: "2026-07-18T00:09:56.054Z"
 last_activity: 2026-07-17
-last_activity_desc: Phase 2 execution started
+last_activity_desc: Phase 3 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
   percent: 50
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-14)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 2 — Cadastro e Funil de Vendas
+**Current focus:** Phase 3 — Administração de Listas Editáveis
 
 ## Current Position
 
-Phase: 2 (Cadastro e Funil de Vendas) — EXECUTING
-Plan: 7 of 7
+Phase: 3 (Administração de Listas Editáveis) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-17 — Phase 2 execution started
+Last activity: 2026-07-17 — Phase 3 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P05 | ~40min | 2 tasks tasks | 10 files files |
 | Phase 02 P06 | ~50min | 2 tasks | 10 files |
 | Phase 02 P07 | 55min | 2 tasks | 12 files |
+| Phase 03 P01 | 35min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 02-07]: marcarStatus always routes through mover_card_funil (never a raw clientes UPDATE) so the 02-01 CHECK constraints stay the real FUN-05/FUN-06 backstop; pre-checks only add friendlier error codes
 - [Phase ?]: [Phase 02-07]: Added atualizarDataTarefa beyond the plan's 3-action tarefas list, since the UI-SPEC's per-row Calendar-popover date picker would be a non-functional stub without it
 - [Phase ?]: [Phase 02-07]: PerdaMotivoDialog's Confirmar perda is genuinely HTML-disabled (not just validated on click) until a motivo is selected, matching FUN-06's acceptance criteria literally
+- [Phase ?]: [Phase 03-01]: getListaValores lives in app/actions/listas.ts (not lib/supabase/queries/clientes.ts) - it's a distinct admin read (active+inactive) that must not be confused with the existing ativo=true-only cadastro readers
+- [Phase ?]: [Phase 03-01]: EditableListTab's pluralAtivoLabel is passed fully-formed by the caller (not derived) since Portuguese gender/number agreement differs per tab (categorias ativas vs produtos ativos)
 
 ### Pending Todos
 
@@ -137,6 +140,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-17T23:28:54.397Z
+Last session: 2026-07-18T00:09:37.660Z
 Stopped at: Phase 3 UI-SPEC approved
 Resume file: .planning/phases/03-administra-o-de-listas-edit-veis/03-UI-SPEC.md
