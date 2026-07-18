@@ -103,12 +103,13 @@ describe("dashboard_clientes_por_etapa", () => {
     expect(afterCounts.aguardando_feedback ?? 0).toBe(
       (beforeCounts.aguardando_feedback ?? 0) + 1
     )
-
-    // Sum across every etapa grew by exactly 2 (the two clientes just
-    // created) — no bleed from any other vendedor's rows, which the RLS
-    // gate (rls-dashboard.test.ts) proves more directly.
-    const beforeTotal = Object.values(beforeCounts).reduce((a, b) => a + b, 0)
-    const afterTotal = Object.values(afterCounts).reduce((a, b) => a + b, 0)
-    expect(afterTotal).toBe(beforeTotal + 2)
+    // Deliberately NOT asserting a whole-sum delta here: other dashboard
+    // test files run concurrently against this same shared vendedorA
+    // account (e.g. ganhos-perdidos.test.ts creates/deletes its own
+    // 'primeira_venda' clientes mid-test), so the grand total across every
+    // etapa isn't stable within this test's narrow before/after window.
+    // Per-etapa deltas on etapas this test owns exclusively are the stable
+    // assertion; "no bleed from any other vendedor's rows" (RLS isolation)
+    // is proven precisely by tests/dashboard/rls-dashboard.test.ts instead.
   })
 })
