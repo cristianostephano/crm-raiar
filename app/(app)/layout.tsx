@@ -66,6 +66,14 @@ export default async function AppLayout({
               Gerenciar equipe
             </Link>
           ) : null}
+          {profile?.role === "supervisor" ? (
+            <Link
+              href="/configuracoes"
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Configurações
+            </Link>
+          ) : null}
           <LogoutButton />
         </div>
       </header>
