@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 4
 current_phase_name: Dashboard Gerencial
 status: executing
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-07-19T03:03:48.927Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-07-19T03:25:25.736Z"
 last_activity: 2026-07-18
 last_activity_desc: Phase 4 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 4 (Dashboard Gerencial) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-18 — Phase 4 execution started
 
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04 P01 | 60min | 3 tasks | 10 files |
 | Phase 04-dashboard-gerencial P02 | ~20min | 2 tasks | 5 files |
 | Phase 04-dashboard-gerencial P03 | ~25min | 2 tasks | 5 files |
+| Phase 04-dashboard-gerencial P04 | ~15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -129,6 +130,8 @@ Recent decisions affecting current work:
 - [Phase ?]: recharts resolved to 3.8.0 via shadcn's registry pin at install time (not 3.9.2 referenced in CLAUDE.md/plan) - same recharts org package, older patch, no re-approval needed — Human legitimacy checkpoint approved the package/publisher, not a specific patch digit
 - [Phase ?]: [Phase 04-03]: DashboardClient defers resolvePeriodo() computation until a period-filtered child exists (04-04) - avoids a dead unused variable ahead of real consumers
 - [Phase ?]: [Phase 04-03]: ClientesPorEtapaChart's fetch-on-mount effect mirrors EditableListTab's react-hooks/set-state-in-effect pattern (synchronous setState in effect body + cancelled guard + reloadKey retry counter) instead of a useCallback loader
+- [Phase 04-04]: GanhosPerdidosCards always renders its 3 tiles once fetched (never a full-row empty banner) - Taxa de conversao renders an em dash via taxaConversao's null guard when ganho+perdido is 0, matching the plan's reachable-guarded-branch acceptance criterion
+- [Phase 04-04]: DashboardClient now computes periodo via useMemo(resolvePeriodo(preset, customRange)) - first real consumer of resolvePeriodo, exactly where 04-03 flagged it would land; also fixed two leftover 04-03 placeholder comments that mis-pointed Desempenho por vendedor/Prospeccao at plan 04-04 instead of 04-05
 
 ### Pending Todos
 
@@ -155,7 +158,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-19T03:00:43.469Z
-Stopped at: Phase 4 UI-SPEC approved
+Last session: 2026-07-19T03:25:25.697Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: 
 None
