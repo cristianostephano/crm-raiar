@@ -44,13 +44,13 @@
 
 ### Dashboard
 
-- [ ] **DSH-01**: Dashboard mostra clientes por etapa do funil
-- [ ] **DSH-02**: Dashboard mostra ganhos x perdidos num período
-- [ ] **DSH-03**: Dashboard mostra desempenho por vendedor
-- [ ] **DSH-04**: Dashboard mostra taxa de conversão
-- [ ] **DSH-05**: Dashboard mostra prospecções por produto e por categoria
-- [ ] **DSH-06**: Vendedor vê uma versão do dashboard só com os próprios números
-- [ ] **DSH-07**: Supervisor vê o dashboard completo, com todos os vendedores
+- [x] **DSH-01**: Dashboard mostra clientes por etapa do funil
+- [x] **DSH-02**: Dashboard mostra ganhos x perdidos num período
+- [x] **DSH-03**: Dashboard mostra desempenho por vendedor
+- [x] **DSH-04**: Dashboard mostra taxa de conversão
+- [x] **DSH-05**: Dashboard mostra prospecções por produto e por categoria
+- [x] **DSH-06**: Vendedor vê uma versão do dashboard só com os próprios números
+- [x] **DSH-07**: Supervisor vê o dashboard completo, com todos os vendedores
 
 ## v2 Requirements
 
@@ -112,13 +112,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADM-02 | Phase 3 | Complete |
 | ADM-03 | Phase 3 | Complete |
 | ADM-04 | Phase 3 | Complete |
-| DSH-01 | Phase 4 | Pending |
-| DSH-02 | Phase 4 | Pending |
-| DSH-03 | Phase 4 | Pending |
-| DSH-04 | Phase 4 | Pending |
-| DSH-05 | Phase 4 | Pending |
-| DSH-06 | Phase 4 | Pending |
-| DSH-07 | Phase 4 | Pending |
+| DSH-01 | Phase 4 | Complete |
+| DSH-02 | Phase 4 | Complete |
+| DSH-03 | Phase 4 | Complete |
+| DSH-04 | Phase 4 | Complete |
+| DSH-05 | Phase 4 | Complete |
+| DSH-06 | Phase 4 | Complete |
+| DSH-07 | Phase 4 | Complete |
 
 **Coverage:**
 

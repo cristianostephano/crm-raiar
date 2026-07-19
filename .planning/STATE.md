@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 3
-current_phase_name: Administração de Listas Editáveis
+current_phase: 4
+current_phase_name: Dashboard Gerencial
 status: executing
 stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-07-18T21:55:30.694Z"
-last_activity: 2026-07-17
-last_activity_desc: Phase 3 execution started
+last_updated: "2026-07-19T02:28:11.274Z"
+last_activity: 2026-07-18
+last_activity_desc: Phase 4 execution started
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 20
+  completed_plans: 16
   percent: 75
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-14)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 3 — Administração de Listas Editáveis
+**Current focus:** Phase 4 — Dashboard Gerencial
 
 ## Current Position
 
-Phase: 3 (Administração de Listas Editáveis) — EXECUTING
-Plan: 3 of 3
+Phase: 4 (Dashboard Gerencial) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-07-17 — Phase 3 execution started
+Last activity: 2026-07-18 — Phase 4 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P01 | 35min | 3 tasks | 7 files |
 | Phase 03 P02 | 20min | 2 tasks | 3 files |
 | Phase 03-administra-o-de-listas-edit-veis P03 | ~45min | 2 tasks | 1 files |
+| Phase 04 P01 | 60min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,10 @@ Recent decisions affecting current work:
 - [Phase 03]: [Phase 03-02]: Row-scoped errors (duplicate-name on edit, generic failure on deactivate) render inline in their own context (edit Input / deactivate Dialog) rather than the shared top banner, matching PerdaMotivoDialog's own-dialog-owns-its-error precedent
 - [Phase 03]: [Phase 03-02]: Reactivate has no confirmation dialog (only deactivate does) - D-03 treats reactivation as the deliberately low-friction reversal path
 - [Phase 03-03]: Task 2's checkpoint blocker (tab click looked stuck) was a real Base UI TabsPanel unmount-on-switch bug, fixed by passing keepMounted to every TabsContent in ConfiguracoesTabs.tsx so EditableListTab fetches once per tab instead of re-fetching (and flashing Carregando) on every click — Root-caused via node_modules/@base-ui/react/tabs/panel/TabsPanel.js source and confirmed with Playwright DOM inspection; verified against both next dev and next build && next start
+- [Phase ?]: [Phase 04-01]: Every dashboard_* function is SECURITY INVOKER by omission (no security definer), mirroring mover_card_funil — RLS on clientes/historico/cliente_produtos is the only authorization boundary
+- [Phase ?]: [Phase 04-01]: Ganhos/perdidos and desempenho-por-vendedor source their date basis from historico.criado_em (status-change event), never clientes.etapa_alterada_em/criado_em (D-02)
+- [Phase ?]: [Phase 04-01]: Prospecção por produto/categoria filters by clientes.criado_em (cadastro date), a deliberately different basis than ganhos/perdidos (D-09)
+- [Phase ?]: [Phase 04-01]: Clientes por etapa takes zero date parameters — always a live snapshot, unaffected by the period filter (D-08)
 
 ### Pending Todos
 
@@ -145,7 +150,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-18T21:33:23.146Z
+Last session: 2026-07-19T02:23:51.970Z
 Stopped at: Phase 4 UI-SPEC approved
 Resume file: 
-.planning/phases/04-dashboard-gerencial/04-UI-SPEC.md
+None
