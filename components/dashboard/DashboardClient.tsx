@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { ClientesPorEtapaChart } from "@/components/dashboard/ClientesPorEtapaChart"
 import { PeriodoFilter } from "@/components/dashboard/PeriodoFilter"
 import type { PeriodoPreset } from "@/lib/dashboard/periodo"
 
@@ -14,10 +15,12 @@ type DashboardClientProps = {
  * will pass the resolved {inicio, fim} down to period-filtered metric
  * blocks — mirrors ConfiguracoesTabs' "shared state, independently-fetching
  * children" pattern, so one failed metric's error state never blanks the
- * whole page. Chart blocks are wired in below as each plan lands: DSH-01
- * (this phase's plan 03) is a live snapshot and deliberately does NOT
- * receive período (D-08); the KPI row, "Desempenho por vendedor"
- * (Supervisor-only, isSupervisor), and "Prospecção" blocks are
+ * whole page.
+ *
+ * ClientesPorEtapaChart (DSH-01) is the only metric wired so far and
+ * deliberately does NOT receive período — it is always a live snapshot,
+ * unaffected by the period filter (D-08). The KPI row, "Desempenho por
+ * vendedor" (Supervisor-only, isSupervisor), and "Prospecção" blocks are
  * period-filtered and land in plans 04-04/04-05.
  */
 export function DashboardClient({ isSupervisor }: DashboardClientProps) {
@@ -49,10 +52,8 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
       />
 
       <div className="flex flex-col gap-6">
-        {/*
-          "Clientes por etapa do funil" (DSH-01) — always-current snapshot,
-          not period-filtered (D-08). Wired in Task 2 of this plan.
-        */}
+        {/* DSH-01 — always-current snapshot, not period-filtered (D-08). */}
+        <ClientesPorEtapaChart />
 
         {/*
           KPI row (Ganhos / Perdidos / Taxa de conversão) — DSH-02/DSH-04,
