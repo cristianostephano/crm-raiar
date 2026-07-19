@@ -2,9 +2,15 @@
 
 import { useMemo, useState } from "react"
 
+import {
+  getProspeccaoPorCategoriaAction,
+  getProspeccaoPorProdutoAction,
+} from "@/app/actions/dashboard"
 import { ClientesPorEtapaChart } from "@/components/dashboard/ClientesPorEtapaChart"
+import { DesempenhoVendedorChart } from "@/components/dashboard/DesempenhoVendedorChart"
 import { GanhosPerdidosCards } from "@/components/dashboard/GanhosPerdidosCards"
 import { PeriodoFilter } from "@/components/dashboard/PeriodoFilter"
+import { ProspeccaoChart } from "@/components/dashboard/ProspeccaoChart"
 import { resolvePeriodo, type PeriodoPreset } from "@/lib/dashboard/periodo"
 
 type DashboardClientProps = {
@@ -20,10 +26,9 @@ type DashboardClientProps = {
  *
  * ClientesPorEtapaChart (DSH-01) deliberately does NOT receive período — it
  * is always a live snapshot, unaffected by the period filter (D-08).
- * GanhosPerdidosCards (DSH-02/DSH-04) is the first period-filtered child,
- * so `periodo` is resolved here via lib/dashboard/periodo.ts's
- * resolvePeriodo. "Desempenho por vendedor" (Supervisor-only, isSupervisor)
- * and "Prospecção" blocks are also period-filtered and land in plan 04-05.
+ * GanhosPerdidosCards (DSH-02/DSH-04), DesempenhoVendedorChart (DSH-03,
+ * Supervisor-only per D-07) and the two ProspeccaoChart instances (DSH-05)
+ * are all period-filtered via the same resolved `periodo`.
  */
 export function DashboardClient({ isSupervisor }: DashboardClientProps) {
   const [preset, setPreset] = useState<PeriodoPreset>("30dias")
@@ -61,14 +66,35 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
         <GanhosPerdidosCards inicio={periodo.inicio} fim={periodo.fim} />
 
         {/*
-          "Desempenho por vendedor" — DSH-03/D-07, Supervisor-only
-          (isSupervisor), period-filtered via `periodo`. Wired in plan 04-05.
+          "Desempenho por vendedor" — DSH-03/D-07, Supervisor-only. This is
+          a UX nicety over the RLS boundary (a Vendedor's own call to
+          getDesempenhoVendedor already returns just their own row) — never
+          the authorization boundary itself.
         */}
+        {isSupervisor ? (
+          <DesempenhoVendedorChart inicio={periodo.inicio} fim={periodo.fim} />
+        ) : null}
 
         {/*
           "Prospecção por produto" / "Prospecção por categoria" — DSH-05,
-          period-filtered via `periodo`. Wired in plan 04-05.
+          period-filtered via `periodo`, shown to both roles.
         */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <ProspeccaoChart
+            title="Prospecção por produto"
+            caption="Clientes cadastrados no período, por produto consumido"
+            inicio={periodo.inicio}
+            fim={periodo.fim}
+            action={getProspeccaoPorProdutoAction}
+          />
+          <ProspeccaoChart
+            title="Prospecção por categoria"
+            caption="Clientes cadastrados no período, por categoria"
+            inicio={periodo.inicio}
+            fim={periodo.fim}
+            action={getProspeccaoPorCategoriaAction}
+          />
+        </div>
       </div>
     </div>
   )
