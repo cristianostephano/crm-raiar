@@ -119,14 +119,22 @@ export function ClientesPorEtapaChart() {
             Nenhum cliente cadastrado ainda.
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-[280px] w-full">
-            <BarChart accessibilityLayer data={state.rows}>
+          <ChartContainer config={chartConfig} className="h-[360px] w-full">
+            <BarChart
+              accessibilityLayer
+              data={state.rows}
+              margin={{ bottom: 100 }}
+            >
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="etapaLabel"
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
+                interval={0}
+                angle={-40}
+                textAnchor="end"
+                height={100}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Bar dataKey="total" fill="var(--color-total)" radius={4} />

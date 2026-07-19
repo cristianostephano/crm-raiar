@@ -76,7 +76,11 @@ export function PeriodoFilter({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="text-sm font-semibold">Período</span>
-      <Select value={preset} onValueChange={handlePresetChange}>
+      <Select
+        value={preset}
+        onValueChange={handlePresetChange}
+        items={PRESET_OPTIONS}
+      >
         <SelectTrigger className="w-fit">
           <SelectValue />
         </SelectTrigger>
