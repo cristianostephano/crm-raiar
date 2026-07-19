@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Autenticação e Papéis** - Usuários fazem login via Supabase Auth e o sistema distingue Supervisor de Vendedor em toda a base de dados (RLS).
 - [x] **Phase 2: Cadastro e Funil de Vendas** - Vendedores e supervisores cadastram, editam e encontram clientes PJ, e movem os clientes pelas 7 etapas do funil kanban, com o mínimo de fricção possível. (completed 2026-07-17)
 - [x] **Phase 3: Administração de Listas Editáveis** - Supervisor mantém categorias, produtos, tipos de tarefa e motivos de perda sem depender de alteração de código. (completed 2026-07-18)
-- [ ] **Phase 4: Dashboard Gerencial** - Supervisor e vendedores acompanham os números do funil, cada um na medida da própria visão.
+- [x] **Phase 4: Dashboard Gerencial** - Supervisor e vendedores acompanham os números do funil, cada um na medida da própria visão. (completed 2026-07-19)
 
 ## Phase Details
 
@@ -139,7 +139,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Dashboard mostra prospecções agrupadas por produto e por categoria.
   5. Vendedor abre o dashboard e vê só os próprios números; Supervisor abre o mesmo dashboard e vê os números de todo o time.
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans complete
 
 **Wave 1** *(parallel — no file overlap)*
 
@@ -156,7 +156,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 04-05-PLAN.md — "Desempenho por vendedor" (barras horizontais, só Supervisor, D-06/D-10) + "Prospecção por produto/categoria" (D-09) + checkpoint humano final (DSH-03, DSH-05, DSH-07)
+- [x] 04-05-PLAN.md — "Desempenho por vendedor" (barras horizontais, só Supervisor, D-06/D-10) + "Prospecção por produto/categoria" (D-09) + checkpoint humano final (DSH-03, DSH-05, DSH-07)
 
 **UI hint**: yes
 
@@ -170,4 +170,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
-| 4. Dashboard Gerencial | 4/5 | In Progress|  |
+| 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |

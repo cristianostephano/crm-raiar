@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 4
 current_phase_name: Dashboard Gerencial
-status: executing
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-07-19T03:25:25.736Z"
+status: verifying
+stopped_at: Completed 04-05-PLAN.md — Phase 4 (Dashboard Gerencial) and v1 milestone complete
+last_updated: "2026-07-19T03:58:20.952Z"
 last_activity: 2026-07-18
 last_activity_desc: Phase 4 execution started
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 20
-  completed_plans: 19
-  percent: 75
+  completed_plans: 20
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 
 Phase: 4 (Dashboard Gerencial) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-18 — Phase 4 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -74,6 +74,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-dashboard-gerencial P02 | ~20min | 2 tasks | 5 files |
 | Phase 04-dashboard-gerencial P03 | ~25min | 2 tasks | 5 files |
 | Phase 04-dashboard-gerencial P04 | ~15min | 2 tasks | 2 files |
+| Phase 04-dashboard-gerencial P05 | ~30min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 04-03]: ClientesPorEtapaChart's fetch-on-mount effect mirrors EditableListTab's react-hooks/set-state-in-effect pattern (synchronous setState in effect body + cancelled guard + reloadKey retry counter) instead of a useCallback loader
 - [Phase 04-04]: GanhosPerdidosCards always renders its 3 tiles once fetched (never a full-row empty banner) - Taxa de conversao renders an em dash via taxaConversao's null guard when ganho+perdido is 0, matching the plan's reachable-guarded-branch acceptance criterion
 - [Phase 04-04]: DashboardClient now computes periodo via useMemo(resolvePeriodo(preset, customRange)) - first real consumer of resolvePeriodo, exactly where 04-03 flagged it would land; also fixed two leftover 04-03 placeholder comments that mis-pointed Desempenho por vendedor/Prospeccao at plan 04-04 instead of 04-05
+- [Phase ?]: [Phase 04-05]: DesempenhoVendedorChart and ProspeccaoChart stayed as two separate components (data shapes differ) - ProspeccaoChart itself is the reusable one, parameterized by title/caption/action, powering both produto and categoria
+- [Phase ?]: [Phase 04-05]: Variable-row-count chart sizing implemented as an uncapped-height ChartContainer inside a max-height:480px overflow-y-auto wrapper, so long lists actually scroll instead of Recharts auto-squeezing bars into a fixed height
+- [Phase ?]: [Phase 04-05]: Human checkpoint (Task 3) was performed directly by the project coordinator in the browser; found and fixed 2 pre-existing bugs during verification (commit 0da3d13) - PeriodoFilter Select missing base-ui items prop, ClientesPorEtapaChart silently dropping 2 of 7 X-axis labels to Recharts collision handling
 
 ### Pending Todos
 
@@ -158,7 +162,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-19T03:25:25.697Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-07-19T03:58:20.899Z
+Stopped at: Completed 04-05-PLAN.md — Phase 4 (Dashboard Gerencial) and v1 milestone complete
 Resume file: 
 None
