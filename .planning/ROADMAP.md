@@ -139,12 +139,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Dashboard mostra prospecções agrupadas por produto e por categoria.
   5. Vendedor abre o dashboard e vê só os próprios números; Supervisor abre o mesmo dashboard e vê os números de todo o time.
 
-**Plans**: 1/5 plans executed
+**Plans**: 2/5 plans executed
 
 **Wave 1** *(parallel — no file overlap)*
 
 - [x] 04-01-PLAN.md — Backend: 5 SECURITY-INVOKER aggregate SQL functions (`0003_dashboard_aggregates.sql`) + query/action layer + período util + full behavior/RLS test suite + [BLOCKING] `supabase db push` (DSH-01..07)
-- [ ] 04-02-PLAN.md — Instala o componente Chart do shadcn (recharts) atrás de checkpoint humano de legitimidade + override `--chart-1` para o azul `--primary` (DSH-01, DSH-03, DSH-05)
+- [x] 04-02-PLAN.md — Instala o componente Chart do shadcn (recharts) atrás de checkpoint humano de legitimidade + override `--chart-1` para o azul `--primary` (DSH-01, DSH-03, DSH-05)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -170,4 +170,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
-| 4. Dashboard Gerencial | 1/5 | In Progress|  |
+| 4. Dashboard Gerencial | 2/5 | In Progress|  |
