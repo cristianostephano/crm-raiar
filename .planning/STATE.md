@@ -6,14 +6,14 @@ current_phase: 4
 current_phase_name: Dashboard Gerencial
 status: executing
 stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-07-19T02:43:52.647Z"
+last_updated: "2026-07-19T03:03:48.927Z"
 last_activity: 2026-07-18
 last_activity_desc: Phase 4 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 20
-  completed_plans: 17
+  completed_plans: 18
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-14)
 ## Current Position
 
 Phase: 4 (Dashboard Gerencial) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-07-18 — Phase 4 execution started
 
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-administra-o-de-listas-edit-veis P03 | ~45min | 2 tasks | 1 files |
 | Phase 04 P01 | 60min | 3 tasks | 10 files |
 | Phase 04-dashboard-gerencial P02 | ~20min | 2 tasks | 5 files |
+| Phase 04-dashboard-gerencial P03 | ~25min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 04-01]: Prospecção por produto/categoria filters by clientes.criado_em (cadastro date), a deliberately different basis than ganhos/perdidos (D-09)
 - [Phase ?]: [Phase 04-01]: Clientes por etapa takes zero date parameters — always a live snapshot, unaffected by the period filter (D-08)
 - [Phase ?]: recharts resolved to 3.8.0 via shadcn's registry pin at install time (not 3.9.2 referenced in CLAUDE.md/plan) - same recharts org package, older patch, no re-approval needed — Human legitimacy checkpoint approved the package/publisher, not a specific patch digit
+- [Phase ?]: [Phase 04-03]: DashboardClient defers resolvePeriodo() computation until a period-filtered child exists (04-04) - avoids a dead unused variable ahead of real consumers
+- [Phase ?]: [Phase 04-03]: ClientesPorEtapaChart's fetch-on-mount effect mirrors EditableListTab's react-hooks/set-state-in-effect pattern (synchronous setState in effect body + cancelled guard + reloadKey retry counter) instead of a useCallback loader
 
 ### Pending Todos
 
@@ -152,7 +155,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-19T02:43:00.909Z
+Last session: 2026-07-19T03:00:43.469Z
 Stopped at: Phase 4 UI-SPEC approved
 Resume file: 
 None

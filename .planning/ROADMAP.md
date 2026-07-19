@@ -139,7 +139,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Dashboard mostra prospecções agrupadas por produto e por categoria.
   5. Vendedor abre o dashboard e vê só os próprios números; Supervisor abre o mesmo dashboard e vê os números de todo o time.
 
-**Plans**: 2/5 plans executed
+**Plans**: 3/5 plans executed
 
 **Wave 1** *(parallel — no file overlap)*
 
@@ -148,7 +148,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 04-03-PLAN.md — Tela `/dashboard` + link no menu (D-03) + orquestrador + filtro de período (D-01) + gráfico "Clientes por etapa" (D-04/D-08) (DSH-01, DSH-06, DSH-07)
+- [x] 04-03-PLAN.md — Tela `/dashboard` + link no menu (D-03) + orquestrador + filtro de período (D-01) + gráfico "Clientes por etapa" (D-04/D-08) (DSH-01, DSH-06, DSH-07)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -170,4 +170,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Autenticação e Papéis | 4/5 | Blocked (01-05 Task 4 manual verification deferred) |  |
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
-| 4. Dashboard Gerencial | 2/5 | In Progress|  |
+| 4. Dashboard Gerencial | 3/5 | In Progress|  |
