@@ -58,6 +58,12 @@ export default async function AppLayout({
           >
             Clientes
           </Link>
+          <Link
+            href="/dashboard"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Dashboard
+          </Link>
           {profile?.role === "supervisor" ? (
             <Link
               href="/equipe"
