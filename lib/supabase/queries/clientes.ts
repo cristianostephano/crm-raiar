@@ -297,6 +297,124 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
 }
 
 /**
+ * Export-shaped cliente row (EXP-01/EXP-02/EXP-03, D-02) — every cadastro
+ * field plus the funil fields (etapa/status/observação), camelCase like
+ * ClienteDetalhe. `etapa`/`statusAcompanhamento` are kept as raw enum values
+ * here; mapping them to pt-BR labels is buildClientesWorkbook's job
+ * (lib/clientes/exportacao.ts, 05-01 Task 3), not this query's.
+ */
+export type ClienteExportRow = {
+  razaoSocial: string
+  cep: string
+  rua: string
+  numero: string
+  complemento: string | null
+  cidade: string
+  estado: string
+  categoriaNome: string | null
+  contato: string | null
+  telefone: string | null
+  email: string | null
+  produtos: string[]
+  numeroDeLojas: number | null
+  responsavelNome: string | null
+  etapa: EtapaKey
+  statusAcompanhamento: StatusAcompanhamento
+  observacao: string | null
+}
+
+/** Raw shape returned by getClientesParaExportacao's embedded-select query. */
+type ClienteExportQueryRow = {
+  razao_social: string
+  cep: string
+  rua: string
+  numero: string
+  complemento: string | null
+  cidade: string
+  estado: string
+  categorias: { nome: string } | null
+  profiles: { nome: string; sobrenome: string } | null
+  contato: string | null
+  telefone: string | null
+  email: string | null
+  numero_de_lojas: number | null
+  cliente_produtos: {
+    produtos_consumidos: { nome: string } | null
+  }[] | null
+  etapa: EtapaKey
+  status_acompanhamento: StatusAcompanhamento
+  observacao: string | null
+}
+
+/**
+ * Export-shaped reader for the "Exportar" download (EXP-01/EXP-02/EXP-03).
+ *
+ * RLS on `clientes` (`is_supervisor() OR responsavel = auth.uid()`, same
+ * policy every other reader in this file relies on) is the ENTIRE
+ * authorization boundary here — there is deliberately no `responsavel`
+ * filter or `is_supervisor()` branch in this function. A Vendedor's call
+ * returns only their own clientes; a Supervisor's call returns every
+ * cliente.
+ *
+ * `ids`, when provided as a non-empty array, layers an additional
+ * `.in("id", ids)` on top of RLS to narrow an already-RLS-scoped result to
+ * a specific set of rows (D-05's server-side narrowing for EXP-03 — the
+ * screen's active search/filter/tab selection). This can only ever narrow
+ * what RLS already allows: an id RLS wouldn't otherwise return simply comes
+ * back as 0 rows for that id, never an error or a widened result. When
+ * `ids` is null/undefined/empty, every RLS-visible row is returned.
+ */
+export async function getClientesParaExportacao(
+  ids?: string[] | null
+): Promise<ClienteExportRow[]> {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from("clientes")
+    .select(
+      "razao_social, cep, rua, numero, complemento, cidade, estado, categorias(nome), profiles(nome, sobrenome), contato, telefone, email, numero_de_lojas, cliente_produtos(produtos_consumidos(nome)), etapa, status_acompanhamento, observacao"
+    )
+
+  if (ids && ids.length > 0) {
+    query = query.in("id", ids)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    throw new Error(`Falha ao carregar clientes para exportação: ${error.message}`)
+  }
+
+  return (data ?? []).map((row) => {
+    const r = row as unknown as ClienteExportQueryRow
+
+    return {
+      razaoSocial: r.razao_social,
+      cep: r.cep,
+      rua: r.rua,
+      numero: r.numero,
+      complemento: r.complemento,
+      cidade: r.cidade,
+      estado: r.estado,
+      categoriaNome: r.categorias?.nome ?? null,
+      contato: r.contato,
+      telefone: r.telefone,
+      email: r.email,
+      produtos: (r.cliente_produtos ?? [])
+        .filter((cp) => cp.produtos_consumidos !== null)
+        .map((cp) => cp.produtos_consumidos!.nome),
+      numeroDeLojas: r.numero_de_lojas,
+      responsavelNome: r.profiles
+        ? `${r.profiles.nome} ${r.profiles.sobrenome}`
+        : null,
+      etapa: r.etapa,
+      statusAcompanhamento: r.status_acompanhamento,
+      observacao: r.observacao,
+    }
+  })
+}
+
+/**
  * Single tarefa row for the Funil section's checklist (FUN-08). RLS on
  * `tarefas` (the parent-cliente EXISTS gate from 02-01) is the real
  * boundary — a Vendedor requesting a non-owned clienteId simply gets an
