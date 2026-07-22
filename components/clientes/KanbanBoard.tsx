@@ -41,7 +41,7 @@ import {
   type ClienteCompletudeInput,
 } from "@/lib/clientes/completude"
 import { ETAPAS, ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
-import { diasParado, staleReason } from "@/lib/funil/staleness"
+import { diasParado, staleReason, taskStatus } from "@/lib/funil/staleness"
 import type { UpdateClienteInput } from "@/lib/validations/cliente"
 import type {
   ClienteListItem,
@@ -125,6 +125,7 @@ function toCardData(cliente: ClienteListItem): ClienteCardData {
     cidade: cliente.cidade,
     estado: cliente.estado,
     telefone: cliente.telefone,
+    taskStatus: taskStatus(cliente.tarefas_abertas),
   }
 }
 
