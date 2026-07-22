@@ -186,7 +186,15 @@ Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em 
   3. Quando há filtros aplicados na tela (categoria, vendedor, produto, texto livre por razão social), o arquivo exportado contém somente os clientes que correspondem a esses filtros — não a base inteira.
   4. O arquivo abre corretamente em Excel/planilha (uma coluna por campo do cliente, uma linha por cliente) e nenhum valor de célula é interpretado como fórmula ao abrir (proteção contra CSV injection).
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Camada de dados: query RLS-scoped `getClientesParaExportacao` + helper `.xlsx` (`@e965/xlsx`, atrás de checkpoint humano de legitimidade) com proteção contra formula injection (EXP-01, EXP-02, EXP-03)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 05-02-PLAN.md — Route Handler `POST /api/clientes/exportar` + botão "Exportar" (envia os ids já filtrados na tela) + checkpoint humano do download real (EXP-01, EXP-02, EXP-03)
 
 ### Phase 6: Importação — Upload, Mapeamento e Revisão
 
@@ -230,6 +238,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
 | 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |
-| 5. Exportação de Clientes | 0/TBD | Not started | - |
+| 5. Exportação de Clientes | 0/2 | Not started | - |
 | 6. Importação — Upload, Mapeamento e Revisão | 0/TBD | Not started | - |
 | 7. Importação — Confirmação e Gravação | 0/TBD | Not started | - |
