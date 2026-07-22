@@ -6,6 +6,7 @@ import {
   isParado,
   staleReason,
   tarefaAtrasada,
+  taskStatus,
   type TarefaAberta,
 } from "../../lib/funil/staleness"
 
@@ -141,5 +142,33 @@ describe("staleReason", () => {
       kind: "parado",
       label: `Parado há ${DIAS_PARADO_ALERTA} dias nesta etapa.`,
     })
+  })
+})
+
+describe("taskStatus", () => {
+  it('returns "none" when there are no open tasks scheduled', () => {
+    expect(taskStatus([], NOW)).toBe("none")
+  })
+
+  it('returns "on_time" for a single open task due today (not overdue)', () => {
+    const tarefas: TarefaAberta[] = [
+      { concluida: false, dataConclusao: dateOnlyDaysAgo(0), tipoNome: "Visitar" },
+    ]
+    expect(taskStatus(tarefas, NOW)).toBe("on_time")
+  })
+
+  it('returns "late" for a single open task past due', () => {
+    const tarefas: TarefaAberta[] = [
+      { concluida: false, dataConclusao: dateOnlyDaysAgo(2), tipoNome: "Visitar" },
+    ]
+    expect(taskStatus(tarefas, NOW)).toBe("late")
+  })
+
+  it('returns "late" when at least one of multiple open tasks is overdue', () => {
+    const tarefas: TarefaAberta[] = [
+      { concluida: false, dataConclusao: dateOnlyDaysAgo(0), tipoNome: "Visitar" },
+      { concluida: false, dataConclusao: dateOnlyDaysAgo(2), tipoNome: "Mandar mensagem" },
+    ]
+    expect(taskStatus(tarefas, NOW)).toBe("late")
   })
 })
