@@ -15,44 +15,58 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 - **Success metric**: time passa a usar o funil no dia a dia e o sistema cobre as necessidades gerenciais (incluindo dashboard) a ponto de o CRM pago poder ser cancelado
 - **Strategy notes**: —
 
+## Current Milestone: v1.1 Importação e Exportação de Clientes
+
+**Goal:** Dar ao supervisor uma forma de trazer clientes em massa via planilha e exportar a lista de clientes, sem depender mais de cadastro manual um a um pra grandes volumes.
+
+**Target features:**
+- Importação de clientes via planilha (Excel/CSV), recorrente, restrita ao Supervisor
+- Tela de mapear colunas da planilha pros campos do sistema
+- Mostrar erros/duplicados antes de confirmar a importação
+- Cliente importado sempre entra na etapa "Aguardando contato"
+- Exportação da lista de clientes (Vendedor exporta só os próprios, Supervisor exporta todos)
+
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Vendedor cadastra cliente PJ com mínimo obrigatório (razão social, endereço, responsável) e completa os demais dados depois — v1.0
+- ✓ Cliente PJ tem: razão social, endereço (CEP, rua, número, complemento), categoria, contato, telefone, email, responsável, produtos consumidos, número de lojas (opcional) — v1.0
+- ✓ Vendedor visualiza e movimenta no funil (kanban de 7 etapas) apenas os próprios clientes — v1.0
+- ✓ Supervisor visualiza e movimenta no funil todos os clientes, de todos os vendedores — v1.0
+- ✓ Vendedor pode editar os próprios clientes; apagar cliente é restrito ao supervisor — v1.0
+- ✓ Supervisor pode cadastrar um cliente e atribuir a um vendedor específico — v1.0
+- ✓ Card no funil tem status_acompanhamento: em andamento, perdido, ou ganho — v1.0
+- ✓ Ao marcar um card como perdido, é obrigatório registrar o motivo (lista de motivos editável pelo supervisor) — v1.0
+- ✓ Card tem observação (texto livre) e tarefas (lista editável pelo supervisor), cada tarefa com sua própria data de conclusão — v1.0
+- ✓ Cards parados/atrasados ficam visualmente destacados no kanban ao abrir a tela — v1.0
+- ✓ Histórico automático de mudanças por cliente (etapa, status, tarefas concluídas) — v1.0
+- ✓ Busca e filtro na lista de clientes (por vendedor, categoria, produto, texto livre por razão social) — v1.0
+- ✓ Supervisor faz CRUD de 4 listas editáveis: categoria do cliente, produtos consumidos, tipos de tarefa, motivos de perda — v1.0
+- ✓ Autenticação via Supabase Auth com dois papéis (Supervisor, Vendedor) — v1.0
+- ✓ Dashboard gerencial: clientes por etapa do funil, ganhos x perdidos, desempenho por vendedor, taxa de conversão, prospecções por produto e por categoria — v1.0
+- ✓ Vendedor vê uma versão do dashboard só com os próprios números; supervisor vê os números de todo o time — v1.0
 
 ### Active
 
-- [ ] Vendedor cadastra cliente PJ com mínimo obrigatório (razão social, endereço, responsável) e completa os demais dados depois, conforme a negociação avança
-- [ ] Cliente PJ tem: razão social, endereço (CEP, rua, número, complemento), categoria, contato, telefone, email, responsável, produtos consumidos, número de lojas (opcional)
-- [ ] Vendedor visualiza e movimenta no funil (kanban de 7 etapas) apenas os próprios clientes (responsavel = usuário logado)
-- [ ] Supervisor visualiza e movimenta no funil todos os clientes, de todos os vendedores
-- [ ] Vendedor pode editar os próprios clientes; apagar cliente é restrito ao supervisor
-- [ ] Supervisor pode cadastrar um cliente e atribuir a um vendedor específico — campo responsável é sempre obrigatório, em qualquer fluxo de cadastro
-- [ ] Card no funil tem status_acompanhamento: em andamento, perdido, ou ganho (ganho só é possível na etapa "1ª venda concluída")
-- [ ] Ao marcar um card como perdido, é obrigatório registrar o motivo (lista de motivos editável pelo supervisor)
-- [ ] Card tem observação (texto livre) e tarefas (lista editável pelo supervisor), cada tarefa com sua própria data de conclusão
-- [ ] Cards parados/atrasados ficam visualmente destacados no kanban ao abrir a tela (sem envio de notificação ativa)
-- [ ] Histórico automático de mudanças por cliente (etapa, status, tarefas concluídas) — surgiu da pesquisa de domínio, reaproveita os mesmos dados do destaque visual
-- [ ] Busca e filtro na lista de clientes (por vendedor, categoria, produto, texto livre por razão social) — surgiu da pesquisa de domínio, essencial pra visão "todos os clientes" do supervisor não virar uma lista inutilizável
-- [ ] Supervisor faz CRUD de 4 listas editáveis: categoria do cliente, produtos consumidos, tipos de tarefa, motivos de perda
-- [ ] Autenticação via Supabase Auth com dois papéis (Supervisor, Vendedor); cadastro de usuário com email, nome, sobrenome, senha, celular
-- [ ] Dashboard gerencial: clientes por etapa do funil, ganhos x perdidos, desempenho por vendedor, taxa de conversão, prospecções por produto e por categoria
-- [ ] Vendedor vê uma versão do dashboard só com os próprios números; supervisor vê os números de todo o time
+- [ ] Supervisor importa clientes em massa via planilha (Excel/CSV), com tela de mapeamento de colunas
+- [ ] Sistema mostra erros e duplicados antes de confirmar a importação
+- [ ] Cliente importado sempre entra na etapa "Aguardando contato" do funil
+- [ ] Vendedor exporta a lista dos próprios clientes; Supervisor exporta a lista de todos os clientes
 
 ### Out of Scope
 
-- Notificações ativas (email, push) de tarefas atrasadas — destaque visual no kanban já resolve o problema de esquecimento no MVP, sem custo/complexidade de um serviço de notificação
-- Colunas do funil editáveis por permissão — as 7 etapas ficam fixas no código no MVP, pra reduzir complexidade e validar a ideia primeiro
-- Tela de importação de planilha de clientes — a migração da base do CRM pago atual é feita uma única vez, fora da interface, não precisa virar uma funcionalidade permanente do sistema
-- App mobile nativo — web responsivo é suficiente para o MVP
+- Notificações ativas (email, push) de tarefas atrasadas — destaque visual no kanban já resolve o problema de esquecimento, sem custo/complexidade de um serviço de notificação
+- Colunas do funil editáveis por permissão — as 7 etapas ficam fixas no código, pra reduzir complexidade
+- App mobile nativo — web responsivo é suficiente
 - Integração contínua (sync/API) com o CRM pago atual — o objetivo é substituí-lo, não integrar com ele
+- Importação em massa pelo Vendedor — restrita ao Supervisor nesta versão, decisão explícita do dono do projeto
 
 ## Context
 
 - **Motivação**: hoje a empresa paga por um CRM externo com custo elevado, e o time de vendas não preenche direito — telas com muitos campos e esquecimento de atualizar o funil são as duas causas apontadas pelo usuário.
 - **Origem do mapeamento de domínio**: existe um wireframe (Excalidraw) do fluxo de vendas atual, já documentado em `CLAUDE.md` — usuários/papéis, cliente PJ, funil de 7 etapas e os 3 enums editáveis originais (categoria, produtos consumidos, tipos de tarefa). O motivo de perda (4º enum editável) surgiu durante esta conversa de inicialização.
-- **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. É uma migração única — feita diretamente no banco a partir de uma exportação, sem exigir uma tela de importação no produto.
+- **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. Na v1.0 isso foi tratado como migração única, fora da UI — na v1.1 essa decisão foi revista: o time recebe planilhas de clientes/leads com frequência (parceiros, feiras), então a importação vira uma tela permanente do sistema, restrita ao Supervisor.
 - **Perfil do usuário**: quem pilota o projeto não programa. Explicações devem evitar jargão técnico, focar em sintomas observáveis, e mudanças grandes precisam de um plano em linguagem simples antes de qualquer implementação.
 
 ## Constraints
@@ -66,13 +80,16 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Cadastro de cliente com mínimo obrigatório (razão social + endereço + responsável) | Reduzir a fricção que hoje trava o preenchimento no CRM pago | — Pending |
-| Motivo de perda vira uma lista editável pelo supervisor (não texto livre) | Precisa ser agregável no dashboard gerencial | — Pending |
-| Colunas do funil fixas no MVP | Menos complexidade pra validar a ideia primeiro | — Pending |
-| Sem notificações ativas no MVP, só destaque visual no kanban | Resolve o esquecimento de atualização sem custo/complexidade de um serviço de notificação | — Pending |
-| Migração de dados do CRM atual é única e feita fora da UI | Evita construir uma funcionalidade de importação permanente que não será reaproveitada | — Pending |
-| Dashboard gerencial entra no MVP, não fica para depois | Critério de sucesso do usuário inclui informação gerencial completa antes de migrar de vez para o novo sistema | — Pending |
-| Vendedor edita os próprios clientes; apagar fica restrito ao supervisor | Confirmado explicitamente pelo usuário, resolve a dúvida em aberto sobre permissões de vendedor | — Pending |
+| Cadastro de cliente com mínimo obrigatório (razão social + endereço + responsável) | Reduzir a fricção que hoje trava o preenchimento no CRM pago | ✓ Good |
+| Motivo de perda vira uma lista editável pelo supervisor (não texto livre) | Precisa ser agregável no dashboard gerencial | ✓ Good |
+| Colunas do funil fixas no MVP | Menos complexidade pra validar a ideia primeiro | ✓ Good |
+| Sem notificações ativas no MVP, só destaque visual no kanban | Resolve o esquecimento de atualização sem custo/complexidade de um serviço de notificação | ✓ Good |
+| Dashboard gerencial entra no MVP, não fica para depois | Critério de sucesso do usuário inclui informação gerencial completa antes de migrar de vez para o novo sistema | ✓ Good |
+| Vendedor edita os próprios clientes; apagar fica restrito ao supervisor | Confirmado explicitamente pelo usuário, resolve a dúvida em aberto sobre permissões de vendedor | ✓ Good |
+| Migração de dados do CRM atual passa a ser recorrente via tela de importação (revisão da decisão de v1.0) | O time continua recebendo listas de clientes/leads em planilha (não é só uma migração única); precisa virar funcionalidade permanente | — Pending |
+| Importação em massa restrita ao Supervisor | Decisão explícita do dono do projeto — Vendedor não tem acesso a essa função | — Pending |
+| Cliente importado sempre entra em "Aguardando contato" | Simplicidade: planilha não precisa de coluna de etapa, todo cliente novo começa do zero no funil | — Pending |
+| Exportação segue a mesma regra de visibilidade (RLS) do funil | Reaproveita a autorização já existente, sem lógica de permissão nova | — Pending |
 
 ## Evolution
 
@@ -93,4 +110,4 @@ Este documento evolui nas transições de fase e nos marcos do projeto.
 5. Atualizar Context com o estado atual (usuários, feedback, métricas)
 
 ---
-*Last updated: 2026-07-14 after initialization*
+*Last updated: 2026-07-22 after starting milestone v1.1*
