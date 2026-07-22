@@ -148,6 +148,12 @@ None yet.
 - REQUIREMENTS.md shows AUTH-02 (Supervisor invites Vendedor) already checked off as Complete, but the invite Edge Function + gerenciar-equipe screen that actually deliver it are still planned for 01-04 (not yet built) — pre-existing inconsistency, not introduced by 01-03; worth a quick correction pass before shipping the phase.
 - **RESOLVED 2026-07-20 — 01-05 Task 4 (real email round-trip verification):** hit the same free-tier 2/hour mailer rate limit a third time (correctly surfaced this time — confirms the earlier 01-04 fix still works). Rather than defer again, split the check into (a) the token/session/UI code path, verified via `supabase.auth.admin.generateLink()` to bypass the mailer entirely — both password-reset and invite-accept round-trips confirmed working end-to-end against the real hosted project — and (b) raw inbox deliverability, not independently re-observed this session but indirectly confirmed since the rate-limit response only fires after GoTrue attempts a real send. AUTH-01/AUTH-02 approved by the project owner 2026-07-20. See `01-05-SUMMARY.md`'s "Open Item: Task 4 — RESOLVED" section.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260722-gbz | Implement sidebar nav (sketch 001 winner B) and Dashboard KPI accent-bar treatment (sketch 002 winner C) | 2026-07-22 | 1ff1d00 | [260722-gbz-implement-sidebar-nav-sketch-001-winner-](./quick/260722-gbz-implement-sidebar-nav-sketch-001-winner-/) |
+
 ### Roadmap Evolution
 
 - Phase 2 edited: merged old Phase 3 (Funil de Vendas/Kanban) into Phase 2 (Cadastro), at owner's request, so cadastro+funil ship as one vertical slice; Admin and Dashboard phases renumbered 4->3, 5->4 accordingly
@@ -162,7 +168,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-19T03:58:20.899Z
-Stopped at: Completed 04-05-PLAN.md — Phase 4 (Dashboard Gerencial) and v1 milestone complete
+Last session: 2026-07-22T14:45:34.458Z
+Stopped at: Completed quick task 260722-gbz — sidebar nav + Dashboard KPI accent-bar restyle, verified by owner in both roles
 Resume file: 
 None
