@@ -1,8 +1,6 @@
-import Link from "next/link"
 import { redirect } from "next/navigation"
 
-import { LogoutButton } from "@/components/auth/LogoutButton"
-import { Badge } from "@/components/ui/badge"
+import { AppSidebar } from "@/components/layout/AppSidebar"
 import { createClient } from "@/lib/supabase/server"
 
 const ROLE_LABELS: Record<string, string> = {
@@ -13,8 +11,9 @@ const ROLE_LABELS: Record<string, string> = {
 /**
  * Auth guard for the whole protected area: redirects to /login when there is
  * no session (RESEARCH.md Pattern 3 / AUTH-01). Role is read from `profiles`
- * and shown only as a UX reflection (neutral/secondary Badge, never blue) —
- * RLS remains the real authorization boundary (threat T-01-08).
+ * and passed to AppSidebar purely as a UX reflection (nav visibility, never
+ * a colored badge) — RLS remains the real authorization boundary (threat
+ * T-01-08 / T-nav-01).
  */
 export default async function AppLayout({
   children,
@@ -43,47 +42,21 @@ export default async function AppLayout({
   const roleLabel = profile
     ? (ROLE_LABELS[profile.role] ?? profile.role)
     : null
+  const initials = profile
+    ? `${profile.nome.charAt(0)}${profile.sobrenome.charAt(0)}`.toUpperCase()
+    : (user.email?.charAt(0) ?? "").toUpperCase()
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <header className="flex items-center justify-between border-b px-6 py-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold">{fullName}</span>
-          {roleLabel ? <Badge variant="secondary">{roleLabel}</Badge> : null}
-        </div>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/clientes"
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Clientes
-          </Link>
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Dashboard
-          </Link>
-          {profile?.role === "supervisor" ? (
-            <Link
-              href="/equipe"
-              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Gerenciar equipe
-            </Link>
-          ) : null}
-          {profile?.role === "supervisor" ? (
-            <Link
-              href="/configuracoes"
-              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Configurações
-            </Link>
-          ) : null}
-          <LogoutButton />
-        </div>
-      </header>
-      <main className="flex flex-1 flex-col">{children}</main>
+    <div className="flex min-h-full flex-1">
+      <AppSidebar
+        fullName={fullName ?? ""}
+        roleLabel={roleLabel}
+        role={profile?.role ?? ""}
+        initials={initials}
+      />
+      <main className="flex flex-1 flex-col overflow-x-hidden">
+        {children}
+      </main>
     </div>
   )
 }

@@ -1,11 +1,22 @@
 "use client"
 
 import { useState } from "react"
+import type { VariantProps } from "class-variance-authority"
 
-import { Button } from "@/components/ui/button"
+import { Button, type buttonVariants } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 
-export function LogoutButton() {
+type LogoutButtonProps = {
+  className?: string
+  variant?: VariantProps<typeof buttonVariants>["variant"]
+  children?: React.ReactNode
+}
+
+export function LogoutButton({
+  className,
+  variant = "outline",
+  children = "Sair",
+}: LogoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   async function handleLogout() {
@@ -19,8 +30,13 @@ export function LogoutButton() {
   }
 
   return (
-    <Button variant="outline" onClick={handleLogout} disabled={isLoading}>
-      Sair
+    <Button
+      variant={variant}
+      className={className}
+      onClick={handleLogout}
+      disabled={isLoading}
+    >
+      {children}
     </Button>
   )
 }

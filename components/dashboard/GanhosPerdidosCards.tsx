@@ -116,29 +116,29 @@ export function GanhosPerdidosCards({ inicio, fim }: GanhosPerdidosCardsProps) {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <Card>
+      <Card className="border-l-4 border-l-green-600">
         <CardContent className="flex flex-col gap-2 p-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <TrendingUp className="size-4 text-green-600 dark:text-green-500" />
+            <TrendingUp className="size-4 text-muted-foreground" />
             Ganhos
           </div>
-          <p className="text-[36px] leading-[1.1] font-semibold text-green-600 dark:text-green-500">
+          <p className="text-[36px] leading-[1.1] font-semibold text-foreground">
             {integerFormatter.format(ganho)}
           </p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border-l-4 border-l-destructive">
         <CardContent className="flex flex-col gap-2 p-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <TrendingDown className="size-4 text-destructive" />
+            <TrendingDown className="size-4 text-muted-foreground" />
             Perdidos
           </div>
-          <p className="text-[36px] leading-[1.1] font-semibold text-destructive">
+          <p className="text-[36px] leading-[1.1] font-semibold text-foreground">
             {integerFormatter.format(perdido)}
           </p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border-l-4 border-l-border">
         <CardContent className="flex flex-col gap-2 p-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
             <Percent className="size-4 text-muted-foreground" />
