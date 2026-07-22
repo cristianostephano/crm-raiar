@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Importação e Exportação de Clientes
-current_phase: 5
-current_phase_name: Exportação de Clientes
+current_phase: 6
+current_phase_name: Importação — Upload, Mapeamento e Revisão
 status: executing
 stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-07-22T20:17:23.059Z"
+last_updated: "2026-07-22T20:52:26.022Z"
 last_activity: 2026-07-22
-last_activity_desc: Phase 5 execution started
+last_activity_desc: Phase 6 execution started
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 6
+  completed_plans: 3
   percent: 14
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-22)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 5 — Exportação de Clientes
+**Current focus:** Phase 6 — Importação — Upload, Mapeamento e Revisão
 
 ## Current Position
 
-Phase: 5 (Exportação de Clientes) — EXECUTING
-Plan: 2 of 2
+Phase: 6 (Importação — Upload, Mapeamento e Revisão) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-07-22 — Phase 5 execution started
+Last activity: 2026-07-22 — Phase 6 execution started
 
 Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 
@@ -76,6 +76,7 @@ Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 | Phase 04-dashboard-gerencial P04 | ~15min | 2 tasks | 2 files |
 | Phase 04-dashboard-gerencial P05 | ~30min | 3 tasks | 5 files |
 | Phase 05 P02 | 30min | 3 tasks | 4 files |
+| Phase 06 P01 | 25min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 04-05]: Human checkpoint (Task 3) was performed directly by the project coordinator in the browser; found and fixed 2 pre-existing bugs during verification (commit 0da3d13) - PeriodoFilter Select missing base-ui items prop, ClientesPorEtapaChart silently dropping 2 of 7 X-axis labels to Recharts collision handling
 - [Phase ?]: [Phase 05-02]: NextResponse body must be new Uint8Array(workbook), not the raw Buffer -- TypeScript's BodyInit type doesn't structurally accept Buffer<ArrayBufferLike> even though Buffer extends Uint8Array at runtime
 - [Phase ?]: [Phase 05-02]: Exportar button placed at the top of KanbanBoard's own returned layout (not in page.tsx next to Novo cliente) -- reconciles D-04's placement request with D-05's requirement that the button know the client-side filtered set, which only exists inside KanbanBoard
+- [Phase ?]: papaparse@5.5.4 + @types/papaparse@5.5.2 approved via blocking human-verify checkpoint (official mholt/PapaParse repo, MIT, millions of weekly downloads, versions match STACK.md v1.1 Addendum)
+- [Phase ?]: SYSTEM_FIELDS (lib/importacao/types.ts) holds 14 fields, 7 required matching createClienteSchema's minimum rules exactly; funnel-stage intentionally absent since every imported row lands in Aguardando contato
+- [Phase ?]: modelo.ts does not sanitize cell values (Pitfall A4 guard) since the model is system-generated, not user input; sanitization belongs to whoever reads user-supplied cells in 06-02
 
 ### Pending Todos
 
@@ -176,7 +180,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T20:17:23.037Z
+Last session: 2026-07-22T20:51:49.419Z
 Stopped at: Phase 6 UI-SPEC approved
 Resume file:
-.planning/phases/06-importa-o-upload-mapeamento-e-revis-o/06-UI-SPEC.md
+None

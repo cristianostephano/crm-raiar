@@ -59,7 +59,7 @@ Milestone v1.1 — Importação em massa de clientes via planilha + exportação
 ### Import (Importação de Clientes)
 
 - [ ] **IMP-01**: Supervisor importa clientes em massa via planilha (.xlsx/.csv)
-- [ ] **IMP-02**: Sistema disponibiliza modelo de planilha para download (vazio + linha de exemplo) com as colunas esperadas
+- [x] **IMP-02**: Sistema disponibiliza modelo de planilha para download (vazio + linha de exemplo) com as colunas esperadas
 - [ ] **IMP-03**: Supervisor mapeia colunas da planilha para os campos do sistema, com opção de "não importar" por coluna
 - [ ] **IMP-04**: Planilha define o vendedor responsável de cada cliente através de uma coluna própria
 - [ ] **IMP-05**: Sistema valida cada linha usando as mesmas regras mínimas do cadastro manual (razão social, endereço, responsável obrigatórios)
@@ -151,7 +151,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXP-01 | Phase 5 | Complete |
 | EXP-02 | Phase 5 | Complete |
 | EXP-03 | Phase 5 | Complete |
-| IMP-02 | Phase 6 | Pending |
+| IMP-02 | Phase 6 | Complete |
 | IMP-03 | Phase 6 | Pending |
 | IMP-04 | Phase 6 | Pending |
 | IMP-05 | Phase 6 | Pending |
