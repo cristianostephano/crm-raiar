@@ -565,8 +565,8 @@ export function KanbanBoard({
                 key={etapa.key}
                 className="flex w-[280px] shrink-0 flex-col gap-2"
               >
-                <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
-                  <h2 className="truncate text-xl font-semibold">
+                <div className="flex items-start gap-2 rounded-lg bg-secondary px-3 py-2">
+                  <h2 className="text-base leading-tight font-semibold">
                     {etapa.label}
                   </h2>
                   <Badge variant="outline" className="shrink-0">
@@ -610,8 +610,8 @@ export function KanbanBoard({
                   key={etapa.key}
                   className="flex w-[280px] shrink-0 flex-col gap-2"
                 >
-                  <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
-                    <h2 className="truncate text-xl font-semibold">
+                  <div className="flex items-start gap-2 rounded-lg bg-secondary px-3 py-2">
+                    <h2 className="text-base leading-tight font-semibold">
                       {etapa.label}
                     </h2>
                     <Badge variant="outline" className="shrink-0">
