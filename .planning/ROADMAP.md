@@ -4,6 +4,8 @@
 
 O CRM Raiar nasce de dentro para fora: primeiro a fundação de login e permissões (sem ela, nenhuma regra de "vendedor só vê os próprios clientes" pode existir de verdade), depois o cadastro de clientes PJ e o funil kanban juntos numa fase só (a pedido do dono do projeto, pra já ver o produto completo — cadastro + colunas do funil — funcionando mais cedo), depois as telas de administração das listas editáveis (categoria, produtos, tipos de tarefa, motivos de perda), e por último o dashboard gerencial, que é uma camada de leitura sobre tudo que as fases anteriores já produziram. Cada fase entrega uma fatia completa e usável — o time consegue fazer algo novo de ponta a ponta ao final de cada uma, não apenas uma camada técnica invisível.
 
+**Marco v1.1 (Importação e Exportação):** com o CRM já em uso no dia a dia, o próximo passo é tirar do caminho o cadastro manual um-a-um para grandes volumes. O time recebe planilhas de clientes/leads com frequência (parceiros, feiras), então a importação vira uma tela permanente restrita ao Supervisor; e todo usuário passa a poder exportar a lista que já enxerga. As três fases novas (5, 6, 7) seguem a ordem de menor risco: exportar primeiro (reaproveita leitura + RLS já existentes, sem RPC nova), depois preparar/revisar a importação (upload, mapeamento de colunas e revisão linha a linha, sem gravar), e por fim confirmar/gravar (nova RPC de inserção em lote).
+
 ## Phases
 
 **Phase Numbering:**
@@ -17,6 +19,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Cadastro e Funil de Vendas** - Vendedores e supervisores cadastram, editam e encontram clientes PJ, e movem os clientes pelas 7 etapas do funil kanban, com o mínimo de fricção possível. (completed 2026-07-17)
 - [x] **Phase 3: Administração de Listas Editáveis** - Supervisor mantém categorias, produtos, tipos de tarefa e motivos de perda sem depender de alteração de código. (completed 2026-07-18)
 - [x] **Phase 4: Dashboard Gerencial** - Supervisor e vendedores acompanham os números do funil, cada um na medida da própria visão. (completed 2026-07-19)
+
+**🚧 Marco v1.1 — Importação e Exportação de Clientes (Fases 5-7):**
+
+- [ ] **Phase 5: Exportação de Clientes** - Vendedor e Supervisor baixam como planilha a lista de clientes que já enxergam na tela, respeitando papel (próprios x todos) e os filtros aplicados.
+- [ ] **Phase 6: Importação — Upload, Mapeamento e Revisão** - Supervisor envia uma planilha, mapeia as colunas para os campos do sistema e revê linha a linha (OK / erro / possível duplicado) — sem gravar nada ainda.
+- [ ] **Phase 7: Importação — Confirmação e Gravação** - Supervisor confirma e os clientes válidos entram de uma vez na etapa "Aguardando contato", sem uma linha ruim travar o lote.
 
 ## Phase Details
 
@@ -160,10 +168,61 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **UI hint**: yes
 
+---
+
+**🚧 Marco v1.1 — Importação e Exportação de Clientes (Fases 5-7)**
+
+Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em risco: exportação primeiro (reaproveita leitura + RLS já existentes, sem RPC nova), depois a preparação da importação (upload, mapeamento e revisão, sem gravar nada), e por fim a confirmação/gravação (nova RPC de inserção em lote — o único caminho de escrita, onde ficam os riscos de timeout serverless e importação parcial).
+
+### Phase 5: Exportação de Clientes
+
+**Goal**: Qualquer usuário do time consegue baixar, como planilha, exatamente a lista de clientes que já enxerga na tela — respeitando papel (Vendedor exporta só os próprios, Supervisor exporta todos) e os filtros aplicados — reaproveitando as mesmas regras de visibilidade (RLS) que já existem, sem nenhuma lógica de permissão nova. É a fase de menor risco do marco: leitura pura, sem RPC nem escrita.
+**Depends on**: Phase 2 (lista de clientes, filtros e RLS de v1.0 já entregues)
+**Requirements**: EXP-01, EXP-02, EXP-03
+**Success Criteria** (what must be TRUE):
+
+  1. Um Vendedor clica em "Exportar" na lista de clientes e recebe um arquivo (.csv/.xlsx) contendo apenas os próprios clientes.
+  2. Um Supervisor clica em "Exportar" e recebe um arquivo contendo os clientes de todos os vendedores.
+  3. Quando há filtros aplicados na tela (categoria, vendedor, produto, texto livre por razão social), o arquivo exportado contém somente os clientes que correspondem a esses filtros — não a base inteira.
+  4. O arquivo abre corretamente em Excel/planilha (uma coluna por campo do cliente, uma linha por cliente) e nenhum valor de célula é interpretado como fórmula ao abrir (proteção contra CSV injection).
+
+**Plans**: TBD
+
+### Phase 6: Importação — Upload, Mapeamento e Revisão
+
+**Goal**: O Supervisor prepara uma importação de ponta a ponta antes de qualquer gravação: baixa um modelo de planilha, envia o arquivo (.xlsx/.csv), diz qual coluna do arquivo corresponde a qual campo do sistema (incluindo qual coluna define o vendedor responsável de cada cliente), e vê uma tela de revisão que classifica cada linha como OK, erro ou possível duplicado. Nada é criado nesta fase — é só pré-visualização, o que a torna testável de forma independente e sem risco para os dados existentes.
+**Depends on**: Phase 2 (reaproveita as regras mínimas de cadastro — razão social, endereço, responsável — e a base de clientes/vendedores para validar e detectar duplicados)
+**Requirements**: IMP-02, IMP-03, IMP-04, IMP-05, IMP-07, IMP-08, IMP-10
+**Success Criteria** (what must be TRUE):
+
+  1. Só o Supervisor acessa a tela de importação; um Vendedor não vê essa opção nem consegue abrir a tela, e a restrição é aplicada pelo sistema (não apenas escondida do menu).
+  2. O Supervisor baixa um modelo de planilha (uma versão vazia + uma linha de exemplo) com exatamente as colunas que o sistema espera.
+  3. Depois de enviar a planilha, o Supervisor associa cada coluna do arquivo a um campo do sistema — incluindo a coluna que define o vendedor responsável — e pode marcar colunas como "não importar".
+  4. A tela de revisão mostra cada linha com um status claro: OK, erro (faltando razão social, endereço ou responsável) ou possível duplicado (mesma razão social de um cliente já existente), sem bloquear nem mesclar automaticamente — a decisão fica com o Supervisor.
+  5. Nenhum cliente é criado nesta etapa — é apenas pré-visualização; nada é gravado até a confirmação da fase seguinte.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 7: Importação — Confirmação e Gravação
+
+**Goal**: O Supervisor confirma a importação revisada e os clientes das linhas válidas entram no sistema de uma só vez, cada um já na etapa "Aguardando contato" do funil, sem que uma linha com erro (ou um duplicado que ele optou por pular) trave o restante do lote. É a única fase de escrita do marco, onde vive a nova RPC de inserção em lote.
+**Depends on**: Phase 6
+**Requirements**: IMP-01, IMP-06, IMP-09
+**Success Criteria** (what must be TRUE):
+
+  1. Ao confirmar a revisão, os clientes das linhas válidas da planilha (.xlsx/.csv) são criados de uma só vez — o Supervisor completa uma importação em massa sem cadastrar um a um.
+  2. Linhas marcadas como erro — e duplicados que o Supervisor escolheu não importar — ficam de fora, enquanto todas as demais linhas válidas são importadas normalmente; uma linha ruim não cancela o lote inteiro.
+  3. Todo cliente importado aparece no funil já na etapa "Aguardando contato".
+  4. Ao final, o Supervisor vê um resumo de quantos clientes foram importados e quantas linhas foram ignoradas (com o motivo).
+
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -171,3 +230,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Cadastro e Funil de Vendas | 7/7 | Complete   | 2026-07-17 |
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
 | 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |
+| 5. Exportação de Clientes | 0/TBD | Not started | - |
+| 6. Importação — Upload, Mapeamento e Revisão | 0/TBD | Not started | - |
+| 7. Importação — Confirmação e Gravação | 0/TBD | Not started | - |

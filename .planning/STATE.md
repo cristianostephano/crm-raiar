@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Importação e Exportação de Clientes
 status: planning
-last_updated: "2026-07-22T17:32:02.237Z"
+last_updated: "2026-07-22T18:10:00.000Z"
 last_activity: 2026-07-22
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-14)
+See: .planning/PROJECT.md (updated 2026-07-22)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 4 — Dashboard Gerencial
+**Current focus:** Phase 5 — Exportação de Clientes (primeira fase do marco v1.1)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-22 — Milestone v1.1 started
+Phase: 5 of 7 (Exportação de Clientes) — primeira das 3 fases do marco v1.1
+Plan: — (nenhum plano criado ainda)
+Status: Ready to plan
+Last activity: 2026-07-22 — Roadmap do marco v1.1 criado (Fases 5, 6, 7; 13 requisitos mapeados 13/13)
+
+Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 
 ## Performance Metrics
 
@@ -77,6 +79,8 @@ Last activity: 2026-07-22 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- Roadmap v1.1: fases derivadas dos 13 requisitos do marco (IMP-01..10 + EXP-01..03), ordenadas por risco crescente — Export (5) → Import preview (6) → Import commit (7). Só a Fase 7 grava no banco; 5 e 6 são leitura/pré-visualização, o que reduz o risco e as torna testáveis isoladamente.
+- Roadmap v1.1: IMP-10 (restrito ao Supervisor) mapeado na Fase 6 (porta de entrada da importação), mas o RPC de gravação da Fase 7 também precisa impor Supervisor-only via RLS — a restrição vale para o fluxo inteiro.
 - Roadmap: Auth & RLS foundation goes first (hard blocker — every table's RLS depends on profiles.role/is_supervisor()), Dashboard goes last (pure read layer over data other phases produce).
 - Roadmap: Search/filter (CLI-07) folded into Phase 2 (Client) and activity log (FUN-10) folded into Phase 3 (Kanban), rather than a standalone phase, to keep phases as complete vertical slices per standard granularity.
 - Open items flagged by research, still to confirm during Phase 1/2 discuss-phase: whether Vendedor can edit/delete own clients beyond creating (CLAUDE.md currently assumes "can edit, cannot delete" — already reflected in CLI-06), and whether kanban stage names become editable in a future version (currently fixed, out of scope for v1).
@@ -141,6 +145,7 @@ None yet.
 - Research flags two areas needing deeper research at plan time, not now: Phase 3 (fractional card-position strategy, mover_card_funil RPC validation, touch/mobile drag ergonomics) and Phase 5 (security_invoker view syntax/index strategy — LOW confidence sources in STACK.md).
 - REQUIREMENTS.md shows AUTH-02 (Supervisor invites Vendedor) already checked off as Complete, but the invite Edge Function + gerenciar-equipe screen that actually deliver it are still planned for 01-04 (not yet built) — pre-existing inconsistency, not introduced by 01-03; worth a quick correction pass before shipping the phase.
 - **RESOLVED 2026-07-20 — 01-05 Task 4 (real email round-trip verification):** hit the same free-tier 2/hour mailer rate limit a third time (correctly surfaced this time — confirms the earlier 01-04 fix still works). Rather than defer again, split the check into (a) the token/session/UI code path, verified via `supabase.auth.admin.generateLink()` to bypass the mailer entirely — both password-reset and invite-accept round-trips confirmed working end-to-end against the real hosted project — and (b) raw inbox deliverability, not independently re-observed this session but indirectly confirmed since the rate-limit response only fires after GoTrue attempts a real send. AUTH-01/AUTH-02 approved by the project owner 2026-07-20. See `01-05-SUMMARY.md`'s "Open Item: Task 4 — RESOLVED" section.
+- **v1.1 research pitfalls to carry into planning (see .planning/research/PITFALLS.md):** A1 fragile razão_social dedup (no CNPJ) → Phase 6; A2 pt-BR CSV delimiter (semicolon), A3 UTF-8 BOM on first header → Phase 6 parse; A4 CSV injection on export → Phase 5; A5 serverless timeout on large batches, A6 partial-import inconsistency → Phase 7 (batch inserts inside one RPC transaction); A7 file-upload security (size cap + magic bytes) → Phase 6. Research also flags a security-audit gate before Phase 7 ships.
 
 ### Quick Tasks Completed
 
@@ -151,6 +156,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- Marco v1.1 roteirizado (2026-07-22): 3 fases novas (5 Exportação, 6 Importação preview, 7 Importação commit) derivadas dos 13 requisitos IMP/EXP, numeração continuando de v1.0 (última = Fase 4). Ordem por risco crescente conforme research/SUMMARY.md. Fases 5-7 marcadas "Not started".
 - Phase 2 edited: merged old Phase 3 (Funil de Vendas/Kanban) into Phase 2 (Cadastro), at owner's request, so cadastro+funil ship as one vertical slice; Admin and Dashboard phases renumbered 4->3, 5->4 accordingly
 
 ## Deferred Items
@@ -163,7 +169,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T14:45:34.458Z
-Stopped at: Completed quick task 260722-gbz — sidebar nav + Dashboard KPI accent-bar restyle, verified by owner in both roles
-Resume file: 
+Last session: 2026-07-22T18:10:00.000Z
+Stopped at: Criado o roadmap do marco v1.1 — Fases 5 (Exportação), 6 (Importação: upload/mapeamento/revisão) e 7 (Importação: confirmação/gravação); 13/13 requisitos mapeados; ROADMAP.md, STATE.md e traceability de REQUIREMENTS.md atualizados
+Resume file:
 None

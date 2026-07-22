@@ -148,6 +148,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DSH-05 | Phase 4 | Complete |
 | DSH-06 | Phase 4 | Complete |
 | DSH-07 | Phase 4 | Complete |
+| EXP-01 | Phase 5 | Pending |
+| EXP-02 | Phase 5 | Pending |
+| EXP-03 | Phase 5 | Pending |
+| IMP-02 | Phase 6 | Pending |
+| IMP-03 | Phase 6 | Pending |
+| IMP-04 | Phase 6 | Pending |
+| IMP-05 | Phase 6 | Pending |
+| IMP-07 | Phase 6 | Pending |
+| IMP-08 | Phase 6 | Pending |
+| IMP-10 | Phase 6 | Pending |
+| IMP-01 | Phase 7 | Pending |
+| IMP-06 | Phase 7 | Pending |
+| IMP-09 | Phase 7 | Pending |
 
 **Coverage (v1.0):**
 
@@ -155,8 +168,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 - Mapped to phases: 32/32 ✓
 - Unmapped: 0 ✓
 
-**Coverage (v1.1):** pending — will be filled when the v1.1 roadmap is created.
+**Coverage (v1.1):**
+
+- v1.1 requirements: 13 total (IMP-01..10 + EXP-01..03)
+- Mapped to phases: 13/13 ✓
+- Unmapped: 0 ✓
+- Distribution: Phase 5 (Export) = 3 · Phase 6 (Import preview) = 7 · Phase 7 (Import commit) = 3
 
 ---
 *Requirements defined: 2026-07-14 (v1)*
-*Last updated: 2026-07-22 after defining v1.1 requirements (Import/Export) — traceability for v1.1 phases pending roadmap creation*
+*Last updated: 2026-07-22 after creating the v1.1 roadmap (Phases 5-7) — Import/Export requirements mapped, coverage 13/13*
