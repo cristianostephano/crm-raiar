@@ -76,8 +76,11 @@ export function AppSidebar({
   role,
   initials,
 }: AppSidebarProps) {
-  const [compact, setCompact] = useState(true)
+  const [pinned, setPinned] = useState(false)
+  const [hovering, setHovering] = useState(false)
   const pathname = usePathname()
+
+  const compact = !pinned && !hovering
 
   const sections: NavSection[] =
     role === "supervisor"
@@ -90,6 +93,8 @@ export function AppSidebar({
 
   return (
     <aside
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
       className={cn(
         "flex h-full flex-shrink-0 flex-col bg-slate-900 text-slate-300 transition-[width] duration-200",
         compact ? "w-16" : "w-60"
@@ -106,7 +111,7 @@ export function AppSidebar({
         ) : null}
         <button
           type="button"
-          onClick={() => setCompact((value) => !value)}
+          onClick={() => setPinned((value) => !value)}
           aria-label={compact ? "Expandir menu" : "Recolher menu"}
           className={cn(
             "flex flex-shrink-0 items-center justify-center rounded-md p-1 text-slate-500 transition-colors hover:text-white",
