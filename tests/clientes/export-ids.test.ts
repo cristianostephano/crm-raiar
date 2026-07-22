@@ -11,7 +11,9 @@ import type { ClientesAgrupadosPorEtapa } from "../../lib/supabase/queries/clien
  */
 
 function emptyGrouped(): ClientesAgrupadosPorEtapa {
-  return Object.fromEntries(ETAPA_KEYS.map((key) => [key, []])) as ClientesAgrupadosPorEtapa
+  return Object.fromEntries(
+    ETAPA_KEYS.map((key) => [key, []])
+  ) as unknown as ClientesAgrupadosPorEtapa
 }
 
 describe("collectExportIds", () => {
