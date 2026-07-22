@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { Download } from "lucide-react"
 import { useMemo, useState, type HTMLAttributes, type ReactNode } from "react"
 
 import { moverCard } from "@/app/actions/funil"
@@ -40,6 +41,7 @@ import {
   isClienteIncompleto,
   type ClienteCompletudeInput,
 } from "@/lib/clientes/completude"
+import { collectExportIds } from "@/lib/clientes/export-ids"
 import { ETAPAS, ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import { diasParado, staleReason, taskStatus } from "@/lib/funil/staleness"
 import type { UpdateClienteInput } from "@/lib/validations/cliente"
@@ -239,6 +241,10 @@ export function KanbanBoard({
     text: string
   } | null>(null)
 
+  // EXP-01/EXP-02/EXP-03 — the Exportar button's in-flight guard (blocks
+  // double-clicks while a download is being generated server-side).
+  const [isExporting, setIsExporting] = useState(false)
+
   // 02-06: card click (never drag, see ClienteCard's onOpen/dragHandleProps
   // split) opens the detail Sheet for this cliente.
   const [selectedClienteId, setSelectedClienteId] = useState<string | null>(
@@ -343,6 +349,56 @@ export function KanbanBoard({
   function showToast(type: "success" | "error", text: string) {
     setToast({ type, text })
     window.setTimeout(() => setToast(null), 4000)
+  }
+
+  /**
+   * D-05: sends collectExportIds(filteredGrouped) — the ALREADY-filtered set
+   * (search + filtros + the active Todos/Incompletos tab), never `grouped`
+   * — so the download mirrors exactly what's on screen at the moment of the
+   * click (EXP-03). Uses fetch + blob rather than a GET/window.location
+   * download: the id set can reach hundreds/low-thousands of UUIDs, which
+   * would overflow a GET URL's practical length limit.
+   */
+  async function handleExport() {
+    if (totalFiltrado === 0 || isExporting) return
+
+    setIsExporting(true)
+    try {
+      const ids = collectExportIds(filteredGrouped)
+
+      const res = await fetch("/api/clientes/exportar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      })
+
+      if (!res.ok) {
+        showToast(
+          "error",
+          "Não foi possível exportar os clientes. Tente novamente."
+        )
+        return
+      }
+
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const filename = `clientes_${new Date().toISOString().slice(0, 10)}.xlsx`
+
+      const anchor = document.createElement("a")
+      anchor.href = url
+      anchor.download = filename
+      document.body.appendChild(anchor)
+      anchor.click()
+      document.body.removeChild(anchor)
+      window.URL.revokeObjectURL(url)
+    } catch {
+      showToast(
+        "error",
+        "Não foi possível exportar os clientes. Tente novamente."
+      )
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -515,6 +571,28 @@ export function KanbanBoard({
 
   return (
     <div className="relative flex flex-1 flex-col gap-4">
+      {/* D-04 asks for "Exportar" beside "Novo cliente", which lives in the
+          Server Component header of app/(app)/clientes/page.tsx — but the
+          on-screen filtered set D-05/EXP-03 requires only exists in this
+          Client Component's filteredGrouped (05-PATTERNS.md). Reconciled by
+          rendering the button here, at the very top of the list screen's
+          toolbar row, prominent without needing to lift filter state up. */}
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleExport}
+          disabled={totalFiltrado === 0 || isExporting}
+        >
+          <Download />
+          {isExporting
+            ? "Exportando..."
+            : callerRole === "supervisor"
+              ? "Exportar todos os clientes"
+              : "Exportar meus clientes"}
+        </Button>
+      </div>
+
       <ClienteToolbar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
