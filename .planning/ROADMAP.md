@@ -209,7 +209,21 @@ Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em 
   4. A tela de revisão mostra cada linha com um status claro: OK, erro (faltando razão social, endereço ou responsável) ou possível duplicado (mesma razão social de um cliente já existente), sem bloquear nem mesclar automaticamente — a decisão fica com o Supervisor.
   5. Nenhum cliente é criado nesta etapa — é apenas pré-visualização; nada é gravado até a confirmação da fase seguinte.
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Motor de leitura client-side (.xlsx/.csv, BOM/delimitador pt-BR) + modelo de planilha (IMP-02) + vocabulário de campos, com checkpoint de legitimidade do papaparse
+
+**Wave 2** *(parallel — no file overlap)*
+
+- [ ] 06-02-PLAN.md — Validação read-only: dedupe (IMP-07), schema/anotação de linha (IMP-04/IMP-05, D-02) e Server Action validarLoteImportacao com portão Supervisor-only (IMP-10)
+- [ ] 06-03-PLAN.md — Rota Supervisor-only /clientes/importar + link no menu + passo 1 do wizard (baixar modelo + upload + parse) (IMP-02, IMP-10)
+
+**Wave 3** *(blocked on 06-02 + 06-03)*
+
+- [ ] 06-04-PLAN.md — Mapeamento de colunas (IMP-03/IMP-04) + tela de revisão OK/erro/duplicado paginada (IMP-07/IMP-08) + checkpoint humano do fluxo completo
+
 **UI hint**: yes
 
 ### Phase 7: Importação — Confirmação e Gravação
@@ -239,5 +253,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
 | 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |
 | 5. Exportação de Clientes | 2/2 | Complete   | 2026-07-22 |
-| 6. Importação — Upload, Mapeamento e Revisão | 0/TBD | Not started | - |
+| 6. Importação — Upload, Mapeamento e Revisão | 0/4 | Not started | - |
 | 7. Importação — Confirmação e Gravação | 0/TBD | Not started | - |
