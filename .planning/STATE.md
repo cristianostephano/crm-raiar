@@ -5,16 +5,16 @@ milestone_name: Importação e Exportação de Clientes
 current_phase: 5
 current_phase_name: Exportação de Clientes
 status: executing
-stopped_at: Phase 5 context gathered
-last_updated: "2026-07-22T19:11:00.989Z"
+stopped_at: Completed 05-02-PLAN.md (human-verify checkpoint approved by coordinator)
+last_updated: "2026-07-22T19:46:23.448Z"
 last_activity: 2026-07-22
 last_activity_desc: Phase 5 execution started
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 0
-  percent: 0
+  completed_plans: 2
+  percent: 14
 ---
 
 # Project State
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-07-22)
 ## Current Position
 
 Phase: 5 (Exportação de Clientes) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 5
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-07-22 — Phase 5 execution started
 
 Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
@@ -75,6 +75,7 @@ Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 | Phase 04-dashboard-gerencial P03 | ~25min | 2 tasks | 5 files |
 | Phase 04-dashboard-gerencial P04 | ~15min | 2 tasks | 2 files |
 | Phase 04-dashboard-gerencial P05 | ~30min | 3 tasks | 5 files |
+| Phase 05 P02 | 30min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 04-05]: DesempenhoVendedorChart and ProspeccaoChart stayed as two separate components (data shapes differ) - ProspeccaoChart itself is the reusable one, parameterized by title/caption/action, powering both produto and categoria
 - [Phase ?]: [Phase 04-05]: Variable-row-count chart sizing implemented as an uncapped-height ChartContainer inside a max-height:480px overflow-y-auto wrapper, so long lists actually scroll instead of Recharts auto-squeezing bars into a fixed height
 - [Phase ?]: [Phase 04-05]: Human checkpoint (Task 3) was performed directly by the project coordinator in the browser; found and fixed 2 pre-existing bugs during verification (commit 0da3d13) - PeriodoFilter Select missing base-ui items prop, ClientesPorEtapaChart silently dropping 2 of 7 X-axis labels to Recharts collision handling
+- [Phase ?]: [Phase 05-02]: NextResponse body must be new Uint8Array(workbook), not the raw Buffer -- TypeScript's BodyInit type doesn't structurally accept Buffer<ArrayBufferLike> even though Buffer extends Uint8Array at runtime
+- [Phase ?]: [Phase 05-02]: Exportar button placed at the top of KanbanBoard's own returned layout (not in page.tsx next to Novo cliente) -- reconciles D-04's placement request with D-05's requirement that the button know the client-side filtered set, which only exists inside KanbanBoard
 
 ### Pending Todos
 
@@ -173,7 +176,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T18:42:06.767Z
-Stopped at: Phase 5 context gathered
+Last session: 2026-07-22T19:46:23.436Z
+Stopped at: Completed 05-02-PLAN.md (human-verify checkpoint approved by coordinator)
 Resume file:
-.planning/phases/05-exporta-o-de-clientes/05-CONTEXT.md
+None

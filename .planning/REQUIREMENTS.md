@@ -71,9 +71,9 @@ Milestone v1.1 — Importação em massa de clientes via planilha + exportação
 
 ### Export (Exportação de Clientes)
 
-- [ ] **EXP-01**: Vendedor exporta a lista dos próprios clientes
-- [ ] **EXP-02**: Supervisor exporta a lista de todos os clientes
-- [ ] **EXP-03**: Exportação respeita os filtros aplicados na tela (categoria, vendedor, produto, texto livre)
+- [x] **EXP-01**: Vendedor exporta a lista dos próprios clientes
+- [x] **EXP-02**: Supervisor exporta a lista de todos os clientes
+- [x] **EXP-03**: Exportação respeita os filtros aplicados na tela (categoria, vendedor, produto, texto livre)
 
 ## v2 Requirements
 
@@ -148,9 +148,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DSH-05 | Phase 4 | Complete |
 | DSH-06 | Phase 4 | Complete |
 | DSH-07 | Phase 4 | Complete |
-| EXP-01 | Phase 5 | Pending |
-| EXP-02 | Phase 5 | Pending |
-| EXP-03 | Phase 5 | Pending |
+| EXP-01 | Phase 5 | Complete |
+| EXP-02 | Phase 5 | Complete |
+| EXP-03 | Phase 5 | Complete |
 | IMP-02 | Phase 6 | Pending |
 | IMP-03 | Phase 6 | Pending |
 | IMP-04 | Phase 6 | Pending |
