@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { EtapaKey } from "@/lib/funil/etapas"
+import type { TaskStatus } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
 
 /**
@@ -30,6 +31,16 @@ export type ClienteCardData = {
    * quick-action icon disabled/muted (not hidden, D-03) so card layout
    * never shifts between cards that do/don't have a phone number. */
   telefone: string | null
+  /** Drives the always-visible 3-color left border (green/amber/red) —
+   * separate signal from `isOverdue`, which only drives the TriangleAlert
+   * tooltip. */
+  taskStatus: TaskStatus
+}
+
+const TASK_STATUS_BORDER: Record<TaskStatus, string> = {
+  on_time: "border-l-4 border-l-green-500",
+  late: "border-l-4 border-l-amber-500",
+  none: "border-l-4 border-l-red-500",
 }
 
 function onlyDigits(value: string): string {
@@ -176,7 +187,7 @@ export function ClienteCard({
       className={cn(
         "gap-1.5",
         onOpen && "cursor-pointer",
-        isOverdue && "border-l-4 border-l-amber-500"
+        TASK_STATUS_BORDER[cliente.taskStatus]
       )}
       {...dragHandleProps}
     >
@@ -188,7 +199,7 @@ export function ClienteCard({
           {cliente.razaoSocial}
         </CardTitle>
         {incompleto ? (
-          <Badge variant="outline" className="shrink-0">
+          <Badge variant="destructive" className="shrink-0">
             Incompleto
           </Badge>
         ) : null}

@@ -41,7 +41,7 @@ import {
   type ClienteCompletudeInput,
 } from "@/lib/clientes/completude"
 import { ETAPAS, ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
-import { diasParado, staleReason } from "@/lib/funil/staleness"
+import { diasParado, staleReason, taskStatus } from "@/lib/funil/staleness"
 import type { UpdateClienteInput } from "@/lib/validations/cliente"
 import type {
   ClienteListItem,
@@ -125,6 +125,7 @@ function toCardData(cliente: ClienteListItem): ClienteCardData {
     cidade: cliente.cidade,
     estado: cliente.estado,
     telefone: cliente.telefone,
+    taskStatus: taskStatus(cliente.tarefas_abertas),
   }
 }
 
@@ -565,8 +566,8 @@ export function KanbanBoard({
                 key={etapa.key}
                 className="flex w-[280px] shrink-0 flex-col gap-2"
               >
-                <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
-                  <h2 className="truncate text-xl font-semibold">
+                <div className="flex items-start gap-2 rounded-lg bg-secondary px-3 py-2">
+                  <h2 className="text-base leading-tight font-semibold">
                     {etapa.label}
                   </h2>
                   <Badge variant="outline" className="shrink-0">
@@ -610,8 +611,8 @@ export function KanbanBoard({
                   key={etapa.key}
                   className="flex w-[280px] shrink-0 flex-col gap-2"
                 >
-                  <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
-                    <h2 className="truncate text-xl font-semibold">
+                  <div className="flex items-start gap-2 rounded-lg bg-secondary px-3 py-2">
+                    <h2 className="text-base leading-tight font-semibold">
                       {etapa.label}
                     </h2>
                     <Badge variant="outline" className="shrink-0">

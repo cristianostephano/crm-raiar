@@ -55,6 +55,26 @@ export function tarefaAtrasada(
   return differenceInCalendarDays(now, parseISO(tarefa.dataConclusao)) > 0
 }
 
+/** Always-on open-task-status signal for a card's left border (distinct from
+ * the "parado/atrasado" TriangleAlert, which stays keyed off staleReason).
+ * Pure, unit-testable, safe to run every render. */
+export type TaskStatus = "on_time" | "late" | "none"
+
+/**
+ * Classifies a cliente's open tasks into a single status: "none" when no
+ * open task is scheduled at all, "late" when any open task is overdue
+ * (reuses tarefaAtrasada so the border and the overdue icon can never
+ * disagree on what "atrasado" means), otherwise "on_time".
+ */
+export function taskStatus(
+  tarefas: TarefaAberta[],
+  now: Date = new Date()
+): TaskStatus {
+  if (tarefas.length === 0) return "none"
+  if (tarefas.some((tarefa) => tarefaAtrasada(tarefa, now))) return "late"
+  return "on_time"
+}
+
 export type StaleReason =
   | { kind: "tarefa"; label: string }
   | { kind: "parado"; label: string }
