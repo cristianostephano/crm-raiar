@@ -5,8 +5,8 @@ milestone_name: Importação e Exportação de Clientes
 current_phase: 5
 current_phase_name: Exportação de Clientes
 status: executing
-stopped_at: Phase 5 (Exportação de Clientes) verified and complete
-last_updated: "2026-07-22T19:58:07.595Z"
+stopped_at: Phase 6 context gathered
+last_updated: "2026-07-22T20:06:01.893Z"
 last_activity: 2026-07-22
 last_activity_desc: Phase 5 execution started
 progress:
@@ -176,7 +176,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T19:58:07.584Z
-Stopped at: Phase 5 (Exportação de Clientes) verified and complete
+Last session: 2026-07-22T20:06:01.822Z
+Stopped at: Phase 6 context gathered
 Resume file:
-.planning/phases/05-exporta-o-de-clientes/05-VERIFICATION.md
+.planning/phases/06-importa-o-upload-mapeamento-e-revis-o/06-CONTEXT.md
