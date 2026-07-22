@@ -352,3 +352,261 @@ Cross-cutting, but establish the discipline explicitly in the Auth/RLS foundatio
 ---
 *Pitfalls research for: B2B sales CRM / kanban pipeline on Supabase*
 *Researched: 2026-07-14*
+
+---
+---
+
+# Milestone Addendum: v1.1 Bulk Import/Export
+
+**Domain:** Adding bulk spreadsheet import/export to the existing single-record-cadastro CRM described above, with per-role (Vendedor/Supervisor) RLS visibility
+**Researched:** 2026-07-22
+**Confidence:** MEDIUM (cross-checked web sources agreeing on core mechanisms; no primary-vendor doc directly fetched for every claim — see Sources below)
+
+This section is scoped specifically to the v1.1 milestone (`Importação e Exportação de Clientes`, see `PROJECT.md`). It supplements, not replaces, the Critical Pitfalls above — those (RLS gaps, migration discipline, testing-as-Supervisor-only) all still apply to any new table/column/RPC this milestone introduces.
+
+## Critical Pitfalls
+
+### Pitfall A1: Trusting company name (razão social) as the duplicate key
+
+**What goes wrong:**
+The system either (a) silently creates duplicate `clientes` rows because "Distribuidora ABC Ltda" and "DISTRIBUIDORA ABC LTDA." / "Distribuidora ABC" don't match textually (false negative — misses real duplicates), or (b) blocks/merges two genuinely different companies that happen to share a common name fragment (false positive).
+
+**Why it happens:**
+There is no CNPJ/tax-ID field in the current schema — razão social is the only quasi-identifying text field, and free-text company names vary in case, punctuation, whitespace, and legal-entity suffixes (LTDA, S.A., ME, EIRELI) between the spreadsheets the sales team receives from different partners/feiras.
+
+**How to avoid:**
+- Normalize before comparing: lowercase, strip accents/punctuation/extra whitespace, strip common legal suffixes (LTDA, S/A, S.A., ME, EIRELI, EPP) into a computed `dedup_key`, never overwrite the original razão social with the normalized form.
+- Combine the normalized name with a second discriminating field already in the schema (e.g. `responsavel`/vendedor, city/CEP prefix from endereço) to reduce false positives — "Distribuidora ABC" in São Paulo and "Distribuidora ABC" in Salvador are very likely different clients.
+- Since this milestone doesn't add a CNPJ field, treat duplicate detection as **advisory** (flag for human review before confirming import), never as an automatic silent skip/merge — the supervisor reviewing "erros/duplicados antes de confirmar" (already scoped in `PROJECT.md`) is the right place for this, not a background auto-merge.
+- Flag CNPJ as a strong candidate for a future milestone if duplicate false positives/negatives turn out to be a recurring pain point after this ships.
+
+**Warning signs:**
+Supervisor reports "eu importei e agora tem cliente repetido" or "ele bloqueou um cliente que não era duplicado" during UAT.
+
+**Phase to address:**
+Import validation/duplicate-detection phase (the "mostrar erros/duplicados antes de confirmar" screen).
+
+---
+
+### Pitfall A2: Hardcoding comma as the CSV delimiter (breaks on pt-BR Excel exports)
+
+**What goes wrong:**
+A parser written and tested with comma-delimited sample files works fine in development, then fails silently or garbles columns the first time the sales team uploads a real spreadsheet exported from Excel in Brazilian Portuguese locale — because Excel PT-BR defaults to comma as the **decimal** separator and therefore exports CSV with **semicolon** as the field delimiter (to avoid ambiguity with decimals inside numeric cells like `número_de_lojas`).
+
+**Why it happens:**
+Most CSV libraries and tutorials assume US/UK locale (comma-delimited) by default; the mismatch only surfaces with real-world Brazilian-locale files, which is exactly the population of files this feature is built for.
+
+**How to avoid:**
+- Auto-detect the delimiter (sniff the first line for `,` vs `;` vs `\t` occurrence counts) rather than hardcoding one, or explicitly support both and let the column-mapping screen show a preview so the user visually confirms columns lined up correctly before proceeding.
+- Prefer accepting `.xlsx` uploads (parsed via a library that reads cell values directly, sidestepping delimiter ambiguity entirely) as the primary path, with CSV as a secondary path that requires delimiter detection.
+- Never assume `,` is safe as a decimal separator either — if any numeric column (e.g. `numero_de_lojas`) is ever entered with a comma decimal, parse it locale-aware, not with a naive `parseFloat`.
+
+**Warning signs:**
+A spreadsheet from a real partner/feira parses into the wrong number of columns, or every value from one Brazilian-locale test file lands in a single "column A".
+
+**Phase to address:**
+Import parsing phase (before column-mapping screen is shown).
+
+---
+
+### Pitfall A3: UTF-8 BOM breaking the first column header, silently
+
+**What goes wrong:**
+When Excel saves "CSV UTF-8", it prepends a 3-byte BOM. If the parser isn't BOM-aware, the first header cell comes back as `"﻿razao_social"` instead of `"razao_social"` — the column-mapping screen then fails to auto-match the first column to any known field, forcing the supervisor to manually remap something that should have matched automatically, or (worse) the app silently treats it as an "unknown column" and drops it.
+
+**Why it happens:**
+Excel adds the BOM by default on that save option; many Node CSV/XLSX libraries don't strip it unless explicitly configured (`bom: true` / `utf-8-sig` equivalent).
+
+**How to avoid:**
+Explicitly strip a leading BOM from the raw file buffer/first line before header parsing, regardless of which library is used. Add a test fixture that is an actual BOM-prefixed pt-BR Excel export, not just a plain UTF-8 CSV.
+
+**Warning signs:**
+The first column of every uploaded file fails to auto-map in the column-mapping UI, but every other column matches fine.
+
+**Phase to address:**
+Import parsing phase.
+
+---
+
+### Pitfall A4: CSV export vulnerable to formula/CSV injection
+
+**What goes wrong:**
+The export feature writes user-entered free-text fields (razão social, contato, observação) straight into CSV cells. If a value happens to start with `=`, `+`, `-`, or `@` (even accidentally, e.g. a phone number typed as `+55...` or an observação starting with `-`), Excel/Sheets on the vendedor's or supervisor's machine may interpret it as a formula on open — at minimum a broken cell, at worst (with legacy DDE-style payloads) code execution on whoever opens the exported file. This is an OWASP-catalogued, well-documented class of vulnerability (CSV/Formula Injection).
+
+**Why it happens:**
+CSV files are opened in spreadsheet software by default, and spreadsheet software treats leading `=`, `+`, `-`, `@` as formula triggers regardless of the file's actual intent — developers exporting "just data" don't think of the output as executable.
+
+**How to avoid:**
+Sanitize every exported cell: if the value starts with `=`, `+`, `-`, `@`, tab, or CR, prefix it with a leading single-quote (`'`) or space to force text interpretation before writing. Do this in one shared export utility function, not ad hoc per column, so every current and future exported field is covered without remembering to re-check next time a column is added.
+
+**Warning signs:**
+None visible from the app itself — this is a "silent until someone gets phished/burned" class of bug. Treat it as a mandatory checklist item, not something to catch via manual testing.
+
+**Phase to address:**
+Export phase — should be part of the initial implementation, not a follow-up hardening pass, since `observacao` is explicitly free text.
+
+---
+
+### Pitfall A5: Long-running import request hits the serverless execution time limit
+
+**What goes wrong:**
+A Server Action / API route that validates + inserts every row of a spreadsheet synchronously in one request works fine with the 20-row test file used during development, then times out (504) on a real 500-row partner list — the import appears to "hang" or fail with no clear error, and the supervisor has no idea whether some rows were saved or not.
+
+**Why it happens:**
+Vercel's Hobby-plan serverless functions default to a 10-second execution limit (killable at that point regardless of what's mid-flight); this project is explicitly on the free/Hobby tier per `CLAUDE.md`'s zero-infra-cost constraint. Row-by-row validation + individual inserts against Supabase, each with network round-trip latency, adds up fast once row counts grow past a few dozen.
+
+**How to avoid:**
+- Batch inserts (500-1000 rows per statement, not one `INSERT` per row) to cut both round-trips and total request time.
+- Keep the "validate + preview" step and the "commit to DB" step as separate requests: parse/validate happens in one shorter-lived call and returns a preview + error list to the browser (already scoped as a UI step — "tela de mapear colunas" and "mostrar erros/duplicados antes de confirmar" — so this fits the planned UX naturally); the actual commit-to-DB call only needs to do inserts, not full re-parsing.
+- Design for the realistic ceiling: internal sales team spreadsheets are expected to be hundreds of rows, not tens of thousands — plan the commit step to comfortably finish under Hobby's ~10s window at that volume, and treat "still too slow" as a signal to chunk the commit into multiple sequential requests from the client (e.g. 200 rows per request) rather than reaching for a paid background-job service.
+
+**Warning signs:**
+Import "hangs" or returns a generic 504/timeout error on a full-size real file even though smaller test files work.
+
+**Phase to address:**
+Import commit phase — needs a load test with a realistic row count (300-800 rows) before considering it done.
+
+---
+
+### Pitfall A6: Partial-import failure leaves the funil in a half-imported, confusing state
+
+**What goes wrong:**
+Row 340 of a 500-row spreadsheet fails validation (missing required endereço field, or a duplicate) mid-commit. Depending on how the commit is written, either (a) Postgres rolls back the entire transaction and the supervisor sees "0 imported" with no idea which rows were the problem, or (b) the commit isn't wrapped in a transaction at all and 339 clients get created while the rest silently don't, leaving the supervisor unsure what actually landed in the funil.
+
+**Why it happens:**
+Bulk import naturally wants "best effort, skip the bad ones" behavior, but a single Postgres transaction is all-or-nothing by default — mixing "some rows commit, some don't" into one unguarded transaction either loses good rows or silently applies partial writes, and developers often don't decide explicitly which behavior they want until it happens in production.
+
+**How to avoid:**
+- Validate the entire file *before* touching the `clientes` table — the "mostrar erros/duplicados antes de confirmar" screen already scoped for this milestone is exactly the right place to catch bad rows, so make it a hard gate: nothing is written to the DB until validation of the whole file has already run and the supervisor has explicitly confirmed.
+- At commit time, decide explicitly and document the choice: either commit only the rows that passed validation (skip/report the rest, e.g. via a temporary staging step or batching that only includes clean rows) or require 100% clean before any commit — but never let it happen implicitly via whichever rows a partial transaction happened to reach before failing.
+- Always show a post-import summary: "N importados, M pulados por [motivo]" so the supervisor never has to guess what happened.
+
+**Warning signs:**
+Supervisor asks "importei mas não sei quantos entraram de verdade" or the funil count doesn't match what the supervisor expected after an import with known-bad rows in the source file.
+
+**Phase to address:**
+Import commit phase; validation-gate phase should be sequenced before it in the roadmap.
+
+---
+
+### Pitfall A7: File upload accepted based on filename/extension or client-sent MIME type alone
+
+**What goes wrong:**
+The upload endpoint checks only the file's extension (`.xlsx`/`.csv`) or the `Content-Type` header the browser sent, both of which are attacker-controlled and trivially spoofed — a malicious or malformed file (e.g. renamed executable, oversized file designed to exhaust memory, or a "zip bomb"-style crafted xlsx, since xlsx is itself a zip container) can be uploaded and processed by the parsing library server-side.
+
+**Why it happens:**
+Extension/MIME checks are the fastest thing to implement and look sufficient in casual testing, but neither reflects the file's actual binary content — this is OWASP's documented weak point for any file upload feature, and it's easy to skip harder validation for an "internal tool, low risk" feature like this one.
+
+**How to avoid:**
+- Enforce a hard file-size cap on upload (spreadsheets from partners/feiras have no legitimate reason to be huge; a cap in the low tens of MB is generous for a CRM contact list).
+- Validate actual file signature/magic bytes server-side in addition to extension, not instead of it (defense in depth, not either/or).
+- Because the only importer is the Supervisor role (already restricted per `PROJECT.md`), this is lower severity than a public-facing upload — but it still runs server-side code against the uploaded bytes, so treat it as untrusted input regardless of who's allowed to upload.
+- If using the `xlsx` (SheetJS) npm package specifically for parsing: the widely-distributed npm version has a known prototype-pollution advisory (CVE-2023-30533) affecting versions through 0.19.2 when parsing crafted files — pin to a patched version (0.19.3+, note the officially patched build is distributed via SheetJS's own CDN rather than a newer npm release) or use an actively maintained alternative parser.
+
+**Warning signs:**
+No visible symptom until an unusual file is uploaded — verify explicitly during code review/security review of this phase rather than waiting for it to surface.
+
+**Phase to address:**
+Import upload phase — file validation should land in the same PR as the upload endpoint, not as a later hardening pass.
+
+---
+
+## Technical Debt Patterns (v1.1 addendum)
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|--------------------|-----------------|------------------|
+| Exact-match duplicate detection on razão social only (no normalization) | Ships faster, simpler code | Misses real duplicates (different formatting) and/or blocks non-duplicates; supervisor loses trust in the "duplicados" screen | Never for the actual detection logic — but acceptable to ship the *first* version with only whitespace/case normalization (not full suffix-stripping) and refine after real usage shows the gaps |
+| Client-only column-mapping validation (no server re-validation) | Faster to build the mapping UI | A crafted request could bypass required-field checks that the RLS/DB schema doesn't itself enforce (e.g. razão social required only in the UI) | Never — required-field and type validation must be re-checked server-side regardless of what the mapping UI already validated, consistent with the project's existing zod-on-both-sides pattern |
+| Skipping a post-import summary count | One less UI screen to build | Supervisor can't tell what actually happened after a partial failure; erodes trust in the feature | Never — this is cheap to build and directly prevents Pitfall A6's worst symptom |
+| Reusing the single-record cadastro's Server Action for each imported row (loop of individual inserts) | Reuses existing, already-tested code | Multiplies latency by row count, makes the import much more likely to hit the serverless time limit at realistic volumes | Only acceptable for an internal "just make it work" first pass with a hard row cap (e.g. 50 rows) while the real batched-insert path is built |
+
+## Integration Gotchas (v1.1 addendum)
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|-----------------|-------------------|
+| Supabase (RLS) | Running the bulk insert through the same client-side RLS-scoped session per row, incurring policy-evaluation overhead per row and multiplying round-trips | Perform the import commit through a server-side path (a Server Action calling Supabase with the request's authenticated session is fine at this row scale; a `SECURITY DEFINER` RPC is the documented escape hatch per this project's own `supabase-conventions` skill if RLS overhead becomes measurable) — but the *authorization check* ("is this user the Supervisor?") must still happen, RLS just shouldn't be the perf bottleneck |
+| Vercel Hobby serverless functions | Assuming request duration scales fine because dev testing used a small file | Load-test the commit endpoint with a file at the upper end of realistic size (300-800 rows) before considering the phase done; batch server-side inserts and/or chunk the commit into multiple client-driven requests if the single-request path is close to the 10s ceiling |
+| Excel PT-BR CSV export | Assuming comma-delimited CSV like most English-language tutorials/libraries assume by default | Detect delimiter from the file itself, or prefer `.xlsx` upload as the primary supported format since it has no delimiter ambiguity |
+
+## Performance Traps (v1.1 addendum)
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|-----------------|
+| Row-by-row insert loop against Supabase | Import "spins" for a long time then times out on real files | Batch inserts (500-1000 rows per statement) | Becomes noticeable past roughly 50-100 rows on Vercel Hobby's 10s window; guaranteed to break well before 500 rows if done row-by-row |
+| Client-side-only spreadsheet parsing of a large file in the browser before upload | Browser tab freezes/crashes on a large partner spreadsheet | Parse server-side (or stream-parse) rather than loading the whole file into browser memory and JS-object-ifying it client-side | Matters once files approach a few thousand rows or include many columns; low risk at this project's expected volumes but cheap to avoid by parsing server-side from the start |
+| Fetching full existing `clientes` table client-side to run duplicate-check in the browser | Slow duplicate-check step, high egress against Supabase's free-tier cap | Run duplicate detection as a server-side query/RPC with a narrow `select()`, not a full client-side table fetch — consistent with this project's existing "narrow select() over full client fetch" stack convention | Breaks the free-tier egress budget well before it breaks on raw speed, since egress (not row count) is the constrained resource here |
+
+## Security Mistakes (v1.1 addendum)
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Trusting client-sent file extension/MIME type for upload validation | Malformed/oversized/malicious file processed server-side by the parsing library | Validate file size + actual content signature server-side; enforce allowlist of xlsx/csv only |
+| Writing free-text fields into exported CSV cells unsanitized | CSV/formula injection — corrupted or malicious spreadsheet opened by a teammate | Sanitize any cell starting with `=`,`+`,`-`,`@` before writing to the export |
+| Using an outdated `xlsx` (SheetJS) npm package version to parse uploaded files | Prototype pollution (CVE-2023-30533) when parsing a crafted file, potential DoS/RCE-class impact | Pin to a patched SheetJS build (0.19.3+ via SheetJS's own distribution) or use a maintained alternative; this specifically matters here because parsing *user-uploaded* files (not just exporting) is exactly the vulnerable code path |
+| Assuming "only the Supervisor can import" removes the need for server-side validation | A compromised/careless Supervisor session, or a bug in the role check, still hits an unguarded upload/parse path | Server-side role check (RLS/RPC-backed, per this project's existing authorization convention) is still mandatory even though only one role has UI access to the feature |
+
+## UX Pitfalls (v1.1 addendum)
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-------------------|
+| Column-mapping screen with no preview of parsed values | Supervisor can't tell if columns lined up correctly (especially with the pt-BR delimiter issue) until after import, then has to fix bad data by hand | Show a small preview (first 3-5 parsed rows) under each mapped column before the supervisor confirms |
+| Generic "import failed" error with no row-level detail | Supervisor has no idea which of hundreds of rows caused the problem, gives up or re-uploads blindly | Show a per-row error list (row number + reason: "linha 47: endereço obrigatório ausente") before commit, matching the "mostrar erros/duplicados antes de confirmar" requirement already scoped |
+| No indication of which stage a large import is currently at (parsing vs validating vs committing) | Supervisor thinks the app froze during a slower real-file import and re-submits, risking a double-import | Simple progress/step indicator ("Lendo arquivo… Validando… Salvando…") even if each step is a separate request |
+| Export button with no visible scope indicator | Vendedor exports and is confused about whether the file includes all clients or just their own | Label the export explicitly ("Exportar meus clientes" vs "Exportar todos os clientes") reflecting the RLS-driven scope so it's not ambiguous, even though the underlying rule (own vs all) is already decided |
+
+## "Looks Done But Isn't" Checklist (v1.1 addendum)
+
+- [ ] **Duplicate detection**: Often missing normalization of company-name formatting — verify with two test rows that are the same company but different case/punctuation/suffix and confirm they're flagged
+- [ ] **CSV/xlsx parsing**: Often missing BOM-stripping and delimiter auto-detection — verify with a real file exported from Excel in pt-BR locale (semicolon-delimited, UTF-8 BOM), not just a hand-written comma CSV
+- [ ] **Export**: Often missing CSV-injection sanitization on free-text fields — verify by putting a value starting with `=` or `+` in `observacao` or `contato` and confirming the exported file opens safely in Excel without a formula/warning
+- [ ] **Import commit**: Often missing a load test at realistic volume — verify a 300-800 row real-shaped file completes without a serverless timeout
+- [ ] **Partial-failure handling**: Often missing an explicit "what happened" summary — verify that after an import with some intentionally-bad rows, the supervisor sees a clear count of imported vs skipped, not silence or a generic error
+- [ ] **File upload validation**: Often missing content-based (magic byte) validation beyond extension check — verify a renamed non-spreadsheet file is rejected server-side, not just by the `<input accept>` attribute (which is client-side only and trivially bypassed)
+- [ ] **RLS on export**: Often missing a server-side re-check that a Vendedor's export request can't be tricked into returning all clients — verify the export query itself is scoped by the authenticated user's role/RLS, not filtered only in the UI
+
+## Recovery Strategies (v1.1 addendum)
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|-----------------|-----------------|
+| Duplicate clients created from a bad detection pass | LOW-MEDIUM | Since clients aren't destructively merged, a supervisor can identify and manually delete the duplicate cards (delete is already supervisor-only per existing RLS rules); consider a follow-up "merge duplicates" utility if this recurs often |
+| Partial import committed inconsistent rows | MEDIUM | Because imported clients always land in "Aguardando contato" with no downstream side effects yet triggered, a partial batch can be identified (e.g. via `created_at` timestamp window) and bulk-deleted by the supervisor, then re-imported after fixing the source file |
+| CSV injection payload already exported and opened elsewhere | HIGH (depends on what ran on the opening machine) | Treat as a security incident, not just a bug — patch the export sanitization immediately and communicate to whoever opened the file; this is exactly why it must be prevented upfront rather than "recovered from" |
+| Vulnerable xlsx parser version already shipped | LOW-MEDIUM | Bump to patched version, re-deploy; since only the Supervisor uploads files, exposure window is limited but should still be treated as a real fix, not deferred |
+
+## Pitfall-to-Phase Mapping (v1.1 addendum)
+
+| Pitfall | Prevention Phase | Verification |
+|---------|-------------------|----------------|
+| Fragile duplicate detection (name-only) (A1) | Import validation/duplicate-detection phase | Test with same company under 2+ formatting variants; confirm flagged, not silently duplicated or falsely blocked |
+| pt-BR delimiter/decimal mismatch (A2) | Import parsing phase | Test with a real Excel-pt-BR-exported CSV (semicolon-delimited) as a required test fixture |
+| UTF-8 BOM breaking header parsing (A3) | Import parsing phase | Test with a BOM-prefixed file fixture; confirm first column auto-maps correctly |
+| CSV/formula injection on export (A4) | Export phase | Test exporting a client with `observacao` starting with `=`/`+`/`-`/`@`; confirm sanitized in output file |
+| Serverless execution time limit on commit (A5) | Import commit phase | Load test with 300-800 row file; confirm completes without 504 |
+| Partial-import inconsistent state (A6) | Import commit phase (sequenced after validation-gate phase) | Test import with intentionally-bad rows mixed in; confirm clear imported/skipped summary, no silent partial writes |
+| Untrusted file upload (extension/MIME spoofing, vulnerable parser) (A7) | Import upload phase | Security review step: attempt uploading a renamed non-spreadsheet file, confirm server-side rejection; confirm xlsx parser dependency version is patched |
+
+## Sources (v1.1 addendum)
+
+- [OWASP: CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection) — Confidence: MEDIUM (cross-checked against multiple independent write-ups agreeing on mechanism and the leading-quote mitigation)
+- [OWASP Web Security Testing Guide: Testing for CSV Injection](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/21-Testing_for_CSV_Injection)
+- [Cyber Chief: CSV formula injection prevention in Node.js/Django/Flask/Java/PHP](https://www.cyberchief.ai/2024/09/csv-formula-injection-attacks.html)
+- [OWASP File Upload Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html) — Confidence: MEDIUM
+- [Sourcery: File Upload Content Type and MIME Type Bypass Vulnerabilities](https://www.sourcery.ai/vulnerabilities/file-upload-content-type-bypass)
+- [Vercel Functions Limits (docs)](https://vercel.com/docs/functions/limitations) — Confidence: MEDIUM (cross-checked against 2 independent 2026 write-ups reporting the same 10s Hobby default / Fluid Compute 300s figures); recommend re-verifying exact current numbers directly against Vercel's docs at implementation time, since these limits have changed across Vercel plan revisions before
+- [GitHub supabase/discussions: Best Practices for Inserting Large Number of Rows](https://github.com/orgs/supabase/discussions/11349) — Confidence: LOW (community discussion, not official doc)
+- [SupaExplorer: Batch INSERT Statements for Bulk Data](https://supaexplorer.com/best-practices/supabase-postgres/data-batch-inserts/) — Confidence: LOW
+- [PostgreSQL Wiki: UPSERT](https://wiki.postgresql.org/wiki/UPSERT) — Confidence: MEDIUM
+- [dev.to: Understanding Atomicity in PostgreSQL](https://dev.to/kfir-g/understanding-atomicity-in-postgresql-a-deep-dive-into-the-a-in-acid-209a) — Confidence: LOW
+- [ablebits: How to change Excel CSV delimiter to comma or semicolon](https://www.ablebits.com/office-addins-blog/change-excel-csv-delimiter/) — Confidence: MEDIUM (cross-checked against a second independent explanation of the same locale-driven Excel delimiter behavior)
+- [LeapRows: How to Control CSV Encoding in Excel — The UTF-8 BOM Problem Explained](https://leaprows.com/en/blog/csv-utf8-bom-encoding-guide) — Confidence: MEDIUM
+- [Elysiate: CSV Encoding Problems: UTF-8, BOM, and Character Issues](https://www.elysiate.com/blog/csv-encoding-problems-utf8-bom-character-issues) — Confidence: LOW
+- [Snyk: Prototype Pollution in xlsx — CVE-2023-30533](https://security.snyk.io/vuln/SNYK-JS-XLSX-5457926) — Confidence: MEDIUM (cross-checked against GitHub Advisory Database and SheetJS's own advisory page reporting the same CVE and affected-version range)
+- [GitHub Advisory Database: Prototype Pollution in sheetJS](https://github.com/advisories/GHSA-4r6h-8v6p-xvw6)
+- [SheetJS official advisory: CVE-2023-30533](https://cdn.sheetjs.com/advisories/CVE-2023-30533)
+- [Supabase Docs: Understanding Edge Function CPU limits](https://supabase.com/docs/guides/troubleshooting/edge-function-cpu-limits) — Confidence: MEDIUM; relevant only if a future phase moves import processing into an Edge Function instead of a Vercel Server Action — noted here as a secondary option if the Vercel Hobby time limit proves too restrictive at real usage volumes
+- [Datablist: What tools to dedupe using fuzzy matching?](https://www.datablist.com/learn/data-cleaning/fuzzy-matching) — Confidence: LOW
+- [Databar.ai: CRM Deduplication Complete Guide](https://databar.ai/blog/article/crm-deduplication-complete-guide-to-finding-merging-duplicate-records) — Confidence: LOW — general CRM-deduplication best practice (normalize to a dedup key, prefer real unique identifiers over name matching, combine name with a secondary field); no dedicated primary source found specific to CNPJ/Brazilian tax-ID normalization, so treat the CNPJ-specific recommendation above as this researcher's inference from general dedup principles, not a directly sourced claim
+
+---
+*Pitfalls research for: Bulk import/export addition to CRM Raiar (v1.1 milestone)*
+*Researched: 2026-07-22*

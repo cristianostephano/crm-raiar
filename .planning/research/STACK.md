@@ -132,3 +132,111 @@ npx playwright install
 ---
 *Stack research for: B2B sales CRM (kanban/pipeline) MVP on Next.js + Supabase*
 *Researched: 2026-07-14*
+
+---
+
+# v1.1 Addendum: Bulk Spreadsheet Import/Export
+
+**Domain:** Bulk spreadsheet import/export addendum for the existing Next.js + Supabase CRM
+**Researched:** 2026-07-22
+**Confidence:** MEDIUM (npm registry versions are HIGH confidence/authoritative; several library-choice judgments are LOW-MEDIUM/web-synthesis — flagged inline)
+
+This section covers ONLY the new capabilities for the v1.1 milestone (import via `.xlsx`/`.csv` with column mapping + duplicate detection, and export to `.xlsx`/`.csv`). It assumes the full existing stack above (unchanged) and does not repeat rationale for those entries.
+
+## Recommended Stack
+
+### Core Technologies
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `@e965/xlsx` | 0.20.3 | Parse uploaded `.xlsx` workbooks into rows; generate `.xlsx` for export | This is an automated, unmodified republish of official SheetJS Community Edition onto the public npm registry (GitHub Actions mirror, updated automatically whenever SheetJS cuts a new release). It exists specifically because **the `xlsx` package name on the npm registry is stuck on 0.18.5 (published 2022) and is not maintained** — SheetJS stopped publishing there over a licensing/2FA dispute with npm and now distributes only from `cdn.sheetjs.com`. `npm install xlsx` today silently installs a version carrying two known CVEs (see "What NOT to Use"). `@e965/xlsx` gives a normal `npm install`/lockfile/Dependabot workflow with the current, patched SheetJS code (0.20.3+) — important for a non-technical project owner who won't remember to manually track a CDN tarball URL |
+| `papaparse` | 5.5.4 | Parse uploaded `.csv` files into rows; generate `.csv` text for export | De facto standard CSV library for JS (works identically in Node and browser), actively maintained (this version published June 2026), handles malformed rows/quoting edge cases gracefully with row-level error reporting — needed for the "mostrar erros antes de confirmar" requirement. `Papa.unparse()` also covers CSV export, so one library does both directions |
+| `@types/papaparse` | 5.5.2 | TypeScript types for papaparse | papaparse itself ships untyped JS; this is the community-maintained `@types` package. `@e965/xlsx` does not need a separate types package — it ships its own `.d.ts` (mirrors SheetJS's) |
+
+### Supporting Libraries
+
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `zod` (already in stack, 4.4.3) | — | Per-row validation during import (required fields present, `categoria`/`produtos_consumidos` values are valid enum options, etc.) | Reuse the existing `cliente` Zod schema (or a relaxed "import row" variant of it) to validate each parsed row before showing the preview/error screen — no new dependency needed, and it keeps validation identical to the manual cadastro form |
+| `react-hook-form` + shadcn/ui `Table`/`Select` (already in stack) | — | Column-mapping screen (dropdown per spreadsheet column → target `cliente` field) | The client schema has ~10 fields — this is a small, static mapping UI, not a generic "any schema" import wizard. Building it with existing primitives avoids a new dependency entirely (see "What NOT to Use" for the dedicated import-wizard libraries considered and rejected) |
+| Postgres `pg_trgm` extension (Supabase-hosted, no npm package) | built into Postgres | Fuzzy duplicate detection (e.g. "Empresa ABC Ltda" vs "Empresa ABC LTDA") when matching import rows against existing clientes | `pg_trgm` ships with every Postgres install, including Supabase's, and is enabled with a one-line migration (`create extension if not exists pg_trgm;`). Exposing a `similarity(razao_social, $1)` check through a Postgres RPC function (per the `supabase-conventions` skill) keeps the entire existing client list — which the duplicate check needs to compare against — server-side and RLS-scoped, instead of shipping it to the browser for a JS fuzzy-match library to chew on. This is the same "compute in Postgres, don't ship the full table to the client" pattern already used for the dashboard aggregates |
+
+### Development Tools
+
+No new dev tools needed. Reuse Vitest (unit-test the Zod row-validation logic and any pure "is this a likely duplicate" helper) and Playwright (E2E: upload a file as Supervisor, map columns, confirm import; verify Vendedor cannot reach the import screen at all — RLS/role check).
+
+## Installation
+
+```bash
+# Core: xlsx parsing/generation (patched SheetJS mirror) + CSV parsing/generation
+npm install @e965/xlsx papaparse
+
+# Dev dependencies
+npm install -D @types/papaparse
+```
+
+No changes needed to Supabase project config beyond one migration:
+
+```sql
+-- supabase/migrations/xxxx_enable_pg_trgm.sql
+create extension if not exists pg_trgm;
+```
+
+## Alternatives Considered
+
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|--------------------------|
+| `@e965/xlsx` (npm mirror) | Official SheetJS tarball from `cdn.sheetjs.com` (`npm install https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`) | If the team wants the package sourced directly from SheetJS with zero third-party republishing in the chain, at the cost of a URL dependency in `package.json` that won't auto-update or trigger Dependabot/`npm outdated` — a real maintenance risk for a non-technical owner who won't remember to bump it by hand |
+| `@e965/xlsx` + `papaparse` (two libraries, one per format) | `exceljs` (handles `.xlsx` only) | Not recommended right now: `exceljs`'s last npm publish was October 2023 (per npm registry metadata) and community discussion describes it as effectively unmaintained with multiple open dependency/security issues. SheetJS-family libraries also read/write CSV, so there's no need for a second Excel-only library |
+| Postgres `pg_trgm` RPC for duplicate detection | `fuse.js` (7.5.0, actively maintained) as a client-side fuzzy matcher | If duplicate suggestions need to appear instantly while the Supervisor is still on the column-mapping screen (before any server round-trip) — e.g. an inline "did you mean an existing client?" hint. Would need the visible client subset shipped to the browser first, so keep it scoped (own clientes only, or a narrow candidate set) rather than the full table |
+| Build column-mapping UI with existing shadcn/ui + react-hook-form | `react-spreadsheet-import` (4.7.1) | If the project later needs a generic "let any user import any CSV shape" wizard with auto-fuzzy column matching out of the box. Today it's not worth it: the library is built on Chakra UI, which would introduce a second component/design system alongside the project's shadcn/ui "nova" (base-ui) setup — the exact tradeoff the project already avoided once by picking shadcn's Chart component over Tremor |
+| Build column-mapping UI with existing shadcn/ui + react-hook-form | `react-csv-importer` (0.8.1) / `@importcsv/react` (0.6.1) / `csv-import-react` (1.0.18) | `react-csv-importer` is CSV-only (no `.xlsx`) and last published in 2023. `@importcsv/react` and `csv-import-react` are more current but pull in their own opinionated modal/wizard UI and validation model — redundant given the schema is small and react-hook-form + zod already cover validation |
+
+## What NOT to Use
+
+| Avoid | Why | Use Instead |
+|-------|-----|--------------|
+| `npm install xlsx` (the plain npm-registry package) | Resolves to 0.18.5 (published 2022), which is **not maintained and carries known vulnerabilities**: CVE-2023-30533 (prototype pollution, fixed upstream in 0.19.3) and CVE-2024-22363 (ReDoS, fixed upstream in 0.20.2). No non-vulnerable version of this exact package exists on the npm registry — SheetJS never published the fix there | `@e965/xlsx` (0.20.3+) or the official CDN tarball |
+| `exceljs` | Effectively unmaintained (no npm publish since Oct 2023); open issues about outdated/vulnerable transitive dependencies (`glob`, `rimraf`, `inflight`) with no fix shipped | `@e965/xlsx` for both `.xlsx` read and write |
+| `string-similarity` | **Explicitly marked "no longer supported" on npm** (deprecated notice on the package itself) | Postgres `pg_trgm` `similarity()`, or `fuse.js` if a client-side JS option is ever needed |
+| A dedicated import-wizard React library (`react-spreadsheet-import`, etc.) as the primary approach | Adds a second design system (Chakra) or a second opinionated form/validation stack, for a mapping UI that only needs to cover ~10 static fields | Custom screen built on existing shadcn/ui `Table`/`Select` + react-hook-form + zod |
+| Persisting the uploaded spreadsheet to Supabase Storage before parsing it | Not needed for this use case — the file is parsed once and discarded; storing it first adds Storage-quota usage (1GB free tier) and an extra round trip for zero benefit, since parsing can happen directly on the in-memory upload | Read the file straight out of `request.formData()` (Route Handler) or the `FormData` argument (Server Action) into an `ArrayBuffer`/`Buffer` and parse in the same request |
+
+## Stack Patterns by Variant
+
+**Import (upload + parse):**
+- Either a Server Action or a Route Handler (`app/api/clientes/import/route.ts`) can receive the uploaded file — Next.js Server Actions accept `File` values inside `FormData` natively. A Route Handler is slightly easier to reason about here since it can return a normal JSON `Response` with a clear preview/error payload before anything is written to the database
+- Must run on the **Node.js runtime**, not Edge (`export const runtime = 'nodejs'` if not already the default) — `@e965/xlsx`/SheetJS relies on Node `Buffer` APIs that aren't guaranteed on Edge
+- Two-step flow matches the requirement ("mostrar erros/duplicados antes de confirmar"): (1) parse + validate + duplicate-check → return a preview to the client, nothing persisted yet; (2) a separate confirm action performs the actual inserts (all new rows into "Aguardando contato", per the milestone decision) inside a transaction/RPC scoped by RLS to the Supervisor role
+
+**Export (generate + download):**
+- Must be a **Route Handler**, not a Server Action — Server Actions can only return serializable data to React, not a binary/text `Response` with `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` (or `text/csv`) and `Content-Disposition: attachment` headers needed to trigger a file download
+- Query the client list the normal RLS-scoped way (Vendedor gets own clientes, Supervisor gets all — same policies already enforcing this everywhere else), then hand the rows to `XLSX.utils.json_to_sheet` + `XLSX.write` (or `Papa.unparse` for CSV) and stream the result back
+
+**File-size ceiling to design around (Vercel Hobby, zero-infra constraint):**
+- Next.js Server Actions default to a 1MB request-body limit (`experimental.serverActions.bodySizeLimit` in `next.config.js` to raise it)
+- Vercel enforces a **hard 4.5MB request-body limit on standard serverless Functions regardless of framework config** (Hobby plan included) — raising `bodySizeLimit` above that won't help; requests over 4.5MB get rejected by Vercel's edge layer (413) before the function even runs
+- Given this project's actual volume (hundreds to low-thousands of clientes from partner/trade-show lists, not tens of thousands), a plain spreadsheet with ~10 text columns stays well under this ceiling in practice. Still: set `bodySizeLimit` to something safely below 4.5MB (e.g. `'4mb'`) and add a friendly client-side file-size check with a plain-language message ("essa planilha é grande demais, tente dividir em partes menores") rather than letting the user hit a raw 413 error
+
+## Version Compatibility
+
+| Package A | Compatible With | Notes |
+|-----------|------------------|-------|
+| `@e965/xlsx@0.20.3` | Node.js runtime in Next.js 16 Route Handlers/Server Actions | Confirm `runtime = 'nodejs'` (not `edge`) on whichever handler does the parsing |
+| `papaparse@5.5.4` | `@types/papaparse@5.5.2` | Types package version trails the JS package slightly; this is normal and fine — no functional gap for the APIs used here (`parse`/`unparse`) |
+| `pg_trgm` | Supabase-hosted Postgres (any current version) | Standard extension; enable per-project via migration, not a dashboard toggle, to keep it versioned like every other schema change (`CLAUDE.md`: migrations always versioned) |
+
+## Sources
+
+- `registry.npmjs.org` — direct registry queries for `xlsx`, `@e965/xlsx`, `exceljs`, `papaparse`, `@types/papaparse`, `react-spreadsheet-import`, `react-csv-importer`, `@importcsv/react`, `csv-import-react`, `fuse.js`, `fast-levenshtein`, `string-similarity` (2026-07-22). Confidence: HIGH for version numbers and publish dates/deprecation flags specifically (authoritative source of truth)
+- WebSearch: "SheetJS xlsx npm registry stopped publishing why use CDN" — cross-checked against SheetJS's own GitHub/Gitea issue threads (#2667, #3183) explaining the npm registry dispute. Confidence: MEDIUM (multiple independent primary-adjacent sources agreeing)
+- WebSearch: "xlsx package CVE-2024-22363 prototype pollution ReDoS vulnerability fixed version" — cross-checked against GitHub Advisory Database (GHSA-5pgg-2g8v-p4x9) and Snyk. Confidence: MEDIUM-HIGH (security advisory databases are authoritative for CVE existence/fix-version claims)
+- WebSearch: "exceljs maintenance status deprecated 2026 alternative" — GitHub discussion threads (#2884, #2987) on exceljs's own repo describing maintainer inactivity. Confidence: MEDIUM (primary-adjacent — the project's own maintainers/community discussing it)
+- WebSearch: "react-spreadsheet-import npm column mapping CSV import library React" — npm package pages + GitHub READMEs. Confidence: LOW-MEDIUM (web synthesis, but library READMEs are close to primary source)
+- WebSearch: "Next.js Server Actions file upload body size limit default 1MB serverActions.bodySizeLimit" — nextjs.org official docs page surfaced directly (`serverActions` config reference). Confidence: MEDIUM-HIGH (official docs referenced, though not directly WebFetched)
+- WebSearch: "Vercel Hobby plan serverless function request body size limit 4.5MB 2026" — vercel.com/docs/functions/limitations and vercel.com/kb surfaced directly. Confidence: MEDIUM-HIGH (official docs referenced, though not directly WebFetched) — worth a manual re-check of `vercel.com/docs/functions/limitations` at implementation time since platform limits can change
+- WebSearch: "Postgres pg_trgm similarity fuzzy duplicate detection Supabase extension" — supabase.com/docs/guides/database/extensions and community discussion. Confidence: MEDIUM. Note one surfaced caveat (GitHub issue supabase/supabase#30503) about `similarity()` occasionally not being found after enabling the extension via the dashboard UI — mitigated here anyway, since the recommended approach is a versioned SQL migration (`create extension`) rather than the dashboard toggle
+
+---
+*Stack research for: bulk spreadsheet import/export (CRM Raiar v1.1)*
+*Researched: 2026-07-22*

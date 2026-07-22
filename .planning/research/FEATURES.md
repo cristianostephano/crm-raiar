@@ -1,197 +1,173 @@
 # Feature Research
 
-**Domain:** B2B sales pipeline CRM (small internal sales team, kanban/funnel-based)
-**Researched:** 2026-07-14
-**Confidence:** MEDIUM
+**Domain:** CRM internal tool — bulk client import (spreadsheet) and client list export
+**Researched:** 2026-07-22
+**Confidence:** LOW-MEDIUM (web-synthesis only; no primary vendor docs directly fetched — see Sources)
 
-> Note on method: this research used the built-in WebSearch tool directly (Node.js runtime was unavailable in this environment, so the `gsd-tools` research-plan/research-store/classify-confidence seams could not be invoked). Findings are cross-referenced against multiple independent sources (Pipedrive/HubSpot/Zoho comparison articles, CRM implementation post-mortems, pipeline-aging and audit-trail guides) rather than a single source. No official vendor documentation or curated docs provider (Context7/Ref) was used, so confidence is capped at MEDIUM per the standard hierarchy — treat as directionally reliable, not authoritative.
+> Note: This file was fully rewritten for milestone v1.1 (Importação e Exportação de Clientes). It supersedes the prior v1.0 FEATURES.md content (kanban/funnel feature landscape), which is preserved in git history and in `.planning/archive/` if the milestone-completion workflow has run. This research covers ONLY the v1.1 additions.
+
+## Scope Note
+
+This research covers ONLY the v1.1 milestone additions: Supervisor-only recurring bulk import via .xlsx/.csv with column mapping and pre-confirmation duplicate/error review, and role-scoped client list export. It assumes the existing v1.0 schema and RLS model (already built) as given, and calls out explicitly where the **absence of a CNPJ/tax-ID field** in the current client schema changes what's achievable.
 
 ## Feature Landscape
 
-Everything below is filtered through the project's actual constraint: this is **not** a general-purpose CRM to compete with Pipedrive/HubSpot. It is a purpose-built internal tool for one sales team tracking PJ clients through one fixed funnel, replacing a paid CRM that failed for one specific reason — **data entry friction causes people to stop updating it**. That reframes "table stakes" away from "what does Pipedrive have" and toward "what does this specific team need to not abandon the tool again."
-
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete, or repeats the failure mode of the tool being replaced.
+Features users assume exist in any "import a spreadsheet of records" flow. Missing these makes the import feature feel broken or dangerous to use on a recurring basis (this is NOT a one-time migration tool — the Supervisor will run this repeatedly with feira/partner lists).
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Kanban board with drag-and-drop stage movement | This is the core interaction model of every pipeline CRM (Pipedrive, HubSpot, Zoho, Capsule) — moving a card across lanes is how reps update status without opening a form | MEDIUM | Already scoped in PROJECT.md (7 fixed stages). Use a proven library (e.g. dnd-kit) rather than hand-rolled drag logic — drag-and-drop UX bugs are a common source of rework |
-| Fast client record creation with minimal required fields | Directly named by the user as the reason the old CRM failed ("telas longas, esquecimento"). Industry research confirms over-engineered mandatory fields is a top adoption killer — CRM projects that start with a large mandatory field set see much lower usage after rollout | LOW | Already scoped: razão social + endereço + responsável only, rest filled in later |
-| Role-based visibility (rep sees own, supervisor sees all) | Standard in every multi-user CRM; without it, a shared team pipeline becomes unusable or requires manual trust-based discipline | LOW–MEDIUM | Already scoped, enforced via Supabase RLS per project conventions |
-| Lost-reason capture on stage-exit | Every competitor CRM (Pipedrive, HubSpot, generic pipeline tools) forces a reason when a deal is marked lost — it is the #1 source of "why are we losing deals" analysis, and without it the loss data in the dashboard is meaningless | LOW | Already scoped as an editable enum, required field on loss |
-| Task/to-do list per card with due dates | Table stakes across all pipeline CRMs — a card without actionable next steps is just a static record | LOW | Already scoped (tarefas + data_conclusao) |
-| Visual staleness/aging indicator on cards | Confirmed by research: "time-in-stage" and "no activity in N days" are the most common visual cues in modern pipeline boards to combat exactly the silent-neglect failure mode this project is trying to fix | LOW–MEDIUM | Already scoped as a requirement (destaque visual, no active notifications). Simplest implementation: flag any card with no field/status change past a threshold (e.g. days since last update) |
-| Free-text notes per card | Universal — every CRM has a notes/description field for context that doesn't fit structured fields | LOW | Already scoped (observação) |
-| Search / filter on the client list and/or kanban | **Gap in current scope.** Every pipeline CRM reviewed (Pipedrive, HubSpot, generic kanban boards) treats search/filter (by name, stage, rep, category, product) as baseline — without it, a board with dozens of active PJ clients becomes unusable for a supervisor scanning across the whole team | LOW–MEDIUM | Not currently in PROJECT.md Active requirements. Recommend adding at minimum: filter by responsável (for supervisor), filter by categoria/produto, text search by razão social |
-| Basic activity/change history per client | **Gap in current scope.** Standard CRM pattern (Pipedrive, SugarCRM, Dynamics, Zoho all document this): a lightweight timeline of "what changed and when" on a client record — distinct from the single free-text `observação` field. Without it, when a card moves stages or a task closes, there's no record of *when* it happened, which undermines both trust in the data and the dashboard's own conversion-rate/win-rate numbers | MEDIUM | Does not need to be a compliance-grade audit trail (see Anti-Features) — a simple append-only log of stage changes, status changes, and task completions is enough. Can piggyback on Postgres triggers writing to a `historico` table |
-| Client record edit history not required beyond above | — | — | Full field-level diffing (before/after values on every field) is audit-trail territory, not needed here — see Anti-Features |
+| Downloadable import template (.xlsx/.csv) | Users copying data from partner/feira lists need to know exactly which columns the system expects before they start reformatting a spreadsheet by hand | LOW | Ship as a static file generated from the same Zod schema/column list used for validation, so template and validator never drift apart. Best practice from research: provide both an empty header-only version and a version with one filled example row — avoids users accidentally re-importing the sample row (LOW confidence, web-synthesis) |
+| Column mapping screen (header → field) | Real-world spreadsheets from different partners/feiras will never have identical column names/order to the system's fields; forcing an exact header match would make the "recurring use" requirement unusable | MEDIUM | Match by column **label** the user selects, not by column position — this is what makes the template tolerant of reordered/renamed columns. Auto-suggest a mapping when header text closely matches a known field name (e.g. "Razão Social", "Nome da Empresa" → `razao_social`), but always let the Supervisor confirm/override every column, including marking a column as "não importar" |
+| Pre-confirmation review screen (errors + duplicates) | The milestone spec explicitly requires "mostrar erros/duplicados antes de confirmar" — users need to see *what will happen* before committing, especially for a bulk operation that's hard to undo cleanly | MEDIUM | Render a preview table: row number, mapped values, and a status per row (OK / needs attention: missing required field, possible duplicate). Do the validation and duplicate-check pass server-side (Server Action) before showing this screen, not just client-side |
+| Row-level partial-failure handling (skip bad rows, don't block the whole file) | Research consistently shows this is now the expected default for spreadsheet import tools — an all-or-nothing rejection over one bad row in a 200-row feira list is exactly the "telas ruins, muita fricção" experience this whole CRM project exists to replace | MEDIUM | Confirmed via research (LOW confidence, cross-referenced across 2 independent sources): modern pattern is "ingest valid rows, skip + report invalid rows with a specific reason per row," not the legacy "reject entire file on first error." Recommend: rows failing required-field validation are excluded from the import and listed with a reason; rows that pass validation but look like possible duplicates are held for an explicit per-row decision (import as new / skip / leave to a later phase) rather than auto-skipped |
+| Required-field validation matching the existing minimum-cadastro rule | v1.0 already established "cadastro rápido, mínimo obrigatório = razão social + endereço + responsável" for manual entry — import must not silently create clients that violate that same minimum, or the funnel fills with unusable half-empty cards | LOW | Reuse the existing Zod schema used for the manual cadastro form as the single source of truth for what's "required" in the mapping/validation step |
+| Assigning `responsavel` (vendedor) per imported client | Every client in this CRM has an owning vendedor for RLS visibility — an imported client with no `responsavel` would be invisible to any vendedor and awkward to fix later at scale | MEDIUM | Since this import is Supervisor-only, the mapping screen needs either (a) a spreadsheet column mapped to vendedor (matched by name/email against existing users) or (b) a single "assign all imported clients to vendedor X" selector for the whole batch. Given feira/partner lists are unlikely to already carry a vendedor column, (b) is the simpler default; support (a) only if a column is actually present. This is a **decision needed before planning**, not something to leave implicit |
+| Fixed landing stage ("Aguardando contato") for all imported clients | Already decided in PROJECT.md — removes the need for a "which funnel stage" column/decision in the mapping screen entirely | LOW | No mapping needed for funnel stage; simplifies the template (one less required column) |
+| Export respecting the same visibility rule as the funnel (RLS-scoped) | Already decided in PROJECT.md; also confirmed as standard SaaS practice — export must never leak rows a user couldn't already see on screen | LOW-MEDIUM | Build the export query as a server-side read using the *same* RLS-backed query/view already used for the client list (not a new unscoped query), so Vendedor exports only own clients and Supervisor exports all, automatically, with zero new permission logic |
+| CSV/Excel encoding and formatting correctness (accents, CNPJ-like numeric strings not truncated, headers on row 1) | Data is Brazilian Portuguese with accented characters (razão social, endereço) — a mis-encoded export (mojibake) or Excel auto-formatting a numeric-looking string (e.g. CEP "01310-000") is a classic recurring complaint that erodes trust in the whole feature | LOW | Use UTF-8 with BOM for CSV exports opened in Excel on Windows (common gotcha with accented PT-BR text); when generating .xlsx directly, this isn't an issue since it isn't plain text |
 
 ### Differentiators (Competitive Advantage)
 
-Not "competitive" in a market sense (this is internal-only, no revenue model) — but these are the features that make this purpose-built tool worth switching to instead of just using a cheaper generic CRM.
+Not required for the milestone to be considered done, but meaningfully reduce friction for the Supervisor doing recurring imports — aligned with the project's Core Value (minimize friction, keep the funnel accurate).
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Prospecção por produto e por categoria no dashboard | Generic CRMs (Pipedrive/HubSpot/Zoho) don't have a native concept of "products consumed" as a dimension for pipeline analysis — this is domain-specific to a food-service/varejo B2B distributor and directly supports business decisions (which product line needs more prospecting) | MEDIUM | Already scoped. This is the single most "not available off the shelf" feature in the whole spec — worth protecting scope around it rather than trimming it |
-| Editable enums (categoria, produtos, tipos de tarefa, motivo de perda) without needing a developer | Generic CRMs either hardcode these behind expensive admin tiers or require code changes; letting the supervisor self-serve list maintenance is a genuine friction reducer for a non-technical-adjacent operation | LOW–MEDIUM | Already scoped. Straightforward CRUD tables + RLS restricted to supervisor role |
-| Minimal-friction PJ-specific fields (razão social, CEP/endereço structure, número de lojas) | Generic CRMs model "company" generically; a PJ-first, Brazil-specific address/company shape (CEP lookup, razão social) removes friction that a US-centric generic CRM (HubSpot, Pipedrive) would introduce | LOW | Already scoped. Consider CEP autocomplete (ViaCEP or similar free API) as a fast-follow — reduces typing without adding real complexity |
-| Rep-scoped dashboard ("vejo só meus números") alongside supervisor's team-wide view | Most CRM dashboards default to admin-only or require paid tiers to segment by user; giving reps their own performance view without extra cost is a lightweight motivator (gamification-adjacent) that a free/cheap generic tool often doesn't offer cleanly at small scale | LOW–MEDIUM | Already scoped |
+| Remembering column mapping between import sessions | Since imports are recurring (not one-time), if the Supervisor gets spreadsheets from the same 2-3 recurring partners, remembering "last time these headers mapped to these fields" saves re-mapping every time | LOW-MEDIUM | Simple: store last-used mapping (by matching header set) in a small table or even browser localStorage; skip if it adds scope risk this milestone |
+| "Import as update" path for rows that match an existing client (not just skip/create) | Multi-source research shows this is a common expectation once volumes grow — instead of only flagging a duplicate and skipping it, letting the Supervisor choose to update the existing client's fields from the new row | MEDIUM-HIGH | Explicitly flag as a candidate for a LATER milestone, not v1.1: it interacts with history/audit tracking (already built in v1.0 — "histórico automático de mudanças") and needs its own UX for field-level conflict resolution. Recommend v1.1 duplicate handling = flag + let user choose "skip this row" or "import anyway as a new client," not merge/update |
+| Batch metadata/tagging on import (e.g. "origem: Feira X, 2026-07") | Helps distinguish freshly-imported clients from organically-cadastrados ones later, useful for the dashboard/reporting the Supervisor already relies on | LOW | Could piggyback on the existing `observacao` free-text field on the card rather than a new schema field — keeps this out of schema-change territory |
+| Export column selection / filtered export (matching current list filters) | v1.0 already has search/filter on the client list (vendedor, categoria, produto, texto livre) — letting export respect the *currently applied filter*, not just full RLS scope, is a natural small extension | LOW | Cheap to add since the filter query already exists; export becomes "download what I'm looking at right now" |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems for a small internal tool with a zero-infra-cost constraint and a non-technical operator.
+Features that look reasonable to add to an import/export feature but would add real risk or complexity disproportionate to this MVP milestone.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|------------------|-------------|
-| Active notifications (email/push/SMS for overdue tasks) | Feels like the "complete" version of the staleness-highlight feature | Requires a notification service (cost, complexity, deliverability issues) — directly against the zero-infra-cost constraint; already explicitly out of scope | Visual highlight on kanban open (already scoped) — team checks the board daily anyway per current workflow |
-| Compliance-grade audit trail (immutable log, before/after on every field, retention policy) | "Track every change" sounds like good practice, and shows up in every enterprise CRM audit-trail article | Massive overkill for a 2-role internal tool with no regulatory/compliance driver; adds schema complexity and storage for a team of a handful of people who don't need forensic-level history | Lightweight activity/change log (see Table Stakes) — enough to answer "when did this move" without building a compliance system |
-| Marketing automation / email sequences / drip campaigns | Every general-purpose CRM (HubSpot, Zoho) bundles this, so it "feels" like a CRM should have it | This tool tracks an existing sales-team-driven funnel with manual outreach (visitas, mensagens) — not inbound/marketing-qualified-lead flow. Building this is a different product | None needed — tarefas (Visitar, Mandar mensagem) already cover the manual-outreach model this team actually uses |
-| Native mobile app | Reps are "in the field" in B2B sales, so mobile feels essential | Already explicitly out of scope; web responsive via Next.js covers phone/tablet use without a second codebase or app-store distribution overhead | Responsive web UI (already scoped) |
-| Configurable/multiple pipelines or per-user custom stages | Generic CRMs (Zoho especially) sell configurability as a feature | Directly against the explicit decision to keep the 7 stages fixed for MVP — configurability adds a settings UI, migration complexity, and analysis complexity (dashboard would need to handle N different funnels) for a team that has exactly one funnel today | Fixed 7-stage funnel (already scoped as Out of Scope for editability) |
-| Third-party integrations (email sync, calendar sync, WhatsApp/telephony integration) | Competitor CRMs differentiate heavily on integration breadth | Each integration is a new external dependency, cost surface, and failure mode — directly against the zero-infra-cost validation goal; also not requested by the user | Manual task logging (Visitar, Mandar mensagem) is sufficient for the MVP; revisit only if usage proves the manual step is the actual friction point |
-| Spreadsheet import UI | Seems useful for any future onboarding of new clients in bulk | Already explicitly out of scope — the one-time migration is a database-level operation, not a recurring product feature; building a robust CSV-import UI (validation, dedup, error handling) is disproportionate effort for a one-time need | One-time SQL-level import from the exported data (already decided) |
-| Deal/revenue value field with forecasting, weighted pipeline value | Extremely common in general sales CRMs (expected revenue × probability by stage) | Not part of the current business model description — the funnel tracks first-sale acquisition, not deal value/recurring revenue; adding forecasting math for the wrong metric creates a dashboard that answers a question nobody's asking | Keep dashboard metrics scoped to what's decided: stage counts, win/loss, conversion rate, rep performance, prospecção by product/category |
-| Granular per-field permission rules (e.g. some fields editable by rep, others supervisor-only) | Feels more "secure"/correct as the team scales | Two roles with clear boundaries (own-record edit vs. all-record edit/delete) is already decided and sufficient; field-level permission matrices are a common source of RLS policy bugs and are hard for a non-technical operator to reason about later | Row-level (whose record) + role-level (Vendedor/Supervisor) permissions only, per current decisions |
+| Automatic silent merge/update of "duplicate" clients during import | Feels efficient — "just update the existing record instead of asking" | Silent merges are exactly how CRM data quality erodes: a partner's feira list might have stale/wrong data that would overwrite good data already in a client's card, with no audit trail of what changed or why. Also interacts badly with the existing `historico automático` if not designed carefully | Always require an explicit Supervisor decision per flagged duplicate (or per-batch policy chosen up front), never a silent overwrite |
+| Fuzzy/automatic tax-ID-based deduplication | Research shows tax ID (CNPJ) is the gold-standard dedup key in B2B — tempting to "just add it" to solve duplicate detection cleanly | **The current schema has no CNPJ/tax-ID field at all.** Adding one is a schema change (new column, likely unique-ish index, RLS/migration work) that wasn't scoped for this milestone, and retroactively backfilling CNPJ for all existing clients is its own project, not a side effect of an import feature | For v1.1, dedupe on **razão social** (normalized: case-insensitive, trimmed, common suffix variants like "LTDA"/"S.A." treated loosely) as a best-effort "possible duplicate" flag — treat every match as a *candidate for human review*, never an automatic block or automatic merge, precisely because name-only matching has real false-positive/false-negative rates. Flag adding a CNPJ field as a good candidate for a **future milestone** if duplicate detection quality becomes a real pain point |
+| Full two-way sync/integration with the old paid CRM via import | Since the team already receives spreadsheets from that CRM, "why not just sync automatically" is a natural ask | Explicitly out of scope per PROJECT.md ("Integração contínua (sync/API) com o CRM pago atual") — the goal is to replace it, and a live sync reintroduces the exact ongoing cost/complexity this MVP is trying to avoid | One-off manual export-from-old-CRM → import-into-new-CRM via the same spreadsheet flow being built here; no live integration |
+| Letting Vendedor use bulk import too | Feels like a small permission tweak once the Supervisor-only version exists | Explicit decision already made in PROJECT.md — restricted to Supervisor this version, "decisão explícita do dono do projeto." Also, a Vendedor-scoped import would need its own visibility/assignment rules (can a vendedor assign imported clients to someone else?) that haven't been discussed | Keep Supervisor-only for v1.1; revisit only if the Supervisor reports it's a bottleneck |
+| Real-time progress/streaming UI for huge imports (progress bar, background job queue) | Feels necessary for "enterprise-grade" bulk import | At free-tier data volumes (hundreds of clientes, not tens of thousands per PROJECT.md constraints) and feira/partner list sizes (likely dozens to low hundreds of rows), a synchronous request/response with a spinner is enough; a background job queue would need infrastructure (a queue, worker) that breaks the zero-infra-cost constraint | Handle the whole import (parse → validate → dedupe-check → confirm → write) as a single Server Action call; only revisit if real usage shows files large enough to hit request timeouts |
+| Accepting arbitrary file formats (PDF tables, Google Sheets links, images of spreadsheets) | Partners might send data in any format they have on hand | Massively expands parsing complexity and attack surface for very little marginal benefit — CLAUDE.md already scopes this to "planilha (Excel/CSV)" | Support .xlsx and .csv only, as scoped; ask the Supervisor to save/export other formats to one of those two before importing |
 
 ## Feature Dependencies
 
 ```
-Kanban board (7 fixed stages)
-    └──requires──> Client record (PJ) with responsável field
-                       └──requires──> Auth + roles (Supabase Auth, Vendedor/Supervisor)
+Downloadable import template
+    └──requires──> Fixed schema of importable fields (already exists from v1.0 cadastro)
 
-Role-based visibility (own vs all clients)
-    └──requires──> Auth + roles
-    └──requires──> RLS policies keyed on responsável = auth.uid()
+Column mapping screen
+    └──requires──> Downloadable import template (defines the field vocabulary the mapping targets)
 
-status_acompanhamento = "ganho"
-    └──requires──> Card currently in stage "1ª venda concluída" (state-dependent constraint)
+Pre-confirmation review screen (errors + duplicates)
+    └──requires──> Column mapping screen (need mapped values before validating/checking dupes)
+    └──requires──> Duplicate-detection rule (razão social match, this milestone)
 
-status_acompanhamento = "perdido"
-    └──requires──> motivo_perda selected from editable enum list
+Row-level partial-failure handling
+    └──requires──> Pre-confirmation review screen (surfaces which rows fail, before commit)
 
-Dashboard metrics (conversion, win/loss, rep performance, prospecção por produto/categoria)
-    └──requires──> Kanban board + status_acompanhamento + motivo_perda + produtos_consumidos populated
-                       └──requires──> Editable enums (categoria, produtos_consumidos, motivo_perda) seeded before first use
+Assigning responsavel per imported client
+    └──requires──> Column mapping screen (either a mapped column or a single batch-wide selector)
 
-Editable enums CRUD (categoria, produtos, tarefas, motivo_perda)
-    └──requires──> Role-based permissions (Supervisor-only write)
+Fixed landing stage "Aguardando contato"
+    └──enhances──> Column mapping screen (removes one required column/decision entirely)
 
-Visual staleness highlight on kanban
-    └──requires──> Timestamp of last meaningful update per card (stage change, task completion, or field edit)
+RLS-scoped export
+    └──requires──> Existing RLS policies from v1.0 (already built — no new permission logic needed)
 
-Activity/change history per client (recommended addition)
-    └──enhances──> Visual staleness highlight (same underlying "last updated" data, surfaced as a readable log)
-    └──enhances──> Dashboard trust (auditable basis for "when did this convert")
+Export column/filter selection (differentiator)
+    └──enhances──> RLS-scoped export (reuses existing list-filter query)
 
-Search/filter on kanban or client list (recommended addition)
-    └──enhances──> Role-based visibility (supervisor needs to narrow a full-team view down to something scannable)
+Import-as-update / merge duplicates (deferred)
+    └──conflicts──> Silent/automatic dedup merge (anti-feature) — if ever built, must remain an explicit per-row human decision, never automatic
 
-Active notifications ──conflicts──> Zero-infra-cost constraint
-Configurable pipelines ──conflicts──> Fixed 7-stage decision
-Compliance audit trail ──conflicts──> Small-team scale / non-technical operator maintainability
+CNPJ-based dedup (deferred, future milestone)
+    └──requires──> New `cnpj`/tax-ID column + migration (schema change, not in this milestone's scope)
 ```
 
 ### Dependency Notes
 
-- **Dashboard metrics require the editable enums to be seeded first:** conversion/prospecção-by-product numbers are meaningless until `categoria` and `produtos_consumidos` have real values, and `motivo_perda` needs at least a starter list before the first card can be marked lost. This means enum CRUD (or at minimum enum seed data) must ship in or before the phase that ships loss-tracking and the dashboard.
-- **"Ganho" is a state-dependent business rule, not a free toggle:** the funnel stage and the win/loss status are two different fields that must be validated together (a card can only become "ganho" while in the last column). This needs to be enforced server-side (RPC or trigger/check constraint), not just in the UI, per the Supabase-conventions skill (never do authorization/business-rule enforcement only in the frontend).
-- **Activity/change log enhances two already-scoped features rather than adding new UI surface:** the same "last updated at" data that powers the staleness highlight can be exposed as a per-client timeline with near-zero extra schema (one `historico` table, populated by a trigger or by the same mutation that updates stage/status). Recommend bundling this with the kanban/stage-movement phase rather than treating it as a separate feature.
-- **Search/filter enhances role-based visibility, not a separate epic:** for the supervisor's "vê todos os clientes" view, an unfiltered list of every client from every rep is close to useless past a small handful of active deals. This should ship alongside (or very shortly after) the supervisor's full-visibility kanban, not be deferred to a later milestone.
+- **Pre-confirmation review requires Column mapping**: you cannot validate or flag duplicates against system fields until raw spreadsheet columns are mapped to those fields — mapping must be a prior step (and prior phase, if split across phases in the roadmap).
+- **Row-level partial-failure handling requires the review screen**: skip-vs-import decisions need somewhere to be surfaced and (for duplicates) explicitly confirmed by the Supervisor — this can't be a silent background behavior per the "anti-features" analysis above.
+- **Assigning `responsavel` requires a decision, not just code**: this is a genuine open question not yet answered in PROJECT.md (batch-wide assignment vs. per-row column) and should be raised explicitly in the Discuss phase before planning the import feature, since it changes both the mapping screen's shape and the template's column list.
+- **CNPJ-based dedup conflicts with this milestone's scope**: it requires a schema/migration change not currently planned; flagged as a natural v1.2+ candidate rather than something to sneak into v1.1's import work.
+- **Export column/filter selection enhances but does not require** rebuilding RLS logic — it's a UI layer on top of the query that already respects visibility rules.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.1 — this milestone)
 
-This matches PROJECT.md's already-decided Active requirements, plus the two gaps flagged above.
-
-- [ ] PJ client CRUD with minimal-required-field creation flow — core value proposition, directly fixes the reason the old CRM was abandoned
-- [ ] 7-stage fixed kanban with drag-and-drop — the funnel visualization is the product
-- [ ] Role-based visibility + edit/delete permissions (Vendedor vs Supervisor) — required for multi-user use from day one
-- [ ] status_acompanhamento (em andamento / perdido / ganho) with stage-dependent "ganho" rule — needed for the dashboard to mean anything
-- [ ] motivo_perda required on loss — same reason
-- [ ] Tarefas per card with due dates — table stakes, already the team's working model (Visitar, Mandar mensagem)
-- [ ] Visual staleness highlight on kanban — directly targets the "esquecimento" failure mode
-- [ ] 4 editable enum CRUDs (categoria, produtos_consumidos, tipos de tarefa, motivo_perda), supervisor-only — required before dashboard numbers mean anything
-- [ ] Dashboard (funil por etapa, ganhos x perdidos, desempenho por vendedor, conversão, prospecção por produto/categoria), rep-scoped and supervisor-scoped views — explicit success criterion, decided to be in MVP not deferred
-- [ ] **Search/filter on client list/kanban** (by responsável, categoria, produto, texto livre por razão social) — recommend adding to MVP scope; without it the supervisor's "ver todos" view degrades fast
-- [ ] **Lightweight activity/change log per client** (stage changes, status changes, task completions with timestamps) — recommend adding to MVP scope; low incremental cost given it reuses the staleness-highlight data model, and protects the dashboard's own credibility
+- [ ] Downloadable .xlsx/.csv template (empty + one sample row) matching the existing client cadastro fields — needed so Supervisor spreadsheets can be prepared consistently
+- [ ] Column mapping screen matching by header label with manual override, "não importar" option per column — needed because real partner/feira spreadsheets won't match the template header-for-header
+- [ ] Server-side validation reusing the existing minimum-required-fields rule from manual cadastro — needed to keep import-created clients as usable as manually-created ones
+- [ ] Duplicate flagging by normalized razão social match, surfaced (not blocked) before confirmation — needed per explicit milestone requirement ("mostrar duplicados antes de confirmar"), acknowledging name-only matching's known limitations
+- [ ] Pre-confirmation review screen showing per-row status (OK / error / possible duplicate) with reasons — needed per explicit milestone requirement
+- [ ] Row-level skip on validation failure (bad rows excluded, good rows still import) rather than all-or-nothing — matches the "mínimo de fricção" Core Value and modern import UX norms
+- [ ] Explicit decision + UI for assigning `responsavel` to imported clients (batch-wide selector as the simple default) — needed because every client requires an owning vendedor for RLS to work
+- [ ] All imported clients land in "Aguardando contato" (already decided, no mapping work needed) — reduces template/mapping surface
+- [ ] RLS-scoped client list export (Vendedor = own clients only, Supervisor = all) — needed per explicit milestone requirement, and cheap since it reuses existing RLS
 
 ### Add After Validation (v1.x)
 
-- [ ] CEP autocomplete on address entry — trigger: if manual CEP typing turns out to be a real friction point once real usage data exists
-- [ ] Basic CSV export of client list — trigger: if the team needs to hand data to someone outside the tool (accounting, ad hoc reporting) before a v2 decision is made
-- [ ] Bulk actions on kanban (e.g. reassign multiple clients to a rep) — trigger: only if the team's re-assignment volume becomes a real recurring task, not a one-off
+- [ ] Remembering/reusing column mappings across import sessions for the same recurring partner spreadsheet — add once real usage shows the Supervisor re-mapping the same headers repeatedly
+- [ ] "Import as update" option for flagged duplicates (instead of only skip/import-anyway) — add once the Supervisor reports genuinely needing to refresh existing client data via re-import, and only alongside a clear field-level conflict UI
+- [ ] Export respecting the currently-applied list filters (not just full RLS scope) — small, cheap addition once the base export ships and is validated
+- [ ] Batch-level import metadata/tagging (source, date) reusing the existing `observacao` field — add if the Supervisor wants to distinguish imported vs. manually-cadastrado clients later
 
 ### Future Consideration (v2+)
 
-- [ ] Configurable pipeline stages — defer until there's evidence the fixed 7-stage funnel doesn't fit an evolving process (explicitly decided as fixed for MVP)
-- [ ] Email/calendar/WhatsApp integration — defer until manual task logging is proven insufficient; adds cost/complexity against the zero-infra goal
-- [ ] Active notifications — defer until visual highlighting is proven insufficient (explicitly out of scope for MVP)
-- [ ] Deal value / weighted pipeline forecasting — defer until the business model includes recurring/variable deal value tracking as a stated need
+- [ ] Adding a CNPJ/tax-ID field to the client schema, enabling high-confidence automatic deduplication — defer until duplicate false-positive/false-negative rate on razão-social matching becomes a real, reported pain point; this is a schema change with migration and RLS implications, not an import-feature tweak
+- [ ] Background job/queue for very large imports with progress UI — defer unless real files start hitting request timeouts at free-tier hosting limits
+- [ ] Vendedor-level bulk import — explicitly deferred by project owner decision; revisit only if raised again
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| PJ client CRUD, minimal required fields | HIGH | LOW | P1 |
-| 7-stage kanban, drag-and-drop | HIGH | MEDIUM | P1 |
-| Role-based visibility + permissions | HIGH | MEDIUM | P1 |
-| status_acompanhamento + motivo_perda | HIGH | LOW | P1 |
-| Tarefas per card | HIGH | LOW | P1 |
-| Visual staleness highlight | HIGH | LOW–MEDIUM | P1 |
-| Editable enums CRUD (4 lists) | HIGH | LOW–MEDIUM | P1 |
-| Dashboard (all 5 metrics decided) | HIGH | MEDIUM–HIGH | P1 |
-| Search/filter on client list/kanban | HIGH | LOW–MEDIUM | P1 (recommend promoting from gap to MVP) |
-| Activity/change log per client | MEDIUM–HIGH | MEDIUM | P1 (recommend promoting from gap to MVP) |
-| CEP autocomplete | MEDIUM | LOW | P2 |
-| CSV export | LOW–MEDIUM | LOW | P2 |
-| Bulk reassignment | LOW | MEDIUM | P3 |
-| Configurable pipeline stages | LOW (no evidence of need yet) | HIGH | P3 |
-| Integrations (email/calendar/WhatsApp) | MEDIUM (unproven) | HIGH | P3 |
-| Active notifications | LOW (explicitly deferred) | MEDIUM–HIGH | P3 |
-| Deal value/forecasting | LOW (not part of business model) | MEDIUM | P3 |
+|---------|------------|----------------------|----------|
+| Downloadable import template | HIGH | LOW | P1 |
+| Column mapping screen | HIGH | MEDIUM | P1 |
+| Pre-confirmation review (errors + duplicates) | HIGH | MEDIUM | P1 |
+| Row-level partial-failure handling | HIGH | MEDIUM | P1 |
+| Responsavel assignment on import | HIGH | MEDIUM | P1 |
+| Fixed landing stage | MEDIUM | LOW | P1 (already decided) |
+| RLS-scoped export | HIGH | LOW-MEDIUM | P1 |
+| Remembered column mappings | MEDIUM | LOW-MEDIUM | P2 |
+| Filtered export (matches list filters) | MEDIUM | LOW | P2 |
+| Import-as-update for duplicates | MEDIUM | HIGH | P3 |
+| Batch import tagging/metadata | LOW-MEDIUM | LOW | P3 |
+| CNPJ field + automatic high-confidence dedup | HIGH (long-term) | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for launch
-- P2: Should have, add when possible
+- P1: Must have for v1.1 launch
+- P2: Should have, add when possible after validation
 - P3: Nice to have, future consideration
 
-## Competitor Feature Analysis
+## Competitor / Reference Pattern Analysis
 
-For context only — this is not a competitive product, but comparing against the incumbent (the paid CRM being replaced) and the category leaders clarifies what "good enough" looks like.
+No direct competitor products were evaluated (this is an internal tool replacing a named paid CRM, not a market entrant); instead, general CRM/data-tool import-export conventions were used as the reference pattern, since row-for-row competitor UX review wasn't the goal.
 
-| Feature | Pipedrive (category leader, pipeline-first) | HubSpot Free/Starter (category leader, all-in-one) | Our Approach (CRM Raiar) |
-|---------|--------------------------------------------|------------------------------------------------------|---------------------------|
-| Pipeline visualization | Visual pipeline is the entire interface; drag-and-drop is the primary interaction | One free pipeline on free tier, more on paid tiers | Single fixed 7-stage pipeline, matches actual current process — no configurability needed at this scale |
-| Required fields on create | Configurable per org, can be minimal | Configurable | Deliberately minimal-by-default (razão social + endereço + responsável), the explicit fix for the incumbent tool's failure mode |
-| Lost-reason tracking | Built-in "lost reason" modal on drag-to-lost | Built-in deal-lost properties | Same pattern, via required editable enum |
-| Activity/task reminders | Built-in activity reminders, can escalate to notifications | Built-in task queues and reminders | Visual-only highlighting, no active notification (deliberate cost/complexity tradeoff) |
-| Custom fields / product taxonomy | Generic custom fields, no domain-specific product taxonomy | Generic custom fields/properties | Domain-specific `produtos_consumidos` + `categoria` enums feeding directly into dashboard — this is the genuine differentiator vs. any generic CRM |
-| Dashboard/reporting | Goal-tracking dashboards, deal reports, some free-tier limits | Reporting dashboards, limited on free tier | Purpose-built 5-metric dashboard scoped exactly to this team's stated success criteria, both rep-level and supervisor-level views, no paywall since self-hosted on Supabase free tier |
-| Multi-user permissions | Role/team permissions on paid tiers only | Role/team permissions on paid tiers only | Two clean roles (Vendedor/Supervisor) enforced via RLS at zero marginal cost — this is where a generic CRM would normally require an upgrade to a paid seat tier |
-| Cost at this team's scale | ~$14+/user/month (Essential tier) once past free trial limits | Free tier caps at 2 users / 1 pipeline; paid tiers needed beyond that | $0 infrastructure cost (Supabase + Vercel free tier), which is the entire point of the migration |
+| Pattern | How well-known CRM/data-import tools handle it | Our approach |
+|---------|--------------------------------------------------|--------------|
+| Column mapping | Match by header label with manual override and auto-suggestion (seen across HubSpot-style and generic CSV-import-wizard products) | Same: label-based mapping with override, per PROJECT.md's explicit "tela de mapear colunas" requirement |
+| Duplicate handling | Ranges from strict unique-identifier matching (when a tax ID/email exists) to multi-field fuzzy matching with confidence tiers | Given no CNPJ field exists yet, use razão-social-based flagging as a "candidate for review," explicitly not an automatic block — closer to the "medium-confidence, route to human" tier described in general dedup research |
+| Partial failure | Increasingly "skip and report bad rows" instead of all-or-nothing (modern pattern); some legacy tools still reject the whole file | Adopt skip-and-report — aligns with this project's Core Value of minimizing friction |
+| Export scoping | Best-practice is exports must never exceed what the same user could see on-screen | Directly reuse existing v1.0 RLS-backed client list query for export — no new permission logic, per PROJECT.md's own stated decision |
 
 ## Sources
 
-- [Zoho vs. Pipedrive: Which is the best CRM for team productivity?](https://blog.hubspot.com/sales/zoho-vs-pipedrive-team-productivity) — MEDIUM confidence (vendor-adjacent comparison content)
-- [Salesforce vs Zoho vs HubSpot vs Pipedrive – The Best CRM for 2026](https://blog.salesflare.com/compare-salesforce-zoho-hubspot-pipedrive) — MEDIUM confidence
-- [HubSpot vs Pipedrive vs Zoho: Best CRM for Growing Teams in 2026](https://meetergo.com/en/magazine/hubspot-vs-pipedrive-vs-zoho-crm-growing-teams) — MEDIUM confidence
-- [Kanban Board — PipelineCRM Help](https://help.pipelinecrm.com/articles/238265-kanban-board) — MEDIUM confidence (product documentation, single vendor)
-- [9 Reasons You Should Choose a Kanban Board for Better Workflow Control in CRM](https://msdynamicsworld.com/blog/9-reasons-you-should-choose-kanban-board-better-workflow-control-crm) — MEDIUM confidence
-- [CRM Implementation Mistakes To Avoid](https://gain.io/blog/crm-implementation-mistakes) — MEDIUM confidence, cross-referenced against multiple similar articles on over-engineering/scope creep
-- [Why CRM Implementations Go Over Budget: The 4-Phase Scope Creep Framework](https://www.hyphadev.io/blog/why-crm-implementations-go-over-budget) — MEDIUM confidence
-- [Historical Summary vs. Activity Stream vs. Audit Log — SugarCRM Support](https://support.sugarcrm.com/Knowledge_Base/User_Interface/Historical_Summary_vs._Activity_Stream_vs._Change_Log/) — MEDIUM-HIGH confidence (official vendor support documentation)
-- [Building Audit Trails in Your CRM: A Guide for Compliance-Focused Organizations](https://vantagepoint.io/blog/sf/building-audit-trails-crm-compliance-guide) — MEDIUM confidence
-- [Sales pipeline aging: how to identify stalled deals — Outreach](https://www.outreach.ai/resources/blog/sales-pipeline-ageing) — MEDIUM confidence
-- [5 Metrics to Track Deal Aging in Sales Pipelines](https://aisdr.shop/articles/metrics-track-deal-aging-sales-pipelines) — MEDIUM confidence
-- [Sales Team Performance Dashboard Examples and Reporting Templates — Coupler.io](https://www.coupler.io/dashboard-examples/sales-team-performance-dashboard) — MEDIUM confidence
-- [CRM Dashboards For Sales And Customer Insights](https://gain.io/blog/crm-dashboards) — MEDIUM confidence
-- `.planning/PROJECT.md` — HIGH confidence (primary source: user-validated decisions and explicit Out of Scope list for this project)
+- WebSearch: "CRM bulk spreadsheet import UX best practices column mapping duplicate detection" — synthesized from Dynamics 365, HubSpot, and general CSV-import-wizard guidance articles. Confidence: LOW (web synthesis, no primary docs fetched)
+- WebSearch: "CSV import wizard partial failure handling skip invalid rows vs block entire import UX pattern" — CSVBox, Dromo, Oracle B2C Service docs referenced. Confidence: LOW
+- WebSearch: "deduplication key company name vs tax id import matching best practices B2B data import" — Insycle, Datamondial, Crustdata articles. Confidence: LOW
+- WebSearch: "downloadable CSV import template best practices required vs optional columns example row" — Dromo, CSVBox, NetSuite/Sage Intacct import docs. Confidence: LOW
+- WebSearch: "export CSV Excel row-level access control scoped export best practices SaaS" — Salesforce/Power BI/SAP export-guidance articles. Confidence: LOW
+- WebSearch: "SheetJS xlsx npm parsing CSV Excel Next.js Server Action best practices 2026" and "react csv export library client-side generate xlsx download 2026" — library landscape confirmation for STACK.md cross-reference. Confidence: LOW
+- `.planning/PROJECT.md` — authoritative source for this milestone's explicit scope, decisions already made (Supervisor-only import, fixed landing stage, RLS-scoped export), and Out of Scope items. Confidence: HIGH (primary internal source)
+- `.claude/CLAUDE.md` and `.claude/gsd-core`-generated STACK.md — confirms existing schema has no CNPJ/tax-ID field, confirms existing RLS/role model and existing cadastro validation rules to reuse. Confidence: HIGH (primary internal source)
 
-**Method caveat:** the `gsd-tools` research-plan/research-store/classify-confidence seams were unavailable (no Node.js runtime on PATH in this session), so this research relied on direct WebSearch calls rather than the cached, provider-routed pipeline. Confidence tags above are applied manually per the standard hierarchy (official vendor docs > cross-referenced blog/comparison content > single unverified source) and should be treated as indicative, not seam-verified.
+**Note on overall confidence:** all external findings here are LOW confidence per this project's source hierarchy (WebSearch synthesis, not primary vendor documentation or cross-verified against an authoritative source). The patterns found are broadly consistent across multiple independent searches (not contradictory), which is a mild positive signal, but none should be treated as authoritative — they inform sensible defaults, not hard requirements. The internal-source findings (schema, existing decisions) are HIGH confidence since they come directly from this project's own planning documents.
 
 ---
-*Feature research for: B2B sales pipeline CRM, internal tool, small team*
-*Researched: 2026-07-14*
+*Feature research for: CRM internal tool — bulk import/export milestone (v1.1)*
+*Researched: 2026-07-22*
