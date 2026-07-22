@@ -188,7 +188,7 @@ export function ClienteCard({
           {cliente.razaoSocial}
         </CardTitle>
         {incompleto ? (
-          <Badge variant="outline" className="shrink-0">
+          <Badge variant="destructive" className="shrink-0">
             Incompleto
           </Badge>
         ) : null}
