@@ -47,7 +47,7 @@ export default async function AppLayout({
     : (user.email?.charAt(0) ?? "").toUpperCase()
 
   return (
-    <div className="flex min-h-full flex-1">
+    <div className="flex min-h-screen flex-1">
       <AppSidebar
         fullName={fullName ?? ""}
         roleLabel={roleLabel}
