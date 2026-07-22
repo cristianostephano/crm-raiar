@@ -52,6 +52,29 @@
 - [x] **DSH-06**: Vendedor vê uma versão do dashboard só com os próprios números
 - [x] **DSH-07**: Supervisor vê o dashboard completo, com todos os vendedores
 
+## v1.1 Requirements
+
+Milestone v1.1 — Importação em massa de clientes via planilha + exportação da lista de clientes.
+
+### Import (Importação de Clientes)
+
+- [ ] **IMP-01**: Supervisor importa clientes em massa via planilha (.xlsx/.csv)
+- [ ] **IMP-02**: Sistema disponibiliza modelo de planilha para download (vazio + linha de exemplo) com as colunas esperadas
+- [ ] **IMP-03**: Supervisor mapeia colunas da planilha para os campos do sistema, com opção de "não importar" por coluna
+- [ ] **IMP-04**: Planilha define o vendedor responsável de cada cliente através de uma coluna própria
+- [ ] **IMP-05**: Sistema valida cada linha usando as mesmas regras mínimas do cadastro manual (razão social, endereço, responsável obrigatórios)
+- [ ] **IMP-06**: Linha com erro é excluída da importação sem travar as demais linhas válidas da planilha
+- [ ] **IMP-07**: Sistema sinaliza possíveis duplicados (comparando razão social) antes de confirmar, sem bloquear ou mesclar automaticamente — decisão final é do supervisor
+- [ ] **IMP-08**: Tela de revisão mostra o status de cada linha (OK / erro / possível duplicado) antes da confirmação final da importação
+- [ ] **IMP-09**: Cliente importado sempre entra na etapa "Aguardando contato" do funil
+- [ ] **IMP-10**: Importação em massa é restrita ao Supervisor — Vendedor não tem acesso a essa função
+
+### Export (Exportação de Clientes)
+
+- [ ] **EXP-01**: Vendedor exporta a lista dos próprios clientes
+- [ ] **EXP-02**: Supervisor exporta a lista de todos os clientes
+- [ ] **EXP-03**: Exportação respeita os filtros aplicados na tela (categoria, vendedor, produto, texto livre)
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -59,11 +82,16 @@ Deferred to future release. Tracked but not in current roadmap.
 ### Client
 
 - **CLI-V2-01**: Autocomplete de CEP no cadastro de endereço (reduz digitação)
-- **CLI-V2-02**: Exportação CSV da lista de clientes
 
 ### Funnel
 
 - **FUN-V2-01**: Ações em lote no kanban (ex: reatribuir vários clientes de uma vez para outro vendedor)
+
+### Import
+
+- **IMP-V2-01**: Adicionar campo CNPJ ao cadastro de cliente, permitindo detecção automática de duplicado com alta confiança — só se a comparação por razão social se mostrar um problema real na prática
+- **IMP-V2-02**: Lembrar/reaproveitar mapeamento de colunas entre importações do mesmo parceiro recorrente
+- **IMP-V2-03**: Opção de "importar como atualização" para duplicados sinalizados (hoje só pula ou importa mesmo assim)
 
 ## Out of Scope
 
@@ -73,13 +101,14 @@ Explicitly excluded. Documented to prevent scope creep.
 |---------|--------|
 | Notificações ativas (email, push) de tarefas atrasadas | Destaque visual no kanban já resolve o esquecimento no MVP, sem custo/complexidade de um serviço de notificação |
 | Colunas do funil editáveis por permissão | As 7 etapas ficam fixas no código no MVP, pra reduzir complexidade e validar a ideia primeiro |
-| Tela de importação de planilha de clientes | Migração da base do CRM atual é feita uma única vez, fora da interface |
 | App mobile nativo | Web responsivo é suficiente para o MVP |
 | Integrações externas (email, calendário, WhatsApp, sync com o CRM pago atual) | Cada integração é uma dependência externa e custo novo; não é o objetivo da migração |
 | Auditoria completa / trilha de compliance | Overkill para um time de 2 papéis sem exigência regulatória; o histórico leve (FUN-10) já cobre "quando isso mudou" |
 | Automação de marketing / e-mail em sequência | O time trabalha com prospecção manual (tarefas), não com fluxo de marketing/inbound |
 | Valor de negócio / forecasting ponderado por probabilidade | Não faz parte do modelo de negócio descrito — o funil acompanha a primeira venda, não valor recorrente |
 | Permissões granulares por campo | Duas permissões claras (dono do registro + papel) já resolvem; permissão por campo é fonte comum de bugs de RLS e difícil de manter por um operador não-técnico |
+| Vendedor fazer importação em massa | Restrito ao Supervisor por decisão explícita do dono do projeto (v1.1) |
+| Background job/fila para importações muito grandes | Só necessário se arquivos reais começarem a estourar o limite de tempo do free tier — não é o caso hoje |
 
 ## Traceability
 
@@ -120,12 +149,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DSH-06 | Phase 4 | Complete |
 | DSH-07 | Phase 4 | Complete |
 
-**Coverage:**
+**Coverage (v1.0):**
 
-- v1 requirements: 32 total (corrected during roadmap creation — the v1 requirement list above contains 32 items across AUTH/CLI/FUN/ADM/DSH; the previous "28 total" note in this file was stale/incorrect)
+- v1 requirements: 32 total
 - Mapped to phases: 32/32 ✓
 - Unmapped: 0 ✓
 
+**Coverage (v1.1):** pending — will be filled when the v1.1 roadmap is created.
+
 ---
-*Requirements defined: 2026-07-14*
-*Last updated: 2026-07-14 after roadmap creation (traceability mapped to Phases 1-5)*
+*Requirements defined: 2026-07-14 (v1)*
+*Last updated: 2026-07-22 after defining v1.1 requirements (Import/Export) — traceability for v1.1 phases pending roadmap creation*
