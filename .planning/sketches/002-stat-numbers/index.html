@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Sketch 002 — Stat Numbers</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding-top: 44px;
+  }
+
+  #variant-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+    background: #fff; border-bottom: 1px solid var(--color-border);
+    padding: 8px 16px; display: flex; gap: 8px; font-family: system-ui;
+  }
+  .variant-tab {
+    border: 1px solid var(--color-border); background: #fff; color: var(--color-text);
+    padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px;
+    transition: all 0.15s ease;
+  }
+  .variant-tab:hover { background: var(--color-bg); }
+  .variant-tab.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  .variant { display: none; padding: var(--space-8); max-width: 900px; margin: 0 auto; }
+  .variant.active { display: block; }
+
+  .variant h2 { font-size: var(--text-lg); margin: 0 0 var(--space-1); }
+  .variant .desc { color: var(--color-text-muted); font-size: var(--text-sm); margin-bottom: var(--space-6); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+
+  .stat-card {
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg); padding: var(--space-6); box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s ease;
+  }
+  .stat-card:hover { box-shadow: var(--shadow-md); }
+  .stat-label { font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  .stat-value { font-size: var(--text-stat); font-weight: 700; line-height: 1; }
+
+  /* ==== Variant A: monochrome number, small colored dot ==== */
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .dot.success { background: var(--color-success); }
+  .dot.danger { background: var(--color-danger); }
+  .dot.neutral { background: var(--color-text-muted); }
+  .variant-a .stat-value { color: var(--color-text); }
+
+  /* ==== Variant B: colored text only, no box tint ==== */
+  .variant-b .stat-value.success { color: var(--color-success); }
+  .variant-b .stat-value.danger { color: var(--color-danger); }
+  .variant-b .stat-value.neutral { color: var(--color-text); }
+
+  /* ==== Variant C: neutral card, left accent bar ==== */
+  .variant-c .stat-card { border-left: 3px solid var(--color-border); padding-left: calc(var(--space-6) - 3px); }
+  .variant-c .stat-card.success { border-left-color: var(--color-success); }
+  .variant-c .stat-card.danger { border-left-color: var(--color-danger); }
+  .variant-c .stat-value { color: var(--color-text); }
+
+  #sketch-tools { position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.7);color:white;padding:8px 12px;border-radius:8px;opacity:0.4;transition:opacity 0.2s; }
+
+  .old-example { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px dashed var(--color-border); }
+  .old-example .stat-row .stat-card { color: #fff; }
+  .old-example .stat-card.success { background: #16a34a; }
+  .old-example .stat-card.danger { background: #ef4444; }
+  .old-example .stat-card.neutral { background: #64748b; }
+  .old-example .stat-label { color: rgba(255,255,255,0.85); }
+  .old-example .stat-value { color: #fff; }
+</style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" onclick="showVariant('a')">A: Ponto colorido</button>
+  <button class="variant-tab" onclick="showVariant('b')">B: Só o texto colorido</button>
+  <button class="variant-tab" onclick="showVariant('c')">C: Barra lateral de destaque ★ Escolhida</button>
+</div>
+
+<!-- ============ VARIANT A: monochrome number + small dot ============ -->
+<div id="variant-a" class="variant active variant-a">
+  <h2>A: Ponto colorido</h2>
+  <div class="desc">Número sempre na mesma cor neutra; um pontinho discreto ao lado do rótulo indica o sentido (verde/vermelho/neutro).</div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-label"><span class="dot success"></span>Ganhos</div>
+      <div class="stat-value">12</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label"><span class="dot danger"></span>Perdidos</div>
+      <div class="stat-value">4</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label"><span class="dot neutral"></span>Taxa de conversão</div>
+      <div class="stat-value">75.0%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VARIANT B: colored text only ============ -->
+<div id="variant-b" class="variant variant-b">
+  <h2>B: Só o texto colorido</h2>
+  <div class="desc">Cartão neutro (igual aos outros do dashboard); só o número em si muda de cor, sem fundo nem caixinha.</div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-label">Ganhos</div>
+      <div class="stat-value success">12</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Perdidos</div>
+      <div class="stat-value danger">4</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Taxa de conversão</div>
+      <div class="stat-value neutral">75.0%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VARIANT C: neutral card + left accent bar ============ -->
+<div id="variant-c" class="variant variant-c">
+  <h2>C: Barra lateral de destaque</h2>
+  <div class="desc">Cartão neutro com uma fina barra colorida só na borda esquerda — indica o sentido sem colorir número nem fundo.</div>
+  <div class="stat-row">
+    <div class="stat-card success">
+      <div class="stat-label">Ganhos</div>
+      <div class="stat-value">12</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-label">Perdidos</div>
+      <div class="stat-value">4</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Taxa de conversão</div>
+      <div class="stat-value">75.0%</div>
+    </div>
+  </div>
+</div>
+
+<div class="old-example" style="max-width:900px;margin:0 auto;padding:0 var(--space-8) var(--space-8);">
+  <div class="desc" style="margin-bottom:12px;">Pra comparação — o estilo atual do sistema (o que foi achado "infantil"):</div>
+  <div class="stat-row">
+    <div class="stat-card success"><div class="stat-label">Ganhos</div><div class="stat-value">12</div></div>
+    <div class="stat-card danger"><div class="stat-label">Perdidos</div><div class="stat-value">4</div></div>
+    <div class="stat-card neutral"><div class="stat-label">Taxa de conversão</div><div class="stat-value">75.0%</div></div>
+  </div>
+</div>
+
+<div id="sketch-tools" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.4'">
+  Sketch 002 — stat-numbers
+</div>
+
+<script>
+function showVariant(id) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
