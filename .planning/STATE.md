@@ -5,15 +5,15 @@ milestone_name: Importação e Exportação de Clientes
 current_phase: 6
 current_phase_name: Importação — Upload, Mapeamento e Revisão
 status: executing
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-07-22T20:52:26.022Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-07-24T12:15:04.714Z"
 last_activity: 2026-07-22
 last_activity_desc: Phase 6 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 5
   percent: 14
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-22)
 ## Current Position
 
 Phase: 6 (Importação — Upload, Mapeamento e Revisão) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-22 — Phase 6 execution started
 
@@ -77,6 +77,7 @@ Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 | Phase 04-dashboard-gerencial P05 | ~30min | 3 tasks | 5 files |
 | Phase 05 P02 | 30min | 3 tasks | 4 files |
 | Phase 06 P01 | 25min | 3 tasks | 7 files |
+| Phase 06 P03 | 35min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -145,6 +146,8 @@ Recent decisions affecting current work:
 - [Phase ?]: papaparse@5.5.4 + @types/papaparse@5.5.2 approved via blocking human-verify checkpoint (official mholt/PapaParse repo, MIT, millions of weekly downloads, versions match STACK.md v1.1 Addendum)
 - [Phase ?]: SYSTEM_FIELDS (lib/importacao/types.ts) holds 14 fields, 7 required matching createClienteSchema's minimum rules exactly; funnel-stage intentionally absent since every imported row lands in Aguardando contato
 - [Phase ?]: modelo.ts does not sanitize cell values (Pitfall A4 guard) since the model is system-generated, not user input; sanitization belongs to whoever reads user-supplied cells in 06-02
+- [Phase ?]: [Phase 06-03]: jsdom instalado como devDependency para viabilizar os primeiros testes de render de componente (@testing-library/react ja estava instalado mas vitest.config.ts nao tinha ambiente DOM); vitest.config.ts agora usa environmentMatchGlobs para restringir jsdom a tests/**/*.test.tsx
+- [Phase ?]: [Phase 06-03]: importar-guard.spec.ts usa timeout de 20s no login (cold-start de signInWithPassword + primeiro compile do Next dev passam do default de 5s do Playwright); ambos os cenarios (Vendedor redirecionado, Supervisor ve o wizard) foram provados individualmente devido ao rate-limit conhecido do Supabase Auth no projeto de teste ao vivo
 
 ### Pending Todos
 
@@ -180,7 +183,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T20:51:49.419Z
-Stopped at: Phase 6 UI-SPEC approved
+Last session: 2026-07-24T12:15:04.706Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file:
 None

@@ -67,7 +67,7 @@ Milestone v1.1 — Importação em massa de clientes via planilha + exportação
 - [ ] **IMP-07**: Sistema sinaliza possíveis duplicados (comparando razão social) antes de confirmar, sem bloquear ou mesclar automaticamente — decisão final é do supervisor
 - [ ] **IMP-08**: Tela de revisão mostra o status de cada linha (OK / erro / possível duplicado) antes da confirmação final da importação
 - [ ] **IMP-09**: Cliente importado sempre entra na etapa "Aguardando contato" do funil
-- [ ] **IMP-10**: Importação em massa é restrita ao Supervisor — Vendedor não tem acesso a essa função
+- [x] **IMP-10**: Importação em massa é restrita ao Supervisor — Vendedor não tem acesso a essa função
 
 ### Export (Exportação de Clientes)
 
@@ -157,7 +157,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMP-05 | Phase 6 | Pending |
 | IMP-07 | Phase 6 | Pending |
 | IMP-08 | Phase 6 | Pending |
-| IMP-10 | Phase 6 | Pending |
+| IMP-10 | Phase 6 | Complete |
 | IMP-01 | Phase 7 | Pending |
 | IMP-06 | Phase 7 | Pending |
 | IMP-09 | Phase 7 | Pending |
