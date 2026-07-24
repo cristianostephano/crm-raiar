@@ -4,7 +4,16 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ColumnMappingTable } from "@/components/importacao/ColumnMappingTable"
 import { FileDropzone } from "@/components/importacao/FileDropzone"
+import type { MappedRow } from "@/lib/importacao/annotarLinha"
+import {
+  applyMapping,
+  requiredFieldsFaltando,
+  suggestMapping,
+  type ColumnMapping,
+  type MappingTarget,
+} from "@/lib/importacao/mapping"
 import { buildModeloImportacao } from "@/lib/importacao/modelo"
 import { parseArquivo } from "@/lib/importacao/parseArquivo"
 import type { ParsedFile } from "@/lib/importacao/types"
@@ -47,6 +56,11 @@ export function ImportWizard() {
   const [progressLabel, setProgressLabel] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // Step 2 (mapeamento) — lives here, not in ColumnMappingTable, so it
+  // survives navigation back and forth between wizard steps.
+  const [mapping, setMapping] = useState<ColumnMapping>({})
+  const [mappedRows, setMappedRows] = useState<MappedRow[] | null>(null)
+
   function handleBaixarModelo() {
     const workbook = buildModeloImportacao()
     const blob = new Blob([new Uint8Array(workbook)], {
@@ -75,6 +89,15 @@ export function ImportWizard() {
       .then((result) => {
         setProgressLabel(null)
         setParsed(result)
+        // Auto-suggest a mapping per column the moment the file is parsed,
+        // so Step 2 opens pre-filled instead of every Select starting on
+        // "Não importar esta coluna".
+        const initialMapping: ColumnMapping = {}
+        result.headers.forEach((header, columnIndex) => {
+          initialMapping[columnIndex] = suggestMapping(header)
+        })
+        setMapping(initialMapping)
+        setMappedRows(null)
       })
       .catch(() => {
         setProgressLabel(null)
@@ -87,14 +110,28 @@ export function ImportWizard() {
     setErrorMessage(motivo)
     setFile(null)
     setParsed(null)
+    setMapping({})
+    setMappedRows(null)
     setProgressLabel(null)
   }
 
   function handleRemoveFile() {
     setFile(null)
     setParsed(null)
+    setMapping({})
+    setMappedRows(null)
     setErrorMessage(null)
     setProgressLabel(null)
+  }
+
+  function handleMappingChange(columnIndex: number, target: MappingTarget) {
+    setMapping((current) => ({ ...current, [columnIndex]: target }))
+  }
+
+  function handleContinueFromMapping() {
+    if (!parsed) return
+    setMappedRows(applyMapping(parsed.headers, parsed.rows, mapping))
+    setStep(3)
   }
 
   const hasRows = parsed !== null && parsed.rows.length > 0
@@ -182,7 +219,7 @@ export function ImportWizard() {
             Continuar
           </Button>
         </div>
-      ) : step === 2 ? (
+      ) : step === 2 && parsed ? (
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold">Mapear colunas</h2>
           <p className="text-sm text-muted-foreground">
@@ -190,10 +227,39 @@ export function ImportWizard() {
             que não devem ser importadas podem ficar marcadas como &quot;Não
             importar&quot;.
           </p>
-          {/* Estrutura preenchida em 06-04: ColumnMappingTable por coluna detectada em `parsed.headers`. */}
+
+          <ColumnMappingTable
+            columns={parsed.headers}
+            previews={parsed.headers.map((_header, columnIndex) =>
+              parsed.rows
+                .slice(0, 3)
+                .map((row) => row[columnIndex] ?? "")
+            )}
+            mapping={mapping}
+            onMappingChange={handleMappingChange}
+          />
+
+          {requiredFieldsFaltando(mapping).map((field) => (
+            <div
+              key={field.key}
+              role="alert"
+              className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              O campo &quot;{field.label}&quot; é obrigatório e ainda não foi
+              associado a nenhuma coluna.
+            </div>
+          ))}
+
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setStep(1)}>
               Voltar
+            </Button>
+            <Button
+              type="button"
+              disabled={requiredFieldsFaltando(mapping).length > 0}
+              onClick={handleContinueFromMapping}
+            >
+              Continuar
             </Button>
           </div>
         </div>
