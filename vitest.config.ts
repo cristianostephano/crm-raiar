@@ -17,7 +17,12 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: "node",
-      include: ["tests/**/*.test.ts"],
+      // Component render tests (tests/**/*.test.tsx) need a DOM — every
+      // existing *.test.ts suite (RLS/Server Action tests against the real
+      // Supabase project) stays on the default "node" environment.
+      environmentMatchGlobs: [["tests/**/*.test.tsx", "jsdom"]],
+      setupFiles: ["./tests/setup.ts"],
+      include: ["tests/**/*.test.{ts,tsx}"],
       exclude: ["tests/e2e/**", "node_modules/**"],
     },
   }
