@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import {
   ChevronLeft,
   ChevronRight,
+  FileUp,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -60,6 +61,7 @@ const ADMIN_SECTION: NavSection = {
   links: [
     { href: "/equipe", label: "Gerenciar equipe", icon: UsersRound },
     { href: "/configuracoes", label: "Configurações", icon: Settings },
+    { href: "/clientes/importar", label: "Importar clientes", icon: FileUp },
   ],
 }
 
