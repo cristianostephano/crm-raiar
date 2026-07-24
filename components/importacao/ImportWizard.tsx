@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
+import { validarLoteImportacao, type ValidatedRow } from "@/app/actions/importacao"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ColumnMappingTable } from "@/components/importacao/ColumnMappingTable"
 import { FileDropzone } from "@/components/importacao/FileDropzone"
+import { ImportPreviewTable } from "@/components/importacao/ImportPreviewTable"
 import type { MappedRow } from "@/lib/importacao/annotarLinha"
 import {
   applyMapping,
@@ -21,11 +23,14 @@ import { cn } from "@/lib/utils"
 
 const MODELO_FILE_NAME = "modelo-importacao-clientes.xlsx"
 const READING_FILE_LABEL = "Lendo arquivo…"
+const VALIDATING_LABEL = "Validando linhas…"
 const EMPTY_STATE_HEADING = "Nenhuma linha encontrada nesta planilha"
 const EMPTY_STATE_BODY =
   "Verifique se o arquivo tem dados abaixo da linha de cabeçalho e tente enviar novamente."
 const PARSE_ERROR =
   "Não foi possível ler esta planilha. Verifique se o arquivo não está corrompido e tente enviar novamente."
+const VALIDATION_ERROR =
+  "Não foi possível validar a planilha agora. Tente novamente."
 const fileAcceptedMessage = (nome: string, linhas: number) =>
   `${nome} selecionado — ${linhas} linha${linhas === 1 ? "" : "s"} encontrada${linhas === 1 ? "" : "s"}`
 
@@ -60,6 +65,39 @@ export function ImportWizard() {
   // survives navigation back and forth between wizard steps.
   const [mapping, setMapping] = useState<ColumnMapping>({})
   const [mappedRows, setMappedRows] = useState<MappedRow[] | null>(null)
+
+  // Step 3 (revisão) — validarLoteImportacao (06-02) result + its own
+  // loading/error state.
+  const [validating, setValidating] = useState(false)
+  const [validatedRows, setValidatedRows] = useState<ValidatedRow[] | null>(
+    null
+  )
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  // Runs the read-only validation the moment Step 3 is reached with a fresh
+  // `mappedRows` batch (handleContinueFromMapping resets `validatedRows` to
+  // null on every "Continuar" click, so this re-fires whenever the mapping
+  // changes) — mirrors the "Lendo arquivo…" synchronous-loading-flag pattern
+  // already used for Step 1's parseArquivo call.
+  useEffect(() => {
+    if (step !== 3 || !mappedRows || validatedRows !== null) return
+
+    // Set synchronously so "Validando linhas…" shows from the very next
+    // render, before validarLoteImportacao's async call starts
+    // (EditableListTab.tsx loading-flag pattern).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setValidating(true)
+    setValidationError(null)
+
+    validarLoteImportacao(mappedRows).then((result) => {
+      setValidating(false)
+      if (result.error) {
+        setValidationError(VALIDATION_ERROR)
+        return
+      }
+      setValidatedRows(result.data.linhas)
+    })
+  }, [step, mappedRows, validatedRows])
 
   function handleBaixarModelo() {
     const workbook = buildModeloImportacao()
@@ -131,6 +169,8 @@ export function ImportWizard() {
   function handleContinueFromMapping() {
     if (!parsed) return
     setMappedRows(applyMapping(parsed.headers, parsed.rows, mapping))
+    setValidatedRows(null)
+    setValidationError(null)
     setStep(3)
   }
 
@@ -266,10 +306,45 @@ export function ImportWizard() {
       ) : (
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold">Revisar antes de importar</h2>
-          {/* Estrutura preenchida em 06-04: tabela de revisão OK/erro/duplicado por linha. */}
+
+          {validating ? (
+            <div
+              role="status"
+              className="flex items-center gap-2 text-sm text-muted-foreground"
+            >
+              <Skeleton className="size-4 rounded-full" />
+              {VALIDATING_LABEL}
+            </div>
+          ) : null}
+
+          {validationError ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {validationError}
+            </div>
+          ) : null}
+
+          {validatedRows ? (
+            <ImportPreviewTable linhas={validatedRows} />
+          ) : null}
+
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setStep(2)}>
               Voltar
+            </Button>
+            <Button
+              type="button"
+              disabled={!validatedRows}
+              onClick={() => {
+                // A escrita real (confirmarLoteImportacao + a RPC
+                // importar_clientes_lote) é escopo da Fase 7 — este botão
+                // não grava nada nesta fase, apenas existe visualmente com
+                // as linhas já revisadas/decididas (06-UI-SPEC.md linha 155).
+              }}
+            >
+              Confirmar importação
             </Button>
           </div>
         </div>
