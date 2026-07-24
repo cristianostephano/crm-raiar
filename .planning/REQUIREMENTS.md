@@ -60,12 +60,12 @@ Milestone v1.1 — Importação em massa de clientes via planilha + exportação
 
 - [ ] **IMP-01**: Supervisor importa clientes em massa via planilha (.xlsx/.csv)
 - [x] **IMP-02**: Sistema disponibiliza modelo de planilha para download (vazio + linha de exemplo) com as colunas esperadas
-- [ ] **IMP-03**: Supervisor mapeia colunas da planilha para os campos do sistema, com opção de "não importar" por coluna
-- [ ] **IMP-04**: Planilha define o vendedor responsável de cada cliente através de uma coluna própria
-- [ ] **IMP-05**: Sistema valida cada linha usando as mesmas regras mínimas do cadastro manual (razão social, endereço, responsável obrigatórios)
+- [x] **IMP-03**: Supervisor mapeia colunas da planilha para os campos do sistema, com opção de "não importar" por coluna
+- [x] **IMP-04**: Planilha define o vendedor responsável de cada cliente através de uma coluna própria
+- [x] **IMP-05**: Sistema valida cada linha usando as mesmas regras mínimas do cadastro manual (razão social, endereço, responsável obrigatórios)
 - [ ] **IMP-06**: Linha com erro é excluída da importação sem travar as demais linhas válidas da planilha
-- [ ] **IMP-07**: Sistema sinaliza possíveis duplicados (comparando razão social) antes de confirmar, sem bloquear ou mesclar automaticamente — decisão final é do supervisor
-- [ ] **IMP-08**: Tela de revisão mostra o status de cada linha (OK / erro / possível duplicado) antes da confirmação final da importação
+- [x] **IMP-07**: Sistema sinaliza possíveis duplicados (comparando razão social) antes de confirmar, sem bloquear ou mesclar automaticamente — decisão final é do supervisor
+- [x] **IMP-08**: Tela de revisão mostra o status de cada linha (OK / erro / possível duplicado) antes da confirmação final da importação
 - [ ] **IMP-09**: Cliente importado sempre entra na etapa "Aguardando contato" do funil
 - [x] **IMP-10**: Importação em massa é restrita ao Supervisor — Vendedor não tem acesso a essa função
 
@@ -152,11 +152,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXP-02 | Phase 5 | Complete |
 | EXP-03 | Phase 5 | Complete |
 | IMP-02 | Phase 6 | Complete |
-| IMP-03 | Phase 6 | Pending |
-| IMP-04 | Phase 6 | Pending |
-| IMP-05 | Phase 6 | Pending |
-| IMP-07 | Phase 6 | Pending |
-| IMP-08 | Phase 6 | Pending |
+| IMP-03 | Phase 6 | Complete |
+| IMP-04 | Phase 6 | Complete |
+| IMP-05 | Phase 6 | Complete |
+| IMP-07 | Phase 6 | Complete |
+| IMP-08 | Phase 6 | Complete |
 | IMP-10 | Phase 6 | Complete |
 | IMP-01 | Phase 7 | Pending |
 | IMP-06 | Phase 7 | Pending |

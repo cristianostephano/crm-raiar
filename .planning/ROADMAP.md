@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **🚧 Marco v1.1 — Importação e Exportação de Clientes (Fases 5-7):**
 
 - [x] **Phase 5: Exportação de Clientes** - Vendedor e Supervisor baixam como planilha a lista de clientes que já enxergam na tela, respeitando papel (próprios x todos) e os filtros aplicados. (completed 2026-07-22)
-- [ ] **Phase 6: Importação — Upload, Mapeamento e Revisão** - Supervisor envia uma planilha, mapeia as colunas para os campos do sistema e revê linha a linha (OK / erro / possível duplicado) — sem gravar nada ainda.
+- [x] **Phase 6: Importação — Upload, Mapeamento e Revisão** - Supervisor envia uma planilha, mapeia as colunas para os campos do sistema e revê linha a linha (OK / erro / possível duplicado) — sem gravar nada ainda. (completed 2026-07-24)
 - [ ] **Phase 7: Importação — Confirmação e Gravação** - Supervisor confirma e os clientes válidos entram de uma vez na etapa "Aguardando contato", sem uma linha ruim travar o lote.
 
 ## Phase Details
@@ -253,5 +253,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Administração de Listas Editáveis | 3/3 | Complete   | 2026-07-18 |
 | 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |
 | 5. Exportação de Clientes | 2/2 | Complete   | 2026-07-22 |
-| 6. Importação — Upload, Mapeamento e Revisão | 0/4 | Not started | - |
+| 6. Importação — Upload, Mapeamento e Revisão | 4/4 | Complete   | 2026-07-24 |
 | 7. Importação — Confirmação e Gravação | 0/TBD | Not started | - |
