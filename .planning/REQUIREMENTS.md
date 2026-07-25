@@ -58,15 +58,15 @@ Milestone v1.1 — Importação em massa de clientes via planilha + exportação
 
 ### Import (Importação de Clientes)
 
-- [ ] **IMP-01**: Supervisor importa clientes em massa via planilha (.xlsx/.csv)
+- [x] **IMP-01**: Supervisor importa clientes em massa via planilha (.xlsx/.csv)
 - [x] **IMP-02**: Sistema disponibiliza modelo de planilha para download (vazio + linha de exemplo) com as colunas esperadas
 - [x] **IMP-03**: Supervisor mapeia colunas da planilha para os campos do sistema, com opção de "não importar" por coluna
 - [x] **IMP-04**: Planilha define o vendedor responsável de cada cliente através de uma coluna própria
 - [x] **IMP-05**: Sistema valida cada linha usando as mesmas regras mínimas do cadastro manual (razão social, endereço, responsável obrigatórios)
-- [ ] **IMP-06**: Linha com erro é excluída da importação sem travar as demais linhas válidas da planilha
+- [x] **IMP-06**: Linha com erro é excluída da importação sem travar as demais linhas válidas da planilha
 - [x] **IMP-07**: Sistema sinaliza possíveis duplicados (comparando razão social) antes de confirmar, sem bloquear ou mesclar automaticamente — decisão final é do supervisor
 - [x] **IMP-08**: Tela de revisão mostra o status de cada linha (OK / erro / possível duplicado) antes da confirmação final da importação
-- [ ] **IMP-09**: Cliente importado sempre entra na etapa "Aguardando contato" do funil
+- [x] **IMP-09**: Cliente importado sempre entra na etapa "Aguardando contato" do funil
 - [x] **IMP-10**: Importação em massa é restrita ao Supervisor — Vendedor não tem acesso a essa função
 
 ### Export (Exportação de Clientes)
@@ -158,9 +158,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMP-07 | Phase 6 | Complete |
 | IMP-08 | Phase 6 | Complete |
 | IMP-10 | Phase 6 | Complete |
-| IMP-01 | Phase 7 | Pending |
-| IMP-06 | Phase 7 | Pending |
-| IMP-09 | Phase 7 | Pending |
+| IMP-01 | Phase 7 | Complete |
+| IMP-06 | Phase 7 | Complete |
+| IMP-09 | Phase 7 | Complete |
 
 **Coverage (v1.0):**
 

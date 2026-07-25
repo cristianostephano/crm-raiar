@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Importação e Exportação de Clientes
-current_phase: 6
-current_phase_name: Importação — Upload, Mapeamento e Revisão
+current_phase: 7
+current_phase_name: Importação — Confirmação e Gravação
 status: executing
-stopped_at: Phase 7 UI-SPEC approved
-last_updated: "2026-07-24T13:43:59.508Z"
-last_activity: 2026-07-22
-last_activity_desc: Phase 6 execution started
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-07-25T02:10:49.782Z"
+last_activity: 2026-07-25
+last_activity_desc: Phase 7 Plan 1 (importar_clientes_lote RPC) executed
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 7
   percent: 29
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-22)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 6 — Importação — Upload, Mapeamento e Revisão
+**Current focus:** Phase 7 — Importação — Confirmação e Gravação
 
 ## Current Position
 
-Phase: 6 (Importação — Upload, Mapeamento e Revisão) — EXECUTING
-Plan: 3 of 4
-Status: Ready to execute
-Last activity: 2026-07-22 — Phase 6 execution started
+Phase: 7 (Importação — Confirmação e Gravação) — EXECUTING
+Plan: 1 of 3 complete
+Status: Ready to execute Plan 2 (confirmarLoteImportacao Server Action)
+Last activity: 2026-07-25 — Phase 7 Plan 1 (importar_clientes_lote RPC) executed
 
 Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 
@@ -78,6 +78,7 @@ Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 | Phase 05 P02 | 30min | 3 tasks | 4 files |
 | Phase 06 P01 | 25min | 3 tasks | 7 files |
 | Phase 06 P03 | 35min | 2 tasks | 12 files |
+| Phase 07 P01 | 19min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -148,6 +149,8 @@ Recent decisions affecting current work:
 - [Phase ?]: modelo.ts does not sanitize cell values (Pitfall A4 guard) since the model is system-generated, not user input; sanitization belongs to whoever reads user-supplied cells in 06-02
 - [Phase ?]: [Phase 06-03]: jsdom instalado como devDependency para viabilizar os primeiros testes de render de componente (@testing-library/react ja estava instalado mas vitest.config.ts nao tinha ambiente DOM); vitest.config.ts agora usa environmentMatchGlobs para restringir jsdom a tests/**/*.test.tsx
 - [Phase ?]: [Phase 06-03]: importar-guard.spec.ts usa timeout de 20s no login (cold-start de signInWithPassword + primeiro compile do Next dev passam do default de 5s do Playwright); ambos os cenarios (Vendedor redirecionado, Supervisor ve o wizard) foram provados individualmente devido ao rate-limit conhecido do Supabase Auth no projeto de teste ao vivo
+- [Phase ?]: [Phase 07-01]: importar_clientes_lote's RETURNS TABLE(razao_social,...) shadowed razao_social as a PL/pgSQL OUT variable, making ON CONFLICT (razao_social) ambiguous (SQLSTATE 42702) - fixed with the #variable_conflict use_column pragma (migration 0005)
+- [Phase ?]: [Phase 07-01]: chaining the clientes and cliente_produtos inserts as two data-modifying CTEs in one WITH statement broke cliente_produtos' parent-EXISTS RLS check (same-command-snapshot visibility gap) - fixed by splitting into two sequential set-based statements, ids passed via plpgsql arrays (migration 0006)
 
 ### Pending Todos
 
@@ -183,7 +186,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-24T13:43:59.486Z
-Stopped at: Phase 7 UI-SPEC approved
+Last session: 2026-07-25T02:10:49.773Z
+Stopped at: Completed 07-01-PLAN.md
 Resume file:
-.planning/phases/07-importa-o-confirma-o-e-grava-o/07-UI-SPEC.md
+None
