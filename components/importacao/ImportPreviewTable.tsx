@@ -35,16 +35,22 @@ const EMPTY_BODY =
  * and a simple slice covers the same 50/page UX, per 06-04-PLAN.md).
  *
  * Per-row Importar/Pular decision (duplicado rows only, default "Pular") is
- * owned here as row-keyed local state, mirroring EditableListTab.tsx's
- * internal editingId/reactivatingId pattern (06-PATTERNS.md) — nothing
- * outside this component reads it in this phase; Fase 7's
- * confirmarLoteImportacao is what will eventually consume these decisions.
+ * a CONTROLLED prop as of 07-03 — `ImportWizard` owns the `decisions` map
+ * (keyed by row index) and resets it alongside `validatedRows`, since
+ * `confirmarLoteImportacao(linhas, decisions)` (07-02) needs it at the
+ * wizard level. This component only reads `decisions` and reports changes
+ * via `onDecisionChange`; it no longer owns any decisions state itself.
  */
-export function ImportPreviewTable({ linhas }: { linhas: ValidatedRow[] }) {
+export function ImportPreviewTable({
+  linhas,
+  decisions,
+  onDecisionChange,
+}: {
+  linhas: ValidatedRow[]
+  decisions: Record<number, "importar" | "pular">
+  onDecisionChange: (row: number, decision: "importar" | "pular") => void
+}) {
   const [page, setPage] = useState(0)
-  const [decisions, setDecisions] = useState<
-    Record<number, "importar" | "pular">
-  >({})
 
   // A fresh validarLoteImportacao run produces a new `linhas` array — reset
   // pagination so the Supervisor always starts reviewing from page 1.
@@ -62,7 +68,7 @@ export function ImportPreviewTable({ linhas }: { linhas: ValidatedRow[] }) {
   }
 
   function setDecision(row: number, decision: "importar" | "pular") {
-    setDecisions((current) => ({ ...current, [row]: decision }))
+    onDecisionChange(row, decision)
   }
 
   if (linhas.length === 0) {

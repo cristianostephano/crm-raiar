@@ -74,6 +74,13 @@ export function ImportWizard() {
   )
   const [validationError, setValidationError] = useState<string | null>(null)
 
+  // Per-row Importar/Pular decision from the review table (duplicado rows
+  // only, default "pular") — lifted out of ImportPreviewTable (07-03) so
+  // confirmarLoteImportacao(validatedRows, decisions) can read it.
+  const [decisions, setDecisions] = useState<
+    Record<number, "importar" | "pular">
+  >({})
+
   // Runs the read-only validation the moment Step 3 is reached with a fresh
   // `mappedRows` batch (handleContinueFromMapping resets `validatedRows` to
   // null on every "Continuar" click, so this re-fires whenever the mapping
@@ -160,10 +167,15 @@ export function ImportWizard() {
     setMappedRows(null)
     setErrorMessage(null)
     setProgressLabel(null)
+    setDecisions({})
   }
 
   function handleMappingChange(columnIndex: number, target: MappingTarget) {
     setMapping((current) => ({ ...current, [columnIndex]: target }))
+  }
+
+  function handleDecisionChange(row: number, decision: "importar" | "pular") {
+    setDecisions((current) => ({ ...current, [row]: decision }))
   }
 
   function handleContinueFromMapping() {
@@ -171,6 +183,7 @@ export function ImportWizard() {
     setMappedRows(applyMapping(parsed.headers, parsed.rows, mapping))
     setValidatedRows(null)
     setValidationError(null)
+    setDecisions({})
     setStep(3)
   }
 
@@ -327,7 +340,11 @@ export function ImportWizard() {
           ) : null}
 
           {validatedRows ? (
-            <ImportPreviewTable linhas={validatedRows} />
+            <ImportPreviewTable
+              linhas={validatedRows}
+              decisions={decisions}
+              onDecisionChange={handleDecisionChange}
+            />
           ) : null}
 
           <div className="flex gap-2">
