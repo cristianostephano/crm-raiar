@@ -1,7 +1,7 @@
 ---
 phase: 8
 slug: rolagem-por-coluna-no-kanban
-status: draft
+status: approved
 shadcn_initialized: true
 preset: base-nova (baseColor neutral, cssVariables true) — already initialized project-wide, unchanged by this phase
 created: 2026-07-25
