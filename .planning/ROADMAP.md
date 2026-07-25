@@ -238,7 +238,20 @@ Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em 
   3. Todo cliente importado aparece no funil já na etapa "Aguardando contato".
   4. Ao final, o Supervisor vê um resumo de quantos clientes foram importados e quantas linhas foram ignoradas (com o motivo).
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — Backend: `importar_clientes_lote` RPC (não-security-definer, guard `is_supervisor()`, INSERT set-based `ON CONFLICT DO NOTHING` + produtos, etapa via default) + migração `0004` + [BLOCKING] `supabase db push` + teste de integração RLS/comportamento (IMP-01, IMP-06, IMP-09)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 07-02-PLAN.md — Helper puro de contabilidade `confirmar.ts` (quais linhas gravar/pular e por quê, D-02) com teste unitário + Server Action `confirmarLoteImportacao` (portão Supervisor, revalidação de duplicado, chama a RPC, retorna `{ importados, puladas }`, D-03) (IMP-01, IMP-06)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 07-03-PLAN.md — UI: sobe as decisões Importar/Pular do `ImportPreviewTable` pro wizard + tela de resumo `ImportSummary` (D-01) + fiação do botão "Confirmar importação" + checkpoint humano importando um arquivo real (IMP-01, IMP-06, IMP-09)
+
 **UI hint**: yes
 
 ## Progress
@@ -254,4 +267,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |
 | 5. Exportação de Clientes | 2/2 | Complete   | 2026-07-22 |
 | 6. Importação — Upload, Mapeamento e Revisão | 4/4 | Complete   | 2026-07-24 |
-| 7. Importação — Confirmação e Gravação | 0/TBD | Not started | - |
+| 7. Importação — Confirmação e Gravação | 0/3 | Not started | - |
