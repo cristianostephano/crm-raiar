@@ -24,7 +24,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 5: Exportação de Clientes** - Vendedor e Supervisor baixam como planilha a lista de clientes que já enxergam na tela, respeitando papel (próprios x todos) e os filtros aplicados. (completed 2026-07-22)
 - [x] **Phase 6: Importação — Upload, Mapeamento e Revisão** - Supervisor envia uma planilha, mapeia as colunas para os campos do sistema e revê linha a linha (OK / erro / possível duplicado) — sem gravar nada ainda. (completed 2026-07-24)
-- [ ] **Phase 7: Importação — Confirmação e Gravação** - Supervisor confirma e os clientes válidos entram de uma vez na etapa "Aguardando contato", sem uma linha ruim travar o lote.
+- [x] **Phase 7: Importação — Confirmação e Gravação** - Supervisor confirma e os clientes válidos entram de uma vez na etapa "Aguardando contato", sem uma linha ruim travar o lote. (completed 2026-07-25)
 
 ## Phase Details
 
@@ -238,7 +238,7 @@ Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em 
   3. Todo cliente importado aparece no funil já na etapa "Aguardando contato".
   4. Ao final, o Supervisor vê um resumo de quantos clientes foram importados e quantas linhas foram ignoradas (com o motivo).
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 **Wave 1**
 
@@ -250,7 +250,7 @@ Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em 
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 07-03-PLAN.md — UI: sobe as decisões Importar/Pular do `ImportPreviewTable` pro wizard + tela de resumo `ImportSummary` (D-01) + fiação do botão "Confirmar importação" + checkpoint humano importando um arquivo real (IMP-01, IMP-06, IMP-09)
+- [x] 07-03-PLAN.md — UI: sobe as decisões Importar/Pular do `ImportPreviewTable` pro wizard + tela de resumo `ImportSummary` (D-01) + fiação do botão "Confirmar importação" + checkpoint humano importando um arquivo real (IMP-01, IMP-06, IMP-09)
 
 **UI hint**: yes
 
@@ -267,4 +267,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |
 | 5. Exportação de Clientes | 2/2 | Complete   | 2026-07-22 |
 | 6. Importação — Upload, Mapeamento e Revisão | 4/4 | Complete   | 2026-07-24 |
-| 7. Importação — Confirmação e Gravação | 2/3 | In Progress|  |
+| 7. Importação — Confirmação e Gravação | 3/3 | Complete   | 2026-07-25 |
