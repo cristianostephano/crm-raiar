@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Gestão de Equipe, Análises de Funil e Filtros
 status: planning
-last_updated: "2026-07-25T15:33:05.776Z"
+last_updated: "2026-07-25T16:00:00.000Z"
 last_activity: 2026-07-25
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Planejar o próximo marco (`/gsd-new-milestone`)
+**Current focus:** Planejar a Fase 8 — Rolagem por Coluna no Kanban (`/gsd-plan-phase 8`)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 8 — Rolagem por Coluna no Kanban (not started; roadmap definido)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-07-25 — Milestone v1.2 started
+Status: Roadmap do marco v1.2 criado (5 fases, 8-12); aguardando planejamento da primeira fase
+Last activity: 2026-07-25 — Roadmap v1.2 criado, 14/14 requisitos mapeados
 
 ## Performance Metrics
 
@@ -83,6 +83,10 @@ Last activity: 2026-07-25 — Milestone v1.2 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- Roadmap v1.2 (2026-07-25): 5 fases derivadas dos 14 requisitos do marco, ordenadas pela ordem de build da research — 8 Kanban scroll (KAN) e 9 Filtros Estado/Cidade (LOC) independentes e paralelizáveis; 10 Desativação (EQP) precede 12 por dependência de schema (`profiles.ativo`); 11 Funil detalhado (FNL) estabelece a lógica de reconstrução de duração; 12 Comparativo por vendedor (VEND) depende de 10 + 11.
+- Roadmap v1.2: decisão de produto travada — na desativação (EQP-04), só clientes em andamento são transferidos ao substituto; clientes já ganho/perdido ficam atribuídos ao vendedor desativado para preservar a precisão histórica. Reflita isso no critério de sucesso da Fase 10 e no comparativo da Fase 12 (vendedor desativado some da lista de ativos, mas seus históricos continuam contando).
+- Roadmap v1.2: decisão de produto travada — o tempo médio por etapa (FNL-01) INCLUI clientes ainda parados na etapa agora (usa `now()` como saída provisória); é intencional, para revelar cards travados, não é bug.
+- Roadmap v1.2: decisão de produto travada — Cidade (LOC-02) vem de uma lista oficial de municípios IBGE previamente carregada (tabela `cidades` + RPC), NÃO de um SELECT DISTINCT sobre os clientes existentes; confirmado pelo dono após a research sinalizar que a abordagem por dados existentes impediria cadastrar uma cidade nova.
 - Roadmap v1.1: fases derivadas dos 13 requisitos do marco (IMP-01..10 + EXP-01..03), ordenadas por risco crescente — Export (5) → Import preview (6) → Import commit (7). Só a Fase 7 grava no banco; 5 e 6 são leitura/pré-visualização, o que reduz o risco e as torna testáveis isoladamente.
 - Roadmap v1.1: IMP-10 (restrito ao Supervisor) mapeado na Fase 6 (porta de entrada da importação), mas o RPC de gravação da Fase 7 também precisa impor Supervisor-only via RLS — a restrição vale para o fluxo inteiro.
 - Roadmap: Auth & RLS foundation goes first (hard blocker — every table's RLS depends on profiles.role/is_supervisor()), Dashboard goes last (pure read layer over data other phases produce).
@@ -162,6 +166,7 @@ None yet.
 - REQUIREMENTS.md shows AUTH-02 (Supervisor invites Vendedor) already checked off as Complete, but the invite Edge Function + gerenciar-equipe screen that actually deliver it are still planned for 01-04 (not yet built) — pre-existing inconsistency, not introduced by 01-03; worth a quick correction pass before shipping the phase.
 - **RESOLVED 2026-07-20 — 01-05 Task 4 (real email round-trip verification):** hit the same free-tier 2/hour mailer rate limit a third time (correctly surfaced this time — confirms the earlier 01-04 fix still works). Rather than defer again, split the check into (a) the token/session/UI code path, verified via `supabase.auth.admin.generateLink()` to bypass the mailer entirely — both password-reset and invite-accept round-trips confirmed working end-to-end against the real hosted project — and (b) raw inbox deliverability, not independently re-observed this session but indirectly confirmed since the rate-limit response only fires after GoTrue attempts a real send. AUTH-01/AUTH-02 approved by the project owner 2026-07-20. See `01-05-SUMMARY.md`'s "Open Item: Task 4 — RESOLVED" section.
 - **v1.1 research pitfalls to carry into planning (see .planning/research/PITFALLS.md):** A1 fragile razão_social dedup (no CNPJ) → Phase 6; A2 pt-BR CSV delimiter (semicolon), A3 UTF-8 BOM on first header → Phase 6 parse; A4 CSV injection on export → Phase 5; A5 serverless timeout on large batches, A6 partial-import inconsistency → Phase 7 (batch inserts inside one RPC transaction); A7 file-upload security (size cap + magic bytes) → Phase 6. Research also flags a security-audit gate before Phase 7 ships.
+- **v1.2 research flags to carry into phase planning (see research/SUMMARY.md + PITFALLS.md v1.2):** Phase 10 (Desativação) — two-step cross-service atomicity: `profiles.ativo=false` é o controle primário; se a chamada da Auth Admin API (`ban_duration`) falhar depois, documentar a janela residual do JWT (~1h) na mensagem de erro; confirmar o formato de `ban_duration`. Phase 11 (Funil) — a média de tempo por etapa inclui cards ainda parados (usa `now()`), confirmar índice/estratégia da query de reconstrução sobre `historico` via window functions. Phase 12 (Comparativo) — precisa de teste automatizado do isolamento por papel (Vendedor não acessa a tabela).
 
 ### Quick Tasks Completed
 
@@ -172,6 +177,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- Marco v1.2 roteirizado (2026-07-25): 5 fases novas (8 Rolagem Kanban / KAN, 9 Filtros Estado-Cidade / LOC, 10 Desativação de Membro / EQP, 11 Funil Detalhado / FNL, 12 Comparativo por Vendedor / VEND) derivadas dos 14 requisitos do marco, numeração continuando de v1.1 (última = Fase 7). Ordem pela build-order da research: 8 e 9 independentes/paralelizáveis primeiro; 10 antes de 12 (dependência de schema `profiles.ativo`); 11 antes de 12 (reuso da lógica de duração). 14/14 requisitos mapeados, sem órfãos. Fases 8-12 marcadas "Not started".
 - Marco v1.1 roteirizado (2026-07-22): 3 fases novas (5 Exportação, 6 Importação preview, 7 Importação commit) derivadas dos 13 requisitos IMP/EXP, numeração continuando de v1.0 (última = Fase 4). Ordem por risco crescente conforme research/SUMMARY.md. Fases 5-7 marcadas "Not started".
 - Phase 2 edited: merged old Phase 3 (Funil de Vendas/Kanban) into Phase 2 (Cadastro), at owner's request, so cadastro+funil ship as one vertical slice; Admin and Dashboard phases renumbered 4->3, 5->4 accordingly
 
@@ -185,11 +191,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T02:38:06.402Z
-Stopped at: Completed 07-03-PLAN.md (Phase 7 complete)
+Last session: 2026-07-25T16:00:00.000Z
+Stopped at: Roadmap v1.2 criado (Phases 8-12); REQUIREMENTS traceability atualizada
 Resume file:
 None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Planejar a primeira fase do marco v1.2 com `/gsd-plan-phase 8` (Rolagem por Coluna no Kanban)
+- Fases 8 e 9 são independentes e podem ser planejadas/executadas em paralelo; 10 antes de 12; 11 antes de 12

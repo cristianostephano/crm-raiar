@@ -62,26 +62,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| KAN-01 | TBD | Pending |
-| KAN-02 | TBD | Pending |
-| LOC-01 | TBD | Pending |
-| LOC-02 | TBD | Pending |
-| LOC-03 | TBD | Pending |
-| LOC-04 | TBD | Pending |
-| EQP-01 | TBD | Pending |
-| EQP-02 | TBD | Pending |
-| EQP-03 | TBD | Pending |
-| EQP-04 | TBD | Pending |
-| FNL-01 | TBD | Pending |
-| FNL-02 | TBD | Pending |
-| FNL-03 | TBD | Pending |
-| VEND-01 | TBD | Pending |
+| KAN-01 | Phase 8 | Pending |
+| KAN-02 | Phase 8 | Pending |
+| LOC-01 | Phase 9 | Pending |
+| LOC-02 | Phase 9 | Pending |
+| LOC-03 | Phase 9 | Pending |
+| LOC-04 | Phase 9 | Pending |
+| EQP-01 | Phase 10 | Pending |
+| EQP-02 | Phase 10 | Pending |
+| EQP-03 | Phase 10 | Pending |
+| EQP-04 | Phase 10 | Pending |
+| FNL-01 | Phase 11 | Pending |
+| FNL-02 | Phase 11 | Pending |
+| FNL-03 | Phase 11 | Pending |
+| VEND-01 | Phase 12 | Pending |
 
 **Coverage:**
 - v1 requirements: 14 total
-- Mapped to phases: 0 (pendente do roadmap)
-- Unmapped: 14 ⚠️ (será preenchido pelo roadmapper)
+- Mapped to phases: 14 ✓
+- Unmapped: 0
+
+**Phase map:**
+- Phase 8 — Rolagem por Coluna no Kanban: KAN-01, KAN-02
+- Phase 9 — Filtros de Estado e Cidade Estruturados: LOC-01, LOC-02, LOC-03, LOC-04
+- Phase 10 — Desativação de Membro da Equipe: EQP-01, EQP-02, EQP-03, EQP-04
+- Phase 11 — Funil de Conversão Detalhado: FNL-01, FNL-02, FNL-03
+- Phase 12 — Comparativo por Vendedor: VEND-01
 
 ---
 *Requirements defined: 2026-07-25*
-*Last updated: 2026-07-25 after initial definition*
+*Last updated: 2026-07-25 after roadmap creation (v1.2 phases 8-12 mapped)*
