@@ -1,13 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
-import { validarLoteImportacao, type ValidatedRow } from "@/app/actions/importacao"
+import {
+  confirmarLoteImportacao,
+  validarLoteImportacao,
+  type ConfirmarLoteResult,
+  type ValidatedRow,
+} from "@/app/actions/importacao"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ColumnMappingTable } from "@/components/importacao/ColumnMappingTable"
 import { FileDropzone } from "@/components/importacao/FileDropzone"
 import { ImportPreviewTable } from "@/components/importacao/ImportPreviewTable"
+import { ImportSummary } from "@/components/importacao/ImportSummary"
 import type { MappedRow } from "@/lib/importacao/annotarLinha"
 import {
   applyMapping,
@@ -31,6 +38,8 @@ const PARSE_ERROR =
   "Não foi possível ler esta planilha. Verifique se o arquivo não está corrompido e tente enviar novamente."
 const VALIDATION_ERROR =
   "Não foi possível validar a planilha agora. Tente novamente."
+const CONFIRM_ERROR =
+  "Não foi possível concluir a importação agora. Nenhum cliente foi criado. Tente novamente."
 const fileAcceptedMessage = (nome: string, linhas: number) =>
   `${nome} selecionado — ${linhas} linha${linhas === 1 ? "" : "s"} encontrada${linhas === 1 ? "" : "s"}`
 
@@ -55,6 +64,8 @@ const STEP_LABELS: Record<WizardStep, string> = {
  * before the async parseArquivo call starts.
  */
 export function ImportWizard() {
+  const router = useRouter()
+
   const [step, setStep] = useState<WizardStep>(1)
   const [file, setFile] = useState<File | null>(null)
   const [parsed, setParsed] = useState<ParsedFile | null>(null)
@@ -80,6 +91,14 @@ export function ImportWizard() {
   const [decisions, setDecisions] = useState<
     Record<number, "importar" | "pular">
   >({})
+
+  // Confirm step (D-01) — confirmarLoteImportacao's (07-02) in-flight/
+  // error/result state.
+  const [confirming, setConfirming] = useState(false)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
+  const [confirmResult, setConfirmResult] = useState<
+    NonNullable<ConfirmarLoteResult["data"]> | null
+  >(null)
 
   // Runs the read-only validation the moment Step 3 is reached with a fresh
   // `mappedRows` batch (handleContinueFromMapping resets `validatedRows` to
@@ -178,6 +197,33 @@ export function ImportWizard() {
     setDecisions((current) => ({ ...current, [row]: decision }))
   }
 
+  function handleConfirmar() {
+    if (!validatedRows) return
+
+    // Set synchronously so the "Importando clientes…" relabel shows from
+    // the very next render, before confirmarLoteImportacao's async call
+    // starts (same loading-flag pattern as parseArquivo/validarLoteImportacao).
+    setConfirming(true)
+    setConfirmError(null)
+
+    confirmarLoteImportacao(validatedRows, decisions).then((result) => {
+      setConfirming(false)
+      if (result.error) {
+        setConfirmError(CONFIRM_ERROR)
+        return
+      }
+      setConfirmResult(result.data)
+    })
+  }
+
+  function handleImportarOutra() {
+    handleRemoveFile()
+    setValidatedRows(null)
+    setConfirmResult(null)
+    setConfirmError(null)
+    setStep(1)
+  }
+
   function handleContinueFromMapping() {
     if (!parsed) return
     setMappedRows(applyMapping(parsed.headers, parsed.rows, mapping))
@@ -192,24 +238,33 @@ export function ImportWizard() {
 
   return (
     <div className="flex flex-col gap-6 rounded-lg border p-6">
-      <ol className="flex items-center gap-4 text-sm">
-        {([1, 2, 3] as const).map((stepNumber) => (
-          <li
-            key={stepNumber}
-            className={cn(
-              "flex items-center gap-1.5",
-              stepNumber === step
-                ? "font-semibold text-primary"
-                : "text-muted-foreground"
-            )}
-          >
-            <span>{stepNumber}</span>
-            <span>{STEP_LABELS[stepNumber]}</span>
-          </li>
-        ))}
-      </ol>
+      {confirmResult === null ? (
+        <ol className="flex items-center gap-4 text-sm">
+          {([1, 2, 3] as const).map((stepNumber) => (
+            <li
+              key={stepNumber}
+              className={cn(
+                "flex items-center gap-1.5",
+                stepNumber === step
+                  ? "font-semibold text-primary"
+                  : "text-muted-foreground"
+              )}
+            >
+              <span>{stepNumber}</span>
+              <span>{STEP_LABELS[stepNumber]}</span>
+            </li>
+          ))}
+        </ol>
+      ) : null}
 
-      {step === 1 ? (
+      {confirmResult !== null ? (
+        <ImportSummary
+          importadosCount={confirmResult.importados.length}
+          puladas={confirmResult.puladas}
+          onVerClientes={() => router.push("/clientes")}
+          onImportarOutra={handleImportarOutra}
+        />
+      ) : step === 1 ? (
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold">Enviar planilha</h2>
 
@@ -347,21 +402,25 @@ export function ImportWizard() {
             />
           ) : null}
 
+          {confirmError ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {confirmError}
+            </div>
+          ) : null}
+
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setStep(2)}>
               Voltar
             </Button>
             <Button
               type="button"
-              disabled={!validatedRows}
-              onClick={() => {
-                // A escrita real (confirmarLoteImportacao + a RPC
-                // importar_clientes_lote) é escopo da Fase 7 — este botão
-                // não grava nada nesta fase, apenas existe visualmente com
-                // as linhas já revisadas/decididas (06-UI-SPEC.md linha 155).
-              }}
+              disabled={!validatedRows || confirming}
+              onClick={handleConfirmar}
             >
-              Confirmar importação
+              {confirming ? "Importando clientes…" : "Confirmar importação"}
             </Button>
           </div>
         </div>
