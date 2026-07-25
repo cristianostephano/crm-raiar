@@ -21,9 +21,21 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, e agora o supervisor consegue trazer clientes em massa via planilha (com revisão de erros/duplicados antes de gravar) e qualquer usuário exporta a lista de clientes que já enxerga.
 
+## Current Milestone: v1.2 Gestão de Equipe, Análises de Funil e Filtros
+
+**Goal:** Dar ao Supervisor mais controle sobre a equipe e mais visibilidade sobre onde o funil trava, e deixar os filtros de localização mais confiáveis — sem entrar ainda na Agenda do vendedor, que é maior e vira o próximo marco (ver `.planning/seeds/SEED-001-agenda-do-vendedor.md`).
+
+**Target features:**
+- Supervisor remove (desativa) um membro da equipe, escolhendo antes pra quem transferir os clientes dele
+- Trava: nunca é possível desativar o último Supervisor ativo do sistema
+- Funil de conversão detalhado no Dashboard: negócios/conversão%/perdidos/tempo médio por etapa, + média de dias até ganhar e até perder
+- Tabela comparativa por vendedor no Dashboard (só Supervisor): conversão, negócios iniciados/ganhos, ciclo médio
+- Kanban com rolagem própria por coluna (evita página infinita com muitos clientes)
+- Filtro de Cidade/Estado estruturado: Estado antes de Cidade, Estado como lista de siglas (SP, RJ...), Cidade como lista dependente do Estado — em cadastro, edição, filtro e importação
+
 ## Next Milestone Goals
 
-Ainda não definido — rodar `/gsd-new-milestone` para levantar o próximo conjunto de necessidades.
+Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-001`), vai puxar automaticamente na próxima `/gsd-new-milestone` depois que v1.2 fechar.
 
 ## Requirements
 
@@ -53,7 +65,14 @@ Ainda não definido — rodar `/gsd-new-milestone` para levantar o próximo conj
 
 ### Active
 
-(Nenhum ainda — próximo marco não definido, rodar `/gsd-new-milestone`)
+- [ ] Supervisor desativa um membro da equipe, escolhendo antes pra quem transferir os clientes dele
+- [ ] Sistema nunca permite desativar o último Supervisor ativo
+- [ ] Dashboard mostra um funil de conversão detalhado por etapa (negócios, % de avanço, perdidos, tempo médio parado)
+- [ ] Dashboard mostra a média de dias até ganhar e até perder um cliente, separadamente
+- [ ] Dashboard mostra uma tabela comparando os vendedores (conversão, negócios iniciados/ganhos, ciclo médio), visível só pro Supervisor
+- [ ] Cada coluna do kanban tem rolagem própria com altura fixa, em vez de crescer a página infinitamente
+- [ ] Filtro de clientes usa Estado (sigla) antes de Cidade, e Cidade vira lista dependente do Estado escolhido
+- [ ] Estado é padronizado como lista de siglas em todo lugar que aparece (cadastro, edição, filtro, importação)
 
 ### Out of Scope
 
@@ -65,6 +84,9 @@ Ainda não definido — rodar `/gsd-new-milestone` para levantar o próximo conj
 - Validação de CNPJ na importação — adiado para uma v2 se vier a ser necessário (v1.1 valida só os campos mínimos de cadastro)
 - Lembrar o mapeamento de colunas entre importações — cada planilha é mapeada do zero por enquanto (v1.1); útil se o volume de importações recorrentes crescer
 - Importação como atualização de cliente existente — v1.1 só cria clientes novos; atualizar em massa fica para uma versão futura, se necessário
+- Agenda do vendedor (prospecção + pós-venda) — deliberadamente separada do v1.2 por tamanho; capturada como seed (`SEED-001`) para o próximo marco
+- Valor em R$ / ticket médio por negócio — o CRM não rastreia valor monetário de cliente hoje; adiado até virar necessidade real (v1.2 só traz métricas de tempo/conversão)
+- Filtro de período (últimos 30/90 dias etc.) no funil de conversão detalhado — v1.2 mostra só o total geral desde sempre; filtro de data fica pra quando for pedido
 
 ## Context
 

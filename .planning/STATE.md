@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Importação e Exportação de Clientes
-current_phase: 1
-status: Awaiting next milestone
-stopped_at: Completed 07-03-PLAN.md (Phase 7 complete)
-last_updated: "2026-07-25T12:42:36.079Z"
+milestone: v1.2
+milestone_name: Gestão de Equipe, Análises de Funil e Filtros
+status: planning
+last_updated: "2026-07-25T15:33:05.776Z"
 last_activity: 2026-07-25
-last_activity_desc: Milestone v1.1 completed and archived
 progress:
-  total_phases: 7
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 43
-current_phase_name: Importação — Confirmação e Gravação
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 
 ## Current Position
 
-Phase: Milestone v1.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-25 — Milestone v1.1 completed and archived
+Status: Defining requirements
+Last activity: 2026-07-25 — Milestone v1.2 started
 
 ## Performance Metrics
 
