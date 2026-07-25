@@ -1,0 +1,87 @@
+# Requirements: CRM Raiar — Acompanhamento de Vendas
+
+**Defined:** 2026-07-25
+**Core Value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
+
+## v1 Requirements
+
+Requisitos do marco v1.2 (Gestão de Equipe, Análises de Funil e Filtros). Cada um mapeia para uma fase do roadmap.
+
+### Equipe (EQP)
+
+- [ ] **EQP-01**: Supervisor desativa um membro da equipe, escolhendo antes um vendedor substituto pra herdar os clientes em andamento
+- [ ] **EQP-02**: Sistema bloqueia a desativação do último Supervisor ativo
+- [ ] **EQP-03**: Membro desativado não consegue mais entrar no sistema; nome e histórico antigo permanecem intactos
+- [ ] **EQP-04**: Clientes já fechados (ganho/perdido) do vendedor desativado continuam contando pra ele nos números históricos — só os em andamento são transferidos
+
+### Funil detalhado (FNL)
+
+- [ ] **FNL-01**: Dashboard mostra um funil de conversão detalhado por etapa: quantidade de clientes, % que avançou pra próxima etapa, quantos foram perdidos naquela etapa (contagem e taxa), e tempo médio parado na etapa (incluindo clientes que ainda estão parados agora)
+- [ ] **FNL-02**: Dashboard mostra a média de dias entre entrada no funil e "ganho", separada da média de dias até "perdido"
+- [ ] **FNL-03**: O funil detalhado segue a mesma regra de visibilidade do Dashboard atual (vendedor só o próprio, supervisor tudo)
+
+### Comparativo por vendedor (VEND)
+
+- [ ] **VEND-01**: Dashboard mostra uma tabela comparando os vendedores ativos (taxa de conversão, negócios iniciados, negócios ganhos, ciclo médio em dias), visível só para o Supervisor
+
+### Kanban (KAN)
+
+- [ ] **KAN-01**: Cada coluna do funil kanban tem altura fixa e rolagem própria, independente da quantidade de clientes
+- [ ] **KAN-02**: Todas as colunas do kanban têm a mesma altura, estejam cheias ou vazias
+
+### Localização (LOC)
+
+- [ ] **LOC-01**: O campo Estado (cadastro/edição de cliente, filtro, importação por planilha) usa uma lista fixa das 27 siglas de UF brasileiras, em vez de texto livre
+- [ ] **LOC-02**: O campo Cidade usa uma lista completa e oficial de municípios brasileiros (IBGE), filtrada pelo Estado escolhido
+- [ ] **LOC-03**: No filtro de clientes, Estado aparece antes de Cidade
+- [ ] **LOC-04**: Clientes já cadastrados com Estado em formato inconsistente (nome completo, digitação diferente) são migrados/normalizados para a sigla correta, sem perder dados nem travar o acesso ao registro
+
+## v2 Requirements
+
+Adiado para um marco futuro — capturado como seed pra reaparecer automaticamente quando for hora.
+
+### Agenda do Vendedor
+
+- **AGD-XX**: Ver `.planning/seeds/SEED-001-agenda-do-vendedor.md` — agenda unificada (tarefas de prospecção + visitas recorrentes pós-venda), campos de cliente "ativo" (Nome Fantasia, CNPJ, frequência de pedidos/visitas), conclusão de visita com resumo e histórico
+
+## Out of Scope
+
+Explicitamente excluído deste marco. Documentado pra prevenir scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Valor em R$ / ticket médio por negócio | CRM não rastreia valor monetário de cliente hoje; adiado até virar necessidade real |
+| Filtro de período no funil detalhado (últimos 30/90 dias etc.) | v1.2 mostra só o total geral desde sempre; filtro de data fica pra quando for pedido |
+| Agenda do vendedor | Separada por tamanho — vira o próximo marco (ver seed SEED-001) |
+| Apagar conta do membro desativado por completo | Quebraria FKs de histórico (`clientes.responsavel`, `historico.autor_id`); desativação (soft) preserva integridade |
+| Cadastro de cidades fora da lista oficial IBGE | A lista oficial cobre todos os municípios brasileiros reais; não há necessidade de entrada livre |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| KAN-01 | TBD | Pending |
+| KAN-02 | TBD | Pending |
+| LOC-01 | TBD | Pending |
+| LOC-02 | TBD | Pending |
+| LOC-03 | TBD | Pending |
+| LOC-04 | TBD | Pending |
+| EQP-01 | TBD | Pending |
+| EQP-02 | TBD | Pending |
+| EQP-03 | TBD | Pending |
+| EQP-04 | TBD | Pending |
+| FNL-01 | TBD | Pending |
+| FNL-02 | TBD | Pending |
+| FNL-03 | TBD | Pending |
+| VEND-01 | TBD | Pending |
+
+**Coverage:**
+- v1 requirements: 14 total
+- Mapped to phases: 0 (pendente do roadmap)
+- Unmapped: 14 ⚠️ (será preenchido pelo roadmapper)
+
+---
+*Requirements defined: 2026-07-25*
+*Last updated: 2026-07-25 after initial definition*
