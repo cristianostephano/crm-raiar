@@ -15,7 +15,7 @@ O CRM Raiar nasce de dentro para fora: primeiro a fundação de login e permiss�
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Autenticação e Papéis** - Usuários fazem login via Supabase Auth e o sistema distingue Supervisor de Vendedor em toda a base de dados (RLS).
+- [x] **Phase 1: Autenticação e Papéis** - Usuários fazem login via Supabase Auth e o sistema distingue Supervisor de Vendedor em toda a base de dados (RLS). (completed 2026-07-20)
 - [x] **Phase 2: Cadastro e Funil de Vendas** - Vendedores e supervisores cadastram, editam e encontram clientes PJ, e movem os clientes pelas 7 etapas do funil kanban, com o mínimo de fricção possível. (completed 2026-07-17)
 - [x] **Phase 3: Administração de Listas Editáveis** - Supervisor mantém categorias, produtos, tipos de tarefa e motivos de perda sem depender de alteração de código. (completed 2026-07-18)
 - [x] **Phase 4: Dashboard Gerencial** - Supervisor e vendedores acompanham os números do funil, cada um na medida da própria visão. (completed 2026-07-19)
@@ -41,13 +41,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. O sistema reconhece se o usuário logado é Supervisor ou Vendedor e reflete esse papel na interface (ex: menu ou perfil), aplicando permissões diferentes de acordo.
   4. Um Vendedor não consegue, nem manipulando a URL ou a API diretamente, acessar ou alterar dados de outro usuário — a regra é aplicada pelo banco de dados (RLS), não só escondida na tela.
 
-**Plans**: 4/5 plans executed (01-05 code complete, Task 4 manual email-verification checkpoint deferred at owner's request — see 01-05-SUMMARY.md "Open Item: Task 4")
+**Plans**: 5/5 plans executed (01-05 Task 4 resolved via `supabase.auth.admin.generateLink()` to bypass the mailer rate limit; password-reset and invite-accept round-trips verified end-to-end and approved — see commit `ffa34d2`)
 
 - [x] 01-01-PLAN.md
 - [x] 01-02-PLAN.md
 - [x] 01-03-PLAN.md
 - [x] 01-04-PLAN.md
-- [ ] 01-05-PLAN.md (Tasks 1-3 done; Task 4 deferred, not approved)
+- [x] 01-05-PLAN.md
 
 **UI hint**: yes
 
