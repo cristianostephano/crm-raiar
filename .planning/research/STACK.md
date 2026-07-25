@@ -240,3 +240,163 @@ create extension if not exists pg_trgm;
 ---
 *Stack research for: bulk spreadsheet import/export (CRM Raiar v1.1)*
 *Researched: 2026-07-22*
+
+
+---
+
+# Milestone Addendum: v1.2 Gestão de Equipe, Análises de Funil e Filtros
+
+**Domain:** CRM SaaS internal tool — v1.2 milestone additions (team management, funnel analytics, kanban layout, location filters)
+**Researched:** 2026-07-25
+**Confidence:** MEDIUM (all 5 target items resolved to specific, verifiable answers; two rely on WebSearch synthesis rather than primary docs — see per-item notes)
+
+## Headline Finding
+
+**4 of the 5 sub-questions need ZERO new npm dependencies.** The 5th (searchable UF/Cidade select) also needs zero new npm dependencies — it's a `shadcn add combobox` file copy, because this project's shadcn style (`base-nova`) is built on `@base-ui/react`, which is already installed and already ships its own Combobox primitive. This milestone should not touch `package.json` at all under normal circumstances.
+
+## Recommended Stack
+
+### Core Technologies
+
+No new core technologies. Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS) stays exactly as-is. All 6 target features in v1.2 are implemented with existing packages plus native Postgres SQL and CSS.
+
+### Supporting Libraries — per feature
+
+| Feature | New Package? | What to Use Instead |
+|---------|--------------|----------------------|
+| (a) Deactivate team member without deleting | **None** | `supabase.auth.admin.updateUserById()` — already part of `@supabase/supabase-js` (2.110.5, installed) |
+| (b) Per-stage time-in-stage / conversion / dropout metrics | **None** | Native PostgreSQL window functions (`LAG`/`LEAD`, `EXTRACT(EPOCH FROM ...)`) in a view/RPC, same pattern as `supabase/migrations/0003_dashboard_aggregates.sql` |
+| (c) Per-salesperson comparison table | **None** | Existing `components/ui/table.tsx` (shadcn) fed by a new Postgres aggregate view/RPC — row count is bounded by team size (a handful of vendedores), no headless table library needed |
+| (d) Fixed-height scrollable kanban column | **None** | Tailwind CSS only (`overflow-y-auto` + a height constraint) on the card list inside each `@dnd-kit` droppable column |
+| (e) Searchable, cascading UF → Cidade select | **None (npm)** — one `shadcn add combobox` file copy | `@base-ui/react`'s native `Combobox` primitive via shadcn's `base-nova` registry — already installed at `^1.6.0` |
+
+### Development Tools
+
+No changes. Vitest, Playwright, Supabase CLI stay as already configured.
+
+## Installation
+
+```bash
+# No npm install needed for this milestone.
+
+# One shadcn CLI file-copy (not an npm package) for item (e):
+npx shadcn@latest add combobox
+# This pulls in its registryDependencies (also file copies, zero npm cost):
+#   - button      (already present in this project)
+#   - input-group (not yet present — will be added by the command above)
+```
+
+## Detailed Findings by Item
+
+### (a) Deactivate a team member without deleting their account
+
+**Answer:** Use Supabase Auth's admin "ban" mechanism: `supabase.auth.admin.updateUserById(userId, { ban_duration: "876000h" })` (≈100 years — Supabase has no permanent-ban shorthand, so a long duration is the documented workaround) blocks the user from logging in while their `auth.users` row — and therefore your `profiles` row and all `clientes.responsavel` foreign-key references — stays intact. Reactivating sets `ban_duration: "none"`.
+
+**Stack impact:** None. `admin.updateUserById` is part of the GoTrue admin API already exposed by `@supabase/supabase-js` (2.110.5, installed). It is **not** callable with the anon/publishable key — it requires the Supabase **service role key**, which this project does not currently have a server-only client for (`lib/supabase/client.ts` and `lib/supabase/server.ts` both currently use the anon key via cookies). Implementing this feature requires:
+1. A new `SUPABASE_SERVICE_ROLE_KEY` env var (server-only, never sent to the browser — add to `.env.local` and Vercel project env, not `NEXT_PUBLIC_*`).
+2. A new server-only admin client (e.g. `lib/supabase/admin.ts`) used exclusively inside a Server Action, gated by an explicit `is_supervisor()` check before the ban call — same defense-in-depth pattern already used for `importar_clientes_lote` (non-security-definer RPC + explicit guard), just applied at the Server Action layer since GoTrue admin calls happen outside RLS entirely (RLS doesn't apply to `auth.users`).
+
+This is an **architecture note, not a dependency**, but it's important enough to flag here because it's the one item that introduces a new credential/trust boundary. Do not use `admin.deleteUser()` — that is a hard delete and would break `clientes.responsavel` foreign keys and historical attribution, which the milestone explicitly rules out.
+
+**Confidence:** LOW-MEDIUM (WebSearch-synthesized from Supabase community/GitHub discussion threads, not fetched directly from `supabase.com/docs`; the `ban_duration` field name and format — decimal + unit suffix like `"2h45m"` — is corroborated across multiple independent threads including Supabase's own GoTrue repo issues, so treat the *existence and shape* of the field as reliable, but verify the exact Server Action code against `supabase.com/docs/reference/javascript/auth-admin-updateuserbyid` at implementation time).
+
+### (b) Per-stage time-in-stage / conversion % / dropout metrics from `historico` + `etapa_alterada_em`
+
+**Answer:** This is a native SQL problem, not a library problem. Standard approach:
+- **Time-in-stage:** window function `LAG(etapa_alterada_em) OVER (PARTITION BY cliente_id ORDER BY etapa_alterada_em)` (or an equivalent self-join) to pair each stage-entry timestamp with the next one for that client, then `EXTRACT(EPOCH FROM (next_ts - ts)) / 86400.0` for days. For the client's *current* stage (no "next" row yet), pair against `now()` to get an in-progress duration, or exclude it from the average depending on whether "time in stage" should mean "completed stays" only — this is a product decision to confirm with the user, not a technical blocker.
+- **Conversion % per stage:** `COUNT(DISTINCT cliente_id)` reaching stage N+1 divided by `COUNT(DISTINCT cliente_id)` that ever reached stage N.
+- **Dropout count/rate:** clients whose most recent `historico`/stage record shows `status_acompanhamento = 'perdido'` while sitting in stage N.
+- **Avg days-to-win / days-to-loss:** `AVG(data_do_evento_terminal - data_de_criacao_do_cliente)` (or first-stage-entry timestamp) filtered by `status_acompanhamento IN ('ganho','perdido')` respectively.
+
+The complication flagged in the milestone context — `historico` rows carry a free-text `descricao` rather than structured `etapa_anterior`/`etapa_nova` columns — means these queries **cannot reliably regex-parse `historico.descricao`** to know which stage a row represents; `clientes.etapa_alterada_em` only tells you *when* the client's stage last changed, not the full stage-by-stage timeline needed for a per-stage funnel (a client that skipped or revisited stages loses history if only the current stage + one timestamp is tracked). **This is very likely a schema gap, not just a query-writing task** — flag it back to planning: computing a *reliable* per-stage funnel (as opposed to just "current distribution + time since last change") probably needs the trigger that already exists (the one populating `historico`) to also write a structured `etapa_id` (and possibly a dedicated `etapa_historico` table with `cliente_id, etapa, entrada_em, saida_em`) rather than relying on text parsing. Recommend this be resolved as a phase-planning/schema question, not solved by adding any library.
+
+**Stack impact:** None — pure Postgres (views/RPC), matching the existing `supabase/migrations/0003_dashboard_aggregates.sql` pattern. See `supabase-conventions` skill for RLS/RPC/view choice.
+
+**Confidence:** LOW (WebSearch synthesis of general SQL funnel-analysis articles, not project-specific; the schema-gap concern above is my own analysis of the milestone context description, not sourced — verify the actual `historico` table structure via `gsd-map-codebase` or a direct migration read before phase planning).
+
+### (c) Per-salesperson comparison table
+
+**Answer:** A Postgres aggregate view/RPC (conversion %, deals started/won, avg cycle time per `responsavel`) rendered through the existing `components/ui/table.tsx` (shadcn `Table` primitive, already installed). Row count equals team size — small enough that no client-side sorting/pagination library adds value.
+
+**Stack impact:** None. Note: earlier v1.0-era `CLAUDE.md` stack notes recommended `@tanstack/react-table` "if/when a table view is added" — it was **never actually installed** (confirmed absent from current `package.json`), and this feature still doesn't need it: a handful of rows with server-computed aggregates doesn't warrant a headless table library. Do not add `@tanstack/react-table` for this.
+
+**Confidence:** HIGH (verified directly against this project's `package.json` — not a web claim).
+
+### (d) Fixed-height scrollable kanban column
+
+**Answer:** Pure CSS/Tailwind: give the scrollable card-list element inside each column a bounded height (e.g. `max-h-[calc(100vh-Npx)]` or a fixed `h-[...]`) plus `overflow-y-auto`, while the column header (title, count badge) stays outside that scroll region so it doesn't scroll away. `@dnd-kit`'s `DndContext`, `useDroppable`, and `useSortable` operate correctly inside a scrollable ancestor with no special configuration — dnd-kit even auto-detects scrollable containers to power its optional auto-scroll-during-drag behavior, which is a nice-to-have bonus this change unlocks for free, not a requirement to make it work.
+
+**Stack impact:** None. Confirmed both `@dnd-kit/core` (6.3.1) and `@dnd-kit/sortable` (10.0.0) already installed match current npm `latest` exactly — no version bump available or needed.
+
+**What NOT to do:** Don't reach for a virtualization library (e.g. `react-window`, `@tanstack/react-virtual`) to solve this — the milestone's stated problem is "the page grows infinitely," which is a CSS overflow/height problem, not a rendering-performance problem at this team's card volumes. Only revisit virtualization if a single column realistically holds 500+ cards, which is far outside this project's scale.
+
+**Confidence:** MEDIUM (dnd-kit's scroll-container-agnostic behavior is documented in dnd-kit's own docs/source and corroborated by multiple community kanban-board tutorials; the CSS technique itself is standard and not something that needs "verification" so much as application).
+
+### (e) Searchable, cascading UF → Cidade select
+
+**Answer:** This project's `components.json` is configured with `"style": "base-nova"`, and its existing `components/ui/select.tsx` already imports `Select as SelectPrimitive` from `@base-ui/react/select` — confirming this codebase uses **Base UI**, not Radix, and not `cmdk`, as its shadcn primitive layer (a deliberate shadcn v4-era option; different from the Radix-based `new-york`/`default` styles most older shadcn tutorials assume). The generic "shadcn combobox" recipe found in most tutorials/blog posts is built on `cmdk` + Radix `Popover` — **do not follow that recipe here**, it would introduce a mismatched primitive library alongside Base UI.
+
+Instead, shadcn's own `base-nova` registry ships a `combobox` component built directly on `@base-ui/react`'s native `Combobox` primitive (verified by fetching `https://ui.shadcn.com/r/styles/base-nova/combobox.json` directly — its only `dependencies` entry is `@base-ui/react`, already installed at `^1.6.0`, which matches the current npm `latest` of `1.6.0`). Its `registryDependencies` are `button` (already present in this project) and `input-group` (not yet present, but installing the combobox via the CLI will bring it in as a file copy automatically).
+
+**Design for the UF/Cidade case:**
+- **Estado (UF):** a fixed 27-item list (26 states + DF) — small enough that a plain `Select` (already installed, already used elsewhere in the form) is arguably sufficient without search; a `Combobox` is a reasonable upgrade for consistency/typeahead but not strictly required by list size.
+- **Cidade:** dynamically populated from distinct `clientes.cidade` values scoped to the selected `Estado` (not a static full Brazilian-city list, per the milestone scope) — this is exactly the "searchable, dependent, server/DB-backed options" use case the Base UI `Combobox` is designed for (its docs describe typeahead + async/filtered option lists as a primary use case). Fetch the distinct-cities-for-UF list via a small Postgres RPC/view (existing pattern), not a client-side full list.
+- Both fields integrate with the existing `react-hook-form` + `zod` + `@hookform/resolvers` stack exactly like the current `Select` usage does — Base UI's `Combobox.Root` exposes a controlled `value`/`onValueChange` API compatible with RHF's `Controller`, same shape as the existing `Select` wrapper in this codebase.
+
+**Stack impact:** None (npm). One `shadcn add combobox` file copy (plus its `input-group` file dependency), which the CLI (`shadcn` package, already a devDependency at `^4.13.0`) will fetch and write into `components/ui/`.
+
+**What NOT to do:** Do not add `cmdk`, `react-select`, `downshift`, or any other combobox library — all would either duplicate Base UI's own Combobox or introduce a second, inconsistent primitive-library dependency into a codebase that has deliberately standardized on Base UI via shadcn's `base-nova` style.
+
+**Confidence:** MEDIUM (the registry JSON for `combobox.json` was fetched directly from `ui.shadcn.com`, and `@base-ui/react`'s version was verified directly against the npm registry and this project's own `select.tsx` import — both primary-source checks. The recommendation to use `Combobox` specifically for the dynamic Cidade list, versus a plain `Select` re-populated on Estado change, is my synthesis based on Base UI's documented use cases, not a fetched confirmation of "Base UI Combobox supports N cities dynamically" — validate the exact API surface (`Combobox.Root`, `items`, async filtering) against Base UI's own docs at implementation time).
+
+## Alternatives Considered
+
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|--------------------------|
+| Native Postgres window functions for funnel metrics (b) | A dedicated product-analytics tool (PostHog, Mixpanel funnels) | Never for this project — external paid/metered service, breaks the zero-infra-cost constraint, and the data already lives in Postgres |
+| Base UI `Combobox` via shadcn `base-nova` registry (e) | `cmdk` + Radix `Popover` "classic shadcn combobox" | Never for this project — would introduce a second, inconsistent UI primitive library alongside the already-adopted Base UI; only relevant if this project were on a Radix-based shadcn style, which it is not |
+| Plain shadcn `Table` for per-salesperson comparison (c) | `@tanstack/react-table` | If the table needs client-side sorting/filtering/pagination across dozens+ of rows — not the case here (row count = team size) |
+| CSS `overflow-y-auto` for scrollable kanban columns (d) | `react-window` / `@tanstack/react-virtual` | Only if a single column needs to render hundreds of cards simultaneously; not this team's scale |
+| `supabase.auth.admin.updateUserById({ ban_duration })` (a) | Adding an `is_active` boolean to `profiles` and checking it in every RLS policy/query | Ban-based approach is preferred: it stops login at the Auth layer itself (can't be bypassed by a query that forgets the `is_active` check), whereas an app-level flag requires remembering to enforce it everywhere — more attack surface for a "no home-rolled auth logic" project |
+
+## What NOT to Use
+
+| Avoid | Why | Use Instead |
+|-------|-----|--------------|
+| `cmdk` | Not compatible with this project's Base UI primitive choice; would introduce a second, redundant combobox implementation | Base UI's native `Combobox` via `shadcn add combobox` (base-nova registry) |
+| `admin.deleteUser()` for team member removal | Hard-deletes the `auth.users` row, cascading/orphaning `profiles` and breaking `clientes.responsavel` history — explicitly ruled out by the milestone ("soft-delete, not hard delete") | `admin.updateUserById(id, { ban_duration })` |
+| `@tanstack/react-table` for the per-salesperson table | Overkill for a handful of rows; adds a dependency that was already considered and never installed in v1.0/v1.1 | Existing shadcn `Table` component |
+| A virtualization library for kanban columns | Solves a rendering-performance problem this project doesn't have; the actual problem is a CSS overflow/height issue | `overflow-y-auto` + a height constraint |
+| A static npm package of all Brazilian cities (e.g. full IBGE city list bundled client-side) | Milestone explicitly wants Cidade options **derived from existing client records** per UF, not an exhaustive external list — bundling one would also bloat the client and go stale | A Postgres RPC/view returning `DISTINCT cidade` for the selected `uf` from `clientes` |
+
+## Stack Patterns by Variant
+
+**If a future milestone needs a genuinely reliable stage-by-stage funnel (not just "current stage + last-changed timestamp"):**
+- Add a structured `etapa_historico` table (`cliente_id`, `etapa`, `entrada_em`, `saida_em`) populated by the same DB trigger that already writes to `historico`, instead of parsing `historico.descricao` text.
+- This is a schema change to flag during phase planning for item (b), not a library decision.
+
+**If the UF/Cidade Combobox needs to handle very large option lists (e.g. thousands of cities nationally, not scoped to one state):**
+- Use Base UI Combobox's async/filter-on-type mode (server-side filtered RPC call per keystroke, debounced) rather than loading a full list client-side — not expected to be necessary here since Cidade is always scoped to one selected UF first.
+
+## Version Compatibility
+
+| Package A | Compatible With | Notes |
+|-----------|------------------|-------|
+| `@base-ui/react@^1.6.0` (installed) | shadcn `base-nova` registry `combobox` component | Verified directly: `combobox.json`'s only listed dependency is `@base-ui/react`; installed version matches current npm `latest` (1.6.0, published 2026-06-18) exactly — no bump needed |
+| `@dnd-kit/core@^6.3.1` / `@dnd-kit/sortable@^10.0.0` (installed) | Scrollable ancestor containers | Both match current npm `latest` exactly (6.3.1 / 10.0.0, both published Dec 2024) — dnd-kit's scroll-container detection needs no extra config for this use case |
+| `@supabase/supabase-js@^2.110.5` (installed) | `auth.admin.updateUserById` (GoTrue admin API) | Current npm `latest` is `2.110.8` (2026-07-21) — a small patch bump exists but is not required for this feature; the admin API shape has been stable across 2.110.x |
+| React 19 / Next.js 16 (installed) | Server Actions calling a service-role Supabase client | No compatibility concern — this is the same Server Action pattern already used for `importar_clientes_lote`, just with a new server-only client instance instead of the RLS-bound one |
+
+## Sources
+
+- Direct npm registry lookups (`registry.npmjs.org`) for `@dnd-kit/core`, `@dnd-kit/sortable`, `@base-ui/react`, `@supabase/supabase-js`, `cmdk` (2026-07-25). Confidence: HIGH for the version numbers themselves (authoritative source of truth), though the project's query-plan seam classifies raw npm lookups as LOW by default since no separate legitimacy check was run against them.
+- Direct fetch of `https://ui.shadcn.com/r/styles/base-nova/combobox.json` (shadcn's own component registry, base-nova style) — confirms the combobox is built on `@base-ui/react`, not `cmdk`. Confidence: MEDIUM (primary source, official registry, but not cross-verified against a second independent source).
+- Direct read of this project's own `components.json` and `components/ui/select.tsx` — confirms `base-nova`/`@base-ui/react` is actually in use, not just configured. Confidence: HIGH (ground truth, this repo).
+- Direct read of this project's `package.json` — confirms exact currently-installed versions and confirms `@tanstack/react-table`/`@tanstack/react-query` were never actually added despite earlier stack notes recommending them. Confidence: HIGH (ground truth, this repo).
+- WebSearch: "Supabase Auth ban user admin.updateUserById ban_duration disable login without deleting" — Supabase community/GitHub discussion threads (`supabase/auth` issues, `supabase` org discussions). Confidence: LOW-MEDIUM — verify exact code against `supabase.com/docs/reference/javascript/auth-admin-updateuserbyid` before implementing.
+- WebSearch: "Postgres SQL compute average time in stage conversion funnel dropout rate from timestamped event log" — general SQL funnel-analysis pattern articles (Silota, Cube Dev, Mode, Tiger Data). Confidence: LOW (generic pattern synthesis, not project-specific; the schema-gap risk noted for item (b) is my own analysis of the milestone description, unsourced).
+- WebSearch: "dnd-kit scrollable container fixed height column kanban board React" — multiple community kanban-board tutorials (LogRocket, dev.to, radzion.com) consistently pairing dnd-kit with Tailwind `overflow-y-auto` for column scrolling. Confidence: MEDIUM (consistent across many independent sources, though none is dnd-kit's own docs directly).
+
+---
+*Stack research for: CRM Raiar v1.2 milestone (team management, funnel analytics, kanban scroll, location filters)*
+*Researched: 2026-07-25*

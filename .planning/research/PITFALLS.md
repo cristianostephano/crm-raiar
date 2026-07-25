@@ -610,3 +610,394 @@ Import upload phase — file validation should land in the same PR as the upload
 ---
 *Pitfalls research for: Bulk import/export addition to CRM Raiar (v1.1 milestone)*
 *Researched: 2026-07-22*
+
+
+---
+
+# Milestone Addendum: v1.2 Gestão de Equipe, Análises de Funil e Filtros
+
+**Domain:** v1.2 features on an existing Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS) CRM — team deactivation, funnel analytics from a free-text event log, Estado/Cidade data migration, Supervisor-only aggregates, fixed-height dnd-kit kanban columns.
+**Researched:** 2026-07-25
+**Confidence:** MEDIUM-HIGH (schema facts read directly from `supabase/migrations/0001-0006` = HIGH; Postgres/Supabase Auth/dnd-kit library behavior cross-checked against official docs = MEDIUM-HIGH; a few product-ambiguity flags are judgment calls, not documented facts = explicitly marked LOW)
+
+## Critical Pitfalls
+
+### Pitfall 1: Deactivation only bans in Supabase Auth — the already-issued JWT keeps working
+
+**What goes wrong:**
+A deactivated Vendedor/Supervisor keeps reading and writing data for up to the access-token lifetime (Supabase default ~1h) after being "deactivated," because `supabase.auth.admin.updateUserById(id, { ban_duration: ... })` only blocks future logins and token **refreshes** — it does not revoke an access token that's already been issued and is still cached in the browser. PostgREST (which every Supabase query goes through) validates the JWT's signature and expiry only; it does not call back to the Auth service to check ban status on every request.
+
+**Why it happens:**
+It's natural to treat "ban the user in Supabase Auth" as the whole solution, since that's the only Auth-native primitive available, and to stop there without adding a second, independent check.
+
+**How to avoid:**
+Add `profiles.ativo boolean not null default true` and make it the **primary, immediate** enforcement mechanism, not the Auth ban. Every RLS policy/helper that currently gates on role must also gate on `ativo`:
+- `is_supervisor()` (0001) must become `role = 'supervisor' and ativo = true` — currently it only checks role, so a deactivated Supervisor would still pass every check that calls `is_supervisor()` unless this helper itself is updated.
+- Any future `is_vendedor_ativo()`-style check used by `clientes`/`historico`/`tarefas` policies must do the same.
+
+Because RLS is evaluated fresh on **every single request** (not cached in the JWT), flipping `profiles.ativo = false` cuts off access on the user's very next query — even mid-session, even with a technically-still-valid JWT. This is strictly faster and more reliable than relying on the Auth ban, and it's free (no extra infra). Treat the Auth-service ban (`ban_duration`) as **defense-in-depth for stopping new logins/refreshes**, not as the access-control boundary.
+
+**Warning signs:**
+- A manual test: deactivate a user in another browser tab while they're mid-session in a first tab, then have them click something in the first tab without refreshing — if it still succeeds, `ativo` isn't wired into RLS yet.
+- Any RLS policy/RPC that checks `is_supervisor()` or `role = 'vendedor'` without also checking `ativo`.
+
+**Phase to address:**
+Feature 1 (deactivate team member).
+
+---
+
+### Pitfall 2: The Auth-ban step needs the service role key — it cannot live inside a plain Postgres RPC
+
+**What goes wrong:**
+Following the existing RPC pattern (`mover_card_funil`, `importar_clientes_lote` — both plain `language plpgsql`, not `security definer`, called via `supabase.rpc(...)`), it's tempting to implement the whole deactivation flow as one more Postgres RPC. But `supabase.auth.admin.updateUserById` is an **Auth service** operation, not a Postgres one — Postgres has no access to it at all. It can only be called from trusted server-side code (a Next.js Server Action or an Edge Function) holding `SUPABASE_SERVICE_ROLE_KEY`, per the project's own `supabase-conventions` skill ("Edge Function... só quando a lógica precisa de algo externo... usar uma secret key").
+
+**Why it happens:**
+Every write in this project so far has fit inside a single Postgres RPC; this is the first v1.2 feature that genuinely needs to reach outside Postgres.
+
+**How to avoid:**
+Split deactivation into two steps and treat the Postgres one as the source of truth:
+1. **Postgres transaction/RPC** (non-security-definer, `is_supervisor()` guard, same pattern as existing RPCs): reassign `clientes.responsavel` for the target user, run the last-active-Supervisor guard (Pitfall 3), then set `profiles.ativo = false`. This alone already blocks all further data access per Pitfall 1, regardless of what happens next.
+2. **Server Action with the service role key** (never in client code, never `NEXT_PUBLIC_`-prefixed — see Security Mistakes): call `auth.admin.updateUserById(id, { ban_duration: '87600h' })` (or similar) as a best-effort follow-up to stop future logins/refreshes.
+
+Sequence step 1 first. If step 2 fails or is slow, the system still fails safe — RLS is already blocking the deactivated user.
+
+**Warning signs:**
+- Trying to call `supabase.auth.admin.*` from a plain PL/pgSQL function — it doesn't exist there; will surface as "function does not exist" or simply be structurally impossible to write.
+- `SUPABASE_SERVICE_ROLE_KEY` referenced anywhere reachable from client bundles.
+
+**Phase to address:**
+Feature 1.
+
+---
+
+### Pitfall 3: Check-then-act race lets the last two Supervisors deactivate each other simultaneously
+
+**What goes wrong:**
+A naive guard ("`select count(*) from profiles where role='supervisor' and ativo` — if count > 1, allow deactivation") is a classic TOCTOU race: two concurrent transactions (two Supervisors each deactivating a *different* Supervisor, or one deactivating themselves while another does the same to a third) can both read `count = 2` before either commits, and both proceed, leaving zero active Supervisors — locking everyone out of the parts of the system Supervisor-gates.
+
+**Why it happens:**
+The count-then-decide logic looks correct in isolation and this project has no precedent yet for concurrency-sensitive guards (v1.0/v1.1 RPCs are all per-row, not aggregate-guard, operations).
+
+**How to avoid:**
+Make the guard atomic by locking the rows it depends on before counting, inside the same transaction as the `ativo = false` update:
+```sql
+perform 1 from profiles
+where role = 'supervisor' and ativo = true
+for update;
+
+if (select count(*) from profiles where role = 'supervisor' and ativo = true) <= 1 then
+  raise exception 'Não é possível desativar o último Supervisor ativo';
+end if;
+```
+`for update` serializes concurrent deactivation attempts against the same row set — the second transaction blocks until the first commits (or rolls back), so it re-reads a consistent count.
+
+**Warning signs:**
+- Any last-Supervisor check written as a plain `select count(*)` without `for update`/row locking in the same statement as the mutation.
+- No test that fires two concurrent deactivation RPC calls against the last two Supervisors.
+
+**Phase to address:**
+Feature 1.
+
+---
+
+### Pitfall 4: Reassignment + historico writes chained across CTEs hit the same RLS-visibility bug already found in v1.1 (migration 0006)
+
+**What goes wrong:**
+The project already has a documented, project-specific instance of this bug: `importar_clientes_lote` originally chained the `clientes` INSERT and the `cliente_produtos` INSERT as two data-modifying CTEs inside one `WITH` statement. Postgres evaluates every CTE of a single statement against the **same command snapshot**, so a later CTE's RLS `EXISTS` check re-scanning the real `clientes` table cannot see rows written by an earlier CTE of that same statement — the fix (0006) was to split it into two **sequential statements**, not one chained `WITH`.
+
+Feature 1's reassignment logic is structurally the same shape: it needs to (a) bulk-`UPDATE clientes SET responsavel = new_vendedor WHERE responsavel = old_vendedor`, and depending on design, (b) possibly write/read something that RLS-gates on the parent `clientes` row's current state (e.g., historico visibility, or a report of "N clientes reassigned"). If (a) and (b) are chained as CTEs of one statement, (b) risks the exact same "can't see the update for RLS purposes" failure.
+
+**Why it happens:**
+It's a genuinely non-obvious Postgres semantic (each CTE of one `WITH` sees the pre-statement snapshot for RLS/re-scans of the base table), and the natural instinct when writing "reassign, then report" logic is to chain it into one query for efficiency.
+
+**How to avoid:**
+Follow the 0006 fix exactly: split into **separate sequential SQL statements** inside the PL/pgSQL function body (not chained data-modifying CTEs in one `WITH`). Capture what you need from the first statement's `RETURNING` into a PL/pgSQL array/variable, then use that in the next statement — never re-query the base table's RLS-relevant state from inside a second CTE of the same statement that wrote to it.
+
+**Warning signs:**
+- Error `new row violates row-level security policy` or `0 rows affected` on a step that should clearly succeed, immediately after a prior write in the same statement.
+- Any new RPC with more than one data-modifying CTE inside a single `WITH ... AS (...)`.
+
+**Phase to address:**
+Feature 1. Reference: `supabase/migrations/0006_fix_importar_clientes_lote_cte_rls_visibility.sql`.
+
+---
+
+### Pitfall 5: `now()` is frozen per-transaction — historico events written together get identical timestamps, breaking chronological ordering
+
+**What goes wrong:**
+Postgres's `now()` returns the **transaction start time**, not the statement/row execution time. `clientes_after_update_historico()` (0002) can insert **two** historico rows in one trigger firing (one `tipo='etapa'`, one `tipo='status_acompanhamento'`) when a single `mover_card_funil` call changes both columns at once (e.g., moving to "1ª venda concluída" while marking `ganho`). Both rows get the exact same `criado_em`. Any future stage-duration or win/loss-date logic (features 2 and 3) that sorts historico rows `order by criado_em` to reconstruct sequence has no reliable tiebreak between same-transaction rows, and this gets worse if a future bulk-move or bulk-status-change RPC is ever added (all its historico rows would share one timestamp).
+
+**Why it happens:**
+`now()`/`current_timestamp` being transaction-scoped (not per-statement) is a well-known but easy-to-forget Postgres behavior; it "just works" for display purposes and only becomes a bug when code starts depending on `criado_em` for **ordering**, which v1.0/v1.1 never needed.
+
+**How to avoid:**
+For any new logic that depends on event ordering (feature 2's time-in-stage math, feature 3's win/loss-date math), never assume `criado_em` alone disambiguates order within a transaction. Either: (a) add a monotonic `id`/sequence-based tiebreak (`order by criado_em, id` only works if `id` generation order matches insertion order, which `gen_random_uuid()` does **not** guarantee — so this doesn't actually fix it), or (b) switch the historico insert triggers to `clock_timestamp()` instead of `now()` for `criado_em` specifically (statement-time, monotonically increasing even within one transaction), or (c) add an explicit integer sequence column. Recommend (b) as the least invasive: it only changes what `criado_em` records, not the schema.
+
+**Warning signs:**
+- Two historico rows for the same `cliente_id` with identical `criado_em` down to the microsecond.
+- Stage-duration calculations that produce a negative or zero duration for a transition that should have taken measurable time.
+
+**Phase to address:**
+Feature 2 (funnel conversion metrics) and feature 3 (avg days-to-win/loss) — both depend on historico ordering.
+
+---
+
+### Pitfall 6: Time-in-stage math built only from `historico` silently excludes the initial stage, currently-open stays, and non-linear moves
+
+**What goes wrong:**
+`historico` only gets a `tipo='etapa'` row on **UPDATE** (`clientes_after_update_historico`, fires `after update`) — there is no `after insert` trigger, so the time a card spends in its very first stage (from `clientes.criado_em` until its first move) has **zero historico rows** representing it. A query that computes stage durations purely by pairing consecutive historico rows will:
+1. Never account for time spent in the stage a card was created into (miscounts every card that hasn't moved yet, and undercounts every card's first stage even after it moves).
+2. Exclude cards **currently sitting** in a stage with no further transition yet — the interval from "entered this stage" to "now" is open-ended and must still count. Since the entire point of this feature is to surface stuck/stalled cards, excluding open intervals **excludes exactly the data the feature exists to show** (classic survivorship bias — the stuck cards are the ones missing their "next" event).
+3. Assume linear progression: `mover_card_funil` has no constraint forcing forward-only or one-step moves — a card can skip stages or move backward. Pairing "enter stage N" with "enter stage N+1" (instead of "enter stage N" with "whatever the next chronological event actually is") breaks the moment a card skips or reverts.
+
+**Why it happens:**
+The event log's shape (`descricao` only records the destination stage, not origin) plus the missing insert-trigger make "reconstruct history" look more complete than it is; it's easy to write a query that looks right against a happy-path test card (created → moved once → moved again) and silently wrong for real data (imported batches sitting untouched, cards moved backward, cards created straight into a mid-funnel stage via Supervisor cadastro).
+
+**How to avoid:**
+1. Treat `clientes.criado_em` as a synthetic "entered [initial etapa] at this time" event, unioned with the real historico `tipo='etapa'` rows, before computing any interval.
+2. For the most recent event per `cliente_id` (whether that's the synthetic creation event or the last historico row), compute its duration against `now()`, not against a next-event that doesn't exist yet — include these open intervals in the average, ideally with a way to distinguish "still ongoing" from "completed stay" in the UI (e.g., show both an average **completed** time-in-stage and a "N cards currently over X days in this stage" count — this is exactly the kind of stuck-card signal the milestone is asking for).
+3. Compute durations as: sort each cliente's (synthetic + real) etapa events chronologically, and attribute the duration of the interval **[event i, event i+1)** to the etapa value carried by **event i** (the stage the card was actually in during that interval) — this is correct regardless of whether event i+1 is a forward move, a skip, or a backward move, because it never assumes which stage comes "next," it only uses the actual next event whatever it is.
+4. Given the log stores only free text (`format('Etapa alterada para "%s"', ...)`), parsing it via `ILIKE`/regex is inherently brittle (already a known weak point — see `dashboard_ganhos_perdidos` in 0003, which does the same `ilike '%"ganho"%'` pattern). **Recommend adding structured columns** (`historico.etapa_anterior etapa_funil`, `historico.etapa_nova etapa_funil`) via a new migration, backfilling `etapa_nova` from a one-time parse of existing rows (and reconstructing `etapa_anterior` from each cliente's previous event, or from `clientes.criado_em`'s implicit stage where there is none) and updating the trigger to write both columns going forward. This removes text-parsing risk from every future aggregate rather than re-solving it per query.
+
+**Warning signs:**
+- Average time-in-stage for a stage known (from manual observation) to have several stalled cards comes out suspiciously low.
+- A card created directly into a non-first stage (Supervisor cadastro, or a card manually moved right after import) shows `NULL`/zero time for its actual first stage.
+- Sum of all per-stage average durations times card counts doesn't roughly reconcile with `now() - criado_em` for a sample of individual cards.
+
+**Phase to address:**
+Feature 2 (funnel conversion metrics per stage).
+
+---
+
+### Pitfall 7: "Days to win/loss" is ambiguous once a card's status has flipped more than once
+
+**What goes wrong:**
+`dashboard_ganhos_perdidos` (0003) already documents this exact edge case: a card can go `perdido → em_andamento → ganho`, and its comment explains the existing dashboard query resolves it by taking "only the most recent status-change event **that still matches the current status**" — a reasonable choice for a point-in-time count, but genuinely ambiguous for a **duration** metric. When a card flips status multiple times, "days to win" could mean: (a) `criado_em` to the *first* time it became `ganho`, (b) `criado_em` to the *most recent* time it became `ganho` (matching the existing dashboard's convention), or (c) time since the *last* status change regardless of how many prior flips happened. These give materially different numbers, and picking silently (without it being a deliberate product decision) risks numbers that don't match what the Supervisor expects when they cross-check a specific client by memory.
+
+**Why it happens:**
+The requirement ("average days to win / days to loss as two separate summary numbers") reads as simple, but the underlying data model already has a known toggle-status edge case that a simple average doesn't obviously resolve.
+
+**How to avoid:**
+Reuse the **same** convention already established in `dashboard_ganhos_perdidos`/`dashboard_desempenho_vendedor` (most-recent status-change event that still matches current status) for consistency — don't invent a second convention for a closely related metric. Explicitly document this choice (in code comment and in the phase's spec) so it's a deliberate decision, not an accident, and so the "por vendedor" comparison table (feature 4) and the "days to win/loss" summary (feature 3) agree with each other and with the existing ganhos/perdidos dashboard counts.
+
+**Warning signs:**
+- Two different dashboard widgets (existing ganhos/perdidos count vs. new days-to-win average) disagree on which clients count as "ganho" for the same period.
+- A manually-checked client that's been marked ganho/perdido/ganho again produces a days-to-win number that doesn't match anyone's intuition about "how long did this actually take."
+
+**Phase to address:**
+Feature 3 (avg days-to-win/loss). Confidence: LOW on which convention is "correct" — this is a product decision, not a technical fact; flagging it so it gets made deliberately.
+
+---
+
+### Pitfall 8: Per-vendedor stats attributed to `clientes.responsavel` (current) instead of `historico.autor_id` (at-the-time) get silently corrupted by every future reassignment
+
+**What goes wrong:**
+Feature 1 explicitly requires reassigning `clientes.responsavel` on deactivation while keeping `historico.autor_id` untouched ("manter atribuição histórica intacta"). If the per-vendedor comparison table (feature 4) or any "deals closed" metric is computed by grouping `clientes` on **current** `responsavel`, then every deal a deactivated vendedor ever closed gets silently re-attributed to whoever inherited their book of clients after a reassignment — inflating the new owner's historical stats and zeroing out the original closer's, even for deals closed months before the reassignment happened.
+
+**Why it happens:**
+`clientes.responsavel` is the obvious, already-indexed column to `GROUP BY`, and it's what every existing dashboard function (0003) already uses — there's no precedent yet in this codebase for "who did this at the time" vs. "who owns this now" diverging, because reassignment didn't exist before v1.2.
+
+**How to avoid:**
+For metrics that are inherently historical ("deals won/lost", "average cycle time to close" — i.e., anything answering "how did this vendedor perform"), attribute to the `autor_id` of the specific `historico` row representing the win/loss event (same event used for Pitfall 7's date), not to `clientes.responsavel` today. Reserve `clientes.responsavel`-based grouping for genuinely **current-state** questions (e.g., "how many open deals does this vendedor have right now"), which should legitimately reflect reassignment. Document which of the two basis columns each new dashboard function uses, the same way 0003 already documents "criado_em vs. status-change date" as two deliberately different bases for different questions (D-09 vs. D-02 in that migration's comments).
+
+**Warning signs:**
+- A vendedor's "deals ganhos" count changes immediately after an unrelated teammate is deactivated and their clients reassigned, with no new sales activity.
+- Historical dashboard numbers for past periods change when queried again after a reassignment event (a correct historical metric should be stable once the period is closed).
+
+**Phase to address:**
+Feature 4 (per-vendedor comparison table), cross-cutting with feature 1 (deactivation/reassignment) and feature 3 (days-to-win/loss).
+
+---
+
+### Pitfall 9: Migrating free-text Estado to a fixed 27-UF list can silently fail the deploy or silently hide/corrupt existing clients
+
+**What goes wrong:**
+`clientes.estado` is `text not null` with zero constraint today, and known to contain a mix of full names ("São Paulo"), abbreviations ("SP"), and typos. Two common bad approaches:
+1. **Hard constraint added directly** (`check (estado in (<27 UFs>))` or converting to a Postgres `enum` type): this validates **every existing row synchronously** at migration time. Any row with an unmapped value (a typo, a full name not yet normalized, blank) makes the whole migration fail — blocking deploy, potentially mid-release.
+2. **Silent normalization with a fallback**: mapping anything unrecognized to `NULL` or to a default UF "just to make the constraint pass" **hides or corrupts real client data** without the Supervisor ever being told which rows were affected — a client's real state silently becomes wrong or missing, and any existing Estado-based filter or export will now be quietly incomplete without an error.
+
+**Why it happens:**
+Both approaches make the migration "just work" in the moment; the cost shows up later as either a deploy blocker discovered under time pressure, or worse, as data that looks fine until someone notices a specific known client no longer appears under the state they expect.
+
+**How to avoid:**
+1. **Backfill first, constrain second.** Build a normalization mapping (full names + common accentless/typo variants → UF) and run an `UPDATE` pass against existing data before adding any constraint. Run `select distinct estado from clientes where estado not in (<27 UFs>)` and get an explicit count/list of remaining unmapped rows before proceeding — do not guess at 100% coverage.
+2. **Add the constraint as `NOT VALID` first**: `alter table clientes add constraint chk_estado_valido check (estado in (<27 UFs>)) not valid;` — this is enforced for all **new** writes immediately without scanning/blocking on existing rows (confirmed current Postgres behavior). Existing bad rows remain exactly as they are and remain queryable/visible (not silently hidden) while a manual cleanup pass runs, then `alter table clientes validate constraint chk_estado_valido;` once cleanup is confirmed complete.
+3. For any row that genuinely can't be auto-mapped (real typo, ambiguous data), leave it visibly flagged in the UI (e.g., an explicit "Estado não reconhecido — revisar" state) rather than defaulting it to any specific UF — a wrong guess is worse than an honest "needs review."
+4. Update the **importação** RPC (`importar_clientes_lote`, which today accepts `estado text` completely unvalidated) to enforce the same 27-UF list at the same time — otherwise the very next bulk import reintroduces the exact inconsistency this migration just cleaned up.
+5. Keep Estado as a fixed list in code/migration (not a new Supervisor-editable lookup table like `categorias`/`produtos_consumidos`/`tipos_tarefa`/`motivos_perda`) — Brazilian UFs are a closed, non-editable set of exactly 27, unlike this project's other "enum" fields, which are deliberately editable-by-permission. Don't reflexively copy the CRUD-lookup-table pattern here; it would add pointless admin surface for something that never changes (parallels the project's existing decision to keep funnel stages fixed rather than CRUD-editable).
+
+**Warning signs:**
+- Migration fails on `ALTER TABLE ... VALIDATE`/`CHECK` with a constraint-violation error naming specific row values.
+- Client list counts under a specific Estado filter drop after the migration compared to before, with no corresponding drop in total client count.
+- The Cidade cascading select (sourced from existing records — see Pitfall 10) shows fewer or duplicate cities immediately after the Estado migration.
+
+**Phase to address:**
+Feature 6 (Estado/Cidade structured filters).
+
+---
+
+### Pitfall 10: Cidade dropdown "sourced from existing records" is built from raw (pre-normalization) Estado groupings, or has no escape hatch for genuinely new cities
+
+**What goes wrong:**
+Two related traps in feature 6's Cidade cascade:
+1. If the Cidade-options query (`select distinct cidade from clientes where estado = :uf`) runs against the **same** free-text `estado` column before/without Pitfall 9's normalization being complete, cities that were entered under "São Paulo" for one row and "SP" for another end up split across two different (soon-to-be-invalid) Estado groupings — the dropdown either misses cities or shows them duplicated depending on which Estado variant is queried. This must run strictly **after** the Estado backfill, against normalized data.
+2. Because Cidade options are sourced only from **existing** client records (not a static IBGE municipality list), there is structurally no way to enter a client in a genuinely new city not already in the database — the first client ever registered in a new city has no valid option to pick. If the UI doesn't include an explicit fallback (free-text "outra cidade" entry, or an inline "add city" affordance), this becomes a hard blocker for legitimate new data entry, not just an edge case.
+
+**Why it happens:**
+"Cascading select sourced from existing data" is simple to build against a snapshot of current data, and the new-city gap is easy to miss because it won't show up in testing against an already-populated database.
+
+**How to avoid:**
+Sequence: normalize Estado (Pitfall 9) → backfill/verify → build the Cidade distinct-value source. Add a deliberate "cidade não está na lista" escape hatch (free-text fallback that still ends up filed under the chosen Estado) so the cascade never blocks entry of a real new client.
+
+**Warning signs:**
+- Same city name appearing twice in the Cidade dropdown under the same Estado.
+- A vendedor reports being unable to register a client in a city they know is correct.
+
+**Phase to address:**
+Feature 6.
+
+---
+
+### Pitfall 11: Per-vendedor comparison table becomes `security definer` "for simplicity" and leaks every vendedor's rows to every vendedor
+
+**What goes wrong:**
+The existing dashboard functions (0003) are all deliberately `language sql stable` **without** `security definer`, so each call runs as the calling user and RLS on `clientes` transparently restricts a Vendedor's aggregate to their own rows — this is explicitly called out in that migration's header comment as a rule ("NEVER add security definer here... start returning every vendedor's data to every caller"). The new per-vendedor comparison function (feature 4) is the same shape (group-by-`responsavel` aggregate) and carries exactly the same risk: adding `security definer` — even for an unrelated reason like "it needs to join something RLS would otherwise block" — silently defeats the row-level restriction and a Vendedor calling it would see every colleague's numbers, not just their own.
+
+**Why it happens:**
+`security definer` is the "make the permission error go away" fix, and this feature is more complex (multi-table joins, cycle-time math) than the existing dashboard functions, increasing the temptation to reach for it if a join hits an unexpected RLS wall during development.
+
+**How to avoid:**
+Keep the new function `security invoker` (i.e., omit `security definer` entirely), matching the existing pattern exactly. Write an integration test mirroring the project's existing `tests/dashboard/rls-dashboard.test.ts` pattern: log in as a Vendedor, call the new comparison RPC, and assert it returns at most one row (their own) or zero rows — not the full team. Since `profiles` already has an open `select` policy (`using (true)` — every authenticated user can already read every profile's name), the actual sensitive surface here is the **metrics**, not the names; make sure the query never independently lists all `profiles` with role='vendedor' and left-joins metrics in a way that exposes "0 deals" for colleagues as if it were real data — either omit rows the caller can't see metrics for, or don't run this widget's query at all for non-Supervisor callers (UI-side is a courtesy, RLS is still the actual boundary).
+
+**Warning signs:**
+- Any `security definer` on a new function that aggregates across `responsavel`.
+- A Vendedor account seeing more than one row (or any teammate's name paired with non-zero metrics) in this table during manual testing.
+
+**Phase to address:**
+Feature 4 (per-vendedor comparison table). Cross-reference: `supabase/migrations/0003_dashboard_aggregates.sql` header comment (existing project rule) and Pitfall 8 above (which basis column to aggregate on).
+
+---
+
+### Pitfall 12: Fixed-height scroll columns break dnd-kit's auto-scroll and stale-rect collision detection
+
+**What goes wrong:**
+Capping each kanban column to a fixed height with its own `overflow-y: auto` (feature 5) interacts with `@dnd-kit` in two specific, well-documented ways:
+1. **Auto-scroll targeting**: dnd-kit's auto-scroll plugin detects scrollable ancestors and scrolls them when the pointer nears an edge during drag. If the column's scroll container isn't correctly picked up (e.g., because the droppable ref and the scroll container are the same node with conflicting overflow/position styling, or a `canScroll`/`scrollableAncestors` override wasn't updated after introducing internal scroll), dragging toward a card below the visible fold of a short column simply can't reach it — the page used to scroll for this, but no longer does once the outer page stops growing.
+2. **Stale droppable rects during scroll**: dnd-kit's default measuring strategy measures droppable containers once (before/at drag start), which was fine when the page didn't scroll during a drag. Once columns scroll internally *during* a drag (via auto-scroll), the drop targets' on-screen positions change but a `DndContext` left at default measuring won't re-measure them, causing drops to register in the wrong slot or not register as "over" the column at all. Fix confirmed via dnd-kit docs: set `measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}` on `DndContext` once internal scrolling is introduced.
+
+A secondary, easy-to-miss CSS issue: if `DragOverlay` is ever rendered inline inside the scrollable column div instead of relying on its default body-portal behavior, the column's `overflow: hidden`/`auto` will visually clip the dragged card as soon as it's lifted above the column's bounds.
+
+**Why it happens:**
+The kanban board currently works because the whole page scrolls together; fixed-height per-column scrolling is a structurally different layout that dnd-kit needs to be explicitly told about — it isn't automatic just because CSS `overflow` changed.
+
+**How to avoid:**
+- Separate the droppable boundary element (fixed height, defines the column's drop-zone rect) from the inner scrollable list element, rather than making one div do both jobs.
+- Add `measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}` to the top-level `DndContext` once columns scroll internally.
+- Verify `DragOverlay` still portals to `document.body` (dnd-kit's default) rather than being nested inside the new scroll container.
+- If touch/tablet use is a realistic scenario, set `touch-action: none` on the drag handle only (not the scroll container), and keep a `PointerSensor` `activationConstraint: { distance: 8 }` so a short touch is read as "start scrolling," not "start dragging."
+- Manually test dragging a card from the top to the bottom of a column with more cards than fit in the fixed height, on both mouse and (if relevant) touch.
+
+**Warning signs:**
+- Cards below the visible area of a column can't be reached by dragging near the column's bottom edge.
+- A card dropped near a column boundary during/after an auto-scroll lands in the wrong position or wrong column.
+- The dragged card visually disappears/clips at the column's edge instead of floating above it.
+
+**Phase to address:**
+Feature 5 (fixed-height kanban columns).
+
+---
+
+## Technical Debt Patterns
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|-----------------|------------------|
+| Parsing `historico.descricao` free text (ILIKE) for stage-duration math instead of adding structured `etapa_anterior`/`etapa_nova` columns | No new migration/backfill work for feature 2 | Brittle to any future wording/format change in the trigger's `format()` string; every new aggregate re-implements the same fragile parsing (already true of `dashboard_ganhos_perdidos`) | Only for a first pass with a hard follow-up commitment to add structured columns before more metrics are built on the same text |
+| Defaulting unmapped legacy Estado values to a guessed UF instead of an explicit "needs review" flag | Constraint passes cleanly, no visible loose ends | Silently wrong client data that nobody is prompted to fix; erodes trust in Estado-based filters/reports | Never |
+| Deactivation implemented as `security definer` RPC "to make the Auth-ban call simpler" | Avoids the two-step Postgres-then-Server-Action split | `security definer` on Postgres can't reach the Auth service anyway (Pitfall 2) — this shortcut doesn't even work, it just obscures where privilege escalation is actually happening | Never — this isn't a valid shortcut, it's a misunderstanding of the boundary |
+| Building the per-vendedor comparison table on `clientes.responsavel` instead of `historico.autor_id` | Simpler query, reuses existing indexed column, matches existing 0003 pattern | Historical stats silently rewrite themselves after every future reassignment (Pitfall 8) | Acceptable only for genuinely current-state questions ("open deals right now"), never for historical performance metrics |
+
+## Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|-----------------|-------------------|
+| Supabase Auth Admin API (`auth.admin.updateUserById` with `ban_duration`) | Calling it from client code, or assuming it invalidates already-issued access tokens | Call only from a Server Action/Edge Function holding `SUPABASE_SERVICE_ROLE_KEY` (never `NEXT_PUBLIC_`-prefixed); treat it as secondary defense, with `profiles.ativo` + RLS as the primary, immediate cutoff (Pitfall 1) |
+| `@dnd-kit/core` `DndContext` + internal-scroll columns | Assuming auto-scroll and collision detection "just work" the same way they did with page-level scroll | Explicitly set `measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}` and verify the scrollable ancestor is correctly detected once columns get `overflow-y: auto` (Pitfall 12) |
+| Postgres `now()` in trigger-written timestamps | Assuming `criado_em` values are strictly increasing across rows written in one transaction | Use `clock_timestamp()` (statement-time) instead of `now()` (transaction-time) for any timestamp column used for event ordering (Pitfall 5) |
+| Postgres `CHECK`/`enum` constraints on a column with pre-existing bad data | Adding the constraint directly and letting the migration fail (or worse, coercing bad data silently to pass it) | Backfill first, then add as `NOT VALID`, then `VALIDATE CONSTRAINT` once confirmed clean (Pitfall 9) |
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|-----------------|
+| Computing time-in-stage/win-loss durations client-side by fetching full `historico` rows per cliente | Dashboard load grows with total historico row count, egress climbs against Supabase's 5GB/month free-tier cap | Compute in a `stable` SQL/PL-pgSQL function (same pattern as 0003), returning only aggregated rows, not raw historico | Once historico rows number in the low thousands, a client-side reduction becomes both slow and egress-expensive |
+| Estado/Cidade cascading select re-querying `distinct cidade` from the full `clientes` table on every keystroke/render | Noticeable UI lag as client count grows; repeated full-table scans | Query once per Estado selection (not per keystroke), consider a small materialized/cached list per Estado if client count grows past a few thousand | Not an issue at current free-tier client volumes (hundreds), worth revisiting only if `clientes` grows into the tens of thousands |
+| `@dnd-kit` collision detection cost with fixed-height columns holding very large card counts | Drag feels laggy once a single column holds hundreds of cards, independent of the scroll-height change | Already flagged in `STACK.md`'s Alternatives Considered (Atlassian `pragmatic-drag-and-drop` if this becomes a real bottleneck) — not expected at this project's scale | ~1,000+ cards in a single column |
+
+## Security Mistakes
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| `SUPABASE_SERVICE_ROLE_KEY` accidentally prefixed `NEXT_PUBLIC_` or otherwise reachable from client bundles | Full admin access to Auth (and RLS-bypass on the DB) exposed to anyone inspecting client JS — the first time this project would need this key at all, so there's no existing convention to follow by habit | Only reference the service role key inside Server Actions/Edge Functions; verify via a bundle-content check (`grep` the built client chunks) that it never appears client-side |
+| `is_supervisor()` (and any future `is_*_ativo()` helper) not updated to also check `profiles.ativo` | A deactivated Supervisor keeps passing every RLS policy/RPC guard that calls this helper, silently defeating the whole deactivation feature | Update the shared helper once, in one migration, and re-run every existing test that depends on `is_supervisor()` to confirm nothing else regresses |
+| Trusting only UI role-hiding to keep the per-vendedor comparison table Supervisor-only | Contradicts `CLAUDE.md`'s explicit rule against UI-only authorization; even though the underlying RLS pattern here happens to be safe-by-construction (Pitfall 11), a future edit could add `security definer` without anyone noticing the UI was the only real gate | Keep an integration test asserting a Vendedor's RPC call is empty/self-only, independent of whatever the UI currently hides |
+| No `for update` row lock on the last-active-Supervisor check | Concurrent deactivation requests can both pass a stale count check, leaving zero active Supervisors | `for update` lock inside the same transaction as the mutation (Pitfall 3) |
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-------------------|
+| Cidade select with no fallback for a city not yet in any existing client record | Vendedor is blocked from registering a legitimate new client in a genuinely new city | Add an explicit free-text "outra cidade" fallback (Pitfall 10) |
+| Estado values that fail auto-normalization silently defaulted instead of flagged | Supervisor never learns a specific client's address data is now wrong | Visible "Estado não reconhecido — revisar" state on affected records (Pitfall 9) |
+| Average time-in-stage excluding currently-stalled cards (open intervals) | The dashboard's core purpose — surfacing where the funnel is stuck — is defeated by exactly the data it's meant to show | Explicitly include open intervals (Pitfall 6), and consider a companion "cards over N days in this stage" count for extra visibility |
+| Per-vendedor comparison table showing "0 deals" for a colleague with genuinely no visible data vs. a colleague who legitimately closed zero deals | A Vendedor (if the widget were ever visible to them) can't distinguish "I can't see this" from "this person did nothing" | Either don't render the widget at all for non-Supervisor callers, or omit rows the caller has no visibility into rather than showing them as zero |
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Deactivation**: Often missing the `ativo` check inside `is_supervisor()`/other shared role helpers — verify a deactivated Supervisor is actually rejected by every RPC that calls that helper, not just by a fresh login attempt.
+- [ ] **Deactivation**: Often missing an atomic last-Supervisor guard — verify with a concurrency test (two simultaneous deactivation calls against the last two active Supervisors), not just a sequential manual click-through.
+- [ ] **Funnel conversion metrics**: Often missing the initial-stage duration (no historico row exists for it) and open (in-progress) intervals — verify a freshly-created, never-moved card and a long-stalled card both contribute correctly to the averages, not just cards that have completed multiple transitions.
+- [ ] **Estado/Cidade migration**: Often missing a post-migration reconciliation check — verify total client count and per-Estado filter counts before and after match (no client silently vanished from a filter).
+- [ ] **Estado/Cidade migration**: Often missing the importação RPC update — verify a fresh spreadsheet import with a free-text "São Paulo" Estado column either gets normalized or rejected, not silently inserted as invalid raw text again.
+- [ ] **Per-vendedor comparison table**: Often missing the RLS-scoping integration test — verify a Vendedor account calling the underlying RPC directly (not just via the hidden UI) never receives another vendedor's metrics.
+- [ ] **Kanban fixed-height scroll**: Often missing drag-to-bottom testing — verify a card below the fold of a short column can actually be dragged to and dropped correctly, with auto-scroll engaging.
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|----------------|------------------|
+| Deactivation only banned in Auth, `ativo`/RLS never wired in | LOW | Add the `ativo` column/check retroactively (no data loss — it's additive); existing sessions self-correct on their next request once the policy is live |
+| Free-text Estado silently coerced/nulled during migration | HIGH | Requires restoring original free-text values from a pre-migration backup/export (the v1.1 export feature can double as an ad-hoc backup before running this migration) and re-running the backfill properly; if no backup exists, affected rows may need manual re-entry from memory/other records |
+| Time-in-stage metrics shipped without accounting for open intervals or the initial stage | MEDIUM | No data loss — it's a query bug, not a data bug; fix the aggregate function and the numbers self-correct on next dashboard load, no backfill needed since historico/clientes rows are untouched |
+| Per-vendedor comparison table shipped as `security definer` | MEDIUM | Remove `security definer`, re-test with the Vendedor-scoping integration test; no data was persisted incorrectly, only over-exposed on read, so no backfill needed — just redeploy the corrected function |
+| dnd-kit drag/drop broken in fixed-height columns | LOW | Purely a frontend/CSS+config fix (measuring strategy, container structure) — no data implications, safe to iterate live |
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Target Feature | Verification |
+|---------|-----------------|----------------|
+| 1. Deactivated user's live JWT keeps working | Feature 1 | Manual concurrent-session test: deactivate mid-session, confirm next request from the still-open session fails |
+| 2. Auth-ban needs service role key, can't live in Postgres RPC | Feature 1 | Code review: confirm the Auth-ban call only exists in a Server Action/Edge Function, never inside `supabase/migrations/*.sql` |
+| 3. Last-Supervisor race condition | Feature 1 | Automated concurrency test: two simultaneous deactivation calls against the last two active Supervisors, assert exactly one fails |
+| 4. Chained-CTE RLS visibility bug (recurrence of 0006) | Feature 1 | Integration test against real Postgres/RLS (not mocked), reassigning clientes and immediately checking historico/clientes visibility, mirroring `tests/importacao`'s existing integration-test pattern |
+| 5. `now()` transaction-time breaks event ordering | Features 2, 3 | Test firing two historico-writing triggers within one transaction, assert `criado_em` values are still distinguishable/orderable |
+| 6. Time-in-stage math excludes initial/open stages, assumes linear order | Feature 2 | Test fixtures covering: never-moved card, skipped-stage card, backward-moved card, currently-open (unfinished) stage |
+| 7. Ambiguous win/loss date on multi-toggle status | Feature 3 | Explicit code comment + cross-check against `dashboard_ganhos_perdidos`'s existing convention for consistency |
+| 8. Historical stats corrupted by reassignment | Features 1, 3, 4 | Test: reassign a vendedor's clients, confirm past-period win/loss stats for both vendedors are unchanged |
+| 9. Estado migration fails/corrupts on bad legacy data | Feature 6 | Pre-migration audit query (`distinct estado not in (27 UFs)`) run and reviewed before the constraint is validated; post-migration count reconciliation |
+| 10. Cidade cascade missing/duplicated cities, no new-city escape hatch | Feature 6 | Manual test: register a client in a brand-new city after the migration ships |
+| 11. Comparison table leaks via `security definer` | Feature 4 | Integration test: Vendedor-scoped RPC call returns self-only/empty, mirroring `tests/dashboard/rls-dashboard.test.ts` |
+| 12. dnd-kit auto-scroll/measuring breaks in fixed-height columns | Feature 5 | Manual drag-to-bottom-of-column test, plus `measuring` prop present in code review |
+
+## Sources
+
+- `supabase/migrations/0001_profiles_and_roles.sql`, `0002_clientes_and_funil.sql`, `0003_dashboard_aggregates.sql`, `0006_fix_importar_clientes_lote_cte_rls_visibility.sql` — read directly from this repository. Confidence: HIGH (primary source, the project's own committed schema and documented bug fix).
+- `.planning/PROJECT.md`, `.planning/RETROSPECTIVE.md` — read directly per required reading. Confidence: HIGH (primary project source).
+- `.claude/skills/Supabase-conventions/SKILL.md` — read directly. Confidence: HIGH (primary source, project convention).
+- WebSearch: "Supabase auth admin updateUserById ban_duration invalidate session" — [supabase.com/docs/reference/javascript/auth-admin-updateuserbyid](https://supabase.com/docs/reference/javascript/auth-admin-updateuserbyid), [github.com/orgs/supabase/discussions/9239](https://github.com/orgs/supabase/discussions/9239). Confidence: MEDIUM (official docs surfaced, but session-invalidation behavior specifically confirmed via community discussion, not a direct official statement).
+- WebSearch: "dnd-kit DndContext autoScroll scrollable container measuring strategy Always" — [dndkit.com/extend/plugins/auto-scroller](https://dndkit.com/extend/plugins/auto-scroller/), [dndkit.com/legacy/api-documentation/context-provider/dnd-context](https://dndkit.com/legacy/api-documentation/context-provider/dnd-context/). Confidence: MEDIUM-HIGH (official dnd-kit docs).
+- WebSearch: "postgres ADD CONSTRAINT CHECK NOT VALID existing rows validate later" — [postgresql.org message threads on NOT VALID constraints](https://www.postgresql.org/message-id/4DE4D265020000250003DF04%40gw.wicourts.gov), postgresqltutorial.com. Confidence: HIGH (matches well-documented, stable Postgres feature, cross-checked across multiple sources).
+- Postgres `now()` vs `clock_timestamp()` transaction-time semantics — standard, stable, widely-documented Postgres behavior (not separately re-verified this session; consistent with official Postgres documentation on date/time functions). Confidence: HIGH (well-established language semantic, not a claim likely to have changed or be version-sensitive).
+
+---
+*Pitfalls research for: CRM Raiar v1.2 — Gestão de Equipe, Análises de Funil e Filtros*
+*Researched: 2026-07-25*

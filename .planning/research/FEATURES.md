@@ -171,3 +171,219 @@ No direct competitor products were evaluated (this is an internal tool replacing
 ---
 *Feature research for: CRM internal tool — bulk import/export milestone (v1.1)*
 *Researched: 2026-07-22*
+
+
+---
+
+# Milestone Addendum: v1.2 Gestão de Equipe, Análises de Funil e Filtros
+
+**Domain:** Small-team B2B sales CRM (funil/kanban) — targeted additions for milestone v1.2
+**Researched:** 2026-07-25
+**Confidence:** MEDIUM overall — codebase-specific findings are HIGH confidence (read directly from `supabase/migrations/*.sql` and `components/clientes/*`); comparable-tool behavior (Pipedrive/HubSpot patterns) is LOW-confidence web synthesis per the `classify-confidence` seam, though cross-checked across multiple independent sources (Pipedrive's own support docs + HubSpot's own support docs + HubSpot community threads agreeing with each other)
+
+> Note: This file was fully rewritten for milestone v1.2 (Gestão de Equipe, Análises de Funil e Filtros). It supersedes the prior v1.1 FEATURES.md content (bulk import/export feature landscape), which is preserved in git history and in `.planning/archive/` if the milestone-completion workflow has run. This research covers ONLY the v1.2 additions.
+
+This is not a general domain survey — v1.2 is six targeted additions to an already-shipped CRM. Every finding below is scoped to how each feature interacts with the **existing** data model: `profiles` (role enum, no `ativo` column yet), `clientes` (the funnel card itself — `etapa_funil` enum, `status_acompanhamento_enum`, `responsavel uuid not null references profiles(id)`, no `on delete` clause), `historico` (auto-populated audit trail, `autor_id references profiles(id)`, no `on delete` clause), and the three dashboard RPCs already shipped in `0003_dashboard_aggregates.sql` (`dashboard_clientes_por_etapa`, `dashboard_ganhos_perdidos`, `dashboard_desempenho_vendedor`).
+
+## Feature Landscape
+
+### Table Stakes vs Differentiator — Quick Categorization
+
+| # | Feature | Category | Why |
+|---|---------|----------|-----|
+| 1 | Deactivate team member + forced reassignment + last-Supervisor guard | **Table stakes** | Every SaaS CRM with roles (Pipedrive, HubSpot, monday.com) offers exactly this triad — deactivate, force-reassign owned records, block removing the last admin. Missing it is a glaring gap once a team member ever leaves |
+| 2 | Detailed per-stage funnel chart (count / %-advance / drop-off / avg time-in-stage) | **Table stakes for a paid-CRM replacement** (this milestone's explicit goal), differentiator relative to a bare MVP | v1.0 already ships a "clientes por etapa" bar chart (a snapshot); this is the deeper Pipedrive/HubSpot-style "funnel report" the team is used to from the tool being replaced |
+| 3 | Avg days-to-win / avg days-to-loss KPIs | **Table stakes**, cheap extension of #2 | Standard "deal age at close" metric in every sales dashboard; low marginal cost because it reuses the same historico-reconstruction query shape already proven in `dashboard_ganhos_perdidos` |
+| 4 | Per-vendedor leaderboard/comparison table (Supervisor-only, no money) | **Table stakes**, extension of an existing RPC | `dashboard_desempenho_vendedor` already groups ganho/perdido by `responsavel` — this item adds columns (conversão, iniciados, ciclo médio) onto a pattern that already exists |
+| 5 | Kanban column fixed-height independent scroll | **Table stakes / bug fix** | Every kanban tool (Trello, Jira, Pipedrive board view) scrolls columns internally; an infinitely-tall page with 200-300 cards is a known usability failure, not a competitive differentiator |
+| 6 | Estado (UF select) before Cidade, Cidade cascading from Estado | **Table stakes / data-quality fix** | Free-text state/city fields are a classic "looks fine with 10 rows, breaks at 200" trap; UF-then-cidade is the standard Brazilian address-form pattern |
+
+None of the six are differentiators in the sense of "sets this CRM apart from competitors" — they close gaps relative to the paid tool being replaced, or fix bugs in what already shipped. That changes how they should be prioritized: none can be safely deferred to "add after validation" the way a brand-new differentiator could, since the milestone's whole premise (`PROJECT.md`) is that these are the specific gaps blocking cancellation of the paid CRM.
+
+---
+
+### Item 1 — Deactivate team member (reassign clients, last-Supervisor guard)
+
+**Standard behavior (Pipedrive/HubSpot, cross-checked):** On deactivation, the admin UI shows a summary of everything the user owns (deals/contacts/activities) and **requires** picking a replacement owner as part of the deactivation flow — it's not a separate optional cleanup step. Pipedrive explicitly documents a "manage items assigned to deactivated users" screen for stragglers. Both tools warn against blindly reassigning **closed/historical** items along with open ones, because it skews reporting attribution for the new owner.
+
+**Complexity: MEDIUM-HIGH.** This is the only one of the six that touches auth, RLS, and cross-row data integrity simultaneously.
+
+**Edge cases specific to this app's schema:**
+- `profiles` has **no `ativo` column today** — needs a new migration. The exact soft-delete convention already exists on `categorias`/`produtos_consumidos`/`tipos_tarefa`/`motivos_perda` (`ativo boolean not null default true`) — reuse that pattern rather than inventing a new one.
+- `clientes.responsavel uuid not null references profiles(id)` has **no `on delete` clause** (default RESTRICT), and so does `historico.autor_id references profiles(id)`. This means: (a) hard-deleting a `profiles` row is structurally blocked by FK integrity the moment that person has ever owned a cliente or authored a historico row — soft-delete via `ativo=false` is not just a UX preference here, it's close to the only option that doesn't fight the schema; (b) the milestone's "deactivated user keeps appearing correctly attributed in historical records" requirement is satisfied close to automatically, since `historico.autor_id` keeps pointing at the still-existing (just inactive) profiles row.
+- `is_supervisor()` (the SECURITY DEFINER helper every RLS policy in the app depends on) currently checks only `role = 'supervisor'`, **not** `ativo`. It must be extended to `role = 'supervisor' and ativo = true`, or a deactivated Supervisor's still-valid session keeps every write permission until they happen to log out.
+- Flipping the DB flag does **not** invalidate an already-issued Supabase Auth session/JWT. Two options to resolve in the Discuss phase: (a) RLS + middleware gate only — every policy that already checks role also checks `ativo`, and a server-side check redirects an `ativo=false` session to a "conta desativada" screen; cheapest, no new Edge Function. (b) Also call `auth.admin` (mirroring `supabase/functions/invite-user/index.ts`'s existing service-role pattern) to kill the session immediately. Recommend (a) as sufficient for MVP — RLS is already the app's enforced authorization boundary per `CLAUDE.md`, and (b) only becomes necessary if "instant logout" turns into a real requirement.
+- The last-active-Supervisor guard is a **cross-row invariant** (`count(*) from profiles where role='supervisor' and ativo=true` must stay > 0 after the flip) — this can't be expressed as a single-row CHECK constraint; it needs to live inside the deactivation RPC as an explicit guard, the same class of decision the `supabase-conventions` skill already flags for RLS-vs-RPC-vs-CHECK. "A Supervisor can deactivate another Supervisor" means the guard counts every active supervisor, not just excludes the target from a self-only check.
+- The "transfer to" picker in the UI must exclude both the user being deactivated and any already-inactive users — only active team members are valid reassignment targets.
+- **Tarefas have no separate owner field** — `tarefas` only has `cliente_id`, no vendedor column. "In-flight tasks assigned implicitly via the client" resolve automatically the moment `clientes.responsavel` is reassigned; this needs zero new code, it's a direct consequence of the existing 1:1 clientes-is-the-funnel-card model. Same is true for `cliente_produtos` and `historico` access — every RLS policy on those tables is gated through `EXISTS (... clientes c WHERE c.responsavel = auth.uid() OR is_supervisor())`, so reassigning the parent `clientes.responsavel` transfers access to all child rows for free.
+
+**Flag for Discuss phase — the one open product decision that has a real downstream cost:** should bulk reassignment during deactivation move **all** of that vendedor's clientes (including already `ganho`/`perdido` ones) to the new owner, or **only** the still-`em_andamento` ones? Pipedrive's own guidance explicitly warns against reassigning closed deals — doing so here would retroactively change who "owns" a won/lost deal for dashboard purposes, because `dashboard_desempenho_vendedor` (and the new Item 4 leaderboard) group by `clientes.responsavel`, which has no separate "who worked this deal historically" field once reassigned. Recommend reassigning **only** `status_acompanhamento = 'em_andamento'` clientes; leave `ganho`/`perdido` clientes pointed at the (now-inactive) original vendedor so Items 3/4's historical numbers stay accurate — see the direct dependency noted in Item 4 below.
+
+**Anti-features to avoid:** hard-deleting the `auth.users`/`profiles` row (blocked by FK integrity anyway, and destroys the audit trail); silently reassigning closed clientes to the successor (see above).
+
+---
+
+### Item 2 — Detailed funnel/pipeline conversion chart
+
+**Standard behavior:** Waterfall/funnel-style chart, one bar per stage, with count + conversion % to the next stage. HubSpot/Pipedrive both frame this as a "funnel report."
+
+**Complexity: MEDIUM.** No new tables needed (reuses `historico`), but the query logic is meaningfully more involved than the existing `dashboard_clientes_por_etapa` snapshot.
+
+**Key modeling decision specific to this schema:** because a `clientes` row IS the funnel card (no separate opportunity/deal entity, only one live `etapa` column), "how many deals reached stage N" has two very different possible definitions:
+- **(a) Current snapshot** — `count(*) where etapa = N` (already exists as `dashboard_clientes_por_etapa`). This alone cannot produce "% advancing to next stage" — it only tells you where things sit *today*.
+- **(b) All-time "ever reached this stage"** — reconstructed from `historico` rows where `tipo = 'etapa'` (already recorded, `descricao` follows the fixed format `Etapa alterada para "%s"` written only by `clientes_after_update_historico()`, matched with the same ILIKE-on-fixed-format-string technique `dashboard_ganhos_perdidos` already uses). This is the correct basis for a real funnel — (a) alone undercounts every stage a cliente has since moved past.
+
+**Skip-stage handling (verified — HubSpot's own community consensus):** a deal that jumps directly from stage 2 to stage 5 is "invisible" in reports that only count direct N→N+1 transition events — a stage 2→3 conversion report would wrongly show 0% for that deal. Recommendation for this app: define "advanced past stage N" as *"clientes.etapa's ordinal position > N, OR historico shows it ever reached ordinal > N"* — NOT "historico shows a direct N→N+1 transition." This is the specific bug HubSpot's own community flags and it's avoidable here because `etapa_funil` is an ordered enum, so ordinal comparison is cheap.
+
+**Backward-move handling:** `mover_card_funil` has **no constraint preventing a card from regressing** to an earlier etapa (only the `ganho`/`primeira_venda` and `perdido`/`motivo_perda_id` CHECK constraints exist) — a card genuinely can move backward. For "avg time-in-stage," use consecutive pairs of `historico` 'etapa' rows (a `LEAD()` window per cliente, ordered by `criado_em`, duration = next row's `criado_em` minus this row's, bucketed by the etapa the interval started in). If a cliente visits stage N twice (regressed then re-advanced), recommend **summing** both visits' durations rather than keeping only the latest — that's the operationally meaningful "how long has this deal actually sat at stage N in total" number, and it's the simpler query.
+
+**Still-open cards in the average:** for the CURRENT stage (no "next" historico row yet), duration = `now() - etapa_alterada_em` (already a column on `clientes`, no historico join needed for this tail case). Recommend **including** this in-progress duration in the average rather than only counting fully-completed visits — excluding it creates survivorship bias (the slowest-moving cards are exactly the ones still sitting there, and would be silently dropped from "avg time in stage"). This mirrors how the existing FUN-09 "cards parados" highlight already computes `diasParado()` off the same `etapa_alterada_em` column for still-open cards — same convention, no new concept.
+
+**Drop-off attribution:** `motivo_perda_id`/`status_acompanhamento='perdido'` are recorded on the current row only, and a card is frozen once perdido (no further moves happen per the existing workflow) — so "drop-off at stage N" = `count(*) where status_acompanhamento='perdido' group by etapa`, a plain query against `clientes` with no historico reconstruction needed. Only the stage-to-stage advance and time-in-stage metrics need the harder historico-based math.
+
+**Genuine simplification:** the milestone explicitly excludes a date-range filter for this chart (`PROJECT.md` Out of Scope) — every query here can be an unbounded `WHERE` with no `p_inicio`/`p_fim` params, unlike `dashboard_ganhos_perdidos`/`dashboard_desempenho_vendedor`/`dashboard_prospeccao_por_*`, which all take a period. Less surface area than the existing dashboard RPCs, not more.
+
+---
+
+### Item 3 — Avg days-to-win / avg days-to-loss (separate KPIs)
+
+**Standard behavior:** "average deal age at close" = close date − created date, computed only over closed deals (won or lost), never blended with still-open ones.
+
+**Complexity: LOW-MEDIUM** — this is a near-direct variant of an *already-tested* query, not new design. Start date = `clientes.criado_em`. End date is **not** a column on `clientes` — it requires the same `distinct on (cliente_id) ... where tipo='status_acompanhamento' and descricao ilike '%"ganho"%'/'%"perdido"%' order by criado_em desc` reconstruction already proven correct in `0003_dashboard_aggregates.sql`'s `dashboard_ganhos_perdidos`.
+
+**Edge cases:**
+- The milestone requires the two KPIs "separadamente, não combinada" — implement as two independent AVG() branches (or one function returning two columns), never a blended "avg days to close."
+- A cliente can flip status more than once (`em_andamento → perdido → em_andamento → ganho` is explicitly allowed by the schema, and `dashboard_ganhos_perdidos`'s own comment calls out the double-counting risk this creates) — reuse the SAME guard `0003` already implements: only count a historico status-change event if `clientes.status_acompanhamento` today still matches that event's status. Direct reuse of an established, already-tested pattern, not new design risk.
+
+---
+
+### Item 4 — Per-vendedor leaderboard/comparison table (Supervisor-only, no money)
+
+**Standard behavior (cross-checked):** keep leaderboards to a small number of headline metrics — literature explicitly warns that overcomplicating with a single weighted/composite score kills the motivational effect; show raw metrics side by side instead. One source flags that for teams under ~5 reps, granular win-rate-style rep comparisons can read as awkward rather than motivating — worth surfacing to the project owner as a framing/tone note (e.g., present as "visão geral do time" rather than a ranked scoreboard, default sort by name not by rank) but **not** a reason to drop a feature the milestone explicitly requires.
+
+**Complexity: LOW-MEDIUM** — `dashboard_desempenho_vendedor` already groups ganho/perdido by `responsavel`; this item adds columns onto the same query, it isn't new territory:
+- **"Deals started"** = `count(*) where responsavel = X` (all-time, no historico needed — plain count).
+- **"Deals won"** already exists in the current RPC's shape.
+- **"Avg sales cycle length"** = the same LEAD()/historico-diff math as Item 3, grouped by `responsavel` instead of globally. Needs one product decision: won-only (the classic "sales cycle length" definition) vs. won+lost combined — recommend **won-only**, keeping days-to-loss as Item 3's separate KPI rather than conflating the two here.
+- **No monetary columns** is trivially satisfied — the schema has **no** value/R$ field on `clientes` at all, so this isn't a restraint decision, it's structurally impossible without a new column. Reinforces it's correctly out of scope, not an oversight.
+
+**Direct cross-item dependency (the one the downstream consumer specifically asked about):** this item's historical accuracy depends entirely on how **Item 1**'s reassignment scope is decided. If Item 1 reassigns *all* of a departed vendedor's clientes (including closed ones) to their successor, the successor's leaderboard row silently absorbs historical wins/losses/cycle-length they never actually worked, and the departed vendedor's historical contribution disappears from the leaderboard entirely — the exact mistake Pipedrive's own documentation warns against. Item 1's recommendation (reassign only `em_andamento` clientes, leave closed ones pointed at the inactive original vendedor) is what keeps this item's numbers correct. **Sequencing implication:** Item 1's reassignment-scope decision should be locked before Item 4 is planned in detail, since Item 4's query design assumes one answer or the other.
+
+---
+
+### Item 5 — Kanban column independent scroll, fixed height
+
+**Standard behavior:** board container height = viewport minus header; each column is a fixed/capped-height flex column; column header (title + count badge) stays pinned, only the card list scrolls internally (`overflow-y-auto`) — never the whole page. Every mainstream kanban tool (Trello, Jira, Pipedrive's own board view) works this way.
+
+**Complexity: LOW** — this is a CSS/layout fix to `components/clientes/KanbanBoard.tsx`, not new business logic. The current bug is precise and already located: the board wrapper is `flex flex-1 gap-4 overflow-x-auto pb-2` (horizontal scroll only, no vertical cap), and each column's card-list div is `flex min-h-10 flex-col gap-2` with **no max-height or overflow set** — that's the literal source of the infinite-page bug, present identically in both the drag-enabled (`DndContext`/`DroppableColumn`) and the drag-disabled/filtered-view render branches of this component (two code paths need the same fix, not one).
+
+**Edge cases specific to the existing implementation:**
+- `@dnd-kit`'s `useDroppable`/`useSortable` need to keep working with an internally-scrolling container. dnd-kit supports auto-scroll on scrollable containers, but the current `DndContext` has no explicit scroll-container configuration — worth a specific verification step during implementation so dragging a card near the bottom edge of a long column auto-scrolls *that column*, not the page (or fails to scroll at all).
+- The fixed-height wrapper needs to go on the **outer** column div (header + list together), with `overflow-y-auto` scoped specifically to the card-list div — so the sticky header with its count badge stays visible while scrolling through 200-300 cards, rather than scrolling away with the list.
+- Both empty-state messages ("Nenhum cliente nesta etapa" and the global "Nenhum cliente encontrado com esses filtros") need to still render sensibly inside a now-fixed-height column.
+
+**No dependency on any other item** — safe to build and ship in isolation, in parallel with anything else in the milestone.
+
+---
+
+### Item 6 — Estado (UF select) before Cidade, Cidade cascading from Estado
+
+**Standard behavior (cross-checked):** UF is a fixed 27-item select (26 states + DF) keyed by the 2-letter abbreviation; cidade options are then filtered by the chosen UF. Community Brazilian datasets (e.g. IBGE municipality-to-UF mappings) exist as static offline JSON, avoiding a live external API — which matches this project's zero-infra-cost / no-new-external-service constraint.
+
+**Complexity: MEDIUM** — touches four surfaces: cadastro form, edição (detail sheet) form, `FiltersPopover.tsx`, and the import wizard's column mapping/validation.
+
+**Edge cases specific to this schema:**
+- `clientes.estado`/`clientes.cidade` are currently plain `text not null` columns with **no enum or FK constraint** (`0002_clientes_and_funil.sql`). Enforcing "fixed 27-item UF list" purely in the frontend (a zod enum) leaves the RPC/import path unprotected; adding a Postgres CHECK constraint on `estado` would mirror the discipline already used for `chk_ganho_somente_etapa_final`/`chk_perdido_exige_motivo` and close that gap — worth raising as a scope question for Discuss.
+- **The real hidden cost of this item:** existing production `clientes` rows were entered as free text and may already contain non-standard values (lowercase, full state names instead of "SP", typos). A CHECK constraint cannot be safely added until those rows are audited/cleaned, or it will either fail to apply or the existing bad rows will violate it silently depending on how the migration is written. This is the single biggest edge case in the whole milestone and should be flagged explicitly in Discuss/Plan for Item 6, likely as its own small data-cleanup step sequenced early (more free-text drift accumulates every day the fix is delayed).
+- `estadoOptions` in `KanbanBoard.tsx` today is **derived from the already-loaded card set** (`Set` of distinct `estado` values actually present, per the file's own comment explaining there's "no separate full-catalog lookup table for estado"). Once estado becomes a fixed enum, this derivation can be **deleted entirely** in favor of a static 27-item constant — a genuine simplification, not just a swap.
+- Cidade becoming "a select whose options are dynamically derived from the selected Estado's **existing client records**" (the milestone's own wording — not the full ~5,570-municipality IBGE dataset) means no new lookup table is needed: a plain `DISTINCT cidade WHERE estado = X` derivation over `clientes`, matching the same "derived from own data" pattern already used for `estadoOptions` and `vendedorOptions` in `KanbanBoard.tsx` today. Must handle the **zero-options case** (a UF with no clientes registered yet — e.g., the first cliente ever in a brand-new state) with either a free-text fallback for cidade or a clear "digite a cidade" affordance; a cascading select with zero options is a dead end for first-time cadastro in a new state.
+- `FiltersPopover.tsx` currently renders Cidade (free-text `Input`) **before** Estado (`Select`) — the milestone's reordering is a JSX prop-order change in an existing component, not new state shape (`ClienteFiltros` already has both fields).
+- **Import path:** `importar_clientes_lote` (migrations 0004-0006) currently accepts estado/cidade as whatever free text the spreadsheet contains. Bringing UF validation to import means either (a) validating each row's estado against the fixed list during the existing OK/erro/duplicado row-classification review screen already built in v1.1, reusing that UI rather than building new error handling, or (b) leaving import lenient and only enforcing the fixed list in manual cadastro/edição. Recommend (a) for consistency — if the CHECK constraint above is added, the RPC's INSERT would reject bad rows regardless, so import-time validation is really about surfacing that error nicely in the existing review screen instead of a generic bulk failure.
+
+**No dependency on Items 1-5** — independent of the team-management and dashboard work.
+
+---
+
+## Feature Dependencies
+
+```
+Item 1 (deactivate + reassign)
+    └──produces a scope decision that──> Item 4 (leaderboard)
+         (reassign only em_andamento clientes, keep closed ones on the
+          original — now inactive — responsavel, so Item 4's historical
+          numbers stay accurate)
+
+Item 2 (funnel chart: per-stage historico duration math)
+    └──shares underlying query shape with──> Item 3 (days-to-win/loss)
+                                          └──> Item 4 (avg cycle length column)
+    (all three differ only in GROUP BY dimension — by etapa, globally, or
+     by responsavel — over the same historico enter/exit-event math;
+     recommend one shared SQL helper/CTE rather than three one-off queries)
+
+Item 5 (kanban column scroll) ──independent── no shared code with any other item
+Item 6 (estado/cidade cascade) ──independent── no shared code with any other item,
+    but has its own internal soft-dependency: a data-cleanup/audit pass over
+    existing free-text estado values should happen before a CHECK constraint
+    is added
+```
+
+### Dependency Notes
+
+- **Item 1 → Item 4:** the leaderboard's "deals won/lost" and "avg cycle length" columns are computed by grouping on `clientes.responsavel`. If Item 1's deactivation RPC reassigns *closed* clientes along with open ones, Item 4's historical numbers for both the departed and the inheriting vendedor become wrong the moment a deactivation happens. This should be locked as a decision in Item 1's plan before Item 4 is planned in detail.
+- **Items 2/3/4 share duration math:** all three need "how long did this cliente spend between two historico events" computed from `historico` rows filtered/paired by `criado_em`. Building this once (e.g. a `stage_durations` or `status_durations` SQL view/CTE parameterized by grouping dimension) avoids three near-duplicate window-function queries and keeps the "sum both visits if a card regressed and came back" rule consistent across all three metrics rather than accidentally diverging.
+- **Items 5 and 6 are safe to sequence anywhere** relative to 1-4, including in parallel — no shared files, no shared query logic, no shared schema changes.
+
+## MVP Definition
+
+This milestone has no traditional "MVP vs. defer" split — all six items are the committed scope of v1.2 per `PROJECT.md`. The relevant boundary is what's explicitly already excluded:
+
+### In Scope for v1.2 (all six, no partial-ship split recommended)
+
+- [ ] Item 1 — Deactivate team member with forced reassignment + last-Supervisor guard — essential: this is the only item touching auth/RLS, highest complexity, should be planned and built first so Item 4's grouping logic isn't built against a moving target
+- [ ] Item 6 — Estado/Cidade cascading filter — the data-cleanup sub-step benefits from starting early (more drift accumulates daily)
+- [ ] Item 2 — Detailed funnel chart — build the shared historico-duration query helper here first
+- [ ] Item 3 — Days-to-win/loss KPIs — reuses Item 2's helper
+- [ ] Item 4 — Vendedor leaderboard — reuses Item 2's helper, and needs Item 1's reassignment-scope decision locked first
+- [ ] Item 5 — Kanban column scroll fix — fully independent, can slot in anywhere, good candidate for a quick early win
+
+### Explicitly Out of Scope (already decided in `PROJECT.md`, reconfirmed here as correct)
+
+- [ ] Date-range filter on the funnel chart — all-time totals only for v1.2; genuinely simplifies Item 2's query shape (no period params, unlike the existing `dashboard_ganhos_perdidos`/`desempenho_vendedor`/`prospeccao_*` RPCs)
+- [ ] Monetary/deal-value columns anywhere in the leaderboard or funnel — structurally impossible without a new column on `clientes`; correctly out of scope, not an oversight
+- [ ] Full IBGE municipality dataset for Cidade — the milestone's own "derive from existing client records" framing already avoids this; importing the full ~5,570-municipality dataset would be unnecessary complexity for a filter that only needs to reflect this app's own data
+
+## Feature Prioritization Matrix
+
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|----------------------|----------|
+| Item 1 — Deactivate team member | HIGH | HIGH (auth + RLS + cross-row invariant) | P1 |
+| Item 2 — Detailed funnel chart | HIGH | MEDIUM (new historico-reconstruction logic) | P1 |
+| Item 3 — Days-to-win/loss KPIs | MEDIUM | LOW (reuses tested query shape) | P1 |
+| Item 4 — Vendedor leaderboard | HIGH (Supervisor-only) | LOW-MEDIUM (extends existing RPC) | P1 |
+| Item 5 — Kanban column scroll | HIGH (daily-use pain point at 200+ cards) | LOW (CSS/layout only) | P1 |
+| Item 6 — Estado/Cidade cascade | MEDIUM | MEDIUM (4 surfaces + data cleanup) | P1 |
+
+All six are P1 — this reflects the milestone's own framing (a fixed, committed scope), not a ranking exercise. The matrix's real value here is the **cost** column, which should inform phase ordering: Item 1 is the highest-cost/highest-risk item (touches auth) and should not be left for last if Item 4 depends on its decisions; Item 5 is the cheapest and safest to build first or in parallel as a confidence-building win.
+
+## Anti-Features (Cross-Cutting)
+
+| Anti-Feature | Why It Seems Appealing | Why Problematic Here | Alternative |
+|--------------|------------------------|------------------------|-------------|
+| Hard-delete of a deactivated user's `auth.users`/`profiles` row | "Removed" sounds cleaner than "deactivated" | Blocked by FK integrity (`clientes.responsavel`, `historico.autor_id` both `references profiles(id)` with no cascade), and destroys the audit trail the milestone explicitly requires | Soft-delete via `ativo boolean`, the same convention already used for `categorias`/`produtos_consumidos`/`tipos_tarefa`/`motivos_perda` |
+| Reassigning a departed vendedor's **closed** (ganho/perdido) clientes to their successor | Simpler than partial reassignment — "just move everything" | Retroactively corrupts Item 3/4's historical accuracy; the successor's dashboard absorbs deals they never worked, and the departed vendedor's real historical contribution vanishes — the exact mistake Pipedrive's own docs warn against | Reassign only `status_acompanhamento = 'em_andamento'` clientes; leave closed ones on the original (now-inactive) responsavel |
+| A single weighted/composite "score" ranking vendedores on the leaderboard | Feels more "gamified"/decisive than raw numbers | Web research explicitly warns overcomplicating with weighted scores kills the motivational effect, and for a small team it risks reading as demotivating rather than useful | Show raw metrics side by side (conversão, iniciados, ganhos, ciclo médio); default sort by name, not rank |
+| Full IBGE municipality dataset bundled for the Cidade select | "Complete and always correct" | Unnecessary size/complexity for a milestone that explicitly wants Cidade derived from the app's own existing client records, not a canonical geographic database | Derive Cidade options via `DISTINCT cidade WHERE estado = X` over `clientes`, same pattern already used for `estadoOptions`/`vendedorOptions` |
+| Date-range filter on the new funnel chart | "Every other dashboard chart in this app already has one" | Explicitly out of scope for v1.2 per `PROJECT.md`; adding it now duplicates the period-param plumbing of the existing `dashboard_ganhos_perdidos`/`desempenho_vendedor` RPCs for a feature nobody asked for yet | All-time totals only; revisit if/when actually requested |
+| Live external geocoding/IBGE API call for cascading Estado→Cidade | Always up to date | Breaks the zero-infra-cost constraint (new external dependency, new failure mode, egress cost) for a filter that only needs the app's own data | Static 27-item UF list bundled in the repo + Cidade derived from existing rows, no network call |
+
+## Sources
+
+- **Codebase (HIGH confidence, read directly):** `supabase/migrations/0001_profiles_and_roles.sql`, `0002_clientes_and_funil.sql`, `0003_dashboard_aggregates.sql`; `supabase/functions/invite-user/index.ts`; `app/(app)/equipe/page.tsx`; `components/clientes/KanbanBoard.tsx`; `components/clientes/FiltersPopover.tsx`; `.planning/PROJECT.md`
+- WebSearch: "Pipedrive HubSpot deactivate remove sales rep user reassign owner of open deals best practice" — Pipedrive's own support docs (support.pipedrive.com, multiple articles) + HubSpot's own knowledge base (knowledge.hubspot.com), agreeing independently on the "force reassignment, don't touch closed deals" pattern. Confidence: LOW per the classify-confidence seam's default for `websearch`, though cross-checked across two vendors' own documentation
+- WebSearch: "CRM sales funnel conversion report handling deal that skipped a stage or moved backward stage history" — HubSpot Community threads (community.hubspot.com, multiple independent threads reaching the same conclusion about skipped-stage reports). Confidence: LOW
+- WebSearch: "sales rep leaderboard comparison table metrics small team CRM win rate average sales cycle length" — synthesis across monday.com, close.com, prospeo.io sales-metrics articles. Confidence: LOW
+- WebSearch: "cascading state city select dropdown Brazil UF IBGE pattern form filter" — general pattern confirmation (Drupal.org, Budibase docs, Oracle docs on IBGE codes, a Brazilian community `municipios-brasileiros` dataset repo). Confidence: LOW
+
+---
+*Feature research for: CRM Raiar v1.2 — Gestão de Equipe, Análises de Funil e Filtros*
+*Researched: 2026-07-25*
