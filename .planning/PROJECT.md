@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Um CRM de acompanhamento de vendas (funil/kanban) para substituir um CRM pago de custo elevado. Vendedores cadastram e trabalham clientes PJ ao longo de um funil de 7 etapas, do primeiro contato até a primeira venda concluída; um supervisor acompanha todos os clientes do time e tem um dashboard gerencial. MVP construído com custo zero de infraestrutura, pra validar a ideia antes de qualquer investimento em escala.
+Um CRM de acompanhamento de vendas (funil/kanban) para substituir um CRM pago de custo elevado. Vendedores cadastram e trabalham clientes PJ ao longo de um funil de 7 etapas, do primeiro contato até a primeira venda concluída; um supervisor acompanha todos os clientes do time, tem um dashboard gerencial, e pode importar clientes em massa via planilha ou exportar a lista que enxerga. Construído com custo zero de infraestrutura, pra validar a ideia antes de qualquer investimento em escala.
 
 ## Core Value
 
@@ -15,16 +15,15 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 - **Success metric**: time passa a usar o funil no dia a dia e o sistema cobre as necessidades gerenciais (incluindo dashboard) a ponto de o CRM pago poder ser cancelado
 - **Strategy notes**: —
 
-## Current Milestone: v1.1 Importação e Exportação de Clientes
+## Current State
 
-**Goal:** Dar ao supervisor uma forma de trazer clientes em massa via planilha e exportar a lista de clientes, sem depender mais de cadastro manual um a um pra grandes volumes.
+**Shipped:** v1.0 MVP (Autenticação, Cadastro + Funil, Administração de Listas, Dashboard Gerencial) e v1.1 Importação e Exportação de Clientes (2026-07-25).
 
-**Target features:**
-- Importação de clientes via planilha (Excel/CSV), recorrente, restrita ao Supervisor
-- Tela de mapear colunas da planilha pros campos do sistema
-- Mostrar erros/duplicados antes de confirmar a importação
-- Cliente importado sempre entra na etapa "Aguardando contato"
-- Exportação da lista de clientes (Vendedor exporta só os próprios, Supervisor exporta todos)
+O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, e agora o supervisor consegue trazer clientes em massa via planilha (com revisão de erros/duplicados antes de gravar) e qualquer usuário exporta a lista de clientes que já enxerga.
+
+## Next Milestone Goals
+
+Ainda não definido — rodar `/gsd-new-milestone` para levantar o próximo conjunto de necessidades.
 
 ## Requirements
 
@@ -46,13 +45,15 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 - ✓ Autenticação via Supabase Auth com dois papéis (Supervisor, Vendedor) — v1.0
 - ✓ Dashboard gerencial: clientes por etapa do funil, ganhos x perdidos, desempenho por vendedor, taxa de conversão, prospecções por produto e por categoria — v1.0
 - ✓ Vendedor vê uma versão do dashboard só com os próprios números; supervisor vê os números de todo o time — v1.0
+- ✓ Supervisor importa clientes em massa via planilha (Excel/CSV), com tela de mapear colunas pros campos do sistema — v1.1
+- ✓ Sistema mostra erros e possíveis duplicados por linha antes de confirmar a importação, e revalida duplicados de novo no momento de gravar — v1.1
+- ✓ Um lote de importação nunca é travado por uma linha ruim: linhas válidas são gravadas mesmo se outras tiverem erro ou forem puladas — v1.1
+- ✓ Cliente importado sempre entra na etapa "Aguardando contato" do funil — v1.1
+- ✓ Vendedor exporta a lista dos próprios clientes; Supervisor exporta a lista de todos os clientes, respeitando os mesmos filtros da tela — v1.1
 
 ### Active
 
-- [ ] Supervisor importa clientes em massa via planilha (Excel/CSV), com tela de mapeamento de colunas
-- [ ] Sistema mostra erros e duplicados antes de confirmar a importação
-- [ ] Cliente importado sempre entra na etapa "Aguardando contato" do funil
-- [ ] Vendedor exporta a lista dos próprios clientes; Supervisor exporta a lista de todos os clientes
+(Nenhum ainda — próximo marco não definido, rodar `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -60,14 +61,19 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 - Colunas do funil editáveis por permissão — as 7 etapas ficam fixas no código, pra reduzir complexidade
 - App mobile nativo — web responsivo é suficiente
 - Integração contínua (sync/API) com o CRM pago atual — o objetivo é substituí-lo, não integrar com ele
-- Importação em massa pelo Vendedor — restrita ao Supervisor nesta versão, decisão explícita do dono do projeto
+- Importação em massa pelo Vendedor — restrita ao Supervisor, decisão explícita do dono do projeto, confirmada e implementada em v1.1
+- Validação de CNPJ na importação — adiado para uma v2 se vier a ser necessário (v1.1 valida só os campos mínimos de cadastro)
+- Lembrar o mapeamento de colunas entre importações — cada planilha é mapeada do zero por enquanto (v1.1); útil se o volume de importações recorrentes crescer
+- Importação como atualização de cliente existente — v1.1 só cria clientes novos; atualizar em massa fica para uma versão futura, se necessário
 
 ## Context
 
 - **Motivação**: hoje a empresa paga por um CRM externo com custo elevado, e o time de vendas não preenche direito — telas com muitos campos e esquecimento de atualizar o funil são as duas causas apontadas pelo usuário.
 - **Origem do mapeamento de domínio**: existe um wireframe (Excalidraw) do fluxo de vendas atual, já documentado em `CLAUDE.md` — usuários/papéis, cliente PJ, funil de 7 etapas e os 3 enums editáveis originais (categoria, produtos consumidos, tipos de tarefa). O motivo de perda (4º enum editável) surgiu durante esta conversa de inicialização.
-- **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. Na v1.0 isso foi tratado como migração única, fora da UI — na v1.1 essa decisão foi revista: o time recebe planilhas de clientes/leads com frequência (parceiros, feiras), então a importação vira uma tela permanente do sistema, restrita ao Supervisor.
+- **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. Na v1.0 isso foi tratado como migração única, fora da UI — na v1.1 essa decisão foi revista e implementada: o time recebe planilhas de clientes/leads com frequência (parceiros, feiras), e a importação agora é uma tela permanente do sistema, restrita ao Supervisor.
 - **Perfil do usuário**: quem pilota o projeto não programa. Explicações devem evitar jargão técnico, focar em sintomas observáveis, e mudanças grandes precisam de um plano em linguagem simples antes de qualquer implementação.
+- **Estado do código pós-v1.1**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. `@e965/xlsx` (leitura/escrita de planilha, alternativa segura ao pacote `xlsx` vulnerável) e `papaparse` (CSV) adicionados em v1.1. Toda escrita de importação passa por uma única RPC (`importar_clientes_lote`) não-security-definer com guard explícito de Supervisor, seguindo o mesmo padrão das RPCs anteriores (`mover_card_funil`).
+- **Débito técnico conhecido**: nenhum item bloqueante identificado ao fechar v1.1. Ideias adiadas para uma v2 (se o uso real pedir): validar CNPJ na importação, lembrar o mapeamento de colunas entre planilhas recorrentes, e permitir que a importação também atualize clientes já existentes (hoje só cria novos).
 
 ## Constraints
 
@@ -86,10 +92,15 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 | Sem notificações ativas no MVP, só destaque visual no kanban | Resolve o esquecimento de atualização sem custo/complexidade de um serviço de notificação | ✓ Good |
 | Dashboard gerencial entra no MVP, não fica para depois | Critério de sucesso do usuário inclui informação gerencial completa antes de migrar de vez para o novo sistema | ✓ Good |
 | Vendedor edita os próprios clientes; apagar fica restrito ao supervisor | Confirmado explicitamente pelo usuário, resolve a dúvida em aberto sobre permissões de vendedor | ✓ Good |
-| Migração de dados do CRM atual passa a ser recorrente via tela de importação (revisão da decisão de v1.0) | O time continua recebendo listas de clientes/leads em planilha (não é só uma migração única); precisa virar funcionalidade permanente | — Pending |
-| Importação em massa restrita ao Supervisor | Decisão explícita do dono do projeto — Vendedor não tem acesso a essa função | — Pending |
-| Cliente importado sempre entra em "Aguardando contato" | Simplicidade: planilha não precisa de coluna de etapa, todo cliente novo começa do zero no funil | — Pending |
-| Exportação segue a mesma regra de visibilidade (RLS) do funil | Reaproveita a autorização já existente, sem lógica de permissão nova | — Pending |
+| Migração de dados do CRM atual passa a ser recorrente via tela de importação (revisão da decisão de v1.0) | O time continua recebendo listas de clientes/leads em planilha (não é só uma migração única); precisa virar funcionalidade permanente | ✓ Good |
+| Importação em massa restrita ao Supervisor | Decisão explícita do dono do projeto — Vendedor não tem acesso a essa função | ✓ Good |
+| Cliente importado sempre entra em "Aguardando contato" | Simplicidade: planilha não precisa de coluna de etapa, todo cliente novo começa do zero no funil | ✓ Good |
+| Exportação segue a mesma regra de visibilidade (RLS) do funil | Reaproveita a autorização já existente, sem lógica de permissão nova | ✓ Good |
+| Revisão antes de gravar: planilha é mapeada e cada linha classificada (OK/erro/duplicado) antes de qualquer escrita no banco | Dá ao supervisor uma chance de corrigir a planilha ou decidir pular linhas problemáticas antes do lote virar clientes de verdade | ✓ Good |
+| Duplicado é revalidado de novo no momento de confirmar (não confia só na checagem da revisão) | Cobre o caso raro de outro cadastro parecido ter entrado no intervalo entre revisão e confirmação | ✓ Good |
+| Linha pulada (erro ou duplicado não importado) não deixa registro permanente no sistema — só aparece no resumo daquela operação | Evita uma tabela nova só pra isso; a planilha original já é o registro, com o supervisor | ✓ Good |
+| Gravação em lote via inserção set-based (`INSERT ... ON CONFLICT DO NOTHING`), não um loop linha a linha | Necessário pelo limite de ~10s de execução do Vercel Hobby; garante que uma linha ruim nunca trava o lote inteiro | ✓ Good |
+| RPC de importação segue o padrão de `mover_card_funil`: não-security-definer, guard explícito de `is_supervisor()` | Mantém a regra "toda autorização passa pelo RLS" (`CLAUDE.md`), sem lógica de permissão paralela dentro da função | ✓ Good |
 
 ## Evolution
 
@@ -110,4 +121,4 @@ Este documento evolui nas transições de fase e nos marcos do projeto.
 5. Atualizar Context com o estado atual (usuários, feedback, métricas)
 
 ---
-*Last updated: 2026-07-22 after starting milestone v1.1*
+*Last updated: 2026-07-25 after v1.1 milestone*
