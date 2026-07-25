@@ -5,15 +5,15 @@ milestone_name: Importação e Exportação de Clientes
 current_phase: 7
 current_phase_name: Importação — Confirmação e Gravação
 status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-07-25T02:10:49.782Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-07-25T02:21:02.828Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 7 Plan 1 (importar_clientes_lote RPC) executed
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 29
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-22)
 ## Current Position
 
 Phase: 7 (Importação — Confirmação e Gravação) — EXECUTING
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: Ready to execute Plan 2 (confirmarLoteImportacao Server Action)
 Last activity: 2026-07-25 — Phase 7 Plan 1 (importar_clientes_lote RPC) executed
 
@@ -79,6 +79,7 @@ Progress: [░░░░░░░░░░] 0% (0/3 fases do v1.1)
 | Phase 06 P01 | 25min | 3 tasks | 7 files |
 | Phase 06 P03 | 35min | 2 tasks | 12 files |
 | Phase 07 P01 | 19min | 3 tasks | 4 files |
+| Phase 07 P02 | 25min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -151,6 +152,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 06-03]: importar-guard.spec.ts usa timeout de 20s no login (cold-start de signInWithPassword + primeiro compile do Next dev passam do default de 5s do Playwright); ambos os cenarios (Vendedor redirecionado, Supervisor ve o wizard) foram provados individualmente devido ao rate-limit conhecido do Supabase Auth no projeto de teste ao vivo
 - [Phase ?]: [Phase 07-01]: importar_clientes_lote's RETURNS TABLE(razao_social,...) shadowed razao_social as a PL/pgSQL OUT variable, making ON CONFLICT (razao_social) ambiguous (SQLSTATE 42702) - fixed with the #variable_conflict use_column pragma (migration 0005)
 - [Phase ?]: [Phase 07-01]: chaining the clientes and cliente_produtos inserts as two data-modifying CTEs in one WITH statement broke cliente_produtos' parent-EXISTS RLS check (same-command-snapshot visibility gap) - fixed by splitting into two sequential set-based statements, ids passed via plpgsql arrays (migration 0006)
+- [Phase ?]: confirmarLoteImportacao re-runs D-02 dedup only over 'ok' candidate rows; explicit supervisor 'importar' overrides on duplicado rows are never re-excluded
 
 ### Pending Todos
 
@@ -186,7 +188,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T02:10:49.773Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-07-25T02:21:02.819Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file:
 None

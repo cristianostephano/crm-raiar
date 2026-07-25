@@ -238,7 +238,7 @@ Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em 
   3. Todo cliente importado aparece no funil já na etapa "Aguardando contato".
   4. Ao final, o Supervisor vê um resumo de quantos clientes foram importados e quantas linhas foram ignoradas (com o motivo).
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 **Wave 1**
 
@@ -246,7 +246,7 @@ Continuação da numeração do v1.0 (que terminou na Fase 4). Ordem baseada em 
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 07-02-PLAN.md — Helper puro de contabilidade `confirmar.ts` (quais linhas gravar/pular e por quê, D-02) com teste unitário + Server Action `confirmarLoteImportacao` (portão Supervisor, revalidação de duplicado, chama a RPC, retorna `{ importados, puladas }`, D-03) (IMP-01, IMP-06)
+- [x] 07-02-PLAN.md — Helper puro de contabilidade `confirmar.ts` (quais linhas gravar/pular e por quê, D-02) com teste unitário + Server Action `confirmarLoteImportacao` (portão Supervisor, revalidação de duplicado, chama a RPC, retorna `{ importados, puladas }`, D-03) (IMP-01, IMP-06)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -267,4 +267,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. Dashboard Gerencial | 5/5 | Complete   | 2026-07-19 |
 | 5. Exportação de Clientes | 2/2 | Complete   | 2026-07-22 |
 | 6. Importação — Upload, Mapeamento e Revisão | 4/4 | Complete   | 2026-07-24 |
-| 7. Importação — Confirmação e Gravação | 1/3 | In Progress|  |
+| 7. Importação — Confirmação e Gravação | 2/3 | In Progress|  |
