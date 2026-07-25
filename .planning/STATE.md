@@ -5,8 +5,8 @@ milestone_name: Gestão de Equipe, Análises de Funil e Filtros
 current_phase: 8
 current_phase_name: not started; roadmap definido
 status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-07-25T16:33:13.872Z"
+stopped_at: Phase 8 UI-SPEC approved
+last_updated: "2026-07-25T17:34:22.033Z"
 last_activity: 2026-07-25
 last_activity_desc: Roadmap v1.2 criado, 14/14 requisitos mapeados
 progress:
@@ -195,10 +195,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T16:33:13.825Z
-Stopped at: Phase 8 context gathered
+Last session: 2026-07-25T17:34:22.010Z
+Stopped at: Phase 8 UI-SPEC approved
 Resume file:
-.planning/phases/08-rolagem-por-coluna-no-kanban/08-CONTEXT.md
+.planning/phases/08-rolagem-por-coluna-no-kanban/08-UI-SPEC.md
 
 ## Operator Next Steps
 
