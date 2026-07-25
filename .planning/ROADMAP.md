@@ -56,7 +56,8 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
   2. Todas as colunas têm a mesma altura, estejam cheias ou vazias.
   3. O cabeçalho de cada coluna (título + contagem de clientes) continua visível enquanto a lista de cards rola.
   4. Arrastar e soltar cards entre colunas continua funcionando normalmente com a rolagem ativa.
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 08-01-PLAN.md — Altura fixa + scroll interno por coluna, header fixo, fade condicional e measuring do dnd-kit (KAN-01, KAN-02)
 **UI hint**: yes
 
 ### Phase 9: Filtros de Estado e Cidade Estruturados
