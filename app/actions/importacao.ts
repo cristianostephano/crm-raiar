@@ -1,5 +1,7 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
+
 import {
   annotarLinha,
   type AnnotarLinhaLookups,
@@ -7,6 +9,11 @@ import {
   type ResolvedRow,
   type VendedorLookup,
 } from "@/lib/importacao/annotarLinha"
+import {
+  planConfirmacao,
+  reconcileImportados,
+  type PuladaGroup,
+} from "@/lib/importacao/confirmar"
 import { findDuplicates } from "@/lib/importacao/dedupe"
 import { createClient } from "@/lib/supabase/server"
 import { getCategoriasAtivas, getProdutosAtivos } from "@/lib/supabase/queries/clientes"
@@ -145,4 +152,128 @@ export async function validarLoteImportacao(
   })
 
   return { data: { linhas: result } }
+}
+
+export type ConfirmarLoteErrorCode = "unauthenticated" | "forbidden" | "generic"
+
+export type ConfirmarLoteResult =
+  | {
+      data: {
+        importados: { razaoSocial: string }[]
+        puladas: PuladaGroup[]
+      }
+      error?: undefined
+    }
+  | { data?: undefined; error: { code: ConfirmarLoteErrorCode } }
+
+/**
+ * Write Server Action that confirms the reviewed import batch (Fase 7,
+ * D-01/D-02/D-03, IMP-01/IMP-06). Supervisor-gated exactly like
+ * validarLoteImportacao (app-layer check is UX-only; the RPC's own
+ * `is_supervisor()` raise, 07-01, is the real backstop), re-runs the D-02
+ * duplicate revalidation via `planConfirmacao` (reusing findDuplicates —
+ * no new dedupe logic), calls `importar_clientes_lote` exactly once with the
+ * surviving rows, and reconciles the result into `{ importados, puladas }`
+ * for the summary screen (D-01).
+ *
+ * `linhas` is the same ValidatedRow[] shape validarLoteImportacao returns
+ * (untrusted client-sent DATA, never an authorization input — same posture
+ * as `linhas` in validarLoteImportacao above); `decisions` is the per-row
+ * Importar/Pular choice the Supervisor made on the review table (06-04/
+ * 07-03), keyed by row index, default "pular" when absent for a duplicado
+ * row.
+ *
+ * D-03: skipped rows are never written anywhere — `puladas` only exists in
+ * this response's return value.
+ */
+export async function confirmarLoteImportacao(
+  linhas: ValidatedRow[],
+  decisions: Record<number, "importar" | "pular">
+): Promise<ConfirmarLoteResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  const isSupervisor = callerProfile?.role === "supervisor"
+
+  if (!isSupervisor) {
+    return { error: { code: "forbidden" } }
+  }
+
+  // D-02 revalidation read — the exact narrow, RLS-scoped select
+  // validarLoteImportacao uses. For a Supervisor, clientes' RLS SELECT
+  // policy returns the whole base, so NEVER add a manual responsavel
+  // filter here.
+  const existentesResult = await supabase.from("clientes").select("razao_social")
+
+  if (existentesResult.error) {
+    return { error: { code: "generic" } }
+  }
+
+  const existentesRazaoSocial = (existentesResult.data ?? []).map(
+    (row) => row.razao_social as string
+  )
+
+  const { rowsToInsert, puladas } = planConfirmacao(
+    linhas,
+    decisions,
+    existentesRazaoSocial
+  )
+
+  if (rowsToInsert.length === 0) {
+    return { data: { importados: [], puladas } }
+  }
+
+  const { data: returnedRows, error: rpcError } = await supabase.rpc(
+    "importar_clientes_lote",
+    { p_clientes: rowsToInsert }
+  )
+
+  if (rpcError) {
+    return { error: { code: "generic" } }
+  }
+
+  const returnedRazoes = (returnedRows ?? []).map(
+    (row: { razao_social: string }) => row.razao_social
+  )
+
+  const { importados, puladasExtra } = reconcileImportados(
+    rowsToInsert,
+    returnedRazoes
+  )
+
+  const puladasFinal = mergePuladas(puladas, puladasExtra)
+
+  revalidatePath("/clientes")
+
+  return { data: { importados, puladas: puladasFinal } }
+}
+
+/** Merges two PuladaGroup breakdowns, summing quantidade for groups that
+ * share the same motivo string (planConfirmacao's D-02 group and
+ * reconcileImportados' RPC-race group both use the same reason string,
+ * so a batch that hits both must report a single combined count). */
+function mergePuladas(a: PuladaGroup[], b: PuladaGroup[]): PuladaGroup[] {
+  const merged = new Map<string, number>()
+
+  for (const { motivo, quantidade } of [...a, ...b]) {
+    merged.set(motivo, (merged.get(motivo) ?? 0) + quantidade)
+  }
+
+  return Array.from(merged.entries()).map(([motivo, quantidade]) => ({
+    motivo,
+    quantidade,
+  }))
 }
