@@ -2,9 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Gestão de Equipe, Análises de Funil e Filtros
+current_phase: 8
+current_phase_name: not started; roadmap definido
 status: planning
-last_updated: "2026-07-25T16:00:00.000Z"
+stopped_at: Phase 8 context gathered
+last_updated: "2026-07-25T16:33:13.872Z"
 last_activity: 2026-07-25
+last_activity_desc: Roadmap v1.2 criado, 14/14 requisitos mapeados
 progress:
   total_phases: 5
   completed_phases: 0
@@ -191,10 +195,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T16:00:00.000Z
-Stopped at: Roadmap v1.2 criado (Phases 8-12); REQUIREMENTS traceability atualizada
+Last session: 2026-07-25T16:33:13.825Z
+Stopped at: Phase 8 context gathered
 Resume file:
-None
+.planning/phases/08-rolagem-por-coluna-no-kanban/08-CONTEXT.md
 
 ## Operator Next Steps
 
