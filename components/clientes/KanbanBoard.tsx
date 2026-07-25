@@ -3,6 +3,7 @@
 import {
   DndContext,
   KeyboardSensor,
+  MeasuringStrategy,
   PointerSensor,
   TouchSensor,
   closestCenter,
@@ -35,6 +36,7 @@ import {
   FILTROS_VAZIOS,
   type ClienteFiltros,
 } from "@/components/clientes/FiltersPopover"
+import { ScrollColumnShell } from "@/components/clientes/ScrollColumnShell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -205,16 +207,18 @@ function StaticClienteCard({
  * to that column. */
 function DroppableColumn({
   etapaKey,
+  cardCount,
   children,
 }: {
   etapaKey: EtapaKey
+  cardCount: number
   children: ReactNode
 }) {
   const { setNodeRef } = useDroppable({ id: etapaKey })
   return (
-    <div ref={setNodeRef} className="flex min-h-10 flex-col gap-2">
+    <ScrollColumnShell cardCount={cardCount} droppableRef={setNodeRef}>
       {children}
-    </div>
+    </ScrollColumnShell>
   )
 }
 
@@ -653,7 +657,7 @@ export function KanbanBoard({
                   </Badge>
                 </div>
 
-                <div className="flex min-h-10 flex-col gap-2">
+                <ScrollColumnShell cardCount={clientes.length}>
                   {clientes.length === 0 ? (
                     <p className="px-1 text-sm text-muted-foreground">
                       Nenhum cliente nesta etapa
@@ -668,7 +672,7 @@ export function KanbanBoard({
                       />
                     ))
                   )}
-                </div>
+                </ScrollColumnShell>
               </div>
             )
           })}
@@ -678,6 +682,7 @@ export function KanbanBoard({
           id="clientes-kanban"
           sensors={sensors}
           collisionDetection={closestCenter}
+          measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
           onDragEnd={handleDragEnd}
         >
           <div className="flex flex-1 gap-4 overflow-x-auto pb-2">
@@ -702,7 +707,10 @@ export function KanbanBoard({
                     items={clientes.map((c) => c.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <DroppableColumn etapaKey={etapa.key}>
+                    <DroppableColumn
+                      etapaKey={etapa.key}
+                      cardCount={clientes.length}
+                    >
                       {clientes.length === 0 ? (
                         <p className="px-1 text-sm text-muted-foreground">
                           Nenhum cliente nesta etapa
