@@ -21,10 +21,10 @@ current_phase_name: Importação — Confirmação e Gravação
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-22)
+See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 7 — Importação — Confirmação e Gravação
+**Current focus:** Planejar o próximo marco (`/gsd-new-milestone`)
 
 ## Current Position
 
