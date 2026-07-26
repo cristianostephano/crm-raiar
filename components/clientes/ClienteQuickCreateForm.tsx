@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { Uf } from "@/lib/clientes/ufs"
 import {
   createClienteSchema,
   type CreateClienteInput,
@@ -107,7 +108,10 @@ function ClienteQuickCreateFields({
     numero: "",
     complemento: "",
     cidade: "",
-    estado: "",
+    // "" is overwritten as soon as the user picks a UF via the Select
+    // landing in 09-05; cast needed only because estado: z.enum(UFS)
+    // narrows the type to Uf (09-03/LOC-01) — no valid empty-string UF.
+    estado: "" as Uf,
     // Vendedor: pre-filled with own uid, rendered disabled below (CLI-04).
     // Supervisor: "" — no default responsável pre-selected, mirroring
     // InviteUserForm's D-05 controlled-Select-from-mount pattern (CLI-03).

@@ -63,6 +63,7 @@ import { HistoricoTimeline } from "@/components/clientes/HistoricoTimeline"
 import { ETAPA_FINAL } from "@/lib/funil/etapas"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
+import type { Uf } from "@/lib/clientes/ufs"
 import {
   updateClienteSchema,
   type UpdateClienteInput,
@@ -119,7 +120,13 @@ function toFormValues(cliente: ClienteDetalhe): UpdateClienteInput {
     numero: cliente.numero,
     complemento: cliente.complemento ?? "",
     cidade: cliente.cidade,
-    estado: cliente.estado,
+    // 09-03/LOC-04/D-01/UI-SPEC §5: a legacy record's stored estado can be
+    // outside the 27-UF enum after the simple case/whitespace backfill
+    // (chk_estado_valido stays NOT VALID for those rows) — cast, don't
+    // reject; the Select just falls back to rendering the raw value
+    // silently until the user picks a valid UF and saves (no blocking UI).
+    // The full Select-based EstadoCidadeFields wiring lands in 09-05.
+    estado: cliente.estado as Uf,
     responsavel: cliente.responsavel,
     categoriaId: cliente.categoriaId ?? "",
     contato: cliente.contato ?? "",
@@ -199,7 +206,10 @@ export function ClienteDetailSheet({
       numero: "",
       complemento: "",
       cidade: "",
-      estado: "",
+      // "" is overwritten by form.reset(toFormValues(...)) once the cliente
+      // loads; cast needed only because estado: z.enum(UFS) narrows the
+      // type to Uf (09-03/LOC-01) — no valid empty-string UF exists.
+      estado: "" as Uf,
       responsavel: "",
       categoriaId: "",
       contato: "",

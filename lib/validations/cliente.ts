@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { UFS } from "@/lib/clientes/ufs"
+
 /**
  * Shared zod schema for cliente creation, used by both
  * ClienteQuickCreateForm.tsx (client-side validation via zodResolver) and
@@ -28,8 +30,8 @@ export const createClienteSchema = z
     rua: z.string().min(1, "Informe a rua."),
     numero: z.string().min(1, "Informe o número."),
     complemento: z.string().optional(),
-    cidade: z.string().min(1, "Informe a cidade."),
-    estado: z.string().min(1, "Informe o estado."),
+    cidade: z.string().min(1, "Selecione uma cidade válida."),
+    estado: z.enum(UFS, { message: "Selecione um estado válido." }),
     // "" is the controlled empty state (Supervisor: no default choice yet);
     // the superRefine below rejects it before submit can succeed.
     responsavel: z.string(),
@@ -80,8 +82,8 @@ export const updateClienteSchema = z
     rua: z.string().min(1, "Informe a rua."),
     numero: z.string().min(1, "Informe o número."),
     complemento: z.string().optional(),
-    cidade: z.string().min(1, "Informe a cidade."),
-    estado: z.string().min(1, "Informe o estado."),
+    cidade: z.string().min(1, "Selecione uma cidade válida."),
+    estado: z.enum(UFS, { message: "Selecione um estado válido." }),
     responsavel: z.string(),
     categoriaId: z.string().optional(),
     contato: z.string().optional(),
