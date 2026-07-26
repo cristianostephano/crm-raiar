@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 
 import { createCliente } from "@/app/actions/clientes"
 import { Button } from "@/components/ui/button"
+import { EstadoCidadeFields } from "@/components/clientes/EstadoCidadeFields"
 import {
   Dialog,
   DialogContent,
@@ -229,47 +230,11 @@ function ClienteQuickCreateFields({
           )}
         />
 
-        <div className="grid grid-cols-3 gap-3">
-          <FormField
-            control={form.control}
-            name="complemento"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Complemento</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="cidade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cidade</FormLabel>
-                <FormControl>
-                  <Input autoComplete="address-level2" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="estado"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <FormControl>
-                  <Input autoComplete="address-level1" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <EstadoCidadeFields
+          control={form.control}
+          watch={form.watch}
+          setValue={form.setValue}
+        />
 
         <FormField
           control={form.control}
