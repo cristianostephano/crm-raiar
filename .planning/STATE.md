@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Gestão de Equipe, Análises de Funil e Filtros
-current_phase: 8
-current_phase_name: not started; roadmap definido
-status: planning
-stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-07-25T17:34:22.033Z"
+current_phase: 08
+current_phase_name: rolagem-por-coluna-no-kanban
+status: verifying
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-07-26T01:20:53.260Z"
 last_activity: 2026-07-25
-last_activity_desc: Roadmap v1.2 criado, 14/14 requisitos mapeados
+last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 20
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Planejar a Fase 8 — Rolagem por Coluna no Kanban (`/gsd-plan-phase 8`)
+**Current focus:** Phase 08 — rolagem-por-coluna-no-kanban
 
 ## Current Position
 
-Phase: 8 — Rolagem por Coluna no Kanban (not started; roadmap definido)
-Plan: —
-Status: Roadmap do marco v1.2 criado (5 fases, 8-12); aguardando planejamento da primeira fase
-Last activity: 2026-07-25 — Roadmap v1.2 criado, 14/14 requisitos mapeados
+Phase: 08 (rolagem-por-coluna-no-kanban) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-07-25 — Phase 08 execution started
 
 ## Performance Metrics
 
@@ -79,6 +79,7 @@ Last activity: 2026-07-25 — Roadmap v1.2 criado, 14/14 requisitos mapeados
 | Phase 07 P01 | 19min | 3 tasks | 4 files |
 | Phase 07 P02 | 25min | 2 tasks | 3 files |
 | Phase 07 P03 | 10min | 3 tasks | 4 files |
+| Phase 08 P01 | 30min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -158,6 +159,8 @@ Recent decisions affecting current work:
 - [Phase ?]: confirmarLoteImportacao re-runs D-02 dedup only over 'ok' candidate rows; explicit supervisor 'importar' overrides on duplicado rows are never re-excluded
 - [Phase 07-03]: ImportSummary derives puladasCount internally from puladas.reduce(...) rather than accepting a separate prop, keeping its props limited to the { importadosCount, puladas } shape 07-02's confirmarLoteImportacao result already provides
 - [Phase 07-03]: Kept decisions/onDecisionChange typed inline in both ImportPreviewTable and ImportWizard rather than exporting a shared type, avoiding a circular import between the two components
+- [Phase 08]: ScrollColumnShell (Phase 08): fixed-height column shell keeps droppable boundary (setNodeRef) separate from the internal overflow-y-auto scroll div, with MeasuringStrategy.Always on DndContext, per dnd-kit Pitfall 12 for correct auto-scroll during drag
+- [Phase 08]: Live physical drag-and-drop verification for KAN-01/KAN-02 was code-reviewed (setNodeRef placement + measuring Always) rather than mouse-tested, due to a browser-pane rendering limitation in the verification session — flagged as a residual gap for a future normal-use spot-check
 
 ### Pending Todos
 
@@ -195,10 +198,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T17:34:22.010Z
-Stopped at: Phase 8 UI-SPEC approved
+Last session: 2026-07-26T01:20:53.253Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file:
-.planning/phases/08-rolagem-por-coluna-no-kanban/08-UI-SPEC.md
+None
 
 ## Operator Next Steps
 

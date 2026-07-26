@@ -39,7 +39,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
 
 ### 🚧 v1.2 Gestão de Equipe, Análises de Funil e Filtros (Phases 8-12) — IN PROGRESS
 
-- [ ] **Phase 8: Rolagem por Coluna no Kanban** - Cada coluna do kanban ganha altura fixa e rolagem própria, evitando a página infinita quando há muitos clientes.
+- [x] **Phase 8: Rolagem por Coluna no Kanban** - Cada coluna do kanban ganha altura fixa e rolagem própria, evitando a página infinita quando há muitos clientes. (completed 2026-07-26)
 - [ ] **Phase 9: Filtros de Estado e Cidade Estruturados** - Estado (27 siglas) e Cidade (lista IBGE dependente do Estado) viram listas estruturadas em cadastro, edição, filtro e importação.
 - [ ] **Phase 10: Desativação de Membro da Equipe** - Supervisor desativa um membro transferindo antes os clientes em andamento, com trava contra desativar o último Supervisor.
 - [ ] **Phase 11: Funil de Conversão Detalhado** - Dashboard ganha o funil de conversão por etapa (negócios, avanço%, perdidos, tempo médio) e a média de dias até ganhar/perder.
@@ -48,62 +48,79 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
 ## Phase Details
 
 ### Phase 8: Rolagem por Coluna no Kanban
+
 **Goal**: Deixar o kanban usável com muitos clientes — cada coluna rola por dentro em vez de esticar a página inteira.
 **Depends on**: Nada (independente; pode rodar cedo e em paralelo com a Fase 9)
 **Requirements**: KAN-01, KAN-02
 **Success Criteria** (what must be TRUE):
+
   1. Cada coluna do kanban tem altura fixa e rola por dentro quando tem muitos clientes, sem esticar a página inteira.
   2. Todas as colunas têm a mesma altura, estejam cheias ou vazias.
   3. O cabeçalho de cada coluna (título + contagem de clientes) continua visível enquanto a lista de cards rola.
   4. Arrastar e soltar cards entre colunas continua funcionando normalmente com a rolagem ativa.
-**Plans**: 1 plan
-- [ ] 08-01-PLAN.md — Altura fixa + scroll interno por coluna, header fixo, fade condicional e measuring do dnd-kit (KAN-01, KAN-02)
+
+**Plans**: 1/1 plans complete
+
+- [x] 08-01-PLAN.md — Altura fixa + scroll interno por coluna, header fixo, fade condicional e measuring do dnd-kit (KAN-01, KAN-02)
+
 **UI hint**: yes
 
 ### Phase 9: Filtros de Estado e Cidade Estruturados
+
 **Goal**: Tornar Estado e Cidade listas estruturadas e confiáveis em todo lugar que aparecem (cadastro, edição, filtro e importação).
 **Depends on**: Nada (independente; pode rodar em paralelo com a Fase 8)
 **Requirements**: LOC-01, LOC-02, LOC-03, LOC-04
 **Success Criteria** (what must be TRUE):
+
   1. Estado é escolhido de uma lista fixa das 27 siglas de UF (SP, RJ...) em cadastro, edição, filtro e importação — não é mais texto livre.
   2. Cidade é escolhida de uma lista oficial de municípios (IBGE, previamente carregada), filtrada pelo Estado selecionado; trocar de Estado troca a lista de cidades disponíveis.
   3. No filtro de clientes, o campo Estado aparece antes do campo Cidade.
   4. Clientes cadastrados antes, com Estado escrito por extenso ou de forma inconsistente, aparecem normalizados para a sigla correta, sem perder dados nem travar o acesso ao registro.
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 10: Desativação de Membro da Equipe
+
 **Goal**: Permitir que o Supervisor remova (desative) um membro da equipe com segurança, transferindo antes os clientes em andamento e sem nunca ficar sem Supervisor.
 **Depends on**: Nada funcionalmente — mas precede a Fase 12 (a coluna `profiles.ativo` que esta fase cria é o que sustenta a lista de "vendedores ativos" do comparativo)
 **Requirements**: EQP-01, EQP-02, EQP-03, EQP-04
 **Success Criteria** (what must be TRUE):
+
   1. O Supervisor desativa um vendedor escolhendo, antes de confirmar, um substituto que herda os clientes em andamento desse vendedor.
   2. O sistema impede desativar o último Supervisor ativo, explicando o motivo em vez de deixar o sistema sem gestor.
   3. Um membro desativado não consegue mais entrar no sistema, mas o nome dele e o histórico antigo continuam visíveis e intactos.
   4. Clientes já ganhos ou perdidos do vendedor desativado continuam atribuídos a ele (contam nos números históricos); só os clientes em andamento são transferidos ao substituto.
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 11: Funil de Conversão Detalhado
+
 **Goal**: Dar ao dashboard visibilidade de onde o funil trava — métricas de conversão e de tempo por etapa — respeitando a mesma regra de visão por papel.
 **Depends on**: Nada funcionalmente — estabelece a lógica de reconstrução de duração (a partir do `historico`) que a Fase 12 reutiliza para o ciclo médio
 **Requirements**: FNL-01, FNL-02, FNL-03
 **Success Criteria** (what must be TRUE):
+
   1. O dashboard mostra, por etapa do funil: quantidade de clientes, % que avançou para a próxima etapa, quantos foram perdidos ali (contagem e taxa) e tempo médio parado na etapa.
   2. O tempo médio por etapa inclui os clientes que ainda estão parados nela agora (usando o momento atual como saída provisória) — de propósito, para revelar cards travados, não como erro.
   3. O dashboard mostra a média de dias entre entrada no funil e "ganho", separada da média de dias até "perdido".
   4. Vendedor vê o funil detalhado só com os próprios clientes; Supervisor vê o de todo o time — mesma regra de visibilidade do dashboard atual.
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 12: Comparativo por Vendedor
+
 **Goal**: Dar ao Supervisor uma tabela lado a lado comparando o desempenho dos vendedores ativos.
 **Depends on**: Fase 10 (coluna `profiles.ativo` que define quem é vendedor ativo) e Fase 11 (lógica de reconstrução de duração para o ciclo médio em dias)
 **Requirements**: VEND-01
 **Success Criteria** (what must be TRUE):
+
   1. O Supervisor vê uma tabela comparando os vendedores ativos: taxa de conversão, negócios iniciados, negócios ganhos e ciclo médio em dias.
   2. A tabela é visível só para o Supervisor; o Vendedor não a acessa.
   3. Vendedores desativados não aparecem na lista de comparação de ativos, mas seus números históricos continuam contando onde já contavam (clientes ganhos/perdidos atribuídos a eles).
+
 **Plans**: TBD
 **UI hint**: yes
 
@@ -122,7 +139,7 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`.planni
 | 5. Exportação de Clientes | v1.1 | 2/2 | Complete | 2026-07-22 |
 | 6. Importação — Upload, Mapeamento e Revisão | v1.1 | 4/4 | Complete | 2026-07-24 |
 | 7. Importação — Confirmação e Gravação | v1.1 | 3/3 | Complete | 2026-07-25 |
-| 8. Rolagem por Coluna no Kanban | v1.2 | 0/? | Not started | - |
+| 8. Rolagem por Coluna no Kanban | v1.2 | 1/1 | Complete   | 2026-07-26 |
 | 9. Filtros de Estado e Cidade Estruturados | v1.2 | 0/? | Not started | - |
 | 10. Desativação de Membro da Equipe | v1.2 | 0/? | Not started | - |
 | 11. Funil de Conversão Detalhado | v1.2 | 0/? | Not started | - |

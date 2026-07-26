@@ -26,8 +26,8 @@ Requisitos do marco v1.2 (Gestão de Equipe, Análises de Funil e Filtros). Cada
 
 ### Kanban (KAN)
 
-- [ ] **KAN-01**: Cada coluna do funil kanban tem altura fixa e rolagem própria, independente da quantidade de clientes
-- [ ] **KAN-02**: Todas as colunas do kanban têm a mesma altura, estejam cheias ou vazias
+- [x] **KAN-01**: Cada coluna do funil kanban tem altura fixa e rolagem própria, independente da quantidade de clientes
+- [x] **KAN-02**: Todas as colunas do kanban têm a mesma altura, estejam cheias ou vazias
 
 ### Localização (LOC)
 
@@ -62,8 +62,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| KAN-01 | Phase 8 | Pending |
-| KAN-02 | Phase 8 | Pending |
+| KAN-01 | Phase 8 | Complete |
+| KAN-02 | Phase 8 | Complete |
 | LOC-01 | Phase 9 | Pending |
 | LOC-02 | Phase 9 | Pending |
 | LOC-03 | Phase 9 | Pending |
@@ -78,11 +78,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VEND-01 | Phase 12 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 14 total
 - Mapped to phases: 14 ✓
 - Unmapped: 0
 
 **Phase map:**
+
 - Phase 8 — Rolagem por Coluna no Kanban: KAN-01, KAN-02
 - Phase 9 — Filtros de Estado e Cidade Estruturados: LOC-01, LOC-02, LOC-03, LOC-04
 - Phase 10 — Desativação de Membro da Equipe: EQP-01, EQP-02, EQP-03, EQP-04
