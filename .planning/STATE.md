@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Gestão de Equipe, Análises de Funil e Filtros
-current_phase: 08
-current_phase_name: rolagem-por-coluna-no-kanban
-status: verifying
-stopped_at: Completed 09-02-PLAN.md
+current_phase: 09
+current_phase_name: filtros-de-estado-e-cidade-estruturados
+status: executing
+stopped_at: Completed 09-02-PLAN.md; 09-01 approved, awaiting db push completion
 last_updated: "2026-07-26T21:36:01.279Z"
-last_activity: 2026-07-25
-last_activity_desc: Phase 08 execution started
+last_activity: 2026-07-26
+last_activity_desc: Phase 09 execution — 09-02 complete, 09-01 push approved
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 7
   completed_plans: 2
-  percent: 20
+  percent: 29
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 08 — rolagem-por-coluna-no-kanban
+**Current focus:** Phase 09 — filtros-de-estado-e-cidade-estruturados
 
 ## Current Position
 
-Phase: 08 (rolagem-por-coluna-no-kanban) — EXECUTING
-Plan: 1 of 1
-Status: Phase complete — ready for verification
-Last activity: 2026-07-25 — Phase 08 execution started
+Phase: 09 (filtros-de-estado-e-cidade-estruturados) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 09
+Last activity: 2026-07-26 — Phase 09 execution started
 
 ## Performance Metrics
 
