@@ -1,10 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
+import { UFS } from "@/lib/clientes/ufs"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox"
 import { Label } from "@/components/ui/label"
 import {
   Popover,
@@ -28,10 +37,14 @@ import {
  * categoriaOptions/produtoOptions are the full active lookup-table catalogs
  * (getCategoriasAtivas/getProdutosAtivos — bugfix: previously derived from
  * the already-loaded card set, which meant a categoria/produto not yet
- * assigned to any visible cliente could never be filtered by). estado/
- * vendedor options are still derived from the already-loaded RLS-scoped card
- * set by the caller (KanbanBoard) — there's no separate lookup table for
- * either. Filtering itself always runs in-memory over the loaded card set
+ * assigned to any visible cliente could never be filtered by). vendedor
+ * options are still derived from the already-loaded RLS-scoped card set by
+ * the caller (KanbanBoard) — there's no separate lookup table for it.
+ * Estado is fed by the fixed `UFS` constant (09-04/LOC-01 — no longer
+ * derived from loaded clientes, so a UF with zero clientes doesn't vanish
+ * from the filter), and Cidade is a searchable Combobox over the
+ * `cidades_por_estado` RPC, disabled until an Estado is chosen (D-02).
+ * Filtering itself always runs in-memory over the loaded card set
  * (Pitfall 7): applying/clearing filters never triggers a new getClientes
  * call.
  */
@@ -83,7 +96,7 @@ export function clienteAtendeFiltros(
   }
 
   const cidadeFiltro = filtros.cidade.trim().toLowerCase()
-  if (cidadeFiltro && !cliente.cidade.toLowerCase().includes(cidadeFiltro)) {
+  if (cidadeFiltro && cliente.cidade.toLowerCase() !== cidadeFiltro) {
     return false
   }
 
@@ -106,7 +119,6 @@ export function FiltersPopover({
   onClear,
   categoriaOptions,
   produtoOptions,
-  estadoOptions,
   vendedorOptions,
   isSupervisor,
 }: {
@@ -115,7 +127,6 @@ export function FiltersPopover({
   onClear: () => void
   categoriaOptions: { id: string; nome: string }[]
   produtoOptions: { id: string; nome: string }[]
-  estadoOptions: string[]
   vendedorOptions: { id: string; nome: string }[]
   isSupervisor: boolean
 }) {
@@ -124,6 +135,32 @@ export function FiltersPopover({
   // board (per UI-SPEC: both footer buttons live "inside the popover only").
   const [draft, setDraft] = useState<ClienteFiltros>(filtros)
   const ativos = contarFiltrosAtivos(filtros)
+
+  // Cidade options are RPC-driven and scoped to the currently-drafted Estado
+  // (D-02 cascade) — unlike categoria/produto/estado, there's no static or
+  // pre-loaded list to derive this from.
+  const [cidades, setCidades] = useState<string[]>([])
+  // Tracks whether the Cidade Combobox popup is open, purely to switch the
+  // input's placeholder between "Todas as cidades" (closed, sentinel-like
+  // empty state) and "Buscar cidade..." (open, actively searching) per
+  // UI-SPEC's Copywriting Contract.
+  const [cidadeComboboxOpen, setCidadeComboboxOpen] = useState(false)
+
+  useEffect(() => {
+    if (!draft.estado) {
+      setCidades([])
+      return
+    }
+    let cancelled = false
+    createClient()
+      .rpc("cidades_por_estado", { p_uf: draft.estado })
+      .then(({ data }: { data: { nome: string }[] | null }) => {
+        if (!cancelled) setCidades((data ?? []).map((row) => row.nome))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [draft.estado])
 
   function handleOpenChange(nextOpen: boolean) {
     // Resync the draft with the currently-applied filters every time the
@@ -253,18 +290,6 @@ export function FiltersPopover({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="filtro-cidade">Cidade</Label>
-            <Input
-              id="filtro-cidade"
-              placeholder="Filtrar por cidade..."
-              value={draft.cidade}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, cidade: event.target.value }))
-              }
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
             <Label htmlFor="filtro-estado">Estado</Label>
             <Select
               value={draft.estado ?? SEM_FILTRO}
@@ -272,6 +297,9 @@ export function FiltersPopover({
                 setDraft((prev) => ({
                   ...prev,
                   estado: value === SEM_FILTRO ? null : String(value),
+                  // Cascade reset (D-02): switching Estado always clears the
+                  // previously-picked Cidade, since it no longer applies.
+                  cidade: "",
                 }))
               }
             >
@@ -280,13 +308,48 @@ export function FiltersPopover({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={SEM_FILTRO}>Todos os estados</SelectItem>
-                {estadoOptions.map((estado) => (
-                  <SelectItem key={estado} value={estado}>
-                    {estado}
+                {UFS.map((uf) => (
+                  <SelectItem key={uf} value={uf}>
+                    {uf}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="filtro-cidade">Cidade</Label>
+            <Combobox
+              items={cidades}
+              disabled={!draft.estado}
+              value={draft.cidade || null}
+              onValueChange={(value) =>
+                setDraft((prev) => ({ ...prev, cidade: (value as string) ?? "" }))
+              }
+              onOpenChange={setCidadeComboboxOpen}
+            >
+              <ComboboxInput
+                id="filtro-cidade"
+                disabled={!draft.estado}
+                placeholder={
+                  !draft.estado
+                    ? "Escolha o Estado primeiro"
+                    : cidadeComboboxOpen
+                      ? "Buscar cidade..."
+                      : "Todas as cidades"
+                }
+              />
+              <ComboboxContent>
+                <ComboboxEmpty>Nenhuma cidade encontrada</ComboboxEmpty>
+                <ComboboxList>
+                  {(cidade: string) => (
+                    <ComboboxItem key={cidade} value={cidade}>
+                      {cidade}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-1">

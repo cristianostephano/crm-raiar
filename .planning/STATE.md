@@ -5,16 +5,16 @@ milestone_name: Gestão de Equipe, Análises de Funil e Filtros
 current_phase: 09
 current_phase_name: filtros-de-estado-e-cidade-estruturados
 status: executing
-stopped_at: "Completed 09-03-PLAN.md (Wave 2 completa) - estado: z.enum(UFS) + EstadoCidadeFields prontos"
-last_updated: "2026-07-26T22:12:07.402Z"
+stopped_at: "Completed 09-03-PLAN.md e 09-04-PLAN.md (Wave 2 completa) - estado z.enum(UFS), EstadoCidadeFields, e FiltersPopover corrigido"
+last_updated: "2026-07-26T22:15:21.053Z"
 last_activity: 2026-07-26
-last_activity_desc: Phase 09 Wave 2 completa (09-03) — estado z.enum(UFS) + EstadoCidadeFields prontos
+last_activity_desc: Phase 09 Wave 2 completa (09-03 + 09-04) — estado z.enum(UFS) + EstadoCidadeFields + FiltersPopover corrigido
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 7
-  completed_plans: 4
-  percent: 57
+  completed_plans: 5
+  percent: 71
 ---
 
 # Project State
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 ## Current Position
 
 Phase: 09 (filtros-de-estado-e-cidade-estruturados) — EXECUTING
-Plan: 4 of 6
-Status: Ready to execute (09-04 next, Wave 3)
-Last activity: 2026-07-26 — 09-03-PLAN.md complete (estado z.enum(UFS) + EstadoCidadeFields)
+Plan: 5 of 6
+Status: Wave 2 complete — Wave 3 (09-05, 09-06) next
+Last activity: 2026-07-26 — 09-03-PLAN.md e 09-04-PLAN.md completos (Wave 2)
 
 ## Performance Metrics
 
@@ -83,6 +83,7 @@ Last activity: 2026-07-26 — 09-03-PLAN.md complete (estado z.enum(UFS) + Estad
 | Phase 09 P02 | 20min | 2 tasks | 5 files |
 | Phase 09 P01 | ~50min (1 human-verify checkpoint pause) | 3 tasks | 4 files |
 | Phase 09 P03 | ~35min | 2 tasks | 6 files |
+| Phase 09 P04 | 25min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,8 @@ Recent decisions affecting current work:
 - [Phase 09-01]: LOC-01/LOC-02/LOC-04 requirements span multiple plans in Phase 9 (09-01 backend only; 09-02 through 09-06 add the frontend consumption) — REQUIREMENTS.md traceability intentionally left as "Pending" rather than "Complete" after this plan, since the user-facing behavior isn't fully delivered until the later frontend plans land
 - [Phase 09-03]: estado usa z.enum(UFS) sem .refine/.superRefine em ambos os schemas — mantem a inferencia do @hookform/resolvers, mesma ressalva ja documentada para responsavel
 - [Phase 09-03]: Rule 3 auto-fix: estado: z.enum(UFS) quebrou ClienteQuickCreateForm.tsx/ClienteDetailSheet.tsx (fora do escopo de 09-03) — cast minimo 'as Uf' em 3 pontos, UI real (Input->EstadoCidadeFields) fica para 09-05
+- [Phase 09-04]: Cidade Combobox no filtro reusa um único ComboboxInput (sem trigger+search separados) trocando o placeholder por estado (disabled/fechado/aberto) para cobrir as 3 strings do Copywriting Contract com um só controle
+- [Phase 09-04]: estadoOptions removido em cadeia (FiltersPopover + ClienteToolbar + KanbanBoard) no mesmo commit para não quebrar o tsc
 
 ### Pending Todos
 
@@ -211,10 +214,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26T22:12:07.358Z
-Stopped at: Completed 09-03-PLAN.md (Wave 2 completa) - estado: z.enum(UFS) + EstadoCidadeFields prontos
+Last session: 2026-07-26T22:15:21.007Z
+Stopped at: Wave 2 complete — 09-03-PLAN.md (estado z.enum(UFS) + EstadoCidadeFields) e 09-04-PLAN.md (FiltersPopover corrigido)
 Resume file:
-.planning/phases/09-filtros-de-estado-e-cidade-estruturados/09-04-PLAN.md
+.planning/phases/09-filtros-de-estado-e-cidade-estruturados/09-05-PLAN.md
 
 ## Operator Next Steps
 
