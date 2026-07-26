@@ -5,16 +5,16 @@ milestone_name: Gestão de Equipe, Análises de Funil e Filtros
 current_phase: 09
 current_phase_name: filtros-de-estado-e-cidade-estruturados
 status: executing
-stopped_at: Completed 09-02-PLAN.md; 09-01 approved, awaiting db push completion
-last_updated: "2026-07-26T21:36:01.279Z"
+stopped_at: Completed 09-01-PLAN.md e 09-02-PLAN.md (Wave 1 completa)
+last_updated: "2026-07-26T21:41:21.000Z"
 last_activity: 2026-07-26
-last_activity_desc: Phase 09 execution — 09-02 complete, 09-01 push approved
+last_activity_desc: Phase 09 Wave 1 completa — cidades/cidades_por_estado/chk_estado_valido pushed to production; UFS/normalizarEstado/combobox prontos
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 7
-  completed_plans: 2
-  percent: 29
+  completed_plans: 3
+  percent: 43
 ---
 
 # Project State
@@ -81,6 +81,7 @@ Last activity: 2026-07-26 — Phase 09 execution started
 | Phase 07 P03 | 10min | 3 tasks | 4 files |
 | Phase 08 P01 | 30min | 3 tasks | 3 files |
 | Phase 09 P02 | 20min | 2 tasks | 5 files |
+| Phase 09 P01 | ~50min (1 human-verify checkpoint pause) | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -162,8 +163,12 @@ Recent decisions affecting current work:
 - [Phase 07-03]: Kept decisions/onDecisionChange typed inline in both ImportPreviewTable and ImportWizard rather than exporting a shared type, avoiding a circular import between the two components
 - [Phase 08]: ScrollColumnShell (Phase 08): fixed-height column shell keeps droppable boundary (setNodeRef) separate from the internal overflow-y-auto scroll div, with MeasuringStrategy.Always on DndContext, per dnd-kit Pitfall 12 for correct auto-scroll during drag
 - [Phase 08]: Live physical drag-and-drop verification for KAN-01/KAN-02 was code-reviewed (setNodeRef placement + measuring Always) rather than mouse-tested, due to a browser-pane rendering limitation in the verification session — flagged as a residual gap for a future normal-use spot-check
-- [Phase 09]: [Phase 09-02]: normalizarEstado's nome->sigla map lives inside lib/clientes/normalizarEstado.ts itself (private, not exported) as the source-of-truth the 09-01 migration's backfill SQL mirrors
-- [Phase 09]: [Phase 09-02]: Left the shadcn-CLI-generated combobox.tsx/input-group.tsx unmodified - visual-parity tokens already satisfied via InputGroup+Input compositing, distributed differently than SelectTrigger since Combobox is a text-input widget by nature
+- [Phase 09-02]: normalizarEstado's nome->sigla map lives inside lib/clientes/normalizarEstado.ts itself (private, not exported) as the source-of-truth the 09-01 migration's backfill SQL mirrors
+- [Phase 09-02]: Left the shadcn-CLI-generated combobox.tsx/input-group.tsx unmodified - visual-parity tokens already satisfied via InputGroup+Input compositing, distributed differently than SelectTrigger since Combobox is a text-input widget by nature
+- [Phase 09-01]: cidades table mirrors historico's read-only RLS posture (RLS enabled, SELECT-only for authenticated, zero write policy) rather than the Supervisor-CRUD categorias/produtos_consumidos pattern — it's a closed IBGE-seeded reference dataset, never edited through the app
+- [Phase 09-01]: cidades_por_estado RPC kept SECURITY INVOKER by omission (never security definer), per 0003_dashboard_aggregates.sql's project-wide convention
+- [Phase 09-01]: chk_estado_valido's final VALIDATE CONSTRAINT step must be wrapped in a DO $$ ... EXCEPTION WHEN check_violation ... $$ block to be genuinely best-effort — an unconditional VALIDATE CONSTRAINT aborts the entire supabase db push transaction if any legacy row (a real estado='ZZ' test row was found live) still violates the check after backfill. Found by human review at the Task 2 checkpoint before push, not self-caught by the executor — worth flagging as a pattern for future NOT VALID constraint migrations in this project.
+- [Phase 09-01]: LOC-01/LOC-02/LOC-04 requirements span multiple plans in Phase 9 (09-01 backend only; 09-02 through 09-06 add the frontend consumption) — REQUIREMENTS.md traceability intentionally left as "Pending" rather than "Complete" after this plan, since the user-facing behavior isn't fully delivered until the later frontend plans land
 
 ### Pending Todos
 
@@ -177,6 +182,8 @@ None yet.
 - **RESOLVED 2026-07-20 — 01-05 Task 4 (real email round-trip verification):** hit the same free-tier 2/hour mailer rate limit a third time (correctly surfaced this time — confirms the earlier 01-04 fix still works). Rather than defer again, split the check into (a) the token/session/UI code path, verified via `supabase.auth.admin.generateLink()` to bypass the mailer entirely — both password-reset and invite-accept round-trips confirmed working end-to-end against the real hosted project — and (b) raw inbox deliverability, not independently re-observed this session but indirectly confirmed since the rate-limit response only fires after GoTrue attempts a real send. AUTH-01/AUTH-02 approved by the project owner 2026-07-20. See `01-05-SUMMARY.md`'s "Open Item: Task 4 — RESOLVED" section.
 - **v1.1 research pitfalls to carry into planning (see .planning/research/PITFALLS.md):** A1 fragile razão_social dedup (no CNPJ) → Phase 6; A2 pt-BR CSV delimiter (semicolon), A3 UTF-8 BOM on first header → Phase 6 parse; A4 CSV injection on export → Phase 5; A5 serverless timeout on large batches, A6 partial-import inconsistency → Phase 7 (batch inserts inside one RPC transaction); A7 file-upload security (size cap + magic bytes) → Phase 6. Research also flags a security-audit gate before Phase 7 ships.
 - **v1.2 research flags to carry into phase planning (see research/SUMMARY.md + PITFALLS.md v1.2):** Phase 10 (Desativação) — two-step cross-service atomicity: `profiles.ativo=false` é o controle primário; se a chamada da Auth Admin API (`ban_duration`) falhar depois, documentar a janela residual do JWT (~1h) na mensagem de erro; confirmar o formato de `ban_duration`. Phase 11 (Funil) — a média de tempo por etapa inclui cards ainda parados (usa `now()`), confirmar índice/estratégia da query de reconstrução sobre `historico` via window functions. Phase 12 (Comparativo) — precisa de teste automatizado do isolamento por papel (Vendedor não acessa a tabela).
+- **gsd-tools.cjs not present in the `agent-a0e04e14689e8d62e` worktree** used to execute 09-01 (it exists in the main checkout's `.claude/gsd-core/bin/` but is untracked, so git worktrees don't share it). STATE.md/ROADMAP.md updates for 09-01 were done by direct manual edit instead of via `gsd-tools query`. Numeric frontmatter progress counters (`current_phase`, `progress.*`) were deliberately left untouched to avoid clobbering concurrent Phase 8 tracking in a parallel worktree — worth reconciling by hand (or by running the full `gsd-tools` state-recalculation) once all in-flight worktrees for this milestone are merged.
+- Live `clientes` table in the hosted project has one test row with `estado='ZZ'` (an invalid placeholder, not a real state), left in place per D-01 (test data the owner is deleting) — `chk_estado_valido` on that row is enforced-but-NOT-VALID (fully blocks any future invalid write, just not retroactively validated). No action needed unless the owner wants to re-run `VALIDATE CONSTRAINT` after deleting test data.
 
 ### Quick Tasks Completed
 
@@ -201,10 +208,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26T21:35:40.101Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-07-26T21:41:21Z
+Stopped at: Wave 1 complete — 09-01-PLAN.md (cidades table + cidades_por_estado RPC + chk_estado_valido pushed to production, human-approved) + 09-02-PLAN.md (UFS + normalizarEstado + combobox)
 Resume file:
-None
+.planning/phases/09-filtros-de-estado-e-cidade-estruturados/09-03-PLAN.md
 
 ## Operator Next Steps
 
