@@ -135,12 +135,26 @@ alter table clientes
   not valid;
 
 -- Passo final best-effort: se o backfill acima já normalizou tudo, isto
--- valida a constraint (deixa de contar como NOT VALID). Se sobrar alguma
--- linha inconsistente, este statement falha e a constraint permanece
--- NOT VALID — ainda assim totalmente enforced para novas gravações, sem
--- reverter o backfill nem bloquear leitura/escrita de linhas existentes
--- (discretion note da CONTEXT.md: não travar acesso, não adivinhar UF).
-alter table clientes validate constraint chk_estado_valido;
+-- valida a constraint (deixa de contar como NOT VALID). Um `alter table ...
+-- validate constraint` puro NÃO é best-effort de verdade — se sobrar
+-- qualquer linha inconsistente ele levanta check_violation e aborta a
+-- transação inteira da migration no `supabase db push`. Por isso o
+-- statement fica dentro de um bloco DO com EXCEPTION: se a validação
+-- falhar (linhas de teste como 'ZZ' que não são nome de estado nem sigla,
+-- portanto fora do mapa de normalização acima — D-01: são dados de teste
+-- que o dono vai apagar, sem fuzzy match), a constraint simplesmente
+-- permanece NOT VALID — ainda assim totalmente enforced para novas
+-- gravações, sem reverter o backfill nem bloquear leitura/escrita de
+-- linhas existentes (discretion note da CONTEXT.md: não travar acesso,
+-- não adivinhar UF).
+do $$
+begin
+  alter table clientes validate constraint chk_estado_valido;
+exception
+  when check_violation then
+    raise notice 'chk_estado_valido permanece NOT VALID: existem linhas de clientes.estado que ainda não correspondem a nenhuma das 27 siglas de UF após o backfill (dados de teste, D-01). Novas gravações continuam bloqueadas se inválidas; nenhuma linha existente foi afetada ou bloqueada.';
+end;
+$$;
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- 5. Seed IBGE — gerado offline por scripts/gerar-seed-cidades.ts (fetch
