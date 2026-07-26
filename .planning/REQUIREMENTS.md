@@ -33,7 +33,7 @@ Requisitos do marco v1.2 (Gestão de Equipe, Análises de Funil e Filtros). Cada
 
 - [x] **LOC-01**: O campo Estado (cadastro/edição de cliente, filtro, importação por planilha) usa uma lista fixa das 27 siglas de UF brasileiras, em vez de texto livre
 - [x] **LOC-02**: O campo Cidade usa uma lista completa e oficial de municípios brasileiros (IBGE), filtrada pelo Estado escolhido
-- [ ] **LOC-03**: No filtro de clientes, Estado aparece antes de Cidade
+- [x] **LOC-03**: No filtro de clientes, Estado aparece antes de Cidade
 - [x] **LOC-04**: Clientes já cadastrados com Estado em formato inconsistente (nome completo, digitação diferente) são migrados/normalizados para a sigla correta, sem perder dados nem travar o acesso ao registro
 
 ## v2 Requirements
@@ -66,7 +66,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | KAN-02 | Phase 8 | Complete |
 | LOC-01 | Phase 9 | Complete |
 | LOC-02 | Phase 9 | Complete |
-| LOC-03 | Phase 9 | Pending |
+| LOC-03 | Phase 9 | Complete |
 | LOC-04 | Phase 9 | Complete |
 | EQP-01 | Phase 10 | Pending |
 | EQP-02 | Phase 10 | Pending |
