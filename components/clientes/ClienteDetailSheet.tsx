@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
+import { EstadoCidadeFields } from "@/components/clientes/EstadoCidadeFields"
 import {
   Dialog,
   DialogContent,
@@ -63,7 +64,7 @@ import { HistoricoTimeline } from "@/components/clientes/HistoricoTimeline"
 import { ETAPA_FINAL } from "@/lib/funil/etapas"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
-import type { Uf } from "@/lib/clientes/ufs"
+import { UFS, type Uf } from "@/lib/clientes/ufs"
 import {
   updateClienteSchema,
   type UpdateClienteInput,
@@ -604,47 +605,12 @@ export function ClienteDetailSheet({
                     )}
                   />
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="complemento"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Complemento</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="cidade"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cidade</FormLabel>
-                          <FormControl>
-                            <Input autoComplete="address-level2" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="estado"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Estado</FormLabel>
-                          <FormControl>
-                            <Input autoComplete="address-level1" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <EstadoCidadeFields
+                    control={form.control}
+                    watch={form.watch}
+                    setValue={form.setValue}
+                    estadoItems={UFS.map((uf) => ({ value: uf, label: uf }))}
+                  />
 
                   <FormField
                     control={form.control}
