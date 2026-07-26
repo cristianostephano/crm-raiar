@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import {
   annotarLinha,
   type AnnotarLinhaLookups,
+  type CidadeLookup,
   type MappedRow,
   type ResolvedRow,
   type VendedorLookup,
@@ -80,8 +81,8 @@ export async function validarLoteImportacao(
   // `linhas` are client-sent DATA (the parsed/mapped spreadsheet rows),
   // never an authorization input — the is_supervisor gate above is the only
   // barrier, same posture as getClientesParaExportacao's `ids` parameter.
-  const [categorias, produtos, vendedoresResult, existentesResult] = await Promise.all(
-    [
+  const [categorias, produtos, vendedoresResult, existentesResult, cidadesResult] =
+    await Promise.all([
       getCategoriasAtivas(),
       getProdutosAtivos(),
       supabase.from("profiles").select("id, nome, sobrenome, email"),
@@ -90,10 +91,14 @@ export async function validarLoteImportacao(
       // policy returns the whole base — exactly the set dedup must compare
       // against. NEVER add a manual responsavel filter here.
       supabase.from("clientes").select("razao_social"),
-    ]
-  )
+      // Narrow, RLS-scoped read of the cidades reference table (09-01) — one
+      // read per batch, same convention as the other three lookups. cidades'
+      // SELECT policy is read-open to any authenticated user (public IBGE
+      // data), so no extra scoping is needed here (LOC-01/LOC-02).
+      supabase.from("cidades").select("nome, uf"),
+    ])
 
-  if (vendedoresResult.error || existentesResult.error) {
+  if (vendedoresResult.error || existentesResult.error || cidadesResult.error) {
     return { error: { code: "generic" } }
   }
 
@@ -104,7 +109,12 @@ export async function validarLoteImportacao(
     email: row.email as string,
   }))
 
-  const lookups: AnnotarLinhaLookups = { vendedores, categorias, produtos }
+  const cidades: CidadeLookup[] = (cidadesResult.data ?? []).map((row) => ({
+    nome: row.nome as string,
+    uf: row.uf as string,
+  }))
+
+  const lookups: AnnotarLinhaLookups = { vendedores, categorias, produtos, cidades }
 
   const existentes = (existentesResult.data ?? []).map(
     (row) => row.razao_social as string
