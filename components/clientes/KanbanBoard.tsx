@@ -269,19 +269,13 @@ export function KanbanBoard({
     [grouped]
   )
 
-  // estadoOptions/vendedorOptions are still derived from the already-loaded
-  // card set (Pitfall 7) — unlike categoria/produto, there is no separate
-  // full-catalog lookup table for "estado" (free-text field on clientes)
-  // or "vendedor" (a Supervisor's own team, already fully represented in
-  // teamMembers elsewhere but not threaded here), and both are only ever
-  // useful as filter values that already appear on a visible cliente.
-  const estadoOptions = useMemo(() => {
-    const set = new Set<string>()
-    for (const cliente of todosOsClientes) {
-      if (cliente.estado) set.add(cliente.estado)
-    }
-    return [...set].sort((a, b) => a.localeCompare(b, "pt-BR"))
-  }, [todosOsClientes])
+  // vendedorOptions is still derived from the already-loaded card set
+  // (Pitfall 7) — there is no separate full-catalog lookup table for
+  // "vendedor" (a Supervisor's own team, already fully represented in
+  // teamMembers elsewhere but not threaded here), so it's only ever useful
+  // as a filter value that already appears on a visible cliente. (Estado's
+  // equivalent derived list, estadoOptions, was removed in 09-04/LOC-01 —
+  // FiltersPopover now imports the fixed UFS constant directly.)
 
   // Supervisor-only (D-09) — the toolbar never renders this option list for
   // a Vendedor, but computing it is harmless either way (a Vendedor's own
@@ -609,7 +603,6 @@ export function KanbanBoard({
         onFiltrosClear={() => setFiltros(FILTROS_VAZIOS)}
         categoriaOptions={categoriaOptions}
         produtoOptions={produtoOptions}
-        estadoOptions={estadoOptions}
         vendedorOptions={vendedorOptions}
         isSupervisor={showResponsavel}
       />

@@ -39,9 +39,6 @@ function renderPopover(filtros: ClienteFiltros = FILTROS_VAZIOS) {
       onClear={() => {}}
       categoriaOptions={[]}
       produtoOptions={[]}
-      // TODO(09-04 Task 2): drop once FiltersPopover stops accepting
-      // estadoOptions (replaced by the fixed UFS constant, LOC-01).
-      estadoOptions={[]}
       vendedorOptions={[]}
       isSupervisor={false}
     />

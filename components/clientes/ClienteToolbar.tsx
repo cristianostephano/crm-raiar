@@ -45,7 +45,6 @@ export function ClienteToolbar({
   onFiltrosClear,
   categoriaOptions,
   produtoOptions,
-  estadoOptions,
   vendedorOptions,
   isSupervisor,
 }: {
@@ -60,7 +59,6 @@ export function ClienteToolbar({
   onFiltrosClear: () => void
   categoriaOptions: { id: string; nome: string }[]
   produtoOptions: { id: string; nome: string }[]
-  estadoOptions: string[]
   vendedorOptions: { id: string; nome: string }[]
   isSupervisor: boolean
 }) {
@@ -84,7 +82,6 @@ export function ClienteToolbar({
           onClear={onFiltrosClear}
           categoriaOptions={categoriaOptions}
           produtoOptions={produtoOptions}
-          estadoOptions={estadoOptions}
           vendedorOptions={vendedorOptions}
           isSupervisor={isSupervisor}
         />
