@@ -47,6 +47,10 @@ const lookups: AnnotarLinhaLookups = {
     { id: "prod-1", nome: "Casca" },
     { id: "prod-2", nome: "Pasteurizado" },
   ],
+  cidades: [
+    { nome: "São Paulo", uf: "SP" },
+    { nome: "Campinas", uf: "SP" },
+  ],
 }
 
 describe("createImportRowSchema", () => {
@@ -178,5 +182,35 @@ describe("annotarLinha", () => {
     )
 
     expect(result.resolved.contato).toBe("'=cmd|' /C calc'!A1")
+  })
+
+  it("flags an estado that is not one of the 27 UF siglas (LOC-01)", () => {
+    const result = annotarLinha({ ...baseRow(), estado: "ZZ" }, lookups)
+
+    expect(result.status).toBe("erro")
+    expect(result.reasons).toContain('Estado "ZZ" não é uma sigla de UF válida')
+  })
+
+  it("flags a cidade that does not belong to the chosen estado (LOC-02)", () => {
+    const result = annotarLinha(
+      { ...baseRow(), estado: "SP", cidade: "Cidade Inexistente" },
+      lookups
+    )
+
+    expect(result.status).toBe("erro")
+    expect(result.reasons).toContain(
+      'Cidade "Cidade Inexistente" não encontrada para o estado SP'
+    )
+  })
+
+  it("resolves estado to uppercase UF and cidade to the canonical IBGE nome (LOC-01/LOC-02)", () => {
+    const result = annotarLinha(
+      { ...baseRow(), estado: "sp", cidade: "campinas" },
+      lookups
+    )
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.estado).toBe("SP")
+    expect(result.resolved.cidade).toBe("Campinas")
   })
 })

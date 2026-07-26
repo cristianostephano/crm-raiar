@@ -1,4 +1,6 @@
+import { cidadeCanonica, cidadeValida } from "@/lib/clientes/cidadeValida"
 import { sanitizeCell } from "@/lib/clientes/exportacao"
+import { UFS, type Uf } from "@/lib/clientes/ufs"
 import { normalizeRazaoSocial } from "@/lib/importacao/dedupe"
 import type { LookupOption } from "@/lib/supabase/queries/clientes"
 import { ENDERECO_FIELDS, createImportRowSchema } from "@/lib/validations/importacao"
@@ -29,10 +31,16 @@ export type VendedorLookup = {
   email: string
 }
 
+/** Cidade lookup shape (nome + uf) — populada uma vez por batch pelo
+ * chamador (app/actions/importacao.ts's validarLoteImportacao), a partir de
+ * um narrow `select nome, uf from cidades` (09-06, LOC-01/LOC-02). */
+export type CidadeLookup = { nome: string; uf: string }
+
 export type AnnotarLinhaLookups = {
   vendedores: VendedorLookup[]
   categorias: LookupOption[]
   produtos: LookupOption[]
+  cidades: CidadeLookup[]
 }
 
 /** Resolved + sanitized row shape, ready for Fase 7 to insert — never
@@ -161,6 +169,26 @@ export function annotarLinha(
     }
   }
 
+  // 4b. Estado (UFS) + Cidade (tabela cidades) — LOC-01/LOC-02. Estado é
+  // reusado da mesma lista fixa dos formulários/filtro (UFS); Cidade é
+  // checada contra a mesma tabela cidades (lookups.cidades), nunca uma
+  // lógica paralela de texto livre. Ambas as checagens são aditivas ao
+  // required-field check do passo 5 (só rodam quando o valor está presente).
+  const estadoValor = sanitized.estado?.trim().toUpperCase()
+  if (estadoValor && !UFS.includes(estadoValor as Uf)) {
+    reasons.push(`Estado "${estadoValor}" não é uma sigla de UF válida`)
+  }
+
+  const cidadeValor = sanitized.cidade?.trim()
+  if (
+    cidadeValor &&
+    estadoValor &&
+    UFS.includes(estadoValor as Uf) &&
+    !cidadeValida(cidadeValor, estadoValor, lookups.cidades)
+  ) {
+    reasons.push(`Cidade "${cidadeValor}" não encontrada para o estado ${estadoValor}`)
+  }
+
   // 5. Required fields (razaoSocial, endereço x5, responsavel) — same
   // minimum rules as createClienteSchema (IMP-05).
   const parsed = createImportRowSchema.safeParse({
@@ -199,8 +227,17 @@ export function annotarLinha(
     rua: sanitized.rua ?? "",
     numero: sanitized.numero ?? "",
     complemento: sanitized.complemento ?? null,
-    cidade: sanitized.cidade ?? "",
-    estado: sanitized.estado ?? "",
+    // LOC-01/LOC-02: normaliza estado para a UF em maiúscula (senão a
+    // constraint chk_estado_valido da Fase 7 barra o insert) e cidade para o
+    // nome canônico do IBGE quando casa; senão preserva o valor sanitizado
+    // original (a linha já está marcada "erro" pelas reasons acima).
+    cidade:
+      cidadeCanonica(cidadeValor ?? "", estadoValor ?? "", lookups.cidades) ??
+      (sanitized.cidade ?? ""),
+    estado:
+      estadoValor && UFS.includes(estadoValor as Uf)
+        ? estadoValor
+        : (sanitized.estado ?? ""),
     categoriaId,
     contato: sanitized.contato ?? null,
     telefone: sanitized.telefone ?? null,

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
+import { cidadeValida } from "@/lib/clientes/cidadeValida"
 import {
   createClienteSchema,
   updateClienteSchema,
@@ -60,6 +61,28 @@ export async function createCliente(
   // supervisor para qualquer um)") already enforces the same rule at the
   // database level. Only a Supervisor may assign a different responsavel.
   const responsavel = isSupervisor ? parsed.data.responsavel : user.id
+
+  // V5/T-09-09: the Combobox already constrains the Cidade choice client-side,
+  // but a Server Action must never trust that alone (CLAUDE.md) — re-check
+  // server-side that the submitted Cidade genuinely belongs to the submitted
+  // Estado (Zod's z.enum(UFS) already re-validated Estado above; Cidade
+  // validity is DB-dependent, so it can't be expressed in Zod).
+  const { data: cidadesDoEstado } = await supabase.rpc("cidades_por_estado", {
+    p_uf: parsed.data.estado,
+  })
+
+  if (
+    !cidadeValida(
+      parsed.data.cidade,
+      parsed.data.estado,
+      (cidadesDoEstado ?? []).map((row: { nome: string }) => ({
+        nome: row.nome,
+        uf: parsed.data.estado,
+      }))
+    )
+  ) {
+    return { error: { code: "validation" } }
+  }
 
   const { data: inserted, error } = await supabase
     .from("clientes")
@@ -179,6 +202,25 @@ export async function updateCliente(
   // Vendedor reassigning responsavel at the database level. Only a
   // Supervisor may assign a different responsavel.
   const responsavel = isSupervisor ? parsed.data.responsavel : user.id
+
+  // V5/T-09-09: same re-validation as createCliente — never trust that the
+  // client-side Combobox already constrained Cidade to the chosen Estado.
+  const { data: cidadesDoEstado } = await supabase.rpc("cidades_por_estado", {
+    p_uf: parsed.data.estado,
+  })
+
+  if (
+    !cidadeValida(
+      parsed.data.cidade,
+      parsed.data.estado,
+      (cidadesDoEstado ?? []).map((row: { nome: string }) => ({
+        nome: row.nome,
+        uf: parsed.data.estado,
+      }))
+    )
+  ) {
+    return { error: { code: "validation" } }
+  }
 
   const { data: updated, error } = await supabase
     .from("clientes")
