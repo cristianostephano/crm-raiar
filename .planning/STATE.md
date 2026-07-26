@@ -5,15 +5,15 @@ milestone_name: Gestão de Equipe, Análises de Funil e Filtros
 current_phase: 08
 current_phase_name: rolagem-por-coluna-no-kanban
 status: verifying
-stopped_at: Phase 9 UI-SPEC approved
-last_updated: "2026-07-26T12:36:34.291Z"
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-07-26T21:36:01.279Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 7
+  completed_plans: 2
   percent: 20
 ---
 
@@ -80,6 +80,7 @@ Last activity: 2026-07-25 — Phase 08 execution started
 | Phase 07 P02 | 25min | 2 tasks | 3 files |
 | Phase 07 P03 | 10min | 3 tasks | 4 files |
 | Phase 08 P01 | 30min | 3 tasks | 3 files |
+| Phase 09 P02 | 20min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -161,6 +162,8 @@ Recent decisions affecting current work:
 - [Phase 07-03]: Kept decisions/onDecisionChange typed inline in both ImportPreviewTable and ImportWizard rather than exporting a shared type, avoiding a circular import between the two components
 - [Phase 08]: ScrollColumnShell (Phase 08): fixed-height column shell keeps droppable boundary (setNodeRef) separate from the internal overflow-y-auto scroll div, with MeasuringStrategy.Always on DndContext, per dnd-kit Pitfall 12 for correct auto-scroll during drag
 - [Phase 08]: Live physical drag-and-drop verification for KAN-01/KAN-02 was code-reviewed (setNodeRef placement + measuring Always) rather than mouse-tested, due to a browser-pane rendering limitation in the verification session — flagged as a residual gap for a future normal-use spot-check
+- [Phase 09]: [Phase 09-02]: normalizarEstado's nome->sigla map lives inside lib/clientes/normalizarEstado.ts itself (private, not exported) as the source-of-truth the 09-01 migration's backfill SQL mirrors
+- [Phase 09]: [Phase 09-02]: Left the shadcn-CLI-generated combobox.tsx/input-group.tsx unmodified - visual-parity tokens already satisfied via InputGroup+Input compositing, distributed differently than SelectTrigger since Combobox is a text-input widget by nature
 
 ### Pending Todos
 
@@ -198,10 +201,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26T12:36:34.247Z
-Stopped at: Phase 9 UI-SPEC approved
+Last session: 2026-07-26T21:35:40.101Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file:
-.planning/phases/09-filtros-de-estado-e-cidade-estruturados/09-UI-SPEC.md
+None
 
 ## Operator Next Steps
 

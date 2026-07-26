@@ -77,13 +77,15 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
   3. No filtro de clientes, o campo Estado aparece antes do campo Cidade.
   4. Clientes cadastrados antes, com Estado escrito por extenso ou de forma inconsistente, aparecem normalizados para a sigla correta, sem perder dados nem travar o acesso ao registro.
 
-**Plans**: 6 plans (3 waves)
+**Plans**: 1/6 plans executed
+
 - [ ] 09-01-PLAN.md — Fundação de dados: migration cidades (seed IBGE) + RPC cidades_por_estado + constraint chk_estado_valido + push em produção [wave 1]
-- [ ] 09-02-PLAN.md — Primitivos de frontend: constante UFS + normalizarEstado (LOC-04) + componente base combobox [wave 1]
+- [x] 09-02-PLAN.md — Primitivos de frontend: constante UFS + normalizarEstado (LOC-04) + componente base combobox [wave 1]
 - [ ] 09-03-PLAN.md — Schema Zod (estado: z.enum(UFS)) + componente compartilhado EstadoCidadeFields (cascata Estado→Cidade) [wave 2]
 - [ ] 09-04-PLAN.md — Filtro: Estado antes de Cidade (LOC-03) + Combobox de Cidade + exact-match + remoção de estadoOptions [wave 2]
 - [ ] 09-05-PLAN.md — Formulários de cadastro e edição usam EstadoCidadeFields [wave 3]
 - [ ] 09-06-PLAN.md — Validação server-side: importação (annotarLinha) + re-validação em createCliente/updateCliente [wave 3]
+
 **UI hint**: yes
 
 ### Phase 10: Desativação de Membro da Equipe
@@ -146,7 +148,7 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`.planni
 | 6. Importação — Upload, Mapeamento e Revisão | v1.1 | 4/4 | Complete | 2026-07-24 |
 | 7. Importação — Confirmação e Gravação | v1.1 | 3/3 | Complete | 2026-07-25 |
 | 8. Rolagem por Coluna no Kanban | v1.2 | 1/1 | Complete   | 2026-07-26 |
-| 9. Filtros de Estado e Cidade Estruturados | v1.2 | 0/? | Not started | - |
+| 9. Filtros de Estado e Cidade Estruturados | v1.2 | 1/6 | In Progress|  |
 | 10. Desativação de Membro da Equipe | v1.2 | 0/? | Not started | - |
 | 11. Funil de Conversão Detalhado | v1.2 | 0/? | Not started | - |
 | 12. Comparativo por Vendedor | v1.2 | 0/? | Not started | - |
