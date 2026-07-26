@@ -5,16 +5,16 @@ milestone_name: Gestão de Equipe, Análises de Funil e Filtros
 current_phase: 09
 current_phase_name: filtros-de-estado-e-cidade-estruturados
 status: executing
-stopped_at: Completed 09-01-PLAN.md e 09-02-PLAN.md (Wave 1 completa)
-last_updated: "2026-07-26T21:41:21.000Z"
+stopped_at: "Completed 09-03-PLAN.md (Wave 2 completa) - estado: z.enum(UFS) + EstadoCidadeFields prontos"
+last_updated: "2026-07-26T22:12:07.402Z"
 last_activity: 2026-07-26
-last_activity_desc: Phase 09 Wave 1 completa — cidades/cidades_por_estado/chk_estado_valido pushed to production; UFS/normalizarEstado/combobox prontos
+last_activity_desc: Phase 09 Wave 2 completa (09-03) — estado z.enum(UFS) + EstadoCidadeFields prontos
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 7
-  completed_plans: 3
-  percent: 43
+  completed_plans: 4
+  percent: 57
 ---
 
 # Project State
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 ## Current Position
 
 Phase: 09 (filtros-de-estado-e-cidade-estruturados) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 09
-Last activity: 2026-07-26 — Phase 09 execution started
+Plan: 4 of 6
+Status: Ready to execute (09-04 next, Wave 3)
+Last activity: 2026-07-26 — 09-03-PLAN.md complete (estado z.enum(UFS) + EstadoCidadeFields)
 
 ## Performance Metrics
 
@@ -82,6 +82,7 @@ Last activity: 2026-07-26 — Phase 09 execution started
 | Phase 08 P01 | 30min | 3 tasks | 3 files |
 | Phase 09 P02 | 20min | 2 tasks | 5 files |
 | Phase 09 P01 | ~50min (1 human-verify checkpoint pause) | 3 tasks | 4 files |
+| Phase 09 P03 | ~35min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -169,6 +170,8 @@ Recent decisions affecting current work:
 - [Phase 09-01]: cidades_por_estado RPC kept SECURITY INVOKER by omission (never security definer), per 0003_dashboard_aggregates.sql's project-wide convention
 - [Phase 09-01]: chk_estado_valido's final VALIDATE CONSTRAINT step must be wrapped in a DO $$ ... EXCEPTION WHEN check_violation ... $$ block to be genuinely best-effort — an unconditional VALIDATE CONSTRAINT aborts the entire supabase db push transaction if any legacy row (a real estado='ZZ' test row was found live) still violates the check after backfill. Found by human review at the Task 2 checkpoint before push, not self-caught by the executor — worth flagging as a pattern for future NOT VALID constraint migrations in this project.
 - [Phase 09-01]: LOC-01/LOC-02/LOC-04 requirements span multiple plans in Phase 9 (09-01 backend only; 09-02 through 09-06 add the frontend consumption) — REQUIREMENTS.md traceability intentionally left as "Pending" rather than "Complete" after this plan, since the user-facing behavior isn't fully delivered until the later frontend plans land
+- [Phase 09-03]: estado usa z.enum(UFS) sem .refine/.superRefine em ambos os schemas — mantem a inferencia do @hookform/resolvers, mesma ressalva ja documentada para responsavel
+- [Phase 09-03]: Rule 3 auto-fix: estado: z.enum(UFS) quebrou ClienteQuickCreateForm.tsx/ClienteDetailSheet.tsx (fora do escopo de 09-03) — cast minimo 'as Uf' em 3 pontos, UI real (Input->EstadoCidadeFields) fica para 09-05
 
 ### Pending Todos
 
@@ -208,10 +211,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26T21:41:21Z
-Stopped at: Wave 1 complete — 09-01-PLAN.md (cidades table + cidades_por_estado RPC + chk_estado_valido pushed to production, human-approved) + 09-02-PLAN.md (UFS + normalizarEstado + combobox)
+Last session: 2026-07-26T22:12:07.358Z
+Stopped at: Completed 09-03-PLAN.md (Wave 2 completa) - estado: z.enum(UFS) + EstadoCidadeFields prontos
 Resume file:
-.planning/phases/09-filtros-de-estado-e-cidade-estruturados/09-03-PLAN.md
+.planning/phases/09-filtros-de-estado-e-cidade-estruturados/09-04-PLAN.md
 
 ## Operator Next Steps
 
