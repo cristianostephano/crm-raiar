@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { createClienteSchema } from "../../lib/validations/cliente"
+import { UFS } from "../../lib/clientes/ufs"
+import {
+  createClienteSchema,
+  updateClienteSchema,
+} from "../../lib/validations/cliente"
 import { SEED_ACCOUNTS } from "../auth/rls-roles.test"
 import { serviceClient, signInAs } from "../helpers/supabase-test-clients"
 
@@ -97,6 +101,138 @@ describe("createClienteSchema", () => {
         (issue) => issue.path[0] === "responsavel"
       )
       expect(responsavelIssue).toBeDefined()
+    }
+  })
+
+  it("accepts estado: 'SP' (LOC-01, z.enum(UFS))", () => {
+    const result = createClienteSchema.safeParse({
+      razaoSocial: "Acme Ltda",
+      cep: "01310-100",
+      rua: "Av. Paulista",
+      numero: "1000",
+      cidade: "São Paulo",
+      estado: "SP",
+      responsavel: "11111111-1111-1111-1111-111111111111",
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("accepts every one of the 27 UFs (LOC-01)", () => {
+    for (const uf of UFS) {
+      const result = createClienteSchema.safeParse({
+        razaoSocial: "Acme Ltda",
+        cep: "01310-100",
+        rua: "Av. Paulista",
+        numero: "1000",
+        cidade: "São Paulo",
+        estado: uf,
+        responsavel: "11111111-1111-1111-1111-111111111111",
+      })
+
+      expect(result.success).toBe(true)
+    }
+  })
+
+  it("rejects a full state name instead of the sigla (LOC-01)", () => {
+    const result = createClienteSchema.safeParse({
+      razaoSocial: "Acme Ltda",
+      cep: "01310-100",
+      rua: "Av. Paulista",
+      numero: "1000",
+      cidade: "São Paulo",
+      estado: "São Paulo",
+      responsavel: "11111111-1111-1111-1111-111111111111",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const estadoIssue = result.error.issues.find(
+        (issue) => issue.path[0] === "estado"
+      )
+      expect(estadoIssue).toBeDefined()
+    }
+  })
+
+  it("rejects an invalid sigla (LOC-01)", () => {
+    const result = createClienteSchema.safeParse({
+      razaoSocial: "Acme Ltda",
+      cep: "01310-100",
+      rua: "Av. Paulista",
+      numero: "1000",
+      cidade: "São Paulo",
+      estado: "XX",
+      responsavel: "11111111-1111-1111-1111-111111111111",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const estadoIssue = result.error.issues.find(
+        (issue) => issue.path[0] === "estado"
+      )
+      expect(estadoIssue).toBeDefined()
+    }
+  })
+})
+
+describe("updateClienteSchema", () => {
+  function baseUpdateFields() {
+    return {
+      id: "22222222-2222-2222-2222-222222222222",
+      razaoSocial: "Acme Ltda",
+      cep: "01310-100",
+      rua: "Av. Paulista",
+      numero: "1000",
+      cidade: "São Paulo",
+      estado: "SP",
+      responsavel: "11111111-1111-1111-1111-111111111111",
+    }
+  }
+
+  it("accepts estado: 'SP' (LOC-01, z.enum(UFS))", () => {
+    const result = updateClienteSchema.safeParse(baseUpdateFields())
+
+    expect(result.success).toBe(true)
+  })
+
+  it("accepts every one of the 27 UFs (LOC-01)", () => {
+    for (const uf of UFS) {
+      const result = updateClienteSchema.safeParse({
+        ...baseUpdateFields(),
+        estado: uf,
+      })
+
+      expect(result.success).toBe(true)
+    }
+  })
+
+  it("rejects a full state name instead of the sigla (LOC-01)", () => {
+    const result = updateClienteSchema.safeParse({
+      ...baseUpdateFields(),
+      estado: "São Paulo",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const estadoIssue = result.error.issues.find(
+        (issue) => issue.path[0] === "estado"
+      )
+      expect(estadoIssue).toBeDefined()
+    }
+  })
+
+  it("rejects an invalid sigla (LOC-01)", () => {
+    const result = updateClienteSchema.safeParse({
+      ...baseUpdateFields(),
+      estado: "XX",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const estadoIssue = result.error.issues.find(
+        (issue) => issue.path[0] === "estado"
+      )
+      expect(estadoIssue).toBeDefined()
     }
   })
 })
