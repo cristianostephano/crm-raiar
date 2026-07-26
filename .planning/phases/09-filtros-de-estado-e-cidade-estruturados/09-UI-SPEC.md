@@ -1,7 +1,7 @@
 ---
 phase: 9
 slug: filtros-de-estado-e-cidade-estruturados
-status: draft
+status: approved
 shadcn_initialized: true
 preset: base-nova (baseColor neutral, cssVariables true) — already initialized project-wide, unchanged by this phase
 created: 2026-07-26
