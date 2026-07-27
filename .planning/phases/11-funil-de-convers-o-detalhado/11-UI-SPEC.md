@@ -1,7 +1,7 @@
 ---
 phase: 11
 slug: funil-de-convers-o-detalhado
-status: draft
+status: approved
 shadcn_initialized: true
 preset: base-nova (baseColor neutral, cssVariables true) — already initialized project-wide, unchanged by this phase
 created: 2026-07-27
@@ -113,6 +113,10 @@ Accent reserved for: nothing new in this phase (no primary CTA in either new com
 
 *(Extends the template — this phase's contract lives mostly here, since it governs the exact visual behavior of a brand-new table-shaped component and a small KPI-tile pair, both built entirely from primitives already proven elsewhere in this codebase.)*
 
+### 0. Focal point
+
+When at least one row is flagged `gargalo === true`, that row's amber-bordered "Gargalo" badge is the primary focal point of this whole new block — it's the one thing meant to catch the eye first. When no row is flagged, the `FunilDetalhadoTable` itself (as the first item in the new block, ahead of `TempoAteFechamentoCards`) is the entry point.
+
 ### 1. `FunilDetalhadoTable.tsx` — the D-01 table (FNL-01, 7 fixed rows)
 
 **Card wrapper:** identical structure to `ClientesPorEtapaChart.tsx` — `Card` > `CardHeader` (`CardTitle` "Funil de conversão detalhado" at `text-[20px] font-semibold`, `CardDescription` "Histórico completo — não é afetado pelo filtro de período") > `CardContent` holding the `Table`.
@@ -128,7 +132,7 @@ Accent reserved for: nothing new in this phase (no primary CTA in either new com
 
 **D-03 Bottleneck row highlight (never color-only):**
 - Row background/border: `TableRow className="border-l-4 border-l-amber-500"` on any row where `gargalo === true` — reuses the exact `border-l-4 border-l-{color}-500` vocabulary already established by `statusBorderClass` in `lib/importacao/preview.ts` (there: green/amber/red for ok/duplicado/erro; here: amber only, since "gargalo" is a single boolean flag, not a 3-way status).
-- Non-color signal (mandatory, do not skip): inside the "Tempo médio parado" cell, render a small pill next to the "{N} dias" text — `Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-500"` containing `<TriangleAlert className="size-3" />` + the text "Gargalo". This is the same icon (`TriangleAlert`, already imported project-wide for the "stuck" concept in `ClienteCard.tsx`/`ImportSummary.tsx`) reused for a new but visually-consistent purpose — never a bare color change with no icon/text, since that would fail for colorblind users comparing 7 rows.
+- Non-color signal (mandatory, do not skip): inside the "Tempo médio parado" cell, render a small pill next to the "{N} dias" text — `Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-500"` containing `<TriangleAlert className="size-3" />` + the text "Gargalo". Same `amber-500` value in both light and dark mode — matches `ClienteCard.tsx`'s `text-amber-500` exactly, no separate dark-mode override invented (the codebase has no `amber-700` usage anywhere to justify one). This is the same icon (`TriangleAlert`, already imported project-wide for the "stuck" concept in `ClienteCard.tsx`/`ImportSummary.tsx`) reused for a new but visually-consistent purpose — never a bare color change with no icon/text, since that would fail for colorblind users comparing 7 rows.
 - A non-bottleneck row renders with the default `TableRow` styling (no left border override, no badge) — the visual distinction must be present ONLY on flagged rows, never a subtler "everything is slightly colored" treatment.
 
 **Loading state:** `Skeleton className="h-[320px] w-full"` inside `CardContent` (7-row table needs more vertical room than `ClientesPorEtapaChart`'s `h-[280px]` chart skeleton — scaled proportionally, still a single skeleton block, not per-row skeletons).
@@ -169,11 +173,11 @@ Insert `FunilDetalhadoTable` and `TempoAteFechamentoCards` as a new consecutive 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS (focal-point note added — §0 above)
+- [x] Dimension 3 Color: PASS (fixed — Gargalo badge text corrected to `text-amber-500`, matching the declared Color table and `ClienteCard.tsx`'s actual usage; no unjustified `amber-700` left in the spec)
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved (2026-07-27, after Color fix)
