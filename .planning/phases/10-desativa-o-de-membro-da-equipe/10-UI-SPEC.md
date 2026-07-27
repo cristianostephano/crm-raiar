@@ -1,7 +1,7 @@
 ---
 phase: 10
 slug: desativa-o-de-membro-da-equipe
-status: draft
+status: approved
 shadcn_initialized: true
 preset: base-nova (baseColor neutral, cssVariables true) — already initialized project-wide, unchanged by this phase
 created: 2026-07-27
@@ -51,13 +51,13 @@ Exceptions (both pre-existing, not introduced by this phase):
 
 ## Typography
 
-Reused exactly as already rendered by `Badge`/`Select`/`Button`/table cells across the app — no new sizes or weights introduced by this phase (stays inside the project's existing 4-size / 2-weight system: 14px/16px/20px/28px[/36px KPI-only], regular 400 / semibold 600).
+Reused exactly as already rendered by `Badge`/`Select`/`Button`/table cells across the app — no new sizes or weights introduced by this phase (stays inside the project's existing sizes: 12px/14px/16px/28px[/36px KPI-only], with weights 400 regular / 500 medium / 600 semibold — the `DialogTitle` default's 500/`font-medium` is a pre-existing third weight already baked into `components/ui/dialog.tsx`, not introduced by this phase).
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body (table cells, dialog paragraph copy, Select items) | 14px (`text-sm`, matches the existing `<table className="w-full text-sm">`) | 400 (regular) | 1.43 (Tailwind `text-sm` default) |
 | Label (`FormLabel`/`Label` "Vendedor substituto", table `<th>` headers) | 14px (`text-sm`) for the Select label; table headers stay `font-semibold` (existing, unchanged) | 400 (label) / 600 (`<th>`, unchanged) | 1.43 |
-| Heading (Dialog title, e.g. "Desativar {nome}?") | 20px (`text-lg`, matches `DialogTitle`'s existing default — same as `EditableListTab`'s "Desativar categoria?" title and `ClienteDetailSheet`'s "Apagar cliente" title) | 600 (semibold, `DialogTitle` default) | 1.2 |
+| Heading (Dialog title, e.g. "Desativar {nome}?") | 16px (`text-base`, `DialogTitle`'s actual default per `components/ui/dialog.tsx`: `"font-heading text-base leading-none font-medium"` — same as `EditableListTab`'s "Desativar categoria?" title and `ClienteDetailSheet`'s "Apagar cliente" title, neither of which overrides the default) | 500 (medium, `DialogTitle` default — pre-existing, not this phase's introduction) | 1 (`leading-none`) |
 | Display | not touched by this phase (page `<h1>` "Gerenciar equipe" stays `text-[28px] font-semibold`) | — | — |
 
 Badge text (Ativo/Inativo, Papel) renders at the existing `Badge` component's default size (`text-xs`, 12px) — this is the one pre-existing exception already baked into `components/ui/badge.tsx` and already used for the Papel column; not a new size introduced by this phase.
@@ -121,6 +121,10 @@ Accent reserved for: the "Convidar" button (unchanged, pre-existing) and the suc
 
 *(Extends the template — per RESEARCH.md's Recommended Project Structure, this lands as `components/equipe/EquipeList.tsx` (Client Component, row actions + Status badge) and `components/equipe/DesativarMembroDialog.tsx` (replacement picker + confirm), consumed by the existing `app/(app)/equipe/page.tsx`.)*
 
+### 0. Focal point
+
+The new Status column (Ativo/Inativo badge) and the new Ações column (Desativar/Reativar icon button) are the primary visual addition to this otherwise-unchanged screen — everything else in `EquipePage` (title, "Convidar" button, existing Nome/Sobrenome/Papel/E-mail columns) stays exactly as-is.
+
 ### 1. Table structure — new "Status" column + new "Ações" column
 
 - Column order: **Nome | Sobrenome | Papel | Status | E-mail | Ações** — Status is inserted immediately after Papel (keeps role/status semantically grouped); Ações is always the last column, matching every other action-column convention in this app (e.g. `ClienteDetailSheet`'s footer action placement).
@@ -156,11 +160,11 @@ Accent reserved for: the "Convidar" button (unchanged, pre-existing) and the suc
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS (minor non-blocking note: single-verb CTA, matches shipped `EditableListTab` precedent)
+- [x] Dimension 2 Visuals: PASS (focal-point note added — §0 above)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS (fixed — Dialog title corrected to actual `DialogTitle` default: 16px/`font-medium`(500)/`leading-none`, not the originally-claimed 20px/600)
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved (2026-07-27, after Typography fix)
