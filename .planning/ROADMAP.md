@@ -100,7 +100,16 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
   3. Um membro desativado não consegue mais entrar no sistema, mas o nome dele e o histórico antigo continuam visíveis e intactos.
   4. Clientes já ganhos ou perdidos do vendedor desativado continuam atribuídos a ele (contam nos números históricos); só os clientes em andamento são transferidos ao substituto.
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Migration 0008: `profiles.ativo`, `is_supervisor()` estendida, RPCs `desativar_membro_equipe`/`reativar_membro_equipe`, revisão humana e push
+- [ ] 10-02-PLAN.md — Fixture de membro descartável + teste de reatribuição (EQP-01/EQP-04)
+- [ ] 10-03-PLAN.md — Testes de trava: autodesativação, último Supervisor, acesso cortado na requisição seguinte (EQP-02/EQP-03)
+- [ ] 10-04-PLAN.md — Client service_role, mapeamento de erros e Server Actions desativar/reativar
+- [ ] 10-05-PLAN.md — `EquipeList` + `DesativarMembroDialog` + teste de render (D-01/D-02/D-03)
+- [ ] 10-06-PLAN.md — Ligação na tela `/equipe` + verificação humana ao vivo do bloqueio/liberação de login
+
 **UI hint**: yes
 
 ### Phase 11: Funil de Conversão Detalhado
