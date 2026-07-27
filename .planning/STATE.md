@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Gestão de Equipe, Análises de Funil e Filtros
-current_phase: 09
-current_phase_name: filtros-de-estado-e-cidade-estruturados
-status: complete
-stopped_at: Phase 10 context gathered
-last_updated: "2026-07-27T11:36:32.481Z"
-last_activity: 2026-07-26
-last_activity_desc: 09-VERIFICATION.md passed after live human check
+current_phase: 10
+current_phase_name: desativa-o-de-membro-da-equipe
+status: executing
+stopped_at: Phase 11 context gathered
+last_updated: "2026-07-27T19:48:26.661Z"
+last_activity: 2026-07-27
+last_activity_desc: Phase 10 execution started
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 7
+  total_plans: 13
   completed_plans: 7
   percent: 40
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 09 — filtros-de-estado-e-cidade-estruturados
+**Current focus:** Phase 10 — desativa-o-de-membro-da-equipe
 
 ## Current Position
 
-Phase: 09 (filtros-de-estado-e-cidade-estruturados) — VERIFIED ✓
-Plan: 6 of 6
-Status: Phase 9 closed. Next: Phase 10 (Desativação de Membro da Equipe)
-Last activity: 2026-07-26 — 09-VERIFICATION.md passed after live human check
+Phase: 10 (desativa-o-de-membro-da-equipe) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 10
+Last activity: 2026-07-27 — Phase 10 execution started
 
 ## Performance Metrics
 
@@ -216,10 +216,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-27T11:36:32.428Z
-Stopped at: Phase 10 context gathered
+Last session: 2026-07-27T19:48:26.652Z
+Stopped at: Phase 11 context gathered
 Resume file:
-.planning/phases/10-desativa-o-de-membro-da-equipe/10-CONTEXT.md
+.planning/phases/11-funil-de-convers-o-detalhado/11-CONTEXT.md
 
 ## Operator Next Steps
 
