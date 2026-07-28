@@ -553,17 +553,18 @@ export async function getFunilDetalhado(): Promise<FunilDetalhadoRow[]> {
 | A3 | 1.5× the average of the other 6 stages is an appropriate "gargalo" threshold multiplier | D-03 / Code Examples | Low — this is explicitly Claude's discretion per CONTEXT.md, a single numeric literal in one `case`/`coalesce` expression, trivially tunable after the owner sees the table live and judges whether the right stages get flagged |
 | A4 | Backward drag (moving a card to an *earlier* stage) is technically possible today (no CHECK constraint or UI guard prevents it, confirmed via `components/clientes/KanbanBoard.tsx`'s `handleDragEnd`) but is not a normal/expected sales workflow | Pitfall 2 / stage_visits design | Low — the reconstruction already handles revisits correctly (each visit is counted independently via `LEAD()`), so this assumption only affects how *surprising* the resulting numbers might look if backward moves turn out to be common in practice, not correctness |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does "quantidade" mean live count or historical ever-entered count?**
+1. **RESOLVED — Does "quantidade" mean live count or historical ever-entered count?**
    - What we know: CONTEXT.md locks the column list but not this semantic; the historical interpretation gives a self-consistent, funnel-shaped table (Pitfall 5).
    - What's unclear: Whether the project owner pictures this column literally duplicating the existing "clientes por etapa" chart's numbers.
-   - Recommendation: Build the historical/ever-entered version (draft query already does this); the live-count alternative is a one-column swap if a UI review surfaces a mismatch with the owner's mental model. Worth flagging explicitly during `/gsd-ui-phase` (UI-SPEC review) rather than assuming silently.
+   - Recommendation: Build the historical/ever-entered version (draft query already does this); the live-count alternative is a one-column swap if a UI review surfaces a mismatch with the owner's mental model.
+   - **Resolution:** Confirmed during `/gsd-ui-phase` — the approved 11-UI-SPEC.md's table caption and tooltip copy explicitly disambiguate "Quantidade" as the historical/ever-entered count, and Plan 11-01's `must_haves.truths` locks this as the implemented semantic. No live-count fallback needed.
 
-2. **Should Phase 12's "ciclo médio em dias" reuse `dashboard_tempo_ate_fechamento()` directly, or a `responsavel`-parameterized variant?**
+2. **RESOLVED (deferred, not blocking) — Should Phase 12's "ciclo médio em dias" reuse `dashboard_tempo_ate_fechamento()` directly, or a `responsavel`-parameterized variant?**
    - What we know: `ROADMAP.md` states Phase 12 depends on this phase's duration-reconstruction logic.
    - What's unclear: Phase 12 groups by vendedor (like `dashboard_desempenho_vendedor` groups the ganho/perdido dedup CTE by `responsavel`); this phase's RPC returns an ungrouped 2-row result.
-   - Recommendation: No action needed now — flag for Phase 12's own research/planning that the `ultimo_fechamento`-style dedup CTE here is the reusable building block, parameterizable by adding a `group by c.responsavel` the same way `dashboard_desempenho_vendedor` already does relative to `dashboard_ganhos_perdidos`.
+   - **Resolution:** No action needed in Phase 11 — flagged for Phase 12's own research/planning that the `ultimo_fechamento`-style dedup CTE here is the reusable building block, parameterizable by adding a `group by c.responsavel` the same way `dashboard_desempenho_vendedor` already does relative to `dashboard_ganhos_perdidos`.
 
 ## Validation Architecture
 

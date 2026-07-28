@@ -1,9 +1,9 @@
 ---
 phase: 11
 slug: funil-de-convers-o-detalhado
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-07-27
 ---
 
@@ -68,11 +68,11 @@ The one thing this phase's VERIFICATION.md should still expect a personal live-b
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (built inline in Plan 11-01: tests written RED in Task 1, driven GREEN in Task 3 — TDD-in-plan pattern, no separate Wave 0 split needed)
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved (2026-07-27, per gsd-plan-checker's Nyquist Dimension 8 PASS)
