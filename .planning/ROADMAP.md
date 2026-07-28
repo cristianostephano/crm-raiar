@@ -124,7 +124,15 @@ Plans:
   3. O dashboard mostra a média de dias entre entrada no funil e "ganho", separada da média de dias até "perdido".
   4. Vendedor vê o funil detalhado só com os próprios clientes; Supervisor vê o de todo o time — mesma regra de visibilidade do dashboard atual.
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Migration com as RPCs `dashboard_funil_detalhado()` e `dashboard_tempo_ate_fechamento()` + testes de integração + push (onda 1)
+- [ ] 11-02-PLAN.md — Leitores tipados e Server Actions das duas RPCs novas (onda 2)
+- [ ] 11-03-PLAN.md — Componente `FunilDetalhadoTable` (tabela por etapa + destaque de gargalo) (onda 3)
+- [ ] 11-04-PLAN.md — Componente `TempoAteFechamentoCards` (médias de dias até ganho/perdido) (onda 3)
+- [ ] 11-05-PLAN.md — Montagem no `DashboardClient` + verificação humana no navegador (onda 4)
+
 **UI hint**: yes
 
 ### Phase 12: Comparativo por Vendedor
