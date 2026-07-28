@@ -100,10 +100,11 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
   3. Um membro desativado não consegue mais entrar no sistema, mas o nome dele e o histórico antigo continuam visíveis e intactos.
   4. Clientes já ganhos ou perdidos do vendedor desativado continuam atribuídos a ele (contam nos números históricos); só os clientes em andamento são transferidos ao substituto.
 
-**Plans**: 6 plans
+**Plans**: 1/6 plans executed
 
 Plans:
-- [ ] 10-01-PLAN.md — Migration 0008: `profiles.ativo`, `is_supervisor()` estendida, RPCs `desativar_membro_equipe`/`reativar_membro_equipe`, revisão humana e push
+
+- [x] 10-01-PLAN.md — Migration 0008: `profiles.ativo`, `is_supervisor()` estendida, RPCs `desativar_membro_equipe`/`reativar_membro_equipe`, revisão humana e push
 - [ ] 10-02-PLAN.md — Fixture de membro descartável + teste de reatribuição (EQP-01/EQP-04)
 - [ ] 10-03-PLAN.md — Testes de trava: autodesativação, último Supervisor, acesso cortado na requisição seguinte (EQP-02/EQP-03)
 - [ ] 10-04-PLAN.md — Client service_role, mapeamento de erros e Server Actions desativar/reativar
@@ -127,6 +128,7 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
+
 - [ ] 11-01-PLAN.md — Migration com as RPCs `dashboard_funil_detalhado()` e `dashboard_tempo_ate_fechamento()` + testes de integração + push (onda 1)
 - [ ] 11-02-PLAN.md — Leitores tipados e Server Actions das duas RPCs novas (onda 2)
 - [ ] 11-03-PLAN.md — Componente `FunilDetalhadoTable` (tabela por etapa + destaque de gargalo) (onda 3)
@@ -166,7 +168,7 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`.planni
 | 7. Importação — Confirmação e Gravação | v1.1 | 3/3 | Complete | 2026-07-25 |
 | 8. Rolagem por Coluna no Kanban | v1.2 | 1/1 | Complete   | 2026-07-26 |
 | 9. Filtros de Estado e Cidade Estruturados | v1.2 | 6/6 | Complete | 2026-07-26 |
-| 10. Desativação de Membro da Equipe | v1.2 | 0/? | Not started | - |
+| 10. Desativação de Membro da Equipe | v1.2 | 1/6 | In Progress|  |
 | 11. Funil de Conversão Detalhado | v1.2 | 0/? | Not started | - |
 | 12. Comparativo por Vendedor | v1.2 | 0/? | Not started | - |
 </content>
