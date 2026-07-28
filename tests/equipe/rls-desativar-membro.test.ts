@@ -52,6 +52,31 @@ async function getUserId(client: Awaited<ReturnType<typeof signInAs>>): Promise<
   return user.id
 }
 
+/**
+ * `signInAs` for a freshly created fixture can intermittently fail against
+ * the live shared test project (documented Supabase Auth rate-limiting
+ * history — STATE.md, Phase 06-03 entry). Bounded retry, not a raised
+ * global timeout, so a real credential/logic bug still fails fast.
+ */
+async function signInWithRetry(
+  email: string,
+  password: string,
+  attempts = 3
+): Promise<Awaited<ReturnType<typeof signInAs>>> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await signInAs(email, password)
+    } catch (error) {
+      lastError = error
+      if (attempt < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+    }
+  }
+  throw lastError
+}
+
 const fixtureIdsToClean: string[] = []
 
 afterAll(async () => {
@@ -146,5 +171,79 @@ describe("RLS/behavior: desativar_membro_equipe guards (EQP-02)", () => {
       .single()
     expect(fixtureRowError).toBeNull()
     expect(fixtureRow!.ativo).toBe(false)
+  })
+})
+
+describe("RLS/behavior: is_supervisor() / RLS re-evaluation after deactivation (EQP-03)", () => {
+  it("is_supervisor() flips to false on the very next request with the same still-valid session (EQP-03)", async () => {
+    const fixtureSupervisor = await createTestMember("supervisor", "sessao")
+    fixtureIdsToClean.push(fixtureSupervisor.id)
+
+    const vendedorA = await signInAs(
+      SEED_ACCOUNTS.vendedorA.email,
+      SEED_ACCOUNTS.vendedorA.password
+    )
+    const vendedorAId = await getUserId(vendedorA)
+
+    // Step 2: sign in as the fixture and keep this exact client. It holds a
+    // real, freshly issued access token that is never refreshed below.
+    const fixtureClient = await signInWithRetry(
+      fixtureSupervisor.email,
+      fixtureSupervisor.password
+    )
+
+    // Step 3: baseline — is_supervisor() is true before deactivation.
+    const baseline = await fixtureClient.rpc("is_supervisor")
+    expect(baseline.error).toBeNull()
+    expect(baseline.data).toBe(true)
+
+    // Step 4: a DIFFERENT client (the seeded Supervisor) deactivates the
+    // fixture.
+    const supervisor = await signInAs(
+      SEED_ACCOUNTS.supervisor.email,
+      SEED_ACCOUNTS.supervisor.password
+    )
+    const { error: desativarError } = await supervisor.rpc("desativar_membro_equipe", {
+      p_profile_id: fixtureSupervisor.id,
+      p_novo_responsavel_id: vendedorAId,
+    })
+    expect(desativarError).toBeNull()
+
+    // Step 5: WITHOUT re-authenticating, WITHOUT any session-refresh call,
+    // and WITHOUT creating a new client — call is_supervisor() again on the
+    // SAME fixture client from step 2. Skipping any re-authentication here
+    // is deliberate: it is what proves RLS re-evaluates per request rather
+    // than trusting the claims baked into the token, and it is the reason
+    // this phase treats the Postgres-side `ativo` flag — not the Auth ban —
+    // as the primary cutoff.
+    const afterDeactivation = await fixtureClient.rpc("is_supervisor")
+    expect(afterDeactivation.error).toBeNull()
+    expect(afterDeactivation.data).toBe(false)
+
+    // Step 6: still on the same unrefreshed client, attempt a
+    // Supervisor-only write. `categorias`' INSERT policy is
+    // `with check (is_supervisor())` (0002_clientes_and_funil.sql), so this
+    // is the cheapest probe that the cascade reached a pre-existing policy
+    // with zero policy edits.
+    const uniqueNome = `Teste EQP-03 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const { data: insertedCategoria, error: insertError } = await fixtureClient
+      .from("categorias")
+      .insert({ nome: uniqueNome })
+      .select("id")
+
+    expect(insertError).not.toBeNull()
+
+    // Defensive: if a row unexpectedly came back, delete it via
+    // serviceClient() so a failing assertion above cannot pollute the real
+    // categoria list.
+    if (insertedCategoria && insertedCategoria.length > 0) {
+      await serviceClient()
+        .from("categorias")
+        .delete()
+        .in(
+          "id",
+          insertedCategoria.map((row) => row.id)
+        )
+    }
   })
 })
