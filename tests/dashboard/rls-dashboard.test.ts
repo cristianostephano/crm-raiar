@@ -438,7 +438,14 @@ describe("RLS: Supervisor sees every vendedor's desempenho (DSH-07)", () => {
 
     // Supervisor sees every vendedor's clientes — the new cliente's stage
     // grows the "quantidade" count relative to the reading taken before.
-    expect(afterSupervisorMap.aguardando_contato.quantidade).toBe(
+    // Uses >= (not exact +1) because dashboard_funil_detalhado() has no
+    // period/responsavel filter — it's a whole-history snapshot across
+    // every vendedor, so it can only ever grow or stay flat between two
+    // reads, never move in the other direction from this test's own
+    // insert; other suites running concurrently against the same live
+    // project may also add clientes in this window, which is fine as long
+    // as the number never fails to reflect our own contribution.
+    expect(afterSupervisorMap.aguardando_contato.quantidade).toBeGreaterThanOrEqual(
       beforeSupervisorMap.aguardando_contato.quantidade + 1
     )
     // Vendedor B keeps seeing exactly the same numbers — Vendedor A's new
