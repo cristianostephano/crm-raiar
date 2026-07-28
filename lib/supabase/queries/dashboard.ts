@@ -2,11 +2,13 @@ import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * Typed .rpc() readers for the five dashboard_* aggregate functions (0003
- * migration). Mirrors lib/supabase/queries/clientes.ts's
- * getClientesAgrupadosPorEtapa() throw-on-error posture — a dashboard chart
- * that silently renders empty on a real fetch error is worse than an
- * explicit failed-fetch state (UI-SPEC's per-card error handling).
+ * Typed .rpc() readers for the seven dashboard_* aggregate functions (the
+ * five from the 0003 migration plus dashboard_funil_detalhado/
+ * dashboard_tempo_ate_fechamento from 0009, Phase 11). Mirrors
+ * lib/supabase/queries/clientes.ts's getClientesAgrupadosPorEtapa()
+ * throw-on-error posture — a dashboard chart that silently renders empty on
+ * a real fetch error is worse than an explicit failed-fetch state (UI-SPEC's
+ * per-card error handling).
  *
  * NO manual responsavel/role filtering anywhere in this file — every
  * dashboard_* function is SECURITY INVOKER, so RLS on clientes/historico
@@ -151,6 +153,72 @@ export async function getProspeccaoPorCategoria(
       id: row.categoria_id,
       nome: row.categoria_nome,
       total: Number(row.total),
+    })
+  )
+}
+
+export type FunilDetalhadoRow = {
+  etapa: EtapaKey
+  quantidade: number
+  avancouCount: number
+  avancouPct: number | null
+  perdidosCount: number
+  perdidosPct: number | null
+  tempoMedioDias: number | null
+  gargalo: boolean
+}
+
+/** FNL-01: live snapshot of all 7 etapas, no period parameters. */
+export async function getFunilDetalhado(): Promise<FunilDetalhadoRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("dashboard_funil_detalhado")
+
+  if (error) {
+    throw new Error(`Falha ao carregar funil detalhado: ${error.message}`)
+  }
+
+  return (data ?? []).map(
+    (row: {
+      etapa: EtapaKey
+      quantidade: number | string
+      avancou_count: number | string
+      avancou_pct: number | string | null
+      perdidos_count: number | string
+      perdidos_pct: number | string | null
+      tempo_medio_dias: number | string | null
+      gargalo: boolean
+    }) => ({
+      etapa: row.etapa,
+      quantidade: Number(row.quantidade),
+      avancouCount: Number(row.avancou_count),
+      avancouPct: row.avancou_pct === null ? null : Number(row.avancou_pct),
+      perdidosCount: Number(row.perdidos_count),
+      perdidosPct: row.perdidos_pct === null ? null : Number(row.perdidos_pct),
+      tempoMedioDias:
+        row.tempo_medio_dias === null ? null : Number(row.tempo_medio_dias),
+      gargalo: row.gargalo,
+    })
+  )
+}
+
+export type TempoAteFechamentoRow = {
+  status: "ganho" | "perdido"
+  mediaDias: number
+}
+
+/** FNL-02: live snapshot (ganho/perdido separated), no period parameters. */
+export async function getTempoAteFechamento(): Promise<TempoAteFechamentoRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("dashboard_tempo_ate_fechamento")
+
+  if (error) {
+    throw new Error(`Falha ao carregar tempo até fechamento: ${error.message}`)
+  }
+
+  return (data ?? []).map(
+    (row: { status: "ganho" | "perdido"; media_dias: number | string }) => ({
+      status: row.status,
+      mediaDias: Number(row.media_dias),
     })
   )
 }
