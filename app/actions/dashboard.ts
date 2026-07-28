@@ -4,13 +4,17 @@ import { createClient } from "@/lib/supabase/server"
 import {
   getClientesPorEtapa,
   getDesempenhoVendedor,
+  getFunilDetalhado,
   getGanhosPerdidos,
   getProspeccaoPorCategoria,
   getProspeccaoPorProduto,
+  getTempoAteFechamento,
   type ClientesPorEtapaRow,
   type DesempenhoVendedorRow,
+  type FunilDetalhadoRow,
   type GanhosPerdidosRow,
   type ProspeccaoRow,
+  type TempoAteFechamentoRow,
 } from "@/lib/supabase/queries/dashboard"
 
 /**
@@ -170,6 +174,62 @@ export async function getProspeccaoPorCategoriaAction(
 
   try {
     return { data: await getProspeccaoPorCategoria(inicio, fim) }
+  } catch {
+    return {
+      error: {
+        code: "fetch_falhou",
+        message:
+          "Não foi possível carregar os dados do dashboard. Tente novamente.",
+      },
+    }
+  }
+}
+
+export type GetFunilDetalhadoResult =
+  | { data: FunilDetalhadoRow[]; error?: undefined }
+  | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
+
+/** FNL-01 — live snapshot, no period parameter. */
+export async function getFunilDetalhadoAction(): Promise<GetFunilDetalhadoResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: "Sessão expirada." } }
+  }
+
+  try {
+    return { data: await getFunilDetalhado() }
+  } catch {
+    return {
+      error: {
+        code: "fetch_falhou",
+        message:
+          "Não foi possível carregar os dados do dashboard. Tente novamente.",
+      },
+    }
+  }
+}
+
+export type GetTempoAteFechamentoResult =
+  | { data: TempoAteFechamentoRow[]; error?: undefined }
+  | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
+
+/** FNL-02 — live snapshot, no period parameter. */
+export async function getTempoAteFechamentoAction(): Promise<GetTempoAteFechamentoResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: "Sessão expirada." } }
+  }
+
+  try {
+    return { data: await getTempoAteFechamento() }
   } catch {
     return {
       error: {
