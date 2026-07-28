@@ -28,12 +28,24 @@ describe("Phase 10 Plan 1: migration 0008 landed in the live database", () => {
       SEED_ACCOUNTS.supervisor.email,
       SEED_ACCOUNTS.supervisor.password
     )
-    const { data, error } = await supervisor.from("profiles").select("id, ativo")
+    const { data, error } = await supervisor
+      .from("profiles")
+      .select("id, email, ativo")
 
     expect(error).toBeNull()
     expect(data).not.toBeNull()
-    expect((data ?? []).length).toBeGreaterThan(0)
-    for (const row of data ?? []) {
+
+    // Scoped to the three seeded accounts only (10-02): a disposable
+    // `equipe-fixture-` member may legitimately be inactive mid-run, since
+    // deactivating a team member is exactly what this phase's tests exercise.
+    const seedEmails: string[] = [
+      SEED_ACCOUNTS.supervisor.email,
+      SEED_ACCOUNTS.vendedorA.email,
+      SEED_ACCOUNTS.vendedorB.email,
+    ]
+    const seededRows = (data ?? []).filter((row) => seedEmails.includes(row.email))
+    expect(seededRows.length).toBeGreaterThan(0)
+    for (const row of seededRows) {
       expect(row.ativo).toBe(true)
     }
   })
