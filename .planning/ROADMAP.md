@@ -42,7 +42,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
 - [x] **Phase 8: Rolagem por Coluna no Kanban** - Cada coluna do kanban ganha altura fixa e rolagem própria, evitando a página infinita quando há muitos clientes. (completed 2026-07-26)
 - [x] **Phase 9: Filtros de Estado e Cidade Estruturados** - Estado (27 siglas) e Cidade (lista IBGE dependente do Estado) viram listas estruturadas em cadastro, edição, filtro e importação. (completed 2026-07-26)
 - [ ] **Phase 10: Desativação de Membro da Equipe** - Supervisor desativa um membro transferindo antes os clientes em andamento, com trava contra desativar o último Supervisor.
-- [ ] **Phase 11: Funil de Conversão Detalhado** - Dashboard ganha o funil de conversão por etapa (negócios, avanço%, perdidos, tempo médio) e a média de dias até ganhar/perder.
+- [x] **Phase 11: Funil de Conversão Detalhado** - Dashboard ganha o funil de conversão por etapa (negócios, avanço%, perdidos, tempo médio) e a média de dias até ganhar/perder. (completed 2026-07-28)
 - [ ] **Phase 12: Comparativo por Vendedor** - Supervisor vê uma tabela comparando os vendedores ativos (conversão, negócios iniciados/ganhos, ciclo médio).
 
 ## Phase Details
@@ -125,7 +125,7 @@ Plans:
   3. O dashboard mostra a média de dias entre entrada no funil e "ganho", separada da média de dias até "perdido".
   4. Vendedor vê o funil detalhado só com os próprios clientes; Supervisor vê o de todo o time — mesma regra de visibilidade do dashboard atual.
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans complete
 
 Plans:
 
@@ -133,7 +133,7 @@ Plans:
 - [x] 11-02-PLAN.md — Leitores tipados e Server Actions das duas RPCs novas (onda 2)
 - [x] 11-03-PLAN.md — Componente `FunilDetalhadoTable` (tabela por etapa + destaque de gargalo) (onda 3)
 - [x] 11-04-PLAN.md — Componente `TempoAteFechamentoCards` (médias de dias até ganho/perdido) (onda 3)
-- [ ] 11-05-PLAN.md — Montagem no `DashboardClient` + verificação humana no navegador (onda 4)
+- [x] 11-05-PLAN.md — Montagem no `DashboardClient` + verificação humana no navegador (onda 4)
 
 **UI hint**: yes
 
@@ -169,7 +169,7 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`.planni
 | 8. Rolagem por Coluna no Kanban | v1.2 | 1/1 | Complete   | 2026-07-26 |
 | 9. Filtros de Estado e Cidade Estruturados | v1.2 | 6/6 | Complete | 2026-07-26 |
 | 10. Desativação de Membro da Equipe | v1.2 | 2/6 | In Progress|  |
-| 11. Funil de Conversão Detalhado | v1.2 | 4/5 | In Progress|  |
+| 11. Funil de Conversão Detalhado | v1.2 | 5/5 | Complete   | 2026-07-28 |
 | 12. Comparativo por Vendedor | v1.2 | 0/? | Not started | - |
 </content>
 </invoke>
