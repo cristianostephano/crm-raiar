@@ -22,6 +22,9 @@ O Dashboard ganha uma tabela nova, visível só para o Supervisor, comparando os
 ### Fórmula de "taxa de conversão"
 - **D-03:** `ganhos / (ganhos + perdidos)` — mede eficácia de fechamento entre negócios já decididos, ignorando os que ainda estão em andamento. Mesma fórmula já usada em `lib/dashboard/periodo.ts`'s `taxaConversao()` para os cards de Ganhos/Perdidos existentes — reaproveitar essa função, não reinventar.
 
+### Base do "ciclo médio em dias"
+- **D-04:** Conta só os negócios GANHOS (não inclui os perdidos) — mede quanto tempo leva pra fechar uma venda de verdade, o sentido mais comum de "ciclo de vendas". Resolvido diretamente com o usuário após a pesquisa técnica ter sinalizado essa ambiguidade explicitamente (RESEARCH.md Open Question 1).
+
 ### Claude's Discretion
 - Ordem das linhas na tabela (alfabético por nome, ou por desempenho) — decisão de UX sem impacto funcional, delegada ao UI-SPEC.
 - Nome e assinatura exata da nova RPC (uma RPC nova dedicada, ou extensão de `dashboard_desempenho_vendedor()` existente) — decisão técnica, ver Canonical References.
