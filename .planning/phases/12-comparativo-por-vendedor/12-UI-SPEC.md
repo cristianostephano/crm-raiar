@@ -1,7 +1,7 @@
 ---
 phase: 12
 slug: comparativo-por-vendedor
-status: draft
+status: approved
 shadcn_initialized: true
 preset: base-nova (baseColor neutral, cssVariables true) — already initialized project-wide, unchanged by this phase
 created: 2026-08-03
@@ -126,9 +126,9 @@ Accent reserved for: nothing new in this phase (no primary CTA, no destructive a
 
 **No bottleneck/warning row highlight:** unlike `FunilDetalhadoTable`'s D-03 amber "Gargalo" treatment, every row here renders with default `TableRow` styling — no conditional border, no badge. This phase's success criteria (ROADMAP.md Phase 12) define no low-performance flag; do not invent one.
 
-**Loading state:** `Skeleton className="h-[280px] w-full"` inside `CardContent` — a comparison table with N active-vendedor rows (typically fewer rows than `FunilDetalhadoTable`'s fixed 7 etapas) uses the same `h-[280px]` skeleton height already established as the project's standard "medium" card skeleton (matches `ClientesPorEtapaChart`'s chart skeleton and `DesempenhoVendedorChart`'s `MIN_HEIGHT`).
+**Loading state:** `Skeleton className="h-[320px] w-full"` inside `CardContent` — matches `FunilDetalhadoTable`'s actual established table-card skeleton height exactly (verified against `FunilDetalhadoTable.tsx`; `280px` is a different, chart-shaped precedent — `ClientesPorEtapaChart`/`DesempenhoVendedorChart` — not applicable to a table-shaped component).
 
-**Error state:** identical structure/copy to `FunilDetalhadoTable`'s error branch — centered `flex h-[280px] w-full flex-col items-center justify-center gap-3 text-center` with the exact retry copy/button from the Copywriting Contract above, its own independent `reloadKey`/`FetchState` (never blocks the rest of `DashboardClient` from rendering, matching every other dashboard card's isolation).
+**Error state:** identical structure/copy to `FunilDetalhadoTable`'s error branch — centered `flex h-[320px] w-full flex-col items-center justify-center gap-3 text-center` with the exact retry copy/button from the Copywriting Contract above, its own independent `reloadKey`/`FetchState` (never blocks the rest of `DashboardClient` from rendering, matching every other dashboard card's isolation).
 
 **Empty state:** when the active-vendedor row list itself is empty (zero rows returned by the RPC — edge case, e.g. every vendedor deactivated), render the same centered empty message pattern as `FunilDetalhadoTable` ("Nenhum vendedor ativo no momento.") INSTEAD OF an empty table — do not render a table with zero rows and no explanation. This is distinct from the "zero-clientes row" case above (an active vendedor who simply has no clientes yet still gets a full dashed row, per RESEARCH.md Open Question 2 — only the "there are no active vendedores at all" case triggers this empty state).
 
@@ -158,11 +158,11 @@ Insert `ComparativoVendedorTable` (gated by `{isSupervisor ? <ComparativoVendedo
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS (fixed — loading/error height corrected to `h-[320px]`, matching `FunilDetalhadoTable`'s actual table-card precedent; the `280px` chart-shaped value and its miscitation removed)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved (2026-07-28, after Visuals fix)
