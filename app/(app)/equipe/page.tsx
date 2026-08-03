@@ -1,13 +1,9 @@
 import { redirect } from "next/navigation"
 
 import { InviteUserForm } from "@/components/auth/InviteUserForm"
-import { Badge } from "@/components/ui/badge"
+import { EquipeList } from "@/components/equipe/EquipeList"
+import { type EquipeMember } from "@/lib/equipe/membros"
 import { createClient } from "@/lib/supabase/server"
-
-const ROLE_LABELS: Record<string, string> = {
-  supervisor: "Supervisor",
-  vendedor: "Vendedor",
-}
 
 /**
  * Supervisor-only "Gerenciar equipe" screen (AUTH-02, D-10). Redirects any
@@ -36,9 +32,9 @@ export default async function EquipePage() {
     redirect("/")
   }
 
-  const { data: members } = await supabase
+  const { data: members }: { data: EquipeMember[] | null } = await supabase
     .from("profiles")
-    .select("id, nome, sobrenome, email, role")
+    .select("id, nome, sobrenome, email, role, ativo")
     .order("nome", { ascending: true })
 
   const hasMembers = (members?.length ?? 0) > 0
@@ -51,34 +47,10 @@ export default async function EquipePage() {
       </div>
 
       {hasMembers ? (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary text-secondary-foreground">
-              <tr>
-                <th className="px-4 py-2 text-left font-semibold">Nome</th>
-                <th className="px-4 py-2 text-left font-semibold">
-                  Sobrenome
-                </th>
-                <th className="px-4 py-2 text-left font-semibold">Papel</th>
-                <th className="px-4 py-2 text-left font-semibold">E-mail</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members!.map((member) => (
-                <tr key={member.id} className="border-t">
-                  <td className="px-4 py-2">{member.nome}</td>
-                  <td className="px-4 py-2">{member.sobrenome}</td>
-                  <td className="px-4 py-2">
-                    <Badge variant="secondary">
-                      {ROLE_LABELS[member.role] ?? member.role}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2">{member.email}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        // currentUserId lets EquipeList hide the Desativar action on the
+        // caller's own row (D-01) — an affordance only; the RPC refuses
+        // self-deactivation regardless of what this prop drives.
+        <EquipeList members={members ?? []} currentUserId={user.id} />
       ) : (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-16 text-center">
           <p className="text-base font-semibold">
