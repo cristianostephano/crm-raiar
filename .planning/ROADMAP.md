@@ -41,7 +41,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
 
 - [x] **Phase 8: Rolagem por Coluna no Kanban** - Cada coluna do kanban ganha altura fixa e rolagem própria, evitando a página infinita quando há muitos clientes. (completed 2026-07-26)
 - [x] **Phase 9: Filtros de Estado e Cidade Estruturados** - Estado (27 siglas) e Cidade (lista IBGE dependente do Estado) viram listas estruturadas em cadastro, edição, filtro e importação. (completed 2026-07-26)
-- [ ] **Phase 10: Desativação de Membro da Equipe** - Supervisor desativa um membro transferindo antes os clientes em andamento, com trava contra desativar o último Supervisor.
+- [x] **Phase 10: Desativação de Membro da Equipe** - Supervisor desativa um membro transferindo antes os clientes em andamento, com trava contra desativar o último Supervisor. (completed 2026-08-03)
 - [x] **Phase 11: Funil de Conversão Detalhado** - Dashboard ganha o funil de conversão por etapa (negócios, avanço%, perdidos, tempo médio) e a média de dias até ganhar/perder. (completed 2026-07-28)
 - [ ] **Phase 12: Comparativo por Vendedor** - Supervisor vê uma tabela comparando os vendedores ativos (conversão, negócios iniciados/ganhos, ciclo médio).
 
@@ -100,7 +100,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
   3. Um membro desativado não consegue mais entrar no sistema, mas o nome dele e o histórico antigo continuam visíveis e intactos.
   4. Clientes já ganhos ou perdidos do vendedor desativado continuam atribuídos a ele (contam nos números históricos); só os clientes em andamento são transferidos ao substituto.
 
-**Plans**: 5/6 plans executed
+**Plans**: 6/6 plans complete
 
 Plans:
 
@@ -109,7 +109,7 @@ Plans:
 - [x] 10-03-PLAN.md — Testes de trava: autodesativação, último Supervisor, acesso cortado na requisição seguinte (EQP-02/EQP-03)
 - [x] 10-04-PLAN.md — Client service_role, mapeamento de erros e Server Actions desativar/reativar
 - [x] 10-05-PLAN.md — `EquipeList` + `DesativarMembroDialog` + teste de render (D-01/D-02/D-03)
-- [ ] 10-06-PLAN.md — Ligação na tela `/equipe` + verificação humana ao vivo do bloqueio/liberação de login
+- [x] 10-06-PLAN.md — Ligação na tela `/equipe` + verificação humana ao vivo do bloqueio/liberação de login
 
 **UI hint**: yes
 
@@ -168,7 +168,7 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`.planni
 | 7. Importação — Confirmação e Gravação | v1.1 | 3/3 | Complete | 2026-07-25 |
 | 8. Rolagem por Coluna no Kanban | v1.2 | 1/1 | Complete   | 2026-07-26 |
 | 9. Filtros de Estado e Cidade Estruturados | v1.2 | 6/6 | Complete | 2026-07-26 |
-| 10. Desativação de Membro da Equipe | v1.2 | 5/6 | In Progress|  |
+| 10. Desativação de Membro da Equipe | v1.2 | 6/6 | Complete   | 2026-08-03 |
 | 11. Funil de Conversão Detalhado | v1.2 | 5/5 | Complete   | 2026-07-28 |
 | 12. Comparativo por Vendedor | v1.2 | 0/? | Not started | - |
 </content>
