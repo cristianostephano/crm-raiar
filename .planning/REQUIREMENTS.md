@@ -9,16 +9,16 @@ Requisitos do marco v1.2 (Gestão de Equipe, Análises de Funil e Filtros). Cada
 
 ### Equipe (EQP)
 
-- [ ] **EQP-01**: Supervisor desativa um membro da equipe, escolhendo antes um vendedor substituto pra herdar os clientes em andamento
-- [ ] **EQP-02**: Sistema bloqueia a desativação do último Supervisor ativo
-- [ ] **EQP-03**: Membro desativado não consegue mais entrar no sistema; nome e histórico antigo permanecem intactos
-- [ ] **EQP-04**: Clientes já fechados (ganho/perdido) do vendedor desativado continuam contando pra ele nos números históricos — só os em andamento são transferidos
+- [x] **EQP-01**: Supervisor desativa um membro da equipe, escolhendo antes um vendedor substituto pra herdar os clientes em andamento
+- [x] **EQP-02**: Sistema bloqueia a desativação do último Supervisor ativo
+- [x] **EQP-03**: Membro desativado não consegue mais entrar no sistema; nome e histórico antigo permanecem intactos
+- [x] **EQP-04**: Clientes já fechados (ganho/perdido) do vendedor desativado continuam contando pra ele nos números históricos — só os em andamento são transferidos
 
 ### Funil detalhado (FNL)
 
-- [ ] **FNL-01**: Dashboard mostra um funil de conversão detalhado por etapa: quantidade de clientes, % que avançou pra próxima etapa, quantos foram perdidos naquela etapa (contagem e taxa), e tempo médio parado na etapa (incluindo clientes que ainda estão parados agora)
-- [ ] **FNL-02**: Dashboard mostra a média de dias entre entrada no funil e "ganho", separada da média de dias até "perdido"
-- [ ] **FNL-03**: O funil detalhado segue a mesma regra de visibilidade do Dashboard atual (vendedor só o próprio, supervisor tudo)
+- [x] **FNL-01**: Dashboard mostra um funil de conversão detalhado por etapa: quantidade de clientes, % que avançou pra próxima etapa, quantos foram perdidos naquela etapa (contagem e taxa), e tempo médio parado na etapa (incluindo clientes que ainda estão parados agora)
+- [x] **FNL-02**: Dashboard mostra a média de dias entre entrada no funil e "ganho", separada da média de dias até "perdido"
+- [x] **FNL-03**: O funil detalhado segue a mesma regra de visibilidade do Dashboard atual (vendedor só o próprio, supervisor tudo)
 
 ### Comparativo por vendedor (VEND)
 
@@ -68,13 +68,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOC-02 | Phase 9 | Complete |
 | LOC-03 | Phase 9 | Complete |
 | LOC-04 | Phase 9 | Complete |
-| EQP-01 | Phase 10 | Pending |
-| EQP-02 | Phase 10 | Pending |
-| EQP-03 | Phase 10 | Pending |
-| EQP-04 | Phase 10 | Pending |
-| FNL-01 | Phase 11 | Pending |
-| FNL-02 | Phase 11 | Pending |
-| FNL-03 | Phase 11 | Pending |
+| EQP-01 | Phase 10 | Complete |
+| EQP-02 | Phase 10 | Complete |
+| EQP-03 | Phase 10 | Complete |
+| EQP-04 | Phase 10 | Complete |
+| FNL-01 | Phase 11 | Complete |
+| FNL-02 | Phase 11 | Complete |
+| FNL-03 | Phase 11 | Complete |
 | VEND-01 | Phase 12 | Pending |
 
 **Coverage:**
