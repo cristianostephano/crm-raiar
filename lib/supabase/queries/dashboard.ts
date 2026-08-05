@@ -1,10 +1,12 @@
+import { taxaConversao } from "@/lib/dashboard/periodo"
 import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * Typed .rpc() readers for the seven dashboard_* aggregate functions (the
- * five from the 0003 migration plus dashboard_funil_detalhado/
- * dashboard_tempo_ate_fechamento from 0009, Phase 11). Mirrors
+ * Typed .rpc() readers for the eight dashboard_* aggregate functions (the
+ * five from the 0003 migration, dashboard_funil_detalhado/
+ * dashboard_tempo_ate_fechamento from 0009 in Phase 11, and
+ * dashboard_comparativo_vendedor from 0011 in this phase). Mirrors
  * lib/supabase/queries/clientes.ts's getClientesAgrupadosPorEtapa()
  * throw-on-error posture — a dashboard chart that silently renders empty on
  * a real fetch error is worse than an explicit failed-fetch state (UI-SPEC's
@@ -14,7 +16,8 @@ import { createClient } from "@/lib/supabase/server"
  * dashboard_* function is SECURITY INVOKER, so RLS on clientes/historico
  * already scopes every result to the caller automatically (D-07, same
  * principle as getClientesAgrupadosPorEtapa's own "no manual responsavel
- * filter" comment).
+ * filter" comment). The list of ATIVO vendedores is also decided only in
+ * SQL: this file never filters by `ativo`.
  */
 
 // Postgres `bigint` columns come back from PostgREST as strings (to avoid
@@ -220,6 +223,52 @@ export async function getTempoAteFechamento(): Promise<TempoAteFechamentoRow[]> 
       status: row.status,
       mediaDias: Number(row.media_dias),
     })
+  )
+}
+
+export type ComparativoVendedorRow = {
+  responsavel: string
+  responsavelNome: string | null
+  negociosIniciados: number
+  ganho: number
+  perdido: number
+  cicloMedioDias: number | null
+  // Computed here via taxaConversao() (D-03) — the RPC never returns this
+  // column. Holds the raw ratio (0 to 1), never a percentage.
+  taxaConversao: number | null
+}
+
+/** VEND-01: live snapshot, whole history, no period parameters (D-01/D-02). */
+export async function getComparativoVendedor(): Promise<ComparativoVendedorRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("dashboard_comparativo_vendedor")
+
+  if (error) {
+    throw new Error(`Falha ao carregar comparativo por vendedor: ${error.message}`)
+  }
+
+  return (data ?? []).map(
+    (row: {
+      responsavel: string
+      responsavel_nome: string | null
+      negocios_iniciados: number | string
+      ganho: number | string
+      perdido: number | string
+      ciclo_medio_dias: number | string | null
+    }) => {
+      const ganho = Number(row.ganho)
+      const perdido = Number(row.perdido)
+      return {
+        responsavel: row.responsavel,
+        responsavelNome: row.responsavel_nome,
+        negociosIniciados: Number(row.negocios_iniciados),
+        ganho,
+        perdido,
+        cicloMedioDias:
+          row.ciclo_medio_dias === null ? null : Number(row.ciclo_medio_dias),
+        taxaConversao: taxaConversao(ganho, perdido),
+      }
+    }
   )
 }
 
