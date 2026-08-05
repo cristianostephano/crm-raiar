@@ -17,6 +17,10 @@ import { serviceClient, signInAs } from "../helpers/supabase-test-clients"
  * Extended in Phase 11 to also cover `dashboard_funil_detalhado()` and
  * `dashboard_tempo_ate_fechamento()` (FNL-03) — both take zero arguments,
  * unlike the period-filtered RPCs above them in the same assertion arrays.
+ *
+ * Extended in Phase 12 to also cover `dashboard_comparativo_vendedor()`
+ * (VEND-01) — another zero-argument RPC, added to the same before/after
+ * arrays plus a dedicated cross-vendedor `it()` block below.
  */
 
 function uniqueRazaoSocial(label: string): string {
@@ -111,6 +115,14 @@ type FunilDetalhadoRow = {
   gargalo: boolean
 }
 type TempoAteFechamentoRow = { status: string; media_dias: number | string }
+type ComparativoVendedorRow = {
+  responsavel: string
+  responsavel_nome: string | null
+  negocios_iniciados: number | string
+  ganho: number | string
+  perdido: number | string
+  ciclo_medio_dias: number | string | null
+}
 
 function toMap<T extends Record<string, unknown>>(
   rows: T[],
@@ -166,6 +178,27 @@ function toTempoFechamentoMap(
   )
 }
 
+/**
+ * Normalizes dashboard_comparativo_vendedor() rows for deep-equality
+ * comparison (VEND-01) — same "before/after must be identical" spirit as
+ * toFunilDetalhadoMap above, keyed by responsavel (id) since row order is
+ * alphabetical by name, not stable enough to compare by position.
+ */
+function toComparativoVendedorMap(rows: ComparativoVendedorRow[]) {
+  return Object.fromEntries(
+    rows.map((row) => [
+      row.responsavel,
+      {
+        negociosIniciados: Number(row.negocios_iniciados),
+        ganho: Number(row.ganho),
+        perdido: Number(row.perdido),
+        cicloMedioDias:
+          row.ciclo_medio_dias === null ? null : Number(row.ciclo_medio_dias),
+      },
+    ])
+  )
+}
+
 describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () => {
   it("Vendedor B sees zero contribution from Vendedor A's clientes across every dashboard RPC", async () => {
     const vendedorA = await signInAs(
@@ -190,6 +223,7 @@ describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () =
       beforeCategoria,
       beforeFunilDetalhado,
       beforeTempoFechamento,
+      beforeComparativoVendedor,
     ] = await Promise.all([
       vendedorB.rpc("dashboard_clientes_por_etapa"),
       vendedorB.rpc("dashboard_ganhos_perdidos", {
@@ -208,10 +242,11 @@ describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () =
         p_inicio: window.inicio,
         p_fim: window.fim,
       }),
-      // FNL-03: both new RPCs take zero arguments, unlike the
-      // period-filtered calls above.
+      // FNL-03/VEND-01: all three RPCs below take zero arguments, unlike
+      // the period-filtered calls above.
       vendedorB.rpc("dashboard_funil_detalhado"),
       vendedorB.rpc("dashboard_tempo_ate_fechamento"),
+      vendedorB.rpc("dashboard_comparativo_vendedor"),
     ])
     for (const result of [
       beforeEtapa,
@@ -221,6 +256,7 @@ describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () =
       beforeCategoria,
       beforeFunilDetalhado,
       beforeTempoFechamento,
+      beforeComparativoVendedor,
     ]) {
       expect(result.error).toBeNull()
     }
@@ -257,6 +293,7 @@ describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () =
       afterCategoria,
       afterFunilDetalhado,
       afterTempoFechamento,
+      afterComparativoVendedor,
     ] = await Promise.all([
       vendedorB.rpc("dashboard_clientes_por_etapa"),
       vendedorB.rpc("dashboard_ganhos_perdidos", {
@@ -277,6 +314,7 @@ describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () =
       }),
       vendedorB.rpc("dashboard_funil_detalhado"),
       vendedorB.rpc("dashboard_tempo_ate_fechamento"),
+      vendedorB.rpc("dashboard_comparativo_vendedor"),
     ])
     for (const result of [
       afterEtapa,
@@ -286,6 +324,7 @@ describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () =
       afterCategoria,
       afterFunilDetalhado,
       afterTempoFechamento,
+      afterComparativoVendedor,
     ]) {
       expect(result.error).toBeNull()
     }
@@ -327,6 +366,17 @@ describe("RLS: dashboard aggregates never leak across vendedores (DSH-06)", () =
     ).toEqual(
       toTempoFechamentoMap(
         (beforeTempoFechamento.data ?? []) as TempoAteFechamentoRow[]
+      )
+    )
+    // VEND-01: same "no single number Vendedor B sees can move" guarantee,
+    // now for dashboard_comparativo_vendedor().
+    expect(
+      toComparativoVendedorMap(
+        (afterComparativoVendedor.data ?? []) as ComparativoVendedorRow[]
+      )
+    ).toEqual(
+      toComparativoVendedorMap(
+        (beforeComparativoVendedor.data ?? []) as ComparativoVendedorRow[]
       )
     )
   })
@@ -450,6 +500,75 @@ describe("RLS: Supervisor sees every vendedor's desempenho (DSH-07)", () => {
     )
     // Vendedor B keeps seeing exactly the same numbers — Vendedor A's new
     // cliente never contributes to Vendedor B's view of any RPC.
+    expect(afterVendedorBMap).toEqual(beforeVendedorBMap)
+  })
+
+  it("dashboard_comparativo_vendedor never leaks another vendedor's real numbers to Vendedor B (VEND-01)", async () => {
+    const vendedorA = await signInAs(
+      SEED_ACCOUNTS.vendedorA.email,
+      SEED_ACCOUNTS.vendedorA.password
+    )
+    const vendedorAId = await getUserId(vendedorA)
+    const vendedorB = await signInAs(
+      SEED_ACCOUNTS.vendedorB.email,
+      SEED_ACCOUNTS.vendedorB.password
+    )
+    const supervisor = await signInAs(
+      SEED_ACCOUNTS.supervisor.email,
+      SEED_ACCOUNTS.supervisor.password
+    )
+
+    const [beforeSupervisor, beforeVendedorB] = await Promise.all([
+      supervisor.rpc("dashboard_comparativo_vendedor"),
+      vendedorB.rpc("dashboard_comparativo_vendedor"),
+    ])
+    expect(beforeSupervisor.error).toBeNull()
+    expect(beforeVendedorB.error).toBeNull()
+    const beforeSupervisorMap = toComparativoVendedorMap(
+      (beforeSupervisor.data ?? []) as ComparativoVendedorRow[]
+    )
+    const beforeVendedorBMap = toComparativoVendedorMap(
+      (beforeVendedorB.data ?? []) as ComparativoVendedorRow[]
+    )
+
+    const razaoSocial = uniqueRazaoSocial("supervisor-comparativo-vendedor")
+    const { data: inserted, error: insertError } = await vendedorA
+      .from("clientes")
+      .insert(
+        baseClienteFields(razaoSocial, vendedorAId, "aguardando_contato")
+      )
+      .select("id")
+      .single()
+    expect(insertError).toBeNull()
+    createdClienteIds.push(inserted!.id)
+
+    const [afterSupervisor, afterVendedorB] = await Promise.all([
+      supervisor.rpc("dashboard_comparativo_vendedor"),
+      vendedorB.rpc("dashboard_comparativo_vendedor"),
+    ])
+    expect(afterSupervisor.error).toBeNull()
+    expect(afterVendedorB.error).toBeNull()
+    const afterSupervisorMap = toComparativoVendedorMap(
+      (afterSupervisor.data ?? []) as ComparativoVendedorRow[]
+    )
+    const afterVendedorBMap = toComparativoVendedorMap(
+      (afterVendedorB.data ?? []) as ComparativoVendedorRow[]
+    )
+
+    // A linha do Vendedor A vista pelo SUPERVISOR cresce em
+    // negocios_iniciados — a RPC não tem filtro de período/responsável, é
+    // um snapshot de histórico completo que só pode crescer ou ficar igual.
+    expect(
+      afterSupervisorMap[vendedorAId]?.negociosIniciados
+    ).toBeGreaterThanOrEqual(
+      (beforeSupervisorMap[vendedorAId]?.negociosIniciados ?? 0) + 1
+    )
+    // A linha do Vendedor A APARECE no resultado do Vendedor B (a lista de
+    // nomes vem de `profiles`, que tem SELECT aberto para todo autenticado),
+    // mas com contagens que não refletem o cliente que o Vendedor A acabou
+    // de criar — clientes/historico seguem escopados por RLS mesmo que o
+    // roster (profiles) em si seja visível a qualquer chamador. É
+    // exatamente essa distinção que este teste trava.
     expect(afterVendedorBMap).toEqual(beforeVendedorBMap)
   })
 })
