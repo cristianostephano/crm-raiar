@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Gestão de Equipe, Análises de Funil e Filtros
-current_phase: 11
-current_phase_name: funil-de-convers-o-detalhado
+current_phase: 12
+current_phase_name: comparativo-por-vendedor
 status: executing
 stopped_at: Phase 12 context gathered
-last_updated: "2026-08-03T17:16:25.706Z"
-last_activity: 2026-07-28
-last_activity_desc: Phase 11 execution started
+last_updated: "2026-08-05T12:20:09.382Z"
+last_activity: 2026-08-05
+last_activity_desc: Phase 12 execution started
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 18
+  total_plans: 22
   completed_plans: 18
   percent: 80
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 11 — funil-de-convers-o-detalhado
+**Current focus:** Phase 12 — comparativo-por-vendedor
 
 ## Current Position
 
-Phase: 11 (funil-de-convers-o-detalhado) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 11
-Last activity: 2026-07-28 — Phase 11 execution started
+Phase: 12 (comparativo-por-vendedor) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 12
+Last activity: 2026-08-05 — Phase 12 execution started
 
 ## Performance Metrics
 
