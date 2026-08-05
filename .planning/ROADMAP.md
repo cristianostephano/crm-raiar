@@ -148,12 +148,12 @@ Plans:
   2. A tabela é visível só para o Supervisor; o Vendedor não a acessa.
   3. Vendedores desativados não aparecem na lista de comparação de ativos, mas seus números históricos continuam contando onde já contavam (clientes ganhos/perdidos atribuídos a eles).
 
-**Plans**: 1/4 plans executed
+**Plans**: 2/4 plans executed
 
 Plans:
 
 - [x] 12-01-PLAN.md — Migration com a RPC `dashboard_comparativo_vendedor()` + testes de integração + push (onda 1)
-- [ ] 12-02-PLAN.md — Leitor tipado `getComparativoVendedor()` e Server Action, com reuso de `taxaConversao()` (onda 2)
+- [x] 12-02-PLAN.md — Leitor tipado `getComparativoVendedor()` e Server Action, com reuso de `taxaConversao()` (onda 2)
 - [ ] 12-03-PLAN.md — Componente `ComparativoVendedorTable` (tabela de 5 colunas) + teste de render (onda 3)
 - [ ] 12-04-PLAN.md — Montagem no `DashboardClient` (Supervisor-only) + verificação humana no navegador (onda 4)
 
@@ -178,6 +178,6 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`.planni
 | 9. Filtros de Estado e Cidade Estruturados | v1.2 | 6/6 | Complete | 2026-07-26 |
 | 10. Desativação de Membro da Equipe | v1.2 | 6/6 | Complete   | 2026-08-03 |
 | 11. Funil de Conversão Detalhado | v1.2 | 5/5 | Complete   | 2026-07-28 |
-| 12. Comparativo por Vendedor | v1.2 | 1/4 | In Progress|  |
+| 12. Comparativo por Vendedor | v1.2 | 2/4 | In Progress|  |
 </content>
 </invoke>
