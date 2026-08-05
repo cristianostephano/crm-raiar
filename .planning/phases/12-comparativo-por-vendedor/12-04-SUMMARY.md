@@ -149,3 +149,12 @@ None - no external service configuration required. (The `.env.local` copy noted 
 ---
 *Phase: 12-comparativo-por-vendedor*
 *Completed: 2026-08-05*
+
+## Self-Check: PASSED
+
+- FOUND: components/dashboard/DashboardClient.tsx
+- FOUND: .planning/phases/12-comparativo-por-vendedor/12-04-SUMMARY.md
+- FOUND: .planning/phases/12-comparativo-por-vendedor/deferred-items.md
+- FOUND: commit 07e2331
+- FOUND: commit 7b05534
+- FOUND: commit 199ceb6
