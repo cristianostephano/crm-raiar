@@ -43,7 +43,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.1-ROADMAP
 - [x] **Phase 9: Filtros de Estado e Cidade Estruturados** - Estado (27 siglas) e Cidade (lista IBGE dependente do Estado) viram listas estruturadas em cadastro, edição, filtro e importação. (completed 2026-07-26)
 - [x] **Phase 10: Desativação de Membro da Equipe** - Supervisor desativa um membro transferindo antes os clientes em andamento, com trava contra desativar o último Supervisor. (completed 2026-08-03)
 - [x] **Phase 11: Funil de Conversão Detalhado** - Dashboard ganha o funil de conversão por etapa (negócios, avanço%, perdidos, tempo médio) e a média de dias até ganhar/perder. (completed 2026-07-28)
-- [ ] **Phase 12: Comparativo por Vendedor** - Supervisor vê uma tabela comparando os vendedores ativos (conversão, negócios iniciados/ganhos, ciclo médio).
+- [x] **Phase 12: Comparativo por Vendedor** - Supervisor vê uma tabela comparando os vendedores ativos (conversão, negócios iniciados/ganhos, ciclo médio). (completed 2026-08-05)
 
 ## Phase Details
 
@@ -148,14 +148,14 @@ Plans:
   2. A tabela é visível só para o Supervisor; o Vendedor não a acessa.
   3. Vendedores desativados não aparecem na lista de comparação de ativos, mas seus números históricos continuam contando onde já contavam (clientes ganhos/perdidos atribuídos a eles).
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 
 - [x] 12-01-PLAN.md — Migration com a RPC `dashboard_comparativo_vendedor()` + testes de integração + push (onda 1)
 - [x] 12-02-PLAN.md — Leitor tipado `getComparativoVendedor()` e Server Action, com reuso de `taxaConversao()` (onda 2)
 - [x] 12-03-PLAN.md — Componente `ComparativoVendedorTable` (tabela de 5 colunas) + teste de render (onda 3)
-- [ ] 12-04-PLAN.md — Montagem no `DashboardClient` (Supervisor-only) + verificação humana no navegador (onda 4)
+- [x] 12-04-PLAN.md — Montagem no `DashboardClient` (Supervisor-only) + verificação humana no navegador (onda 4)
 
 **UI hint**: yes
 
@@ -178,6 +178,6 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`.planni
 | 9. Filtros de Estado e Cidade Estruturados | v1.2 | 6/6 | Complete | 2026-07-26 |
 | 10. Desativação de Membro da Equipe | v1.2 | 6/6 | Complete   | 2026-08-03 |
 | 11. Funil de Conversão Detalhado | v1.2 | 5/5 | Complete   | 2026-07-28 |
-| 12. Comparativo por Vendedor | v1.2 | 3/4 | In Progress|  |
+| 12. Comparativo por Vendedor | v1.2 | 4/4 | Complete   | 2026-08-05 |
 </content>
 </invoke>
