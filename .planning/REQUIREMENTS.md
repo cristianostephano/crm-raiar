@@ -22,7 +22,7 @@ Requisitos do marco v1.2 (Gestão de Equipe, Análises de Funil e Filtros). Cada
 
 ### Comparativo por vendedor (VEND)
 
-- [ ] **VEND-01**: Dashboard mostra uma tabela comparando os vendedores ativos (taxa de conversão, negócios iniciados, negócios ganhos, ciclo médio em dias), visível só para o Supervisor
+- [x] **VEND-01**: Dashboard mostra uma tabela comparando os vendedores ativos (taxa de conversão, negócios iniciados, negócios ganhos, ciclo médio em dias), visível só para o Supervisor
 
 ### Kanban (KAN)
 
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FNL-01 | Phase 11 | Complete |
 | FNL-02 | Phase 11 | Complete |
 | FNL-03 | Phase 11 | Complete |
-| VEND-01 | Phase 12 | Pending |
+| VEND-01 | Phase 12 | Complete |
 
 **Coverage:**
 
