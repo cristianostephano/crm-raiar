@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import {
   getClientesPorEtapa,
+  getComparativoVendedor,
   getDesempenhoVendedor,
   getFunilDetalhado,
   getGanhosPerdidos,
@@ -10,6 +11,7 @@ import {
   getProspeccaoPorProduto,
   getTempoAteFechamento,
   type ClientesPorEtapaRow,
+  type ComparativoVendedorRow,
   type DesempenhoVendedorRow,
   type FunilDetalhadoRow,
   type GanhosPerdidosRow,
@@ -230,6 +232,34 @@ export async function getTempoAteFechamentoAction(): Promise<GetTempoAteFechamen
 
   try {
     return { data: await getTempoAteFechamento() }
+  } catch {
+    return {
+      error: {
+        code: "fetch_falhou",
+        message:
+          "Não foi possível carregar os dados do dashboard. Tente novamente.",
+      },
+    }
+  }
+}
+
+export type GetComparativoVendedorResult =
+  | { data: ComparativoVendedorRow[]; error?: undefined }
+  | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
+
+/** VEND-01 — live snapshot, no period parameter; Supervisor-only gate lives in DashboardClient, not here. */
+export async function getComparativoVendedorAction(): Promise<GetComparativoVendedorResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: "Sessão expirada." } }
+  }
+
+  try {
+    return { data: await getComparativoVendedor() }
   } catch {
     return {
       error: {
