@@ -7,6 +7,7 @@ import {
   getProspeccaoPorProdutoAction,
 } from "@/app/actions/dashboard"
 import { ClientesPorEtapaChart } from "@/components/dashboard/ClientesPorEtapaChart"
+import { ComparativoVendedorTable } from "@/components/dashboard/ComparativoVendedorTable"
 import { DesempenhoVendedorChart } from "@/components/dashboard/DesempenhoVendedorChart"
 import { FunilDetalhadoTable } from "@/components/dashboard/FunilDetalhadoTable"
 import { GanhosPerdidosCards } from "@/components/dashboard/GanhosPerdidosCards"
@@ -26,12 +27,13 @@ type DashboardClientProps = {
  * children" pattern, so one failed metric's error state never blanks the
  * whole page.
  *
- * ClientesPorEtapaChart (DSH-01), FunilDetalhadoTable (FNL-01) and
- * TempoAteFechamentoCards (FNL-02) deliberately do NOT receive período —
- * they are always whole-history/live snapshots, unaffected by the period
- * filter (D-08). GanhosPerdidosCards (DSH-02/DSH-04), DesempenhoVendedorChart
- * (DSH-03, Supervisor-only per D-07) and the two ProspeccaoChart instances
- * (DSH-05) are all period-filtered via the same resolved `periodo`.
+ * ClientesPorEtapaChart (DSH-01), FunilDetalhadoTable (FNL-01),
+ * TempoAteFechamentoCards (FNL-02) and ComparativoVendedorTable (VEND-01)
+ * deliberately do NOT receive período — they are always whole-history/live
+ * snapshots, unaffected by the period filter (D-08). GanhosPerdidosCards
+ * (DSH-02/DSH-04), DesempenhoVendedorChart (DSH-03, Supervisor-only per
+ * D-07) and the two ProspeccaoChart instances (DSH-05) are all
+ * period-filtered via the same resolved `periodo`.
  */
 export function DashboardClient({ isSupervisor }: DashboardClientProps) {
   const [preset, setPreset] = useState<PeriodoPreset>("30dias")
@@ -75,6 +77,17 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
         */}
         <FunilDetalhadoTable />
         <TempoAteFechamentoCards />
+
+        {/*
+          "Comparativo por vendedor" — VEND-01, Supervisor-only. Whole-history
+          snapshot with zero período parameters, so it belongs in this group
+          (alongside FunilDetalhadoTable/TempoAteFechamentoCards), never in
+          the period-filtered group below (D-02). The role check here is a
+          UX nicety over the RLS boundary — same posture as the
+          DesempenhoVendedorChart gate below — never the authorization
+          boundary itself.
+        */}
+        {isSupervisor ? <ComparativoVendedorTable /> : null}
 
         {/* KPI row (Ganhos / Perdidos / Taxa de conversão) — DSH-02/DSH-04,
           period-filtered via `periodo`. */}
