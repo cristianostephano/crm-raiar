@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 
+import { buscarCidadesComClientes } from "@/lib/clientes/cidadesComClientes"
 import { UFS } from "@/lib/clientes/ufs"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -42,8 +42,13 @@ import {
  * the caller (KanbanBoard) — there's no separate lookup table for it.
  * Estado is fed by the fixed `UFS` constant (09-04/LOC-01 — no longer
  * derived from loaded clientes, so a UF with zero clientes doesn't vanish
- * from the filter), and Cidade is a searchable Combobox over the
- * `cidades_por_estado` RPC, disabled until an Estado is chosen (D-02).
+ * from the filter), and Cidade is a searchable Combobox scoped to cities
+ * that already have at least one cliente in the chosen Estado, system-wide
+ * across every vendedor (D-02, 260806-h8a) — disabled until an Estado is
+ * chosen. This is a different source than the cadastro/edição form's
+ * cascade (EstadoCidadeFields.tsx), which deliberately keeps offering the
+ * full IBGE seed-table list so a brand-new city can still be entered the
+ * first time a cliente is registered there (D-01).
  * Filtering itself always runs in-memory over the loaded card set
  * (Pitfall 7): applying/clearing filters never triggers a new getClientes
  * call.
@@ -151,11 +156,9 @@ export function FiltersPopover({
       return
     }
     let cancelled = false
-    createClient()
-      .rpc("cidades_por_estado", { p_uf: draft.estado })
-      .then(({ data }: { data: { nome: string }[] | null }) => {
-        if (!cancelled) setCidades((data ?? []).map((row) => row.nome))
-      })
+    buscarCidadesComClientes(draft.estado).then((nomes) => {
+      if (!cancelled) setCidades(nomes)
+    })
     return () => {
       cancelled = true
     }

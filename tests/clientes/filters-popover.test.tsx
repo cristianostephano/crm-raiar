@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 import {
@@ -8,27 +8,36 @@ import {
   clienteAtendeFiltros,
   type ClienteFiltros,
 } from "@/components/clientes/FiltersPopover"
+import { RPC_CIDADES_COM_CLIENTES } from "@/lib/clientes/cidadesComClientes"
 
 /**
- * Contract test for FiltersPopover (09-04) — proves the two real bugs
- * RESEARCH.md found are fixed plus the new cascade behavior:
+ * Contract test for FiltersPopover (09-04, extended 260806-h8a) — proves the
+ * two real bugs RESEARCH.md found are fixed plus the cascade behavior:
  *  - LOC-03: Estado renders BEFORE Cidade in DOM order (today it's backwards).
  *  - D-02/LOC-02: Cidade is disabled until an Estado is chosen (cascade).
  *  - Pitfall 4: clienteAtendeFiltros compares Cidade by exact value
  *    (case-insensitive), not substring ("Santos" must not match
  *    "Santos do Sul").
+ *  - 260806-h8a D-03: Cidade is fed by buscarCidadesComClientes (the new
+ *    system-wide, cliente-backed RPC), never the old IBGE seed-table RPC.
  *
- * Mocks `@/lib/supabase/client` because the Cidade Combobox calls
- * cidades_por_estado(draft.estado) once an Estado is picked — the mock lets
- * the component mount without a real Supabase env/session.
+ * Mocks `@/lib/supabase/client` because the Cidade Combobox now calls
+ * buscarCidadesComClientes(draft.estado), which itself calls .rpc(...), once
+ * an Estado is picked — the mock lets the component mount without a real
+ * Supabase env/session.
+ *
+ * vi.mock is hoisted above imports, so the spy is declared via vi.hoisted()
+ * to be available inside the mock factory below.
  */
-vi.mock("@/lib/supabase/client", () => ({
-  createClient: () => ({
-    rpc: vi.fn().mockResolvedValue({
-      data: [{ nome: "Santos" }, { nome: "São Paulo" }],
-      error: null,
-    }),
+const { rpcSpy } = vi.hoisted(() => ({
+  rpcSpy: vi.fn().mockResolvedValue({
+    data: [{ nome: "Santos" }, { nome: "São Paulo" }],
+    error: null,
   }),
+}))
+
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({ rpc: rpcSpy }),
 }))
 
 function renderPopover(filtros: ClienteFiltros = FILTROS_VAZIOS) {
@@ -85,5 +94,17 @@ describe("FiltersPopover - ordem Estado/Cidade, cascade e exact-match (09-04)", 
     expect(
       clienteAtendeFiltros({ ...base, cidade: "Santos do Sul" }, filtros)
     ).toBe(false)
+  })
+
+  it("busca cidades pela RPC nova (cidades_com_clientes_por_estado), não a antiga do IBGE (260806-h8a D-03)", async () => {
+    rpcSpy.mockClear()
+    renderPopover({ ...FILTROS_VAZIOS, estado: "SP" })
+    fireEvent.click(screen.getByRole("button", { name: /filtros/i }))
+
+    await waitFor(() => {
+      expect(rpcSpy).toHaveBeenCalledWith(RPC_CIDADES_COM_CLIENTES, {
+        p_uf: "SP",
+      })
+    })
   })
 })
