@@ -148,7 +148,6 @@ export function FiltersPopover({
 
   useEffect(() => {
     if (!draft.estado) {
-      setCidades([])
       return
     }
     let cancelled = false
@@ -161,6 +160,12 @@ export function FiltersPopover({
       cancelled = true
     }
   }, [draft.estado])
+
+  // A lista exibida é derivada do Estado escolhido no rascunho em vez de
+  // guardada: zerar o estado do React dentro do corpo do efeito dispara
+  // render em cascata (regra react-hooks/set-state-in-effect). Derivar
+  // produz exatamente o mesmo resultado renderizado.
+  const cidadesVisiveis = draft.estado ? cidades : []
 
   function handleOpenChange(nextOpen: boolean) {
     // Resync the draft with the currently-applied filters every time the
@@ -320,7 +325,7 @@ export function FiltersPopover({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="filtro-cidade">Cidade</Label>
             <Combobox
-              items={cidades}
+              items={cidadesVisiveis}
               disabled={!draft.estado}
               value={draft.cidade || null}
               onValueChange={(value) =>

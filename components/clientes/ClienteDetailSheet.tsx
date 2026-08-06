@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { format, parseISO } from "date-fns"
 import { Info, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 
 import { deleteCliente, getClienteDetalhe, updateCliente } from "@/app/actions/clientes"
 import {
@@ -224,6 +224,16 @@ export function ClienteDetailSheet({
 
   useEffect(() => {
     if (!open || !clienteId) {
+      // Achado pré-existente, fora do escopo desta task (260806-fln/Task 2):
+      // o React Compiler só conseguiu reportar este `set-state-in-effect`
+      // depois que o `react-hooks/incompatible-library` da linha ~489 foi
+      // corrigido logo abaixo — com aquele erro presente, o compilador não
+      // analisava o restante do componente. Resetar estas ~13 variáveis
+      // locais ao fechar o Sheet ou trocar de cliente é comportamento
+      // intencional; convertê-lo para o padrão "ajustar estado durante o
+      // render" (recomendado pelo React para este caso) é um refactor maior
+      // que fica fora do escopo de hygiene deste plano. Ver deferred-items.md.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCliente(null)
       setLoadError(null)
       setFormError(null)
@@ -486,7 +496,7 @@ export function ClienteDetailSheet({
     }
   }
 
-  const produtoIds = form.watch("produtoIds") ?? []
+  const produtoIds = useWatch({ control: form.control, name: "produtoIds" }) ?? []
 
   return (
     <>

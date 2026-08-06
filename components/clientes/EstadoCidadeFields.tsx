@@ -92,7 +92,6 @@ export function EstadoCidadeFields<
 
   useEffect(() => {
     if (!estado) {
-      setCidades([])
       return
     }
 
@@ -109,6 +108,12 @@ export function EstadoCidadeFields<
       cancelled = true
     }
   }, [estado])
+
+  // A lista exibida é derivada do Estado selecionado em vez de guardada:
+  // zerar o estado do React dentro do corpo do efeito dispara render em
+  // cascata (regra react-hooks/set-state-in-effect). Derivar produz
+  // exatamente o mesmo resultado renderizado.
+  const cidadesVisiveis = estado ? cidades : []
 
   return (
     <div className="grid grid-cols-3 gap-3">
@@ -134,7 +139,7 @@ export function EstadoCidadeFields<
             <FormLabel>Cidade</FormLabel>
             <FormControl>
               <Combobox
-                items={cidades}
+                items={cidadesVisiveis}
                 value={(field.value as string) || null}
                 onValueChange={(value) => field.onChange(value ?? "")}
                 onOpenChange={setCidadeOpen}
