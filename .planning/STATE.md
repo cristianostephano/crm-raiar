@@ -198,6 +198,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 260722-gbz | Implement sidebar nav (sketch 001 winner B) and Dashboard KPI accent-bar treatment (sketch 002 winner C) | 2026-07-22 | 1ff1d00 | [260722-gbz-implement-sidebar-nav-sketch-001-winner-](./quick/260722-gbz-implement-sidebar-nav-sketch-001-winner-/) |
 | 260722-hpe | Kanban card polish: light-red Incompleto badge, wrap long column titles, 3-color task-status left border | 2026-07-22 | 0f2b7d2 | [260722-hpe-kanban-card-polish-light-red-incompleto-](./quick/260722-hpe-kanban-card-polish-light-red-incompleto-/) |
+| 260806-fln | Limpar 4 avisos pequenos de lint pré-existentes (react-hooks/incompatible-library, react-hooks/set-state-in-effect x2, unused-var) | 2026-08-06 | 2fd6840 | [260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi](./quick/260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi/) |
 
 ### Roadmap Evolution
 
@@ -212,6 +213,7 @@ Items acknowledged and carried forward from previous milestone close:
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Manual verification | 01-05 Task 4 — real password-reset + invite-accept email round-trips (see STATE.md Blockers/Concerns and 01-05-SUMMARY.md "Open Item: Task 4") | Resolved 2026-07-20 (code path verified via admin-generated links; see summary) | 2026-07-16, end of 01-05 execution |
+| Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` on the ~13-setter reset effect (close Sheet / switch clienteId), suppressed with a documented `eslint-disable-next-line` instead of refactored, because the correct fix ("adjust state during render") changes reset timing and risks real behavior change with no test coverage on this component. Recommend a dedicated quick task. | Open — suppressed, not fixed | 2026-08-06, quick task 260806-fln |
 
 ## Session Continuity
 
