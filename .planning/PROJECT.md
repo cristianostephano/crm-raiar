@@ -21,11 +21,23 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor agora consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), e os filtros de Estado/Cidade viram listas estruturadas confiáveis em vez de texto livre.
 
+## Current Milestone: v1.3 Agenda do Vendedor
+
+**Goal:** Dar ao vendedor uma agenda única mostrando o que ele precisa fazer, hoje e nos próximos dias — juntando as tarefas de prospecção que já existem no funil com uma nova rotina de visitas recorrentes para clientes que já viraram "ganho".
+
+**Target features:**
+- Novo item de menu "Agenda", no topo, acima de "Clientes"
+- Tarefas de prospecção (já existentes nos cards do funil) entram automaticamente na agenda, sem cadastro duplicado
+- Ao marcar um card como "ganho", o vendedor define a frequência de visita (semanal/quinzenal/mensal/nenhuma), editável depois
+- Ao concluir uma visita, o sistema sugere a próxima data com base na frequência; o vendedor confirma ou ajusta
+- Toda conclusão (tarefa de prospecção ou visita) pede um resumo curto, guardado como histórico por cliente
+- Campos novos de cliente, só exigidos quando o cliente vira "ativo" (nunca no cadastro inicial): Nome Fantasia, CNPJ, frequência de pedidos (informativo), frequência de visitas
+
+Origem: `SEED-001` (`.planning/seeds/SEED-001-agenda-do-vendedor.md`), plantado durante a discussão do v1.2.
+
 ## Next Milestone Goals
 
-Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-001`), vai puxar automaticamente na próxima `/gsd-new-milestone`.
-
-Também pendente para o próximo ciclo de trabalho (não é um marco formal ainda): revisar o filtro de Cidade na tela de Clientes, que hoje mostra a lista completa de municípios do IBGE por Estado em vez de só as cidades que já têm cliente cadastrado — capturado em `.planning/todos/pending/2026-08-06-filtro-de-cidade-mostra-todas-as-cidades-do-brasil-em-vez-de.md`.
+Nada capturado ainda. Definir ao fechar o v1.3.
 
 ## Requirements
 
@@ -63,7 +75,7 @@ Também pendente para o próximo ciclo de trabalho (não é um marco formal aind
 
 ### Active
 
-Nenhum requisito ativo no momento — v1.2 fechado, próximo marco ainda não iniciado (ver Next Milestone Goals).
+Marco v1.3 (Agenda do Vendedor) em definição — requisitos detalhados em `.planning/REQUIREMENTS.md` assim que definidos.
 
 ### Out of Scope
 
@@ -75,7 +87,6 @@ Nenhum requisito ativo no momento — v1.2 fechado, próximo marco ainda não in
 - Validação de CNPJ na importação — adiado para uma v2 se vier a ser necessário (v1.1 valida só os campos mínimos de cadastro)
 - Lembrar o mapeamento de colunas entre importações — cada planilha é mapeada do zero por enquanto (v1.1); útil se o volume de importações recorrentes crescer
 - Importação como atualização de cliente existente — v1.1 só cria clientes novos; atualizar em massa fica para uma versão futura, se necessário
-- Agenda do vendedor (prospecção + pós-venda) — deliberadamente separada do v1.2 por tamanho; capturada como seed (`SEED-001`) para o próximo marco
 - Valor em R$ / ticket médio por negócio — o CRM não rastreia valor monetário de cliente hoje; adiado até virar necessidade real (v1.2 só trouxe métricas de tempo/conversão)
 - Filtro de período (últimos 30/90 dias etc.) no funil de conversão detalhado — v1.2 mostra só o total geral desde sempre; filtro de data fica pra quando for pedido
 - Apagar conta do membro desativado por completo — quebraria FKs de histórico (`clientes.responsavel`, `historico.autor_id`); desativação (soft, via `profiles.ativo` + Auth `ban_duration`) preserva integridade — v1.2
@@ -88,7 +99,7 @@ Nenhum requisito ativo no momento — v1.2 fechado, próximo marco ainda não in
 - **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. Na v1.0 isso foi tratado como migração única, fora da UI — na v1.1 essa decisão foi revista e implementada: o time recebe planilhas de clientes/leads com frequência (parceiros, feiras), e a importação agora é uma tela permanente do sistema, restrita ao Supervisor.
 - **Perfil do usuário**: quem pilota o projeto não programa. Explicações devem evitar jargão técnico, focar em sintomas observáveis, e mudanças grandes precisam de um plano em linguagem simples antes de qualquer implementação.
 - **Estado do código pós-v1.2**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. v1.2 adicionou: coluna `profiles.ativo` + duas RPCs `SECURITY DEFINER` documentadas como exceção deliberada (`desativar_membro_equipe`/`reativar_membro_equipe`, únicas que chamam a Auth Admin API via `service_role`), tabela `cidades` (seed IBGE, read-only) + RPC `cidades_por_estado`, e três RPCs `SECURITY INVOKER` novas de dashboard (`dashboard_funil_detalhado`, `dashboard_tempo_ate_fechamento`, `dashboard_comparativo_vendedor`).
-- **Débito técnico conhecido**: nenhum item bloqueante. Um gap de verificação humana ficou formalmente aceito (Fase 8 — drag-and-drop com auto-scroll do kanban não foi exercitado por um teste automatizado nem por um drag real de mouse numa sessão anterior; risco julgado baixo por ser mudança isolada de CSS/layout, ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`). Um item de UX foi capturado para o próximo ciclo, não para o próximo marco: filtro de Cidade mostrando todos os municípios do IBGE em vez de só os que já têm cliente cadastrado (`.planning/todos/pending/2026-08-06-filtro-de-cidade-mostra-todas-as-cidades-do-brasil-em-vez-de.md`).
+- **Débito técnico conhecido**: nenhum item bloqueante. Um gap de verificação humana ficou formalmente aceito (Fase 8 — drag-and-drop com auto-scroll do kanban não foi exercitado por um teste automatizado nem por um drag real de mouse numa sessão anterior; risco julgado baixo por ser mudança isolada de CSS/layout, ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`). Um `eslint-disable` pontual e documentado ficou em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — corrigir com o padrão "ajustar estado durante o render" fica como quick task futura (ver STATE.md Deferred Items).
 
 ## Constraints
 
@@ -141,4 +152,4 @@ Este documento evolui nas transições de fase e nos marcos do projeto.
 5. Atualizar Context com o estado atual (usuários, feedback, métricas)
 
 ---
-*Last updated: 2026-08-06 after v1.2 milestone*
+*Last updated: 2026-08-06 — started v1.3 milestone*

@@ -1,19 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Gestão de Equipe, Análises de Funil e Filtros
-current_phase: null
-status: Awaiting next milestone
-stopped_at: Milestone v1.2 closed
-last_updated: "2026-08-06T12:35:00.977Z"
+milestone: v1.3
+milestone_name: Agenda do Vendedor
+status: planning
+last_updated: "2026-08-06T20:23:39.119Z"
 last_activity: 2026-08-06
-last_activity_desc: Milestone v1.2 completed and archived
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 22
-  completed_plans: 22
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -23,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Nenhum — v1.2 fechado, aguardando início do próximo marco (`/gsd-new-milestone`)
+**Current focus:** Marco v1.3 (Agenda do Vendedor) — definindo requisitos
 
 ## Current Position
 
-Phase: Milestone v1.2 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-06 — Milestone v1.2 completed and archived
+Status: Defining requirements
+Last activity: 2026-08-06 — Milestone v1.3 started
 
 ## Performance Metrics
 
