@@ -2,36 +2,35 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Gestão de Equipe, Análises de Funil e Filtros
-current_phase: 12
-current_phase_name: comparativo-por-vendedor
-status: executing
-stopped_at: Phase 12 context gathered
-last_updated: "2026-08-05T12:20:09.382Z"
-last_activity: 2026-08-05
-last_activity_desc: Phase 12 execution started
+current_phase: null
+status: Awaiting next milestone
+stopped_at: Milestone v1.2 closed
+last_updated: "2026-08-06T12:35:00.977Z"
+last_activity: 2026-08-06
+last_activity_desc: Milestone v1.2 completed and archived
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 22
-  completed_plans: 18
-  percent: 80
+  completed_plans: 22
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-25)
+See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 12 — comparativo-por-vendedor
+**Current focus:** Nenhum — v1.2 fechado, aguardando início do próximo marco (`/gsd-new-milestone`)
 
 ## Current Position
 
-Phase: 12 (comparativo-por-vendedor) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 12
-Last activity: 2026-08-05 — Phase 12 execution started
+Phase: Milestone v1.2 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-06 — Milestone v1.2 completed and archived
 
 ## Performance Metrics
 
@@ -223,5 +222,4 @@ Resume file:
 
 ## Operator Next Steps
 
-- Planejar a primeira fase do marco v1.2 com `/gsd-plan-phase 8` (Rolagem por Coluna no Kanban)
-- Fases 8 e 9 são independentes e podem ser planejadas/executadas em paralelo; 10 antes de 12; 11 antes de 12
+- Start the next milestone with /gsd-new-milestone

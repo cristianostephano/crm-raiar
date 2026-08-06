@@ -1,5 +1,19 @@
 # Milestones
 
+## v1.2 Gestão de Equipe, Análises de Funil e Filtros (Shipped: 2026-08-06)
+
+**Phases completed:** 5 phases, 22 plans, 52 tasks
+
+**Key accomplishments:**
+
+- Kanban: cada uma das 7 colunas do funil agora tem altura fixa e rolagem própria (ScrollColumnShell), com o drag-and-drop de cards continuando a funcionar corretamente durante o auto-scroll.
+- Estado e Cidade estruturados: cadastro, edição, filtro e importação por planilha agora usam uma lista fixa das 27 UFs e a lista oficial de municípios do IBGE (cascata Estado -> Cidade), substituindo os campos de texto livre anteriores.
+- Desativação de membro da equipe: o Supervisor pode desativar um vendedor com segurança - os clientes em andamento são transferidos a um substituto escolhido, o histórico e os números fechados (ganho/perdido) continuam intactos, o membro perde acesso ao sistema, e o sistema nunca permite ficar sem nenhum Supervisor ativo.
+- Funil de conversão detalhado no Dashboard: nova tabela por etapa (quantidade, % que avançou, perdidos, tempo médio parado) e cartões com o tempo médio até "ganho" e até "perdido", respeitando a mesma regra de visibilidade por papel do Dashboard.
+- Comparativo por vendedor no Dashboard: nova tabela, visível só para o Supervisor, comparando taxa de conversão, negócios iniciados, negócios ganhos e ciclo médio em dias entre os vendedores ativos.
+
+---
+
 ## v1.1 Importação e Exportação de Clientes (Shipped: 2026-07-25)
 
 **Phases completed:** 3 phases, 9 plans, 20 tasks

@@ -2,6 +2,50 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v1.2 — Gestão de Equipe, Análises de Funil e Filtros
+
+**Shipped:** 2026-08-06
+**Phases:** 5 | **Plans:** 22 | **Sessions:** ~1 longa sessão (com pelo menos uma interrupção por limite de uso semanal)
+
+### What Was Built
+- Kanban: cada uma das 7 colunas ganhou altura fixa e rolagem própria (`ScrollColumnShell`), sem quebrar o drag-and-drop/auto-scroll do dnd-kit.
+- Estado/Cidade estruturados em cadastro, edição, filtro e importação — lista fixa de 27 UFs + lista oficial de municípios do IBGE em cascata, substituindo texto livre.
+- Desativação de membro da equipe: transferência dos clientes em andamento para um substituto, trava contra desativar o último Supervisor, corte de acesso via Supabase Auth `ban_duration`, histórico e números fechados preservados.
+- Funil de conversão detalhado no Dashboard (por etapa: quantidade, % avançou, perdidos, tempo médio parado) + tempo médio até ganho/perdido, separados.
+- Comparativo por vendedor no Dashboard (Supervisor-only): conversão, negócios iniciados/ganhos, ciclo médio em dias (ganho-only).
+
+### What Worked
+- Verificação manual real no navegador ao final de cada fase continuou pegando o que testes automatizados não alcançam — inclusive um bug real de produção (ver abaixo).
+- Testes de integração contra o banco real (não mockado) seguem pegando bugs de RLS/PL/pgSQL que testes mockados não pegariam — reforça a lição já registrada em v1.1.
+- `gsd-ui-checker` pegou uma inconsistência real entre UI-SPEC e o código-fonte real em 3 fases seguidas (8, 11, 12) — todas relacionadas a valores de estilo citados de cabeça em vez de lidos do componente de referência.
+- O planejador (`gsd-planner`) pegou um bug de percentual (`formatConversao` renderizando 0.625 como "0,6%" em vez de "62,5%") ainda na fase de planejamento, antes de qualquer código ser escrito.
+
+### What Was Inefficient
+- **Colisão de numeração de migration**: Fase 10 e Fase 11 rodaram em paralelo (worktrees separados) e cada uma nomeou sua migration `0008_*.sql` de forma independente. Só foi pega porque o orquestrador desconfiou de um "up to date" bom demais do `supabase db push --dry-run` e checou manualmente com `migration list`. Exigiu renumerar a Fase 11 para `0009` e reconciliar histórico local/remoto no meio da execução.
+- **Bug de produção descoberto só na checagem humana ao vivo**: `dashboard_funil_detalhado()` (Fase 11) podia mostrar `avancou_pct` acima de 100% porque o drag-and-drop não-adjacente do kanban permite pular etapas; a CTE original contava "avançou" a partir do maior estágio já alcançado, sem exigir que o cliente tivesse realmente passado pela etapa. Corrigido com uma migration corretiva (`0010`) escrita e verificada pelo próprio orquestrador, fora do fluxo normal de executor.
+- **Arquivos VERIFICATION.md sem o prefixo do número de fase**: as Fases 10, 11 e 12 salvaram seus relatórios como `VERIFICATION.md` em vez de `NN-VERIFICATION.md`. O conteúdo estava correto (status `passed` nas três), mas a ferramenta de fechamento de marco (`init.manager`) não os reconhecia e reportava as três fases como sem verificação — só descoberto ao rodar `/gsd-complete-milestone`, exigindo renomear os três arquivos manualmente antes de prosseguir.
+- Lista de "accomplishments" gerada automaticamente pelo `milestone.complete` veio granular demais (uma linha por plano, 21 itens) e incluiu uma linha de ruído puxada de um resumo de worktree ("Restored .env.local") — precisou de edição manual para virar 5 itens de verdade, um por fase.
+- Sandbox do Claude Code bloqueou `supabase link`/`supabase db push` repetidamente (executores de subagente e, ocasionalmente, o próprio orquestrador) — resolvido na maioria das vezes com uma nova tentativa do orquestrador; só uma vez precisou que o usuário rodasse o comando manualmente.
+
+### Patterns Established
+- RPCs de leitura para o dashboard seguem `SECURITY INVOKER` sem exceção — as únicas duas `SECURITY DEFINER` do projeto inteiro (`desativar_membro_equipe`/`reativar_membro_equipe`) são documentadas como exceção deliberada, porque precisam chamar a Auth Admin API via `service_role`.
+- Reconstrução de duração por etapa a partir do `historico` (entrada sintética + `LEAD()` + `COALESCE` de três vias) virou um padrão reutilizável entre Fase 11 e Fase 12.
+- Fixtures descartáveis (`createTestMember`/`deleteTestMember`) em vez de contas seed compartilhadas — necessário para contagens determinísticas em testes de integração que dependem de estado exato.
+- Sempre reler o SQL de uma migration linha a linha antes de aprovar o push, mesmo quando o executor já relatou sucesso — pegou o bug do `avancou_pct` antes que ele fosse considerado "fase pronta".
+
+### Key Lessons
+1. Ao rodar fases em paralelo (worktrees), nomear migrations por convenção fixa ligada ao número da fase (ou checar `ls supabase/migrations/` no momento da execução, nunca confiar em um número decidido durante o planejamento) evita colisões de numeração.
+2. Nomear artefatos de verificação sempre com o prefixo do número de fase (`NN-VERIFICATION.md`) — um nome "quase certo" engana a ferramenta de fechamento de marco mesmo com o conteúdo perfeito.
+3. "Testes passando" não prova comportamento correto quando a lógica depende de dados reais de uso (o bug de `avancou_pct` só apareceu com dados reais de um kanban com drag não-adjacente) — a checagem humana ao vivo continua sendo a rede de segurança que pega esse tipo de coisa.
+4. Accomplishments gerados automaticamente por ferramenta a partir de `provides:` de cada plano tendem a vir granulares e ocasionalmente ruidosos — sempre revisar e condensar antes de aceitar no `MILESTONES.md`.
+
+### Cost Observations
+- Model mix: majoritariamente sonnet (planner/executor/verifier), plan-checker/ui-checker em modelos mais baratos para verificação estrutural.
+- Rate-limit do Supabase Auth ("Request rate limit reached") apareceu repetidamente entre as três fases por volume acumulado de sign-ins de verificação na mesma sessão — tratado consistentemente como ruído de infraestrutura de free-tier, não regressão de código, depois de confirmado por reruns isolados dos arquivos de teste específicos.
+- Nenhum retrabalho de funcionalidade foi necessário — os dois problemas reais encontrados (colisão de migration, bug de `avancou_pct`) foram ambos corrigidos dentro da própria sessão de execução, antes do fechamento do marco.
+
+---
+
 ## Milestone: v1.1 — Importação e Exportação de Clientes
 
 **Shipped:** 2026-07-25
@@ -51,13 +95,17 @@
 |-----------|----------|--------|------------|
 | v1.0 | — (not retrospected; shipped before this document existed) | 4 | — |
 | v1.1 | ~2-3 | 3 | Primeira retrospectiva formal; verificação manual no navegador ao final de cada fase virou padrão consistente |
+| v1.2 | ~1 (com interrupção por limite de uso) | 5 | Fases rodando em paralelo via worktree (8/9, e depois 10/11) virou padrão — trouxe junto o risco novo de colisão de numeração de migration, agora documentado como lição |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Coverage | Zero-Dep Additions |
 |-----------|-------|----------|---------------------|
 | v1.1 | 72+ (tests/importacao/*, incluindo 3 casos de integração contra RLS real) | Não medido formalmente | `@e965/xlsx`, `papaparse` (ambos avaliados por legitimidade antes da instalação) |
+| v1.2 | Suite completa passando (falhas remanescentes isoladas a rate-limit de Auth do free-tier, não regressão); novos arquivos de integração em `tests/equipe/*` e `tests/dashboard/*` | Não medido formalmente | Nenhuma dependência nova — v1.2 foi só RPCs/migrations + componentes reaproveitando a stack já instalada |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Fechar cada marco formalmente antes de iniciar o próximo evita perda de registro histórico (v1.1 pagou esse custo ao fechar o v1.0 tardiamente).
+2. Testes de integração contra o banco real (não mockado) seguem sendo a forma mais confiável de pegar bugs de RLS/PL/pgSQL — confirmado de novo em v1.2.
+3. Verificação humana ao vivo no navegador continua pegando bugs que nenhum teste automatizado alcança (v1.1: nenhum caso; v1.2: o bug de `avancou_pct` acima de 100%) — vale manter como gate obrigatório de toda fase de UI/dashboard.

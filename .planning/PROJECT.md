@@ -17,25 +17,15 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 ## Current State
 
-**Shipped:** v1.0 MVP (Autenticação, Cadastro + Funil, Administração de Listas, Dashboard Gerencial) e v1.1 Importação e Exportação de Clientes (2026-07-25).
+**Shipped:** v1.0 MVP (Autenticação, Cadastro + Funil, Administração de Listas, Dashboard Gerencial), v1.1 Importação e Exportação de Clientes (2026-07-25), e v1.2 Gestão de Equipe, Análises de Funil e Filtros (2026-08-06).
 
-O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, e agora o supervisor consegue trazer clientes em massa via planilha (com revisão de erros/duplicados antes de gravar) e qualquer usuário exporta a lista de clientes que já enxerga.
-
-## Current Milestone: v1.2 Gestão de Equipe, Análises de Funil e Filtros
-
-**Goal:** Dar ao Supervisor mais controle sobre a equipe e mais visibilidade sobre onde o funil trava, e deixar os filtros de localização mais confiáveis — sem entrar ainda na Agenda do vendedor, que é maior e vira o próximo marco (ver `.planning/seeds/SEED-001-agenda-do-vendedor.md`).
-
-**Target features:**
-- Supervisor remove (desativa) um membro da equipe, escolhendo antes pra quem transferir os clientes dele
-- Trava: nunca é possível desativar o último Supervisor ativo do sistema
-- Funil de conversão detalhado no Dashboard: negócios/conversão%/perdidos/tempo médio por etapa, + média de dias até ganhar e até perder
-- Tabela comparativa por vendedor no Dashboard (só Supervisor): conversão, negócios iniciados/ganhos, ciclo médio
-- Kanban com rolagem própria por coluna (evita página infinita com muitos clientes)
-- Filtro de Cidade/Estado estruturado: Estado antes de Cidade, Estado como lista de siglas (SP, RJ...), Cidade como lista dependente do Estado — em cadastro, edição, filtro e importação
+O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor agora consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), e os filtros de Estado/Cidade viram listas estruturadas confiáveis em vez de texto livre.
 
 ## Next Milestone Goals
 
-Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-001`), vai puxar automaticamente na próxima `/gsd-new-milestone` depois que v1.2 fechar.
+Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-001`), vai puxar automaticamente na próxima `/gsd-new-milestone`.
+
+Também pendente para o próximo ciclo de trabalho (não é um marco formal ainda): revisar o filtro de Cidade na tela de Clientes, que hoje mostra a lista completa de municípios do IBGE por Estado em vez de só as cidades que já têm cliente cadastrado — capturado em `.planning/todos/pending/2026-08-06-filtro-de-cidade-mostra-todas-as-cidades-do-brasil-em-vez-de.md`.
 
 ## Requirements
 
@@ -62,17 +52,18 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-00
 - ✓ Um lote de importação nunca é travado por uma linha ruim: linhas válidas são gravadas mesmo se outras tiverem erro ou forem puladas — v1.1
 - ✓ Cliente importado sempre entra na etapa "Aguardando contato" do funil — v1.1
 - ✓ Vendedor exporta a lista dos próprios clientes; Supervisor exporta a lista de todos os clientes, respeitando os mesmos filtros da tela — v1.1
+- ✓ Supervisor desativa um membro da equipe, escolhendo antes pra quem transferir os clientes dele — v1.2
+- ✓ Sistema nunca permite desativar o último Supervisor ativo — v1.2
+- ✓ Dashboard mostra um funil de conversão detalhado por etapa (negócios, % de avanço, perdidos, tempo médio parado) — v1.2
+- ✓ Dashboard mostra a média de dias até ganhar e até perder um cliente, separadamente — v1.2
+- ✓ Dashboard mostra uma tabela comparando os vendedores (conversão, negócios iniciados/ganhos, ciclo médio), visível só pro Supervisor — v1.2
+- ✓ Cada coluna do kanban tem rolagem própria com altura fixa, em vez de crescer a página infinitamente — v1.2
+- ✓ Filtro de clientes usa Estado (sigla) antes de Cidade, e Cidade vira lista dependente do Estado escolhido — v1.2
+- ✓ Estado é padronizado como lista de siglas em todo lugar que aparece (cadastro, edição, filtro, importação) — v1.2
 
 ### Active
 
-- [ ] Supervisor desativa um membro da equipe, escolhendo antes pra quem transferir os clientes dele
-- [ ] Sistema nunca permite desativar o último Supervisor ativo
-- [ ] Dashboard mostra um funil de conversão detalhado por etapa (negócios, % de avanço, perdidos, tempo médio parado)
-- [ ] Dashboard mostra a média de dias até ganhar e até perder um cliente, separadamente
-- [ ] Dashboard mostra uma tabela comparando os vendedores (conversão, negócios iniciados/ganhos, ciclo médio), visível só pro Supervisor
-- [ ] Cada coluna do kanban tem rolagem própria com altura fixa, em vez de crescer a página infinitamente
-- [ ] Filtro de clientes usa Estado (sigla) antes de Cidade, e Cidade vira lista dependente do Estado escolhido
-- [ ] Estado é padronizado como lista de siglas em todo lugar que aparece (cadastro, edição, filtro, importação)
+Nenhum requisito ativo no momento — v1.2 fechado, próximo marco ainda não iniciado (ver Next Milestone Goals).
 
 ### Out of Scope
 
@@ -85,8 +76,10 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-00
 - Lembrar o mapeamento de colunas entre importações — cada planilha é mapeada do zero por enquanto (v1.1); útil se o volume de importações recorrentes crescer
 - Importação como atualização de cliente existente — v1.1 só cria clientes novos; atualizar em massa fica para uma versão futura, se necessário
 - Agenda do vendedor (prospecção + pós-venda) — deliberadamente separada do v1.2 por tamanho; capturada como seed (`SEED-001`) para o próximo marco
-- Valor em R$ / ticket médio por negócio — o CRM não rastreia valor monetário de cliente hoje; adiado até virar necessidade real (v1.2 só traz métricas de tempo/conversão)
+- Valor em R$ / ticket médio por negócio — o CRM não rastreia valor monetário de cliente hoje; adiado até virar necessidade real (v1.2 só trouxe métricas de tempo/conversão)
 - Filtro de período (últimos 30/90 dias etc.) no funil de conversão detalhado — v1.2 mostra só o total geral desde sempre; filtro de data fica pra quando for pedido
+- Apagar conta do membro desativado por completo — quebraria FKs de histórico (`clientes.responsavel`, `historico.autor_id`); desativação (soft, via `profiles.ativo` + Auth `ban_duration`) preserva integridade — v1.2
+- Cadastro de cidades fora da lista oficial IBGE — a lista oficial cobre todos os municípios brasileiros reais; não há necessidade de entrada livre — v1.2
 
 ## Context
 
@@ -94,8 +87,8 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-00
 - **Origem do mapeamento de domínio**: existe um wireframe (Excalidraw) do fluxo de vendas atual, já documentado em `CLAUDE.md` — usuários/papéis, cliente PJ, funil de 7 etapas e os 3 enums editáveis originais (categoria, produtos consumidos, tipos de tarefa). O motivo de perda (4º enum editável) surgiu durante esta conversa de inicialização.
 - **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. Na v1.0 isso foi tratado como migração única, fora da UI — na v1.1 essa decisão foi revista e implementada: o time recebe planilhas de clientes/leads com frequência (parceiros, feiras), e a importação agora é uma tela permanente do sistema, restrita ao Supervisor.
 - **Perfil do usuário**: quem pilota o projeto não programa. Explicações devem evitar jargão técnico, focar em sintomas observáveis, e mudanças grandes precisam de um plano em linguagem simples antes de qualquer implementação.
-- **Estado do código pós-v1.1**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. `@e965/xlsx` (leitura/escrita de planilha, alternativa segura ao pacote `xlsx` vulnerável) e `papaparse` (CSV) adicionados em v1.1. Toda escrita de importação passa por uma única RPC (`importar_clientes_lote`) não-security-definer com guard explícito de Supervisor, seguindo o mesmo padrão das RPCs anteriores (`mover_card_funil`).
-- **Débito técnico conhecido**: nenhum item bloqueante identificado ao fechar v1.1. Ideias adiadas para uma v2 (se o uso real pedir): validar CNPJ na importação, lembrar o mapeamento de colunas entre planilhas recorrentes, e permitir que a importação também atualize clientes já existentes (hoje só cria novos).
+- **Estado do código pós-v1.2**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. v1.2 adicionou: coluna `profiles.ativo` + duas RPCs `SECURITY DEFINER` documentadas como exceção deliberada (`desativar_membro_equipe`/`reativar_membro_equipe`, únicas que chamam a Auth Admin API via `service_role`), tabela `cidades` (seed IBGE, read-only) + RPC `cidades_por_estado`, e três RPCs `SECURITY INVOKER` novas de dashboard (`dashboard_funil_detalhado`, `dashboard_tempo_ate_fechamento`, `dashboard_comparativo_vendedor`).
+- **Débito técnico conhecido**: nenhum item bloqueante. Um gap de verificação humana ficou formalmente aceito (Fase 8 — drag-and-drop com auto-scroll do kanban não foi exercitado por um teste automatizado nem por um drag real de mouse numa sessão anterior; risco julgado baixo por ser mudança isolada de CSS/layout, ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`). Um item de UX foi capturado para o próximo ciclo, não para o próximo marco: filtro de Cidade mostrando todos os municípios do IBGE em vez de só os que já têm cliente cadastrado (`.planning/todos/pending/2026-08-06-filtro-de-cidade-mostra-todas-as-cidades-do-brasil-em-vez-de.md`).
 
 ## Constraints
 
@@ -123,6 +116,11 @@ Agenda do vendedor (prospecção + pós-venda) — capturada como seed (`SEED-00
 | Linha pulada (erro ou duplicado não importado) não deixa registro permanente no sistema — só aparece no resumo daquela operação | Evita uma tabela nova só pra isso; a planilha original já é o registro, com o supervisor | ✓ Good |
 | Gravação em lote via inserção set-based (`INSERT ... ON CONFLICT DO NOTHING`), não um loop linha a linha | Necessário pelo limite de ~10s de execução do Vercel Hobby; garante que uma linha ruim nunca trava o lote inteiro | ✓ Good |
 | RPC de importação segue o padrão de `mover_card_funil`: não-security-definer, guard explícito de `is_supervisor()` | Mantém a regra "toda autorização passa pelo RLS" (`CLAUDE.md`), sem lógica de permissão paralela dentro da função | ✓ Good |
+| Desativação de membro é soft-delete (`profiles.ativo` + Auth `ban_duration`), nunca apaga a conta | Preserva integridade referencial do histórico (`clientes.responsavel`, `historico.autor_id`) sem quebrar FKs | ✓ Good |
+| `desativar_membro_equipe`/`reativar_membro_equipe` são as únicas RPCs `SECURITY DEFINER` do projeto, documentadas como exceção deliberada | Precisam chamar a Auth Admin API via `service_role` para banir/desbanir login, algo que RLS sozinho não alcança | ✓ Good |
+| Cidade sempre vem da lista oficial do IBGE, sem opção de texto livre | A lista cobre todos os municípios reais do Brasil; texto livre só reintroduziria o problema de dado inconsistente que a Fase 9 resolveu | ✓ Good |
+| Tempo médio por etapa do funil inclui clientes ainda parados nela agora (usa o momento atual como saída provisória) | De propósito, para revelar cards travados — é o objetivo da métrica, não um bug | ✓ Good |
+| Ciclo médio em dias (comparativo por vendedor) conta só fechamentos "ganho", nunca "perdido" | "Ciclo de venda" é o tempo até vender, não até desistir — misturar os dois distorceria a métrica | ✓ Good |
 
 ## Evolution
 
@@ -143,4 +141,4 @@ Este documento evolui nas transições de fase e nos marcos do projeto.
 5. Atualizar Context com o estado atual (usuários, feedback, métricas)
 
 ---
-*Last updated: 2026-07-25 after v1.1 milestone*
+*Last updated: 2026-08-06 after v1.2 milestone*
