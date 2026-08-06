@@ -60,7 +60,8 @@ describe("createImportRowSchema", () => {
   })
 
   it("rejects a row missing a required field, pointing at the field", () => {
-    const { razaoSocial: _razaoSocial, ...rest } = baseRow()
+    const rest: Record<string, unknown> = { ...baseRow() }
+    delete rest.razaoSocial
     const result = createImportRowSchema.safeParse(rest)
     expect(result.success).toBe(false)
     if (!result.success) {
