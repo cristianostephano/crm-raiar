@@ -199,6 +199,7 @@ None yet.
 | 260722-gbz | Implement sidebar nav (sketch 001 winner B) and Dashboard KPI accent-bar treatment (sketch 002 winner C) | 2026-07-22 | 1ff1d00 | [260722-gbz-implement-sidebar-nav-sketch-001-winner-](./quick/260722-gbz-implement-sidebar-nav-sketch-001-winner-/) |
 | 260722-hpe | Kanban card polish: light-red Incompleto badge, wrap long column titles, 3-color task-status left border | 2026-07-22 | 0f2b7d2 | [260722-hpe-kanban-card-polish-light-red-incompleto-](./quick/260722-hpe-kanban-card-polish-light-red-incompleto-/) |
 | 260806-fln | Limpar 4 avisos pequenos de lint pré-existentes (react-hooks/incompatible-library, react-hooks/set-state-in-effect x2, unused-var) | 2026-08-06 | 2fd6840 | [260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi](./quick/260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi/) |
+| 260806-h8a | Corrigir filtro de Cidade (tela de Clientes) para mostrar só cidades com cliente cadastrado, via nova RPC `cidades_com_clientes_por_estado` (migration 0012) | 2026-08-06 | b1f9497 | [260806-h8a-corrigir-o-filtro-de-cidade-na-tela-de-c](./quick/260806-h8a-corrigir-o-filtro-de-cidade-na-tela-de-c/) |
 
 ### Roadmap Evolution
 
@@ -214,6 +215,8 @@ Items acknowledged and carried forward from previous milestone close:
 |----------|------|--------|-------------|
 | Manual verification | 01-05 Task 4 — real password-reset + invite-accept email round-trips (see STATE.md Blockers/Concerns and 01-05-SUMMARY.md "Open Item: Task 4") | Resolved 2026-07-20 (code path verified via admin-generated links; see summary) | 2026-07-16, end of 01-05 execution |
 | Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` on the ~13-setter reset effect (close Sheet / switch clienteId), suppressed with a documented `eslint-disable-next-line` instead of refactored, because the correct fix ("adjust state during render") changes reset timing and risks real behavior change with no test coverage on this component. Recommend a dedicated quick task. | Open — suppressed, not fixed | 2026-08-06, quick task 260806-fln |
+
+**SECURITY DEFINER exceptions (3 total in this codebase):** `is_supervisor()` and `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) — and now `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a), which returns ONLY distinct city-name text for a chosen estado (no ids/PII/row data), needed because RLS-invoker semantics on `clientes` would otherwise give a Vendedor an incomplete city list. Any future RPC needing system-wide aggregate data from an RLS-scoped table should follow this same pattern: minimum-possible-output SECURITY DEFINER function, never a new open SELECT policy.
 
 ## Session Continuity
 
