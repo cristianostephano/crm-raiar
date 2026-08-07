@@ -75,7 +75,13 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.2-ROADMAP
   3. A frequência de visita pode ser trocada ou cancelada a qualquer momento na ficha do cliente, e existe um valor só — mexer nele pela ficha ou pela agenda leva sempre ao mesmo lugar, nunca a dois números diferentes.
   4. Clientes que já estavam "ganho" antes desta versão aparecem sem frequência definida, e continuam funcionando normalmente até alguém definir uma — o sistema não supõe nenhuma cadência por conta própria.
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — Migration de fundação: colunas novas (nullable) em `clientes`, enum de frequência, tabela `visitas` com RLS parent-gated, `proxima_data_visita` e `mover_card_funil` estendido com o guard de frequência-obrigatória-ao-ganho + semeadura da 1ª visita
+- [ ] 13-02-PLAN.md — Vocabulário único das frequências, `marcarStatus` levando a frequência até o RPC, e o `GanhoFrequenciaDialog` ligado ao Select de Status da ficha
+- [ ] 13-03-PLAN.md — Server Action `atualizarFrequenciaVisita` e o controle permanente de frequência na seção Funil (trocar/cancelar a qualquer momento, estado vazio dos clientes legados)
+
 **UI hint**: yes
 
 **Notas para o planejamento** (da research, `.planning/research/ARCHITECTURE.md`):
@@ -193,7 +199,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.2-ROADMAP
 | 10. Desativação de Membro da Equipe | v1.2 | 6/6 | Complete | 2026-08-03 |
 | 11. Funil de Conversão Detalhado | v1.2 | 5/5 | Complete | 2026-07-28 |
 | 12. Comparativo por Vendedor | v1.2 | 4/4 | Complete | 2026-08-05 |
-| 13. Cliente Ativo e Frequência de Visita | v1.3 | 0/? | Not started | - |
+| 13. Cliente Ativo e Frequência de Visita | v1.3 | 0/3 | Planned | - |
 | 14. Agenda Unificada | v1.3 | 0/? | Not started | - |
 | 15. Conclusão com Resumo e Próxima Visita | v1.3 | 0/? | Not started | - |
 | 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 0/? | Not started | - |
