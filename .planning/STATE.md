@@ -3,10 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Agenda do Vendedor
 status: planning
-last_updated: "2026-08-06T20:23:39.119Z"
-last_activity: 2026-08-06
+current_phase: 13
+last_updated: "2026-08-07T00:00:00.000Z"
+last_activity: 2026-08-07
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,35 +21,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Marco v1.3 (Agenda do Vendedor) — definindo requisitos
+**Current focus:** Marco v1.3 (Agenda do Vendedor) — Fase 13 (Cliente Ativo e Frequência de Visita), pronta para planejar
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-08-06 — Milestone v1.3 started
+Phase: 13 of 17 (Cliente Ativo e Frequência de Visita) — 1ª das 5 fases do marco v1.3
+Plan: — (nenhum plano criado ainda)
+Status: Ready to plan
+Last activity: 2026-08-07 — Roadmap do v1.3 criado (Fases 13-17, 17/17 requisitos mapeados)
+
+Progress (v1.3): [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: - min
-- Total execution time: 0 hours
+- Total plans completed: 51 (marcos v1.0–v1.2, todos concluídos)
+- Average duration: ~32 min/plano
+- Total execution time: ~27 horas
 
-**By Phase:**
+**By Phase (histórico por plano):**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
+| Phase | Duration | Tasks | Files |
+|-------|----------|-------|-------|
 | Phase 01 P01 | 30 | 3 tasks | 15 files |
 | Phase 01 P02 | 45 | 3 tasks | 3 files |
 | Phase 01 P03 | 90 | 4 tasks | 12 files |
@@ -57,18 +52,18 @@ Last activity: 2026-08-06 — Milestone v1.3 started
 | Phase 02 P01 | 20min | 3 tasks | 4 files |
 | Phase 02 P02 | 20min | 2 tasks | 8 files |
 | Phase 02 P03 | ~15min | 2 tasks | 4 files |
-| Phase 02 P04 | 50min | 2 tasks (+1 checkpoint) tasks | 8 files files |
-| Phase 02 P05 | ~40min | 2 tasks tasks | 10 files files |
+| Phase 02 P04 | 50min | 2 tasks (+1 checkpoint) | 8 files |
+| Phase 02 P05 | ~40min | 2 tasks | 10 files |
 | Phase 02 P06 | ~50min | 2 tasks | 10 files |
 | Phase 02 P07 | 55min | 2 tasks | 12 files |
 | Phase 03 P01 | 35min | 3 tasks | 7 files |
 | Phase 03 P02 | 20min | 2 tasks | 3 files |
-| Phase 03-administra-o-de-listas-edit-veis P03 | ~45min | 2 tasks | 1 files |
+| Phase 03 P03 | ~45min | 2 tasks | 1 files |
 | Phase 04 P01 | 60min | 3 tasks | 10 files |
-| Phase 04-dashboard-gerencial P02 | ~20min | 2 tasks | 5 files |
-| Phase 04-dashboard-gerencial P03 | ~25min | 2 tasks | 5 files |
-| Phase 04-dashboard-gerencial P04 | ~15min | 2 tasks | 2 files |
-| Phase 04-dashboard-gerencial P05 | ~30min | 3 tasks | 5 files |
+| Phase 04 P02 | ~20min | 2 tasks | 5 files |
+| Phase 04 P03 | ~25min | 2 tasks | 5 files |
+| Phase 04 P04 | ~15min | 2 tasks | 2 files |
+| Phase 04 P05 | ~30min | 3 tasks | 5 files |
 | Phase 05 P02 | 30min | 3 tasks | 4 files |
 | Phase 06 P01 | 25min | 3 tasks | 7 files |
 | Phase 06 P03 | 35min | 2 tasks | 12 files |
@@ -76,11 +71,18 @@ Last activity: 2026-08-06 — Milestone v1.3 started
 | Phase 07 P02 | 25min | 2 tasks | 3 files |
 | Phase 07 P03 | 10min | 3 tasks | 4 files |
 | Phase 08 P01 | 30min | 3 tasks | 3 files |
-| Phase 09 P02 | 20min | 2 tasks | 5 files |
 | Phase 09 P01 | ~50min (1 human-verify checkpoint pause) | 3 tasks | 4 files |
+| Phase 09 P02 | 20min | 2 tasks | 5 files |
 | Phase 09 P03 | ~35min | 2 tasks | 6 files |
 | Phase 09 P04 | 25min | 2 tasks | 4 files |
 | Phase 09 P06 | 15min | 3 tasks | 6 files |
+
+**Recent Trend:**
+
+- Last 5 plans: 25min, 15min, e os planos das Fases 10-12 (não registrados individualmente aqui)
+- Trend: Stable
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -89,12 +91,34 @@ Last activity: 2026-08-06 — Milestone v1.3 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Roadmap v1.2 (2026-07-25): 5 fases derivadas dos 14 requisitos do marco, ordenadas pela ordem de build da research — 8 Kanban scroll (KAN) e 9 Filtros Estado/Cidade (LOC) independentes e paralelizáveis; 10 Desativação (EQP) precede 12 por dependência de schema (`profiles.ativo`); 11 Funil detalhado (FNL) estabelece a lógica de reconstrução de duração; 12 Comparativo por vendedor (VEND) depende de 10 + 11.
-- Roadmap v1.2: decisão de produto travada — na desativação (EQP-04), só clientes em andamento são transferidos ao substituto; clientes já ganho/perdido ficam atribuídos ao vendedor desativado para preservar a precisão histórica. Reflita isso no critério de sucesso da Fase 10 e no comparativo da Fase 12 (vendedor desativado some da lista de ativos, mas seus históricos continuam contando).
-- Roadmap v1.2: decisão de produto travada — o tempo médio por etapa (FNL-01) INCLUI clientes ainda parados na etapa agora (usa `now()` como saída provisória); é intencional, para revelar cards travados, não é bug.
-- Roadmap v1.2: decisão de produto travada — Cidade (LOC-02) vem de uma lista oficial de municípios IBGE previamente carregada (tabela `cidades` + RPC), NÃO de um SELECT DISTINCT sobre os clientes existentes; confirmado pelo dono após a research sinalizar que a abordagem por dados existentes impediria cadastrar uma cidade nova.
-- Roadmap v1.1: fases derivadas dos 13 requisitos do marco (IMP-01..10 + EXP-01..03), ordenadas por risco crescente — Export (5) → Import preview (6) → Import commit (7). Só a Fase 7 grava no banco; 5 e 6 são leitura/pré-visualização, o que reduz o risco e as torna testáveis isoladamente.
-- Roadmap v1.1: IMP-10 (restrito ao Supervisor) mapeado na Fase 6 (porta de entrada da importação), mas o RPC de gravação da Fase 7 também precisa impor Supervisor-only via RLS — a restrição vale para o fluxo inteiro.
+- **Roadmap v1.3 (2026-08-07):** 5 fases (13 Cliente Ativo e Frequência / 14 Agenda Unificada / 15 Conclusão e Próxima Visita / 16 Ficha do Cliente Ativo e Diário / 17 Planilhas) derivadas dos 17 requisitos do marco, numeração continuando da v1.2 (última = Fase 12). Ordem pela build-order da research: 13 é a fundação de schema (colunas de `clientes` + tabela `visitas` + `mover_card_funil` estendido) e precede tudo; 14 é leitura pura sobre 13; 15 é o fluxo de escrita e é a fase de maior risco; 16 e 17 são payoff/escala e dependem de 13 + 15.
+- **Roadmap v1.3:** "Ativo" = sinônimo de `status_acompanhamento = 'ganho'` — resolvido no Discuss com o dono do projeto, NÃO reabrir durante o planejamento das fases.
+- **Roadmap v1.3:** `frequencia_visita` (ATV-03) e a recorrência definida no "ganho" (VIS-01/VIS-02) são o MESMO valor, guardado uma vez em `clientes` — nunca dois campos.
+- **Roadmap v1.3:** sem cron / sem worker de fundo. A próxima data de visita é calculada no momento da escrita, dentro do RPC `concluir_visita`, com confirmação síncrona do vendedor (VIS-03).
+- **Roadmap v1.3:** `historico` não muda de schema; o `resumo` (CONC-01) vira coluna nullable direto em `tarefas`/`visitas` e chega ao `historico` pelo trigger `SECURITY DEFINER` que já existe — zero exceções `SECURITY DEFINER` novas.
+- **Roadmap v1.3:** IMP-01 reaproveita o padrão de TELA da importação da v1.1, mas é RPC/fluxo materialmente diferente (atualiza campo de clientes existentes, não cria clientes) — planejar como item de build próprio.
+- **Roadmap v1.3:** clientes já "ganho" antes do marco ficam SEM frequência (VIS-04) até alguém definir uma, individualmente ou pelo fluxo de planilha (IMP-01).
+- Roadmap v1.2 (2026-07-25): 5 fases derivadas dos 14 requisitos do marco — 8 (KAN) e 9 (LOC) independentes/paralelizáveis; 10 (EQP) precede 12 por dependência de schema (`profiles.ativo`); 11 (FNL) estabelece a lógica de reconstrução de duração; 12 (VEND) depende de 10 + 11.
+- Roadmap v1.2: decisão de produto travada — na desativação (EQP-04), só clientes em andamento são transferidos ao substituto; clientes já ganho/perdido ficam com o vendedor desativado para preservar precisão histórica.
+- Roadmap v1.2: decisão de produto travada — o tempo médio por etapa (FNL-01) INCLUI clientes ainda parados na etapa agora (usa `now()` como saída provisória); é intencional, não é bug.
+- Roadmap v1.2: decisão de produto travada — Cidade (LOC-02) vem da lista oficial IBGE (tabela `cidades` + RPC), NÃO de um SELECT DISTINCT sobre clientes existentes.
+- Roadmap v1.1: fases derivadas dos 13 requisitos IMP/EXP, ordenadas por risco crescente — Export (5) → Import preview (6) → Import commit (7). Só a Fase 7 grava no banco.
+
+**Convenções de código/arquitetura acumuladas (v1.0–v1.2), as mais relevantes para o v1.3:**
+
+- Um `clientes` É o card do funil (modelo 1:1) — `etapa`/`status_acompanhamento`/`motivo_perda_id`/`observacao`/`posicao` vivem direto em `clientes`, não há tabela `cards` separada.
+- `mover_card_funil` NÃO é security definer — roda como o chamador, então o RLS ainda se aplica ao UPDATE. Todo RPC novo deve seguir isso.
+- `historico` não tem policy de INSERT para usuários — só triggers `SECURITY DEFINER` escrevem nela, mantendo a trilha de auditoria à prova de adulteração pela API.
+- Toda função `dashboard_*` é SECURITY INVOKER por omissão (mirror de `mover_card_funil`); RLS em `clientes`/`historico`/`cliente_produtos` é a única fronteira de autorização.
+- `cidades` espelha a postura read-only do `historico` (RLS ligada, SELECT-only, zero policy de escrita) — padrão para datasets de referência.
+- `chk_estado_valido` mostrou que o passo final `VALIDATE CONSTRAINT` de uma constraint `NOT VALID` precisa vir dentro de `DO $$ ... EXCEPTION WHEN check_violation ... $$`, senão aborta o `supabase db push` inteiro se alguma linha legada violar. Padrão para futuras migrations com `NOT VALID`.
+- `importar_clientes_lote` precisou do pragma `#variable_conflict use_column` (colisão entre coluna e OUT var) e teve que separar os inserts de `clientes` e `cliente_produtos` em dois statements sequenciais — encadear como duas CTEs de escrita quebra o RLS parent-EXISTS do filho.
+- Efeitos de fetch-on-mount neste projeto seguem o padrão `EditableListTab` (setState síncrono no corpo do efeito + guarda `cancelled` + contador `reloadKey`).
+- `keepMounted` é obrigatório nos `TabsContent` (Base UI desmonta o painel ao trocar de aba e re-dispara o fetch).
+
+<details>
+<summary><strong>Histórico completo de decisões por plano (Fases 01-09)</strong> — preservado aqui porque os diretórios de fase e os SUMMARY.md correspondentes foram limpos do disco; só existem no histórico do git</summary>
+
 - Roadmap: Auth & RLS foundation goes first (hard blocker — every table's RLS depends on profiles.role/is_supervisor()), Dashboard goes last (pure read layer over data other phases produce).
 - Roadmap: Search/filter (CLI-07) folded into Phase 2 (Client) and activity log (FUN-10) folded into Phase 3 (Kanban), rather than a standalone phase, to keep phases as complete vertical slices per standard granularity.
 - Open items flagged by research, still to confirm during Phase 1/2 discuss-phase: whether Vendedor can edit/delete own clients beyond creating (CLAUDE.md currently assumes "can edit, cannot delete" — already reflected in CLI-06), and whether kanban stage names become editable in a future version (currently fixed, out of scope for v1).
@@ -174,20 +198,31 @@ Recent decisions affecting current work:
 - [Phase 09-04]: estadoOptions removido em cadeia (FiltersPopover + ClienteToolbar + KanbanBoard) no mesmo commit para não quebrar o tsc
 - [Phase ?]: cidadeValida/cidadeCanonica kept fully pure (no Supabase) so annotarLinha and the Server Actions share one implementation
 
+</details>
+
 ### Pending Todos
 
 None yet.
 
 ### Blockers/Concerns
 
-- REQUIREMENTS.md's own "Coverage" note said "28 total" but the actual v1 requirement list (AUTH/CLI/FUN/ADM/DSH) contains 32 items. Roadmap creation used the actual 32-item list as ground truth and corrected the count in REQUIREMENTS.md traceability. Worth a quick sanity check with the user if the number 28 came from somewhere specific.
-- Research flags two areas needing deeper research at plan time, not now: Phase 3 (fractional card-position strategy, mover_card_funil RPC validation, touch/mobile drag ergonomics) and Phase 5 (security_invoker view syntax/index strategy — LOW confidence sources in STACK.md).
-- REQUIREMENTS.md shows AUTH-02 (Supervisor invites Vendedor) already checked off as Complete, but the invite Edge Function + gerenciar-equipe screen that actually deliver it are still planned for 01-04 (not yet built) — pre-existing inconsistency, not introduced by 01-03; worth a quick correction pass before shipping the phase.
-- **RESOLVED 2026-07-20 — 01-05 Task 4 (real email round-trip verification):** hit the same free-tier 2/hour mailer rate limit a third time (correctly surfaced this time — confirms the earlier 01-04 fix still works). Rather than defer again, split the check into (a) the token/session/UI code path, verified via `supabase.auth.admin.generateLink()` to bypass the mailer entirely — both password-reset and invite-accept round-trips confirmed working end-to-end against the real hosted project — and (b) raw inbox deliverability, not independently re-observed this session but indirectly confirmed since the rate-limit response only fires after GoTrue attempts a real send. AUTH-01/AUTH-02 approved by the project owner 2026-07-20. See `01-05-SUMMARY.md`'s "Open Item: Task 4 — RESOLVED" section.
-- **v1.1 research pitfalls to carry into planning (see .planning/research/PITFALLS.md):** A1 fragile razão_social dedup (no CNPJ) → Phase 6; A2 pt-BR CSV delimiter (semicolon), A3 UTF-8 BOM on first header → Phase 6 parse; A4 CSV injection on export → Phase 5; A5 serverless timeout on large batches, A6 partial-import inconsistency → Phase 7 (batch inserts inside one RPC transaction); A7 file-upload security (size cap + magic bytes) → Phase 6. Research also flags a security-audit gate before Phase 7 ships.
-- **v1.2 research flags to carry into phase planning (see research/SUMMARY.md + PITFALLS.md v1.2):** Phase 10 (Desativação) — two-step cross-service atomicity: `profiles.ativo=false` é o controle primário; se a chamada da Auth Admin API (`ban_duration`) falhar depois, documentar a janela residual do JWT (~1h) na mensagem de erro; confirmar o formato de `ban_duration`. Phase 11 (Funil) — a média de tempo por etapa inclui cards ainda parados (usa `now()`), confirmar índice/estratégia da query de reconstrução sobre `historico` via window functions. Phase 12 (Comparativo) — precisa de teste automatizado do isolamento por papel (Vendedor não acessa a tabela).
-- **gsd-tools.cjs not present in the `agent-a0e04e14689e8d62e` worktree** used to execute 09-01 (it exists in the main checkout's `.claude/gsd-core/bin/` but is untracked, so git worktrees don't share it). STATE.md/ROADMAP.md updates for 09-01 were done by direct manual edit instead of via `gsd-tools query`. Numeric frontmatter progress counters (`current_phase`, `progress.*`) were deliberately left untouched to avoid clobbering concurrent Phase 8 tracking in a parallel worktree — worth reconciling by hand (or by running the full `gsd-tools` state-recalculation) once all in-flight worktrees for this milestone are merged.
-- Live `clientes` table in the hosted project has one test row with `estado='ZZ'` (an invalid placeholder, not a real state), left in place per D-01 (test data the owner is deleting) — `chk_estado_valido` on that row is enforced-but-NOT-VALID (fully blocks any future invalid write, just not retroactively validated). No action needed unless the owner wants to re-run `VALIDATE CONSTRAINT` after deleting test data.
+**Ativos para o v1.3:**
+
+- **Pitfall 1 — matemática de data/fuso (Fase 15):** é a primeira feature deste codebase a fazer aritmética de data no servidor. Calcular a próxima data no Postgres (`date + interval`), guardar como `date` puro, e no cliente usar `parseISO` do `date-fns` — nunca `new Date(stringISO)` (vira meia-noite UTC e mostra o dia anterior no fuso de São Paulo). Teste obrigatório: `mensal` de 31/jan → 28/fev (e 29/fev em ano bissexto).
+- **Pitfall 2 — atomicidade de 3 tabelas (Fase 15):** concluir visita = fechar visita + gravar histórico + criar próxima visita. Uma RPC atômica `SECURITY INVOKER`, nunca 3 chamadas do cliente. Se aparecer `create policy ... on historico for insert` num diff, é sinal de parar e revisar.
+- **Pitfall 3 — campos graduados (Fase 13):** `nome_fantasia`/`cnpj`/frequências entram como colunas **nullable**; um `NOT NULL`/`CHECK` cego quebra a migration contra as linhas "ganho" que já existem em produção. A exigência vai no guard do RPC.
+- **Pitfall 5 — feed unificado (Fase 14):** uma RPC `agenda_do_vendedor()` com `UNION ALL` no SQL, não duas queries `supabase-js` mescladas no cliente. Adicionar índices de data em `visitas`/`tarefas`.
+- **CSV injection (Fase 17):** a exportação do diário (IMP-02) leva texto livre escrito pelo vendedor — mesmo risco A4 já tratado na exportação de clientes da v1.1.
+- **Limite de ~10s do Vercel Hobby (Fase 17):** gravação em lote set-based, nunca loop linha a linha — mesma regra que valeu para `importar_clientes_lote`.
+- Research sinalizou pesquisa mais profunda em tempo de planejamento para a Fase 15 (`/gsd-plan-phase 15 --research-phase`); Fases 14, 16 e 17 são padrões já estabelecidos no projeto.
+
+**Herdados, ainda relevantes:**
+
+- Gap de verificação humana aceito formalmente (Fase 8): o drag-and-drop com auto-scroll do kanban foi revisado por código, não exercitado por um drag real de mouse. Risco julgado baixo. Ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`.
+- `eslint-disable` documentado em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — a Fase 16 mexe justamente nesse arquivo; não piorar.
+- A tabela `clientes` ao vivo tem uma linha de teste com `estado='ZZ'`; `chk_estado_valido` está enforced-but-NOT-VALID nela (bloqueia escritas futuras, só não foi validada retroativamente). Sem ação necessária a menos que o dono queira re-rodar `VALIDATE CONSTRAINT` depois de apagar os dados de teste.
+- `gsd-tools.cjs` não existe dentro de worktrees git criados a partir deste repo (está em `.claude/gsd-core/bin/` mas é untracked). Em execução paralela por worktree, as atualizações de STATE/ROADMAP precisam de edição manual.
+- **RESOLVIDO 2026-07-20 — 01-05 Task 4 (verificação de email real):** o limite de 2 envios/hora do free tier foi contornado dividindo a checagem em (a) caminho de token/sessão/UI, verificado via `supabase.auth.admin.generateLink()` — reset de senha e aceite de convite confirmados de ponta a ponta contra o projeto hospedado real — e (b) entregabilidade bruta na caixa de entrada, não re-observada, mas indiretamente confirmada. AUTH-01/AUTH-02 aprovados pelo dono do projeto.
 
 ### Quick Tasks Completed
 
@@ -200,9 +235,10 @@ None yet.
 
 ### Roadmap Evolution
 
-- Marco v1.2 roteirizado (2026-07-25): 5 fases novas (8 Rolagem Kanban / KAN, 9 Filtros Estado-Cidade / LOC, 10 Desativação de Membro / EQP, 11 Funil Detalhado / FNL, 12 Comparativo por Vendedor / VEND) derivadas dos 14 requisitos do marco, numeração continuando de v1.1 (última = Fase 7). Ordem pela build-order da research: 8 e 9 independentes/paralelizáveis primeiro; 10 antes de 12 (dependência de schema `profiles.ativo`); 11 antes de 12 (reuso da lógica de duração). 14/14 requisitos mapeados, sem órfãos. Fases 8-12 marcadas "Not started".
-- Marco v1.1 roteirizado (2026-07-22): 3 fases novas (5 Exportação, 6 Importação preview, 7 Importação commit) derivadas dos 13 requisitos IMP/EXP, numeração continuando de v1.0 (última = Fase 4). Ordem por risco crescente conforme research/SUMMARY.md. Fases 5-7 marcadas "Not started".
-- Phase 2 edited: merged old Phase 3 (Funil de Vendas/Kanban) into Phase 2 (Cadastro), at owner's request, so cadastro+funil ship as one vertical slice; Admin and Dashboard phases renumbered 4->3, 5->4 accordingly
+- **Marco v1.3 roteirizado (2026-08-07):** 5 fases novas (13 Cliente Ativo e Frequência de Visita / 14 Agenda Unificada / 15 Conclusão com Resumo e Próxima Visita / 16 Ficha do Cliente Ativo — Campos e Diário / 17 Planilhas — Frequência em Massa e Exportação do Diário) derivadas dos 17 requisitos do marco (AGD/VIS/CONC/DIAR/ATV/IMP), numeração continuando da v1.2 (última = Fase 12). 17/17 requisitos mapeados, sem órfãos nem duplicados. Fases 13-17 marcadas "Not started".
+- Marco v1.2 roteirizado (2026-07-25): 5 fases novas (8 KAN / 9 LOC / 10 EQP / 11 FNL / 12 VEND) derivadas dos 14 requisitos do marco, numeração continuando de v1.1 (última = Fase 7). 14/14 requisitos mapeados.
+- Marco v1.1 roteirizado (2026-07-22): 3 fases novas (5 Exportação, 6 Importação preview, 7 Importação commit) derivadas dos 13 requisitos IMP/EXP, numeração continuando de v1.0 (última = Fase 4).
+- Phase 2 edited (v1.0): merged old Phase 3 (Funil/Kanban) into Phase 2 (Cadastro), a pedido do dono, para cadastro+funil entregarem como uma fatia vertical só; Admin e Dashboard renumeradas 4→3, 5→4.
 
 ## Deferred Items
 
@@ -210,18 +246,19 @@ Items acknowledged and carried forward from previous milestone close:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| Manual verification | 01-05 Task 4 — real password-reset + invite-accept email round-trips (see STATE.md Blockers/Concerns and 01-05-SUMMARY.md "Open Item: Task 4") | Resolved 2026-07-20 (code path verified via admin-generated links; see summary) | 2026-07-16, end of 01-05 execution |
-| Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` on the ~13-setter reset effect (close Sheet / switch clienteId), suppressed with a documented `eslint-disable-next-line` instead of refactored, because the correct fix ("adjust state during render") changes reset timing and risks real behavior change with no test coverage on this component. Recommend a dedicated quick task. | Open — suppressed, not fixed | 2026-08-06, quick task 260806-fln |
+| Manual verification | 01-05 Task 4 — real password-reset + invite-accept email round-trips | Resolved 2026-07-20 (caminho de código verificado via links gerados pelo admin) | 2026-07-16 |
+| Manual verification | Fase 8 — drag real de mouse com auto-scroll do kanban não exercitado (revisão de código apenas) | Aberto — risco aceito, baixo | 2026-07-26 |
+| Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` no efeito de reset com ~13 setters, suprimido com `eslint-disable-next-line` em vez de refatorado (o fix correto muda o timing do reset e não há cobertura de teste nesse componente). Recomendada uma quick task dedicada — a Fase 16 mexe neste arquivo. | Aberto — suprimido, não corrigido | 2026-08-06, quick task 260806-fln |
 
-**SECURITY DEFINER exceptions (3 total in this codebase):** `is_supervisor()` and `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) — and now `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a), which returns ONLY distinct city-name text for a chosen estado (no ids/PII/row data), needed because RLS-invoker semantics on `clientes` would otherwise give a Vendedor an incomplete city list. Any future RPC needing system-wide aggregate data from an RLS-scoped table should follow this same pattern: minimum-possible-output SECURITY DEFINER function, never a new open SELECT policy.
+**SECURITY DEFINER exceptions (3 no codebase):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) e `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a). O v1.3 **não deve adicionar uma quarta** — o `resumo` chega ao `historico` pelo trigger `SECURITY DEFINER` que já existe (categoria já abençoada), não por um RPC novo. Qualquer RPC futuro que precise de dado agregado do sistema inteiro sobre tabela com RLS deve seguir o mesmo padrão: função `SECURITY DEFINER` de saída mínima possível, nunca uma policy de SELECT aberta.
 
 ## Session Continuity
 
-Last session: 2026-08-03T17:16:25.681Z
-Stopped at: Phase 12 context gathered
-Resume file:
-.planning/phases/12-comparativo-por-vendedor/12-CONTEXT.md
+Last session: 2026-08-07
+Stopped at: Roadmap do marco v1.3 criado (ROADMAP.md Fases 13-17 + traceability 17/17 em REQUIREMENTS.md)
+Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Revisar o roadmap do v1.3 em `.planning/ROADMAP.md` (Fases 13-17).
+- Depois de aprovado: `/gsd-discuss-phase 13` (ou direto `/gsd-plan-phase 13`) para começar a fundação de dados do marco.

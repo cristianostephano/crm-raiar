@@ -73,13 +73,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| AGD-01 | Phase 14 | Pending |
+| AGD-02 | Phase 14 | Pending |
+| AGD-03 | Phase 14 | Pending |
+| AGD-04 | Phase 14 | Pending |
+| AGD-05 | Phase 14 | Pending |
+| AGD-06 | Phase 14 | Pending |
+| VIS-01 | Phase 13 | Pending |
+| VIS-02 | Phase 13 | Pending |
+| VIS-03 | Phase 15 | Pending |
+| VIS-04 | Phase 13 | Pending |
+| CONC-01 | Phase 15 | Pending |
+| DIAR-01 | Phase 16 | Pending |
+| ATV-01 | Phase 16 | Pending |
+| ATV-02 | Phase 16 | Pending |
+| ATV-03 | Phase 13 | Pending |
+| IMP-01 | Phase 17 | Pending |
+| IMP-02 | Phase 17 | Pending |
 
 **Coverage:**
 
 - v1 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17 ✓
+- Unmapped: 0
+
+**Por fase:**
+
+| Phase | Requisitos | Total |
+|-------|------------|-------|
+| 13. Cliente Ativo e Frequência de Visita | VIS-01, VIS-02, VIS-04, ATV-03 | 4 |
+| 14. Agenda Unificada | AGD-01, AGD-02, AGD-03, AGD-04, AGD-05, AGD-06 | 6 |
+| 15. Conclusão com Resumo e Próxima Visita | VIS-03, CONC-01 | 2 |
+| 16. Ficha do Cliente Ativo — Campos e Diário | ATV-01, ATV-02, DIAR-01 | 3 |
+| 17. Planilhas — Frequência em Massa e Exportação do Diário | IMP-01, IMP-02 | 2 |
 
 ---
 *Requirements defined: 2026-08-07*
-*Last updated: 2026-08-07 after initial definition*
+*Last updated: 2026-08-07 after roadmap creation (Phases 13-17, 17/17 mapped, sem órfãos)*
