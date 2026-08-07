@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Agenda do Vendedor
-status: planning
+status: executing
 current_phase: 13
-last_updated: "2026-08-07T00:00:00.000Z"
+last_updated: "2026-08-07T18:21:00.000Z"
 last_activity: 2026-08-07
 progress:
   total_phases: 5
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 ## Current Position
 
 Phase: 13 of 17 (Cliente Ativo e Frequência de Visita) — 1ª das 5 fases do marco v1.3
-Plan: — (nenhum plano criado ainda)
-Status: Ready to plan
-Last activity: 2026-08-07 — Roadmap do v1.3 criado (Fases 13-17, 17/17 requisitos mapeados)
+Plan: 01 de 3 (Fundação de banco) — COMPLETO
+Status: Plano 13-01 executado e commitado (migration 0013 aplicada em produção, testes verdes); pronto para 13-02 (diálogo de frequência ao marcar ganho)
+Last activity: 2026-08-07 — Plano 13-01 (fundação de banco: enum, colunas nullable de clientes, tabela visitas + RLS, proxima_data_visita, mover_card_funil de 6 parâmetros) executado e aplicado em produção
 
-Progress (v1.3): [░░░░░░░░░░] 0%
+Progress (v1.3): [░░░░░░░░░░] 0% (ver nota: recálculo automático de progress indisponível neste worktree — gsd-tools.cjs não existe aqui, ver Blockers/Concerns)
 
 ## Performance Metrics
 
@@ -91,6 +91,7 @@ Progress (v1.3): [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- **[Fase 13-01] (2026-08-07):** Migration 0013 aplicada em produção — `frequencia_visita_enum`, 4 colunas nullable em `clientes` (nome_fantasia/cnpj/frequencia_pedidos/frequencia_visita), tabela `visitas` com RLS 4-policy parent-gated (espelhando `tarefas`), `proxima_data_visita` (immutable, clamp de fim de mês) e `mover_card_funil` recriado com o 6º parâmetro `p_frequencia_visita` (assinatura antiga de 5 removida no mesmo arquivo, sem sobrecarga ambígua). VIS-01/VIS-04/ATV-03 provados por 28/28 testes de integração contra o banco real. Pin do Supabase CLI em `2.111.0` para o push (2.112.0 tem bug de validação de schema em link/API keys). `npm test` completo (433 testes) não terminou limpo em nenhuma tentativa por causa do rate limit conhecido de `signInWithPassword` do Supabase Auth (ver Blockers/Concerns) — mitigado com 91 testes isolados nos arquivos de maior risco de regressão (funil-status/funil-constraints + as 5 suítes de dashboard), todos verdes. Ver `13-01-SUMMARY.md`.
 - **Roadmap v1.3 (2026-08-07):** 5 fases (13 Cliente Ativo e Frequência / 14 Agenda Unificada / 15 Conclusão e Próxima Visita / 16 Ficha do Cliente Ativo e Diário / 17 Planilhas) derivadas dos 17 requisitos do marco, numeração continuando da v1.2 (última = Fase 12). Ordem pela build-order da research: 13 é a fundação de schema (colunas de `clientes` + tabela `visitas` + `mover_card_funil` estendido) e precede tudo; 14 é leitura pura sobre 13; 15 é o fluxo de escrita e é a fase de maior risco; 16 e 17 são payoff/escala e dependem de 13 + 15.
 - **Roadmap v1.3:** "Ativo" = sinônimo de `status_acompanhamento = 'ganho'` — resolvido no Discuss com o dono do projeto, NÃO reabrir durante o planejamento das fases.
 - **Roadmap v1.3:** `frequencia_visita` (ATV-03) e a recorrência definida no "ganho" (VIS-01/VIS-02) são o MESMO valor, guardado uma vez em `clientes` — nunca dois campos.
@@ -215,6 +216,7 @@ None yet.
 - **CSV injection (Fase 17):** a exportação do diário (IMP-02) leva texto livre escrito pelo vendedor — mesmo risco A4 já tratado na exportação de clientes da v1.1.
 - **Limite de ~10s do Vercel Hobby (Fase 17):** gravação em lote set-based, nunca loop linha a linha — mesma regra que valeu para `importar_clientes_lote`.
 - Research sinalizou pesquisa mais profunda em tempo de planejamento para a Fase 15 (`/gsd-plan-phase 15 --research-phase`); Fases 14, 16 e 17 são padrões já estabelecidos no projeto.
+- **[Fase 13-01] `npm test` completo não termina limpo numa execução única contra o projeto ao vivo:** confirmado (duas tentativas, uma com 5min de cooldown entre elas) que a suíte inteira (433 testes / 56 arquivos serializados) esgota a cota de rate limit de `signInWithPassword` do Supabase Auth só pelo próprio volume de logins que ela faz (~150-200 chamadas de `signInAs` em ~300s) — 100% das falhas em ambas tentativas são exatamente `Request rate limit reached`, zero falha de asserção de schema/RPC. Mesma causa raiz do achado da Fase 6-03. Rodar a suíte completa em lotes pequenos (por diretório/feature) em vez de `npm test` de uma vez, ou considerar aumentar o rate limit de Auth nas configurações do projeto Supabase (decisão do dono, fora do escopo de código).
 
 **Herdados, ainda relevantes:**
 
@@ -255,10 +257,12 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-08-07
-Stopped at: Roadmap do marco v1.3 criado (ROADMAP.md Fases 13-17 + traceability 17/17 em REQUIREMENTS.md)
+Stopped at: Plano 13-01 (fundação de banco) executado e commitado — migration 0013 aplicada em produção com aprovação humana, testes verdes (28/28 nos arquivos novos + 91/91 nos arquivos de maior risco de regressão). Ver `.planning/phases/13-cliente-ativo-e-frequ-ncia-de-visita/13-01-SUMMARY.md`.
 Resume file: None
 
 ## Operator Next Steps
 
-- Revisar o roadmap do v1.3 em `.planning/ROADMAP.md` (Fases 13-17).
-- Depois de aprovado: `/gsd-discuss-phase 13` (ou direto `/gsd-plan-phase 13`) para começar a fundação de dados do marco.
+- Nenhuma ação necessária do dono no momento — o schema de "cliente ativo e frequência de visita" já está em produção.
+- Próximo: Plano 13-02 (diálogo `GanhoFrequenciaDialog` ao marcar cliente como ganho) e Plano 13-03 (edição da frequência na ficha do cliente), ambos já desbloqueados por este plano.
+- **Aviso temporário:** entre agora e a conclusão do Plano 13-02, marcar um cliente como "ganho" pela tela vai falhar (o banco já exige a frequência, o diálogo ainda não existe) — esperado, dura só até 13-02 subir.
+- Opcional, fora do escopo de código: revisar o rate limit de `signInWithPassword` nas configurações de Auth do projeto Supabase, já que `npm test` completo não termina limpo numa única execução por causa desse limite (ver Blockers/Concerns).
