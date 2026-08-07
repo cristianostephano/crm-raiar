@@ -1,117 +1,91 @@
-# Research Summary — v1.2 Gestão de Equipe, Análises de Funil e Filtros
+# Project Research Summary
 
-**Milestone:** v1.2 — Team Deactivation, Funnel Analytics, Kanban Layout, Location Filters
-**Project:** CRM Raiar — Acompanhamento de Vendas
-**Domain:** B2B sales CRM (kanban funnel + role-based analytics) on Supabase
-**Researched:** 2026-07-25
+**Project:** CRM Raiar v1.3 "Agenda do Vendedor"
+**Domain:** B2B field-sales CRM — recurring post-sale visit scheduling + unified task/agenda
+**Researched:** 2026-08-07
 **Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-Milestone v1.2 adds six targeted capabilities: team member soft-deactivation with forced reassignment, per-stage funnel conversion/duration metrics, per-salesperson performance comparison, kanban column fixed-height scroll, and Estado/Cidade cascading location filters. **Zero new npm dependencies needed.** All features layer onto existing RLS/RPC/historico without schema restructuring — deactivation adds one column (`profiles.ativo`), funnel metrics parse existing `historico` text via window functions, location filter introduces one lookup table.
-
-**Critical cross-feature dependency:** Team deactivation's reassignment scope (open-only vs. all clientes) affects leaderboard historical accuracy. This decision must be locked before leaderboard is planned in detail. **Recommendation: reassign only open clientes.**
-
-**Build order:** Kanban scroll + location filter (no deps) → deactivation (enables leaderboard schema) → funnel metrics (establishes duration math) → leaderboard (reuses both).
+v1.3 "Agenda do Vendedor" extends the existing Supabase/Postgres schema with recurring-visit scheduling and a unified task/visit list. Architecture reuses established patterns with **zero new external dependencies** — all required libraries are already in package.json. Critical risk surface is narrow: date-timezone handling, multi-table write atomicity, and "ativo" state ambiguity. Research recommends **not introducing a background scheduler** — the "suggest and confirm" pattern (compute at write time, let vendor adjust, seed next row atomically) sidesteps complexity and preserves free-tier egress constraints.
 
 ## Key Findings
 
 ### Recommended Stack
 
-**Zero new npm packages.** All features use existing core stack (Next.js 16, React 19, Supabase, `@dnd-kit`, shadcn/ui), native PostgreSQL (window functions, string parsing), and Supabase Auth Admin API (already in `@supabase/supabase-js`). Minor addition: server-only admin client (`lib/supabase/admin.ts`) using `service_role` key (`.env.local`, never `NEXT_PUBLIC_`).
+No new dependencies. Core: Next.js 16, React 19 (useOptimistic), Supabase Postgres/RLS, date-fns 4.4.0, react-hook-form, zod, shadcn/ui, Vitest, Playwright.
 
 ### Expected Features
 
-**Six features, all P1 (committed scope):**
+**Table stakes:** Unified agenda list, overdue highlighting, mark-done with resumo, per-client diary, frequência de visita, suggested next date, RLS visibility, "ativo"-gated fields
 
-| # | Feature | Dependency |
-|---|---------|------------|
-| 1 | Deactivate + reassign + last-Supervisor guard | Precedes leaderboard |
-| 2 | Funnel chart (conversion %/dropout/time-in-stage) | Shared duration math |
-| 3 | Days-to-win/loss KPIs | Extends chart query |
-| 4 | Vendedor leaderboard | Depends on item 1 scope |
-| 5 | Kanban column scroll | Independent |
-| 6 | Estado/Cidade cascading | Independent |
+**Should-have:** Quick filters, supervisor per-vendor filter, nav count badge
 
-**Open decision (Item 1→4):** Reassign all clientes or open-only? Recommendation: **open-only** to preserve leaderboard historical accuracy.
+**Defer:** Weekly calendar, single-occurrence reschedule, full-text search
 
 ### Architecture Approach
 
-**Deactivation:** Two-step cross-service flow. RPC (`desativar_membro_equipe`) enforces last-Supervisor guard, reassigns clientes, flips `profiles.ativo = false`. Separate Server Action calls Auth Admin API (`ban_duration: '87600h'`) to block sign-in (service_role key). If step 2 fails after step 1, `ativo=false` already enforced; residual risk (still-valid JWT ~1h) documented.
+Extends proven patterns: SECURITY INVOKER RPCs for reads/writes, SECURITY DEFINER triggers for historico. New `visitas` table (sibling to `tarefas`), extended `mover_card_funil`, new `concluir_visita`/`concluir_tarefa_prospeccao`/`agenda_do_vendedor` RPCs. No new authorization exceptions needed.
 
-**Funnel analytics:** Reconstructs history from existing `historico` rows — no schema change. Fixed-format `descricao` (`'Etapa alterada para "%s"'`) parsed via window functions to pair entry/exit timestamps per stage.
+### Critical Pitfalls & Prevention
 
-**Leaderboard:** Extended `dashboard_desempenho_vendedor` RPC via `create or replace`, adds `negocios_iniciados`, `ciclo_medio_dias`, `ativo` columns. Same `SECURITY INVOKER` pattern as existing dashboard.
+**1. Timezone/date-math off-by-one** — Compute in Postgres (not browser), store as plain date, test Jan 31 + mensal
 
-**Location filters:** New `cidades` table (IBGE-seeded, read-only), new `cidades_por_estado()` RPC. Estado (27 UF) is frontend constant. Avoids perpetuating free-text inconsistencies.
+**2. 3-table write atomicity** — One atomic RPC for all writes; extend existing trigger pattern; test rollback
 
-**Kanban scroll:** Pure CSS/Tailwind — bounded `max-h` + `overflow-y-auto` on card-list, header outside scroll region.
+**3. Graduated fields fail on populated table** — Add as nullable; enforce in RPC guard; resolve "ativo" definition first
 
-### Critical Pitfalls
+**4. Auto-generate via scheduler** — Compute at write time, "overdue" at read time; no scheduled job
 
-1. **Two-step deactivation atomicity:** GoTrue separate from Postgres; if step 2 fails, `ativo=false` already enforced but Auth ban pending. **Prevention:** Document that `ativo=false` is primary control.
+**5. Client-side merge instead of UNION ALL** — One SECURITY INVOKER RPC with pagination in SQL; add date indexes
 
-2. **Cidade dropdown from existing clientes:** Perpetuates inconsistency, blocks first-ever city entry. **Prevention:** Use `cidades` table + RPC.
+## Roadmap Implications
 
-3. **Structured columns for historico:** Backfill gap, zero benefit. **Prevention:** Parse existing `descricao` via window functions.
+**Phase 1:** Schema Foundation — Resolve "ativo", add graduated fields, extend mover_card_funil. **Avoids Pitfall 3.**
 
-## Implications for Roadmap
+**Phase 2:** Recurrence Engine — Build RPCs, create visitas table, extend historico triggers, heavy testing. **Avoids Pitfalls 1, 2, 4.**
 
-### Phase 1: Kanban Scroll (Fixed-Height Layout)
-Rationale: Zero deps, pure CSS, UX win. Delivers bounded-height columns, pinned headers.
+**Phase 3:** Agenda Read View — Build agenda_do_vendedor RPC, indexes, AgendaList component. **Avoids Pitfall 5.**
 
-### Phase 2: Estado/Cidade Filters
-Rationale: Independent, unblocks all forms. Delivers `cidades` table + RPC, cascading dropdown.
+**Phase 4:** Mark-Done Dialog — ConcluirItemDialog with React 19 useOptimistic, zod validation.
 
-### Phase 3: Team Deactivation
-Rationale: Highest risk, must precede leaderboard schema. **MUST lock reassignment scope.** Delivers `profiles.ativo`, modified `is_supervisor()`, `desativar_membro_equipe()` RPC, deactivation UI.
+**Phase 5:** Diary + Ativo Fields Display — Extend ClienteDetailSheet.
 
-### Phase 4: Funnel Metrics
-Rationale: Establishes duration math leaderboard reuses. Delivers `dashboard_tempo_por_etapa()`, `dashboard_dias_ate_ganho_perdido()`, funnel visualization.
+**Phase 6:** Polish — Nav badge, filters, export (optional).
 
-### Phase 5: Vendedor Leaderboard
-Rationale: Depends on phase 3 (`ativo` column) + phase 4 (duration logic). Delivers extended dashboard with per-vendedor metrics (no money columns).
-
-### Phase Ordering
-- Phases 1&2: Parallel OK, no cross-deps
-- Phase 3: Must precede 5 (schema dependency)
-- Phase 4: Should precede 5 (code reuse)
-- Phase 5: Last (depends on 3&4)
+**Ordering:** Phase 1 resolves "ativo"; Phase 2 builds core wiring; Phase 3 data layer; Phase 4 UI consumption; Phase 5 payoff; Phase 6 polish.
 
 ### Research Flags
 
-Needing research:
-- **Phase 3:** Confirm Auth Admin API `ban_duration` format, JWT expiry window
-- **Phase 4:** Confirm whether in-progress duration included in avg (survivorship bias vs. clean data)
-- **Phase 5:** Automated test for per-role query isolation
+**Need research:** Phase 1 (Discuss "ativo" definition), Phase 2 (plan with `/gsd-plan-phase --research-phase 2`)
 
-Standard patterns (skip research):
-- **Phases 1&2:** Established patterns, standard research sufficient
+**Standard patterns:** Phases 3, 4, 5, 6 (skip research)
 
 ## Confidence Assessment
 
-| Area | Confidence |
-|------|-----------|
-| Stack | HIGH — all packages in codebase, no new deps |
-| Features | MEDIUM-HIGH — well-scoped, reassignment scope needs user input |
-| Architecture | HIGH — traced to live migrations (0001-0003 precedent) |
-| Pitfalls | MEDIUM — three v1.2-specific pitfalls, general v1.0 pitfalls still apply |
-
-**Overall:** MEDIUM-HIGH
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Stack | HIGH | Verified in package.json; @tanstack/react-query NOT installed |
+| Features | MEDIUM-HIGH | High for project patterns; medium for general CRM research |
+| Architecture | HIGH | Grounded in actual migrations and established patterns |
+| Pitfalls | MEDIUM-HIGH | Verified across recurring-task systems; not yet on this project |
+| Overall | MEDIUM-HIGH | Sound architecture; narrow, documented risk surface |
 
 ### Gaps to Address
 
-1. **Reassignment scope:** MUST lock before phase 3 planning. Default: open-only. If all-clientes, document leaderboard corruption risk.
-2. **Current-stage duration:** Confirm if in-progress cards included (survivorship-bias avoidance) or excluded (clean data only).
-3. **Auth ban latency:** Confirm JWT expiry (~1h typical), document residual window in error messages.
-4. **Historico format-string:** Trigger maintains `'Etapa alterada para "%s"'`. If future trigger changes to structured fields, parsing becomes unnecessary — note as refactor opportunity.
+- **"Ativo" definition:** Synonym for 'ganho' or new lifecycle state? Resolve in Discuss.
+- **Frequência_visita values:** Confirm semanal/quinzenal/mensal/nenhuma only.
+- **Resumo field:** "Short text" — 200 chars or unbounded?
+- **Historical backfill:** Default cadence or NULL for legacy "ganho" clients?
 
 ## Sources
 
-**Primary (HIGH):** Live migrations (0001-0003), `.planning/PROJECT.md`, Supabase JS API reference
-**Secondary (MEDIUM):** STACK/FEATURES/ARCHITECTURE v1.2 research, codebase verification
-**Tertiary (LOW):** WebSearch patterns (Postgres window functions, CRM deactivation, Brazil UF/city forms)
+**Primary (HIGH):** Codebase inspection (package.json, migrations 0001–0012, 2026-08-07), PROJECT.md, supabase-conventions skill, SEED-001, CLAUDE.md
+
+**Secondary (MEDIUM):** npm registry checks, WebSearch (date-fns, React 19, recurring-task patterns, Postgres migration patterns)
 
 ---
 
-*Research completed: 2026-07-25 — Ready for roadmap*
+*Researched: 2026-08-07*
+*Synthesized by: gsd-synthesize*
+*Ready for roadmap: yes*
