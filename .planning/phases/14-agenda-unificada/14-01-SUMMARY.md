@@ -213,3 +213,12 @@ None - nenhuma configuração de serviço externo necessária além do que já e
 ---
 *Phase: 14-agenda-unificada*
 *Completed: 2026-08-08*
+
+## Self-Check: PASSED
+
+- FOUND: `supabase/migrations/0014_agenda_do_vendedor.sql`
+- FOUND: `tests/agenda/agenda-rpc.test.ts`
+- FOUND: `tests/agenda/rls-agenda.test.ts`
+- FOUND: `.planning/phases/14-agenda-unificada/14-01-SUMMARY.md` (this file)
+- FOUND: commit `8e32bb3` (Task 1)
+- FOUND: commit `285e769` (SUMMARY.md)
