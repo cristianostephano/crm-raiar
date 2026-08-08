@@ -35,6 +35,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         roleLabel="Supervisor"
         role="supervisor"
         initials="AS"
+        agendaCount={0}
       />
     )
     expandSidebar(container)
@@ -49,6 +50,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         roleLabel="Vendedor"
         role="vendedor"
         initials="JS"
+        agendaCount={0}
       />
     )
     expandSidebar(container)
