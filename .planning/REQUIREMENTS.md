@@ -9,11 +9,11 @@ Requisitos do marco v1.3 (Agenda do Vendedor). Cada um mapeia para uma fase do r
 
 ### Agenda (AGD)
 
-- [ ] **AGD-01**: Vendedor vê uma agenda única com tarefas de prospecção e visitas de pós-venda juntas, ordenada por atrasado → hoje → próximos dias
+- [x] **AGD-01**: Vendedor vê uma agenda única com tarefas de prospecção e visitas de pós-venda juntas, ordenada por atrasado → hoje → próximos dias
 - [ ] **AGD-02**: Item de menu "Agenda" aparece no topo do menu principal, acima de "Clientes"
-- [ ] **AGD-03**: Itens atrasados ficam destacados visualmente (mesmo padrão já usado no kanban)
+- [x] **AGD-03**: Itens atrasados ficam destacados visualmente (mesmo padrão já usado no kanban)
 - [ ] **AGD-04**: Vendedor vê só a própria agenda; Supervisor vê a agenda de todo o time
-- [ ] **AGD-05**: Supervisor pode filtrar a agenda do time por vendedor
+- [x] **AGD-05**: Supervisor pode filtrar a agenda do time por vendedor
 - [ ] **AGD-06**: Item de menu "Agenda" mostra a contagem de itens pendentes (ex.: "Agenda (5)")
 
 ### Visitas / Recorrência (VIS)
@@ -73,11 +73,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AGD-01 | Phase 14 | Pending |
+| AGD-01 | Phase 14 | Complete |
 | AGD-02 | Phase 14 | Pending |
-| AGD-03 | Phase 14 | Pending |
+| AGD-03 | Phase 14 | Complete |
 | AGD-04 | Phase 14 | Pending |
-| AGD-05 | Phase 14 | Pending |
+| AGD-05 | Phase 14 | Complete |
 | AGD-06 | Phase 14 | Pending |
 | VIS-01 | Phase 13 | Complete |
 | VIS-02 | Phase 13 | Complete |
