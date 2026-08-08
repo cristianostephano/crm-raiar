@@ -3,6 +3,7 @@ import {
   type ClienteCompletudeInput,
 } from "@/lib/clientes/completude"
 import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
+import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 import { staleReason, type TarefaAberta } from "@/lib/funil/staleness"
 import { createClient } from "@/lib/supabase/server"
 
@@ -87,6 +88,9 @@ export type ClienteDetalhe = {
   statusAcompanhamento: StatusAcompanhamento
   motivoPerdaId: string | null
   observacao: string | null
+  /** Cadência de pós-venda (VIS-01/VIS-02/ATV-03) — vale para qualquer
+   * status, mas só é editável na ficha quando o cliente está ganho. */
+  frequenciaVisita: FrequenciaVisita | null
 }
 
 type ClienteDetalheRow = {
@@ -110,6 +114,7 @@ type ClienteDetalheRow = {
   status_acompanhamento: StatusAcompanhamento
   motivo_perda_id: string | null
   observacao: string | null
+  frequencia_visita: FrequenciaVisita | null
 }
 
 /**
@@ -128,7 +133,7 @@ export async function getClienteById(
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao"
+      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao, frequencia_visita"
     )
     .eq("id", id)
     .maybeSingle()
@@ -160,6 +165,7 @@ export async function getClienteById(
     statusAcompanhamento: row.status_acompanhamento,
     motivoPerdaId: row.motivo_perda_id,
     observacao: row.observacao,
+    frequenciaVisita: row.frequencia_visita,
   }
 }
 
