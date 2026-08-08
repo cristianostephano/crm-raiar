@@ -11,6 +11,7 @@ import {
 } from "@/lib/validations/cliente"
 import { createClient } from "@/lib/supabase/server"
 import { getClienteById, type ClienteDetalhe } from "@/lib/supabase/queries/clientes"
+import { isFrequenciaVisita, type FrequenciaVisita } from "@/lib/funil/frequencia"
 
 export type CreateClienteErrorCode =
   | "validation"
@@ -350,4 +351,73 @@ export async function deleteCliente(id: string): Promise<DeleteClienteResult> {
 
   revalidatePath("/clientes")
   return { data: { id: deleted.id } }
+}
+
+export type AtualizarFrequenciaVisitaErrorCode = "unauthenticated" | "invalid" | "generic"
+
+export type AtualizarFrequenciaVisitaResult =
+  | { data: { id: string }; error?: undefined }
+  | { data?: undefined; error: { code: AtualizarFrequenciaVisitaErrorCode } }
+
+/**
+ * Edits the standing frequência de visita of an already-"ganho" cliente
+ * (VIS-02: editável/cancelável a qualquer momento) and is also the only
+ * place a legacy "ganho" cliente (frequência nula, VIS-04) can receive a
+ * cadência for the first time. Reads/writes exactly the same
+ * `clientes.frequencia_visita` column the `mover_card_funil` RPC writes at
+ * the moment of "ganho" (ATV-03) — there is only ever one value, never two
+ * parallel fields.
+ *
+ * Deliberately an ordinary `clientes` UPDATE, NOT a call into
+ * `mover_card_funil`: that RPC's purpose is specifically the funnel
+ * stage/status transition (etapa/status guards), and reusing it here would
+ * reintroduce guards that make no sense for a plain preference edit
+ * (13-UI-SPEC.md, Interaction Contract point 4). `nenhuma` is a legitimate
+ * value here, not an "erase" — it means "cancel the cadence going forward".
+ * This action deliberately never touches the `visitas` table: cancelling
+ * the cadence does not cancel or close the visita already agendada, it only
+ * stops the next one from being generated once the current one is
+ * concluded (Fase 15).
+ */
+export async function atualizarFrequenciaVisita(
+  clienteId: string,
+  frequencia: FrequenciaVisita
+): Promise<AtualizarFrequenciaVisitaResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  // Server Action nunca confia no que veio do navegador, mesmo tipado.
+  if (!isFrequenciaVisita(frequencia)) {
+    return { error: { code: "invalid" } }
+  }
+
+  const { data: updated, error } = await supabase
+    .from("clientes")
+    .update({ frequencia_visita: frequencia })
+    .eq("id", clienteId)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    return { error: { code: "generic" } }
+  }
+
+  if (!updated) {
+    // 0 rows: a RLS policy de UPDATE de `clientes` do 0002 ("vendedor edita
+    // os proprios clientes, supervisor edita todos") é a fronteira real que
+    // decidiu isso, não esta função — um vendedor tentando alterar a
+    // frequência de um cliente alheio cai aqui e falha fechada, em vez de
+    // devolver sucesso silencioso.
+    return { error: { code: "generic" } }
+  }
+
+  revalidatePath("/clientes")
+  return { data: { id: updated.id } }
 }
