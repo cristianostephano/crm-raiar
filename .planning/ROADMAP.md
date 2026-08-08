@@ -56,7 +56,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.2-ROADMAP
 ### 🚧 v1.3 Agenda do Vendedor (Phases 13-17) — IN PROGRESS
 
 - [x] **Phase 13: Cliente Ativo e Frequência de Visita** - Ao marcar um card como "ganho" o vendedor já define a frequência de visita, e essa frequência fica editável depois na ficha do cliente.
-- [ ] **Phase 14: Agenda Unificada** - Nova tela "Agenda" no topo do menu, juntando tarefas de prospecção e visitas pendentes numa lista só, ordenada por urgência.
+- [x] **Phase 14: Agenda Unificada** - Nova tela "Agenda" no topo do menu, juntando tarefas de prospecção e visitas pendentes numa lista só, ordenada por urgência. (completed 2026-08-08)
 - [ ] **Phase 15: Conclusão com Resumo e Próxima Visita** - Concluir um item da agenda exige um resumo curto; ao concluir uma visita o sistema sugere a próxima data e o vendedor confirma ou ajusta.
 - [ ] **Phase 16: Ficha do Cliente Ativo — Campos e Diário** - A ficha do cliente ganha Nome Fantasia, CNPJ, frequência de pedidos e o diário de visitas/tarefas concluídas.
 - [ ] **Phase 17: Planilhas — Frequência em Massa e Exportação do Diário** - Supervisor define a frequência de visita de vários clientes de uma vez por planilha, e o diário pode ser exportado.
@@ -105,14 +105,14 @@ Plans:
   3. Itens atrasados ficam destacados visualmente, no mesmo padrão já usado para os cards parados/atrasados do kanban.
   4. Vendedor vê só a própria agenda; Supervisor vê a agenda de todo o time e consegue filtrar por vendedor.
 
-**Plans**: 2/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 
 - [x] 14-01-PLAN.md — Migration da RPC `agenda_do_vendedor()` (união de tarefas pendentes + visitas pendentes, sem elevação de privilégio) + índice de data em `tarefas` + testes de formato e de RLS cross-vendedor
 - [x] 14-02-PLAN.md — `lib/agenda/itens.ts` (autoridade única de atrasado/hoje/próximos, filtro e opções de vendedor), leitor tipado `getAgenda`/`getAgendaPendentesCount` e a Server Action de leitura
-- [ ] 14-03-PLAN.md — Tela `/agenda`: `AgendaItemRow` (selo de origem + destaque de atraso idêntico ao do kanban), `AgendaList` (três seções, filtro de vendedor, todos os estados) e a rota
-- [ ] 14-04-PLAN.md — Item "Agenda" no topo do menu, acima de "Clientes", com o selo de contagem de pendentes nas duas formas do menu
+- [x] 14-03-PLAN.md — Tela `/agenda`: `AgendaItemRow` (selo de origem + destaque de atraso idêntico ao do kanban), `AgendaList` (três seções, filtro de vendedor, todos os estados) e a rota
+- [x] 14-04-PLAN.md — Item "Agenda" no topo do menu, acima de "Clientes", com o selo de contagem de pendentes nas duas formas do menu
 
 **UI hint**: yes
 
@@ -209,7 +209,7 @@ Plans:
 | 11. Funil de Conversão Detalhado | v1.2 | 5/5 | Complete | 2026-07-28 |
 | 12. Comparativo por Vendedor | v1.2 | 4/4 | Complete | 2026-08-05 |
 | 13. Cliente Ativo e Frequência de Visita | v1.3 | 0/3 | Planned | - |
-| 14. Agenda Unificada | v1.3 | 2/4 | In Progress|  |
+| 14. Agenda Unificada | v1.3 | 4/4 | Complete   | 2026-08-08 |
 | 15. Conclusão com Resumo e Próxima Visita | v1.3 | 0/? | Not started | - |
 | 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 0/? | Not started | - |
 | 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 0/? | Not started | - |
