@@ -6,7 +6,12 @@ import { Info, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 
-import { deleteCliente, getClienteDetalhe, updateCliente } from "@/app/actions/clientes"
+import {
+  atualizarFrequenciaVisita,
+  deleteCliente,
+  getClienteDetalhe,
+  updateCliente,
+} from "@/app/actions/clientes"
 import {
   getHistoricoAction,
   marcarStatus,
@@ -63,7 +68,7 @@ import { PerdaMotivoDialog } from "@/components/clientes/PerdaMotivoDialog"
 import { GanhoFrequenciaDialog } from "@/components/clientes/GanhoFrequenciaDialog"
 import { HistoricoTimeline } from "@/components/clientes/HistoricoTimeline"
 import { ETAPA_FINAL } from "@/lib/funil/etapas"
-import type { FrequenciaVisita } from "@/lib/funil/frequencia"
+import { FREQUENCIA_VISITA_ITEMS, type FrequenciaVisita } from "@/lib/funil/frequencia"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
 import { UFS, type Uf } from "@/lib/clientes/ufs"
@@ -193,6 +198,8 @@ export function ClienteDetailSheet({
   const [isSavingStatus, setIsSavingStatus] = useState(false)
   const [perdaDialogOpen, setPerdaDialogOpen] = useState(false)
   const [ganhoDialogOpen, setGanhoDialogOpen] = useState(false)
+  const [frequenciaError, setFrequenciaError] = useState<string | null>(null)
+  const [isSavingFrequencia, setIsSavingFrequencia] = useState(false)
 
   const [addingTarefa, setAddingTarefa] = useState(false)
   const [novoTipoTarefaId, setNovoTipoTarefaId] = useState("")
@@ -248,6 +255,8 @@ export function ClienteDetailSheet({
       setStatusError(null)
       setPerdaDialogOpen(false)
       setGanhoDialogOpen(false)
+      setFrequenciaError(null)
+      setIsSavingFrequencia(false)
       setAddingTarefa(false)
       setNovoTipoTarefaId("")
       setNovaData(undefined)
@@ -365,6 +374,38 @@ export function ClienteDetailSheet({
       return
     }
     void handleStatusChange(novoStatus)
+  }
+
+  // Standing frequência de visita control (VIS-02/VIS-04) — deliberately a
+  // separate handler from handleStatusChange/handleStatusSelect: this is an
+  // ordinary clientes field edit, never a funil stage/status transition, so
+  // it must never call marcarStatus or reach mover_card_funil
+  // (13-UI-SPEC.md Interaction Contract point 4). Saves immediately on
+  // change, no confirmation step, outside the "Dados do cliente"
+  // react-hook-form/"Salvar alterações" flow (VIS-02 minimum friction).
+  async function handleFrequenciaChange(value: string | null) {
+    if (!value || !cliente) return
+    const frequencia = value as FrequenciaVisita
+
+    setFrequenciaError(null)
+    setIsSavingFrequencia(true)
+
+    try {
+      const result = await atualizarFrequenciaVisita(cliente.id, frequencia)
+
+      if (result.error) {
+        setFrequenciaError(GENERIC_ERROR)
+        return
+      }
+
+      setCliente((prev) =>
+        prev ? { ...prev, frequenciaVisita: frequencia } : prev
+      )
+    } catch {
+      setFrequenciaError(GENERIC_ERROR)
+    } finally {
+      setIsSavingFrequencia(false)
+    }
   }
 
   async function handleToggleTarefa(tarefaId: string, concluida: boolean) {
@@ -881,6 +922,43 @@ export function ClienteDetailSheet({
                         </p>
                       ) : null}
                     </div>
+
+                    {cliente.statusAcompanhamento === "ganho" ? (
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="cliente-frequencia-visita-select">
+                          Frequência de visita
+                        </Label>
+                        <Select
+                          value={cliente.frequenciaVisita ?? ""}
+                          onValueChange={handleFrequenciaChange}
+                          items={FREQUENCIA_VISITA_ITEMS}
+                        >
+                          <SelectTrigger
+                            id="cliente-frequencia-visita-select"
+                            className="w-full"
+                            disabled={isSavingFrequencia}
+                          >
+                            <SelectValue placeholder="Selecione a frequência" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FREQUENCIA_VISITA_ITEMS.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {frequenciaError ? (
+                          <p role="alert" className="text-sm text-destructive">
+                            {frequenciaError}
+                          </p>
+                        ) : cliente.frequenciaVisita === null ? (
+                          <p className="text-sm text-muted-foreground">
+                            Frequência ainda não definida.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
 
                     <FormField
                       control={form.control}
