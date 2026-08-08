@@ -2,14 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Agenda do Vendedor
-status: executing
 current_phase: 14
-last_updated: "2026-08-07T19:15:00.000Z"
-last_activity: 2026-08-07
+current_phase_name: Agenda Unificada
+status: executing
+stopped_at: Plano 13-01 (fundação de banco) executado e commitado — migration 0013 aplicada em produção com aprovação humana, testes verdes (28/28 nos arquivos novos + 91/91 nos arquivos de maior risco de regressão). Ver `.planning/phases/13-cliente-ativo-e-frequ-ncia-de-visita/13-01-SUMMARY.md`.
+last_updated: "2026-08-08T13:16:23.834Z"
+last_activity: 2026-08-08
+last_activity_desc: Phase 14 execution started
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
+  total_plans: 7
   completed_plans: 3
   percent: 20
 ---
@@ -21,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Marco v1.3 (Agenda do Vendedor) — Fase 13 concluída; próxima é Fase 14 (Agenda Unificada)
+**Current focus:** Phase 14 — Agenda Unificada
 
 ## Current Position
 
-Phase: 13 of 17 (Cliente Ativo e Frequência de Visita) — 1ª das 5 fases do marco v1.3 — CONCLUÍDA
-Plan: 03 de 3 (controle de edição permanente de frequência) — COMPLETO
-Status: Fase 13 completa (3/3 planos mergeados em master, verificação ao vivo feita); próxima fase a planejar é a 14 (Agenda Unificada)
-Last activity: 2026-08-07 — Merge do Plano 13-03 (controle de frequência no ClienteDetailSheet) em master; worktree e branch removidos; Fase 13 encerrada
+Phase: 14 (Agenda Unificada) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 14
+Last activity: 2026-08-08 — Phase 14 execution started
 
 Progress (v1.3): [██░░░░░░░░] 20% (1 de 5 fases concluída; recálculo automático indisponível neste worktree — gsd-tools.cjs não existe aqui, ver Blockers/Concerns)
 
