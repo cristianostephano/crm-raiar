@@ -60,8 +60,10 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PerdaMotivoDialog } from "@/components/clientes/PerdaMotivoDialog"
+import { GanhoFrequenciaDialog } from "@/components/clientes/GanhoFrequenciaDialog"
 import { HistoricoTimeline } from "@/components/clientes/HistoricoTimeline"
 import { ETAPA_FINAL } from "@/lib/funil/etapas"
+import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
 import { UFS, type Uf } from "@/lib/clientes/ufs"
@@ -190,6 +192,7 @@ export function ClienteDetailSheet({
   const [statusError, setStatusError] = useState<string | null>(null)
   const [isSavingStatus, setIsSavingStatus] = useState(false)
   const [perdaDialogOpen, setPerdaDialogOpen] = useState(false)
+  const [ganhoDialogOpen, setGanhoDialogOpen] = useState(false)
 
   const [addingTarefa, setAddingTarefa] = useState(false)
   const [novoTipoTarefaId, setNovoTipoTarefaId] = useState("")
@@ -244,6 +247,7 @@ export function ClienteDetailSheet({
       setHistorico([])
       setStatusError(null)
       setPerdaDialogOpen(false)
+      setGanhoDialogOpen(false)
       setAddingTarefa(false)
       setNovoTipoTarefaId("")
       setNovaData(undefined)
@@ -302,7 +306,8 @@ export function ClienteDetailSheet({
 
   async function handleStatusChange(
     novoStatus: StatusAcompanhamento,
-    motivoPerdaId?: string
+    motivoPerdaId?: string,
+    frequenciaVisita?: FrequenciaVisita
   ): Promise<MarcarStatusResult> {
     if (!cliente) return { error: { code: "cliente_nao_encontrado", message: LOAD_ERROR } }
 
@@ -310,7 +315,7 @@ export function ClienteDetailSheet({
     setIsSavingStatus(true)
 
     try {
-      const result = await marcarStatus(cliente.id, novoStatus, motivoPerdaId)
+      const result = await marcarStatus(cliente.id, novoStatus, motivoPerdaId, frequenciaVisita)
 
       if (result.error) {
         setStatusError(result.error.message)
@@ -324,6 +329,13 @@ export function ClienteDetailSheet({
               ...prev,
               statusAcompanhamento: novoStatus,
               motivoPerdaId: novoStatus === "perdido" ? (motivoPerdaId ?? null) : null,
+              // The RPC's own coalesce never erases frequenciaVisita when the
+              // status changes away from "ganho" — mirror that here so local
+              // state never diverges from the DB (ATV-03).
+              frequenciaVisita:
+                novoStatus === "ganho"
+                  ? (frequenciaVisita ?? prev.frequenciaVisita)
+                  : prev.frequenciaVisita,
             }
           : prev
       )
@@ -346,6 +358,10 @@ export function ClienteDetailSheet({
     const novoStatus = value as StatusAcompanhamento
     if (novoStatus === "perdido") {
       setPerdaDialogOpen(true)
+      return
+    }
+    if (novoStatus === "ganho") {
+      setGanhoDialogOpen(true)
       return
     }
     void handleStatusChange(novoStatus)
@@ -1106,12 +1122,20 @@ export function ClienteDetailSheet({
       </Dialog>
 
       {cliente ? (
-        <PerdaMotivoDialog
-          open={perdaDialogOpen}
-          onOpenChange={setPerdaDialogOpen}
-          razaoSocial={cliente.razaoSocial}
-          onConfirm={(motivoId) => handleStatusChange("perdido", motivoId)}
-        />
+        <>
+          <PerdaMotivoDialog
+            open={perdaDialogOpen}
+            onOpenChange={setPerdaDialogOpen}
+            razaoSocial={cliente.razaoSocial}
+            onConfirm={(motivoId) => handleStatusChange("perdido", motivoId)}
+          />
+          <GanhoFrequenciaDialog
+            open={ganhoDialogOpen}
+            onOpenChange={setGanhoDialogOpen}
+            razaoSocial={cliente.razaoSocial}
+            onConfirm={(frequencia) => handleStatusChange("ganho", undefined, frequencia)}
+          />
+        </>
       ) : null}
     </>
   )
