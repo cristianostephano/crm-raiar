@@ -8,6 +8,7 @@ import {
   ChevronRight,
   FileUp,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Settings,
   Users,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react"
 
 import { LogoutButton } from "@/components/auth/LogoutButton"
+import { Badge } from "@/components/ui/badge"
 import {
   Tooltip,
   TooltipContent,
@@ -28,12 +30,21 @@ type AppSidebarProps = {
   roleLabel: string | null
   role: string
   initials: string
+  /** AGD-06: contagem de itens pendentes da Agenda, lida uma vez por
+   * carregamento de página em app/(app)/layout.tsx a partir da MESMA fonte
+   * (`getAgendaPendentesCount()`) que alimenta a tela — nunca uma segunda
+   * consulta. Zero quando a leitura falha (tratamento tolerante a falha no
+   * layout), nunca undefined/null aqui. */
+  agendaCount: number
 }
 
 type NavLink = {
   href: string
   label: string
   icon: LucideIcon
+  /** Opcional porque só o item Agenda tem conteúdo dinâmico (AGD-06);
+   * nenhum outro item de menu recebe selo. */
+  badgeCount?: number
 }
 
 type NavSection = {
@@ -47,13 +58,28 @@ type NavSection = {
  * identical to the previous inline `profile?.role === "supervisor"` checks
  * in app/(app)/layout.tsx — nav visibility is a UX reflection only, RLS
  * remains the real authorization boundary (threat T-nav-01).
+ *
+ * Agenda is the FIRST entry — AGD-02 requires it literally "above Clientes",
+ * so this array's order IS the requirement, not a visual preference. This
+ * constant stays the single source of truth for ORDER; `badgeCount` is
+ * filled in dynamically inside the component (see `sections` below), never
+ * set here.
  */
 const PRINCIPAL_SECTION: NavSection = {
   label: "Principal",
   links: [
+    { href: "/agenda", label: "Agenda", icon: ListChecks },
     { href: "/clientes", label: "Clientes", icon: Users },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   ],
+}
+
+/** Caps the compact-mode circular indicator's display at "9+" so a
+ * double-digit count never overflows the collapsed icon rail (AGD-06). Not
+ * used by the expanded badge or the tooltip text, which show the raw
+ * number. */
+function formatContagemIndicador(count: number): string {
+  return count > 9 ? "9+" : String(count)
 }
 
 const ADMIN_SECTION: NavSection = {
@@ -77,6 +103,7 @@ export function AppSidebar({
   roleLabel,
   role,
   initials,
+  agendaCount,
 }: AppSidebarProps) {
   const [pinned, setPinned] = useState(false)
   const [hovering, setHovering] = useState(false)
@@ -84,10 +111,21 @@ export function AppSidebar({
 
   const compact = !pinned && !hovering
 
+  // PRINCIPAL_SECTION stays the constant that defines ORDER; the count is
+  // dynamic, so the effective section is derived here by mapping the
+  // existing list — never duplicating it or turning the constant into a
+  // function with a parameter (AGD-06).
+  const principalSectionComContagem: NavSection = {
+    ...PRINCIPAL_SECTION,
+    links: PRINCIPAL_SECTION.links.map((link) =>
+      link.href === "/agenda" ? { ...link, badgeCount: agendaCount } : link
+    ),
+  }
+
   const sections: NavSection[] =
     role === "supervisor"
-      ? [PRINCIPAL_SECTION, ADMIN_SECTION]
-      : [PRINCIPAL_SECTION]
+      ? [principalSectionComContagem, ADMIN_SECTION]
+      : [principalSectionComContagem]
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(`${href}/`)
@@ -139,6 +177,12 @@ export function AppSidebar({
             {section.links.map((link) => {
               const active = isActive(link.href)
               const Icon = link.icon
+              // Only the Agenda entry ever carries badgeCount (AGD-06); a
+              // count of exactly 0 renders neither the expanded badge nor
+              // the compact indicator — the "{label} (0)" form must never
+              // be rendered anywhere.
+              const badgeCount = link.badgeCount ?? 0
+              const hasBadge = badgeCount > 0
 
               const linkContent = (
                 <Link
@@ -147,11 +191,41 @@ export function AppSidebar({
                   className={cn(
                     "flex items-center gap-3 overflow-hidden rounded-md px-3 py-2.5 text-sm text-slate-300 whitespace-nowrap transition-colors hover:bg-slate-800 hover:text-white",
                     compact && "justify-center",
+                    // The justify-between/relative additions only ever apply
+                    // to the item that actually has a badge to lay out — the
+                    // other links keep exactly today's classes.
+                    !compact && hasBadge && "justify-between",
+                    compact && hasBadge && "relative",
                     active && "bg-slate-700 font-medium text-white"
                   )}
                 >
-                  <Icon className="size-[18px] flex-shrink-0" />
-                  {!compact ? <span className="truncate">{link.label}</span> : null}
+                  {!compact && hasBadge ? (
+                    <span className="flex items-center gap-3 overflow-hidden">
+                      <Icon className="size-[18px] flex-shrink-0" />
+                      <span className="truncate">{link.label}</span>
+                    </span>
+                  ) : (
+                    <Icon className="size-[18px] flex-shrink-0" />
+                  )}
+                  {!compact && !hasBadge ? (
+                    <span className="truncate">{link.label}</span>
+                  ) : null}
+                  {!compact && hasBadge ? (
+                    <Badge
+                      className="h-4 min-w-4 shrink-0 px-1 text-[10px]"
+                      aria-label={`${link.label}, ${badgeCount} itens pendentes`}
+                    >
+                      {badgeCount}
+                    </Badge>
+                  ) : null}
+                  {compact && hasBadge ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-primary text-[9px] leading-none text-primary-foreground"
+                    >
+                      {formatContagemIndicador(badgeCount)}
+                    </span>
+                  ) : null}
                 </Link>
               )
 
@@ -162,7 +236,9 @@ export function AppSidebar({
               return (
                 <Tooltip key={link.href}>
                   <TooltipTrigger render={linkContent} />
-                  <TooltipContent side="right">{link.label}</TooltipContent>
+                  <TooltipContent side="right">
+                    {hasBadge ? `${link.label} (${badgeCount})` : link.label}
+                  </TooltipContent>
                 </Tooltip>
               )
             })}

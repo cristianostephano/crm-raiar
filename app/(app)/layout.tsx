@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { AppSidebar } from "@/components/layout/AppSidebar"
+import { getAgendaPendentesCount } from "@/lib/supabase/queries/agenda"
 import { createClient } from "@/lib/supabase/server"
 
 const ROLE_LABELS: Record<string, string> = {
@@ -46,6 +47,18 @@ export default async function AppLayout({
     ? `${profile.nome.charAt(0)}${profile.sobrenome.charAt(0)}`.toUpperCase()
     : (user.email?.charAt(0) ?? "").toUpperCase()
 
+  // AGD-06: this layout wraps EVERY authenticated screen (Clientes,
+  // Dashboard, Equipe, Configurações, Agenda), so a single unhandled
+  // exception here would take the entire logged-in area down for the sake
+  // of a decorative sidebar number. Zero is the deliberate fallback — the
+  // menu still renders normally, just without a badge (T-14-21).
+  let agendaCount = 0
+  try {
+    agendaCount = await getAgendaPendentesCount()
+  } catch {
+    agendaCount = 0
+  }
+
   return (
     <div className="flex min-h-screen flex-1">
       <AppSidebar
@@ -53,6 +66,7 @@ export default async function AppLayout({
         roleLabel={roleLabel}
         role={profile?.role ?? ""}
         initials={initials}
+        agendaCount={agendaCount}
       />
       <main className="flex flex-1 flex-col overflow-x-hidden">
         {children}
