@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache"
 
 import { ETAPA_FINAL, type EtapaKey } from "@/lib/funil/etapas"
+import {
+  isFrequenciaVisita,
+  type FrequenciaVisita,
+} from "@/lib/funil/frequencia"
 import { createClient } from "@/lib/supabase/server"
 import {
   getHistorico,
@@ -94,6 +98,7 @@ export type MarcarStatusErrorCode =
   | "cliente_nao_encontrado"
   | "ganho_travado"
   | "motivo_obrigatorio"
+  | "frequencia_obrigatoria"
   | "mover_falhou"
 
 export type MarcarStatusResult =
@@ -115,7 +120,8 @@ export type MarcarStatusResult =
 export async function marcarStatus(
   clienteId: string,
   novoStatus: StatusAcompanhamento,
-  motivoPerdaId?: string
+  motivoPerdaId?: string,
+  frequenciaVisita?: FrequenciaVisita
 ): Promise<MarcarStatusResult> {
   const supabase = await createClient()
 
@@ -153,11 +159,28 @@ export async function marcarStatus(
     }
   }
 
+  // Pré-checagem apenas para uma mensagem mais amigável: o guard REAL é o
+  // do RPC `mover_card_funil` (13-01, migration 0013), que continua sendo o
+  // backstop se este caminho for contornado — mesma relação já documentada
+  // acima entre as pré-checagens e as CHECK constraints.
+  if (
+    novoStatus === "ganho" &&
+    !isFrequenciaVisita(frequenciaVisita)
+  ) {
+    return {
+      error: {
+        code: "frequencia_obrigatoria",
+        message: "Selecione a frequência de visita antes de confirmar.",
+      },
+    }
+  }
+
   const { error } = await supabase.rpc("mover_card_funil", {
     p_cliente_id: clienteId,
     p_nova_etapa: cliente.etapa,
     p_novo_status: novoStatus,
     p_motivo_perda_id: novoStatus === "perdido" ? motivoPerdaId : null,
+    p_frequencia_visita: novoStatus === "ganho" ? frequenciaVisita : null,
   })
 
   if (error) {
