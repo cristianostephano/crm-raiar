@@ -18,10 +18,10 @@ Requisitos do marco v1.3 (Agenda do Vendedor). Cada um mapeia para uma fase do r
 
 ### Visitas / Recorrência (VIS)
 
-- [ ] **VIS-01**: Ao mover um card para "ganho", o vendedor define a frequência de visita (semanal/quinzenal/mensal/nenhuma)
-- [ ] **VIS-02**: A frequência de visita pode ser editada ou cancelada a qualquer momento
+- [x] **VIS-01**: Ao mover um card para "ganho", o vendedor define a frequência de visita (semanal/quinzenal/mensal/nenhuma)
+- [x] **VIS-02**: A frequência de visita pode ser editada ou cancelada a qualquer momento
 - [ ] **VIS-03**: Ao concluir uma visita, o sistema sugere a próxima data com base na frequência — o vendedor confirma ou ajusta, nunca é automático e silencioso
-- [ ] **VIS-04**: Clientes já "ganho" antes do lançamento da Agenda começam sem frequência definida (nada é suposto automaticamente)
+- [x] **VIS-04**: Clientes já "ganho" antes do lançamento da Agenda começam sem frequência definida (nada é suposto automaticamente)
 
 ### Conclusão (CONC)
 
@@ -35,7 +35,7 @@ Requisitos do marco v1.3 (Agenda do Vendedor). Cada um mapeia para uma fase do r
 
 - [ ] **ATV-01**: Cliente "ativo" (= status ganho) passa a aceitar Nome Fantasia e CNPJ no cadastro — nunca exigidos no cadastro inicial rápido
 - [ ] **ATV-02**: Cadastro de cliente ativo aceita frequência de pedidos (só informativo, sem alerta automático)
-- [ ] **ATV-03**: Frequência de visitas é o mesmo valor no cadastro e na recorrência da agenda — editar um atualiza o outro, nunca dessincroniza
+- [x] **ATV-03**: Frequência de visitas é o mesmo valor no cadastro e na recorrência da agenda — editar um atualiza o outro, nunca dessincroniza
 
 ### Importação / Exportação (IMP)
 
@@ -79,15 +79,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGD-04 | Phase 14 | Pending |
 | AGD-05 | Phase 14 | Pending |
 | AGD-06 | Phase 14 | Pending |
-| VIS-01 | Phase 13 | Pending |
-| VIS-02 | Phase 13 | Pending |
+| VIS-01 | Phase 13 | Complete |
+| VIS-02 | Phase 13 | Complete |
 | VIS-03 | Phase 15 | Pending |
-| VIS-04 | Phase 13 | Pending |
+| VIS-04 | Phase 13 | Complete |
 | CONC-01 | Phase 15 | Pending |
 | DIAR-01 | Phase 16 | Pending |
 | ATV-01 | Phase 16 | Pending |
 | ATV-02 | Phase 16 | Pending |
-| ATV-03 | Phase 13 | Pending |
+| ATV-03 | Phase 13 | Complete |
 | IMP-01 | Phase 17 | Pending |
 | IMP-02 | Phase 17 | Pending |
 

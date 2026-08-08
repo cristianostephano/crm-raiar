@@ -55,7 +55,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.2-ROADMAP
 
 ### 🚧 v1.3 Agenda do Vendedor (Phases 13-17) — IN PROGRESS
 
-- [ ] **Phase 13: Cliente Ativo e Frequência de Visita** - Ao marcar um card como "ganho" o vendedor já define a frequência de visita, e essa frequência fica editável depois na ficha do cliente.
+- [x] **Phase 13: Cliente Ativo e Frequência de Visita** - Ao marcar um card como "ganho" o vendedor já define a frequência de visita, e essa frequência fica editável depois na ficha do cliente.
 - [ ] **Phase 14: Agenda Unificada** - Nova tela "Agenda" no topo do menu, juntando tarefas de prospecção e visitas pendentes numa lista só, ordenada por urgência.
 - [ ] **Phase 15: Conclusão com Resumo e Próxima Visita** - Concluir um item da agenda exige um resumo curto; ao concluir uma visita o sistema sugere a próxima data e o vendedor confirma ou ajusta.
 - [ ] **Phase 16: Ficha do Cliente Ativo — Campos e Diário** - A ficha do cliente ganha Nome Fantasia, CNPJ, frequência de pedidos e o diário de visitas/tarefas concluídas.
@@ -78,9 +78,9 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.2-ROADMAP
 **Plans**: 3 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — Migration de fundação: colunas novas (nullable) em `clientes`, enum de frequência, tabela `visitas` com RLS parent-gated, `proxima_data_visita` e `mover_card_funil` estendido com o guard de frequência-obrigatória-ao-ganho + semeadura da 1ª visita
-- [ ] 13-02-PLAN.md — Vocabulário único das frequências, `marcarStatus` levando a frequência até o RPC, e o `GanhoFrequenciaDialog` ligado ao Select de Status da ficha
-- [ ] 13-03-PLAN.md — Server Action `atualizarFrequenciaVisita` e o controle permanente de frequência na seção Funil (trocar/cancelar a qualquer momento, estado vazio dos clientes legados)
+- [x] 13-01-PLAN.md — Migration de fundação: colunas novas (nullable) em `clientes`, enum de frequência, tabela `visitas` com RLS parent-gated, `proxima_data_visita` e `mover_card_funil` estendido com o guard de frequência-obrigatória-ao-ganho + semeadura da 1ª visita
+- [x] 13-02-PLAN.md — Vocabulário único das frequências, `marcarStatus` levando a frequência até o RPC, e o `GanhoFrequenciaDialog` ligado ao Select de Status da ficha
+- [x] 13-03-PLAN.md — Server Action `atualizarFrequenciaVisita` e o controle permanente de frequência na seção Funil (trocar/cancelar a qualquer momento, estado vazio dos clientes legados)
 
 **UI hint**: yes
 
