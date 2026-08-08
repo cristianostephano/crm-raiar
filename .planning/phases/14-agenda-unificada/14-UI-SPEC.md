@@ -110,6 +110,8 @@ Accent reserved for (explicit, closed list): nav active-link state, nav count ba
 
 *(Supplements the Copywriting Contract with the "where does this render, how does it behave" detail the checker/executor needs — same posture as `13-UI-SPEC.md`'s own Interaction Contract section.)*
 
+**Focal point:** the **Atrasado** section is the primary visual anchor when it has items (red left-border + top position draws the eye first, by design — overdue items are the whole point of the "o que preciso fazer hoje" framing). When Atrasado is empty, the first item in **Hoje** is the primary focal point. Secondary focal point: the "Agenda" nav item's count badge in the sidebar, which is what leads the vendedor here in the first place.
+
 ### Page structure — `app/agenda/page.tsx` (new)
 
 1. Server Component page shell (route group `(app)`, same layout wrapper as `/clientes`/`/dashboard`) renders a Client Component `AgendaList` that owns its own fetch/loading/error state, mirroring `ComparativoVendedorTable`'s fetch-on-mount posture exactly (`useState<FetchState>`, `useEffect` calling a Server Action that wraps `supabase.rpc('agenda_do_vendedor')`, `cancelled` guard, `reloadKey` retry counter).
@@ -165,11 +167,11 @@ No third-party registries declared or needed this phase (`components.json` → `
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS (FLAG resolved — focal point added to Layout & Interaction Contract)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved
