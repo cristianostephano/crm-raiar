@@ -186,3 +186,14 @@ None - nenhuma configuração de serviço externo necessária. `.env.local` já 
 ---
 *Phase: 14-agenda-unificada*
 *Completed: 2026-08-08*
+
+## Self-Check: PASSED
+
+- FOUND: `components/agenda/AgendaItemRow.tsx`
+- FOUND: `components/agenda/AgendaList.tsx`
+- FOUND: `app/(app)/agenda/page.tsx`
+- FOUND: `tests/agenda/agenda-item-row.test.tsx`
+- FOUND: `tests/agenda/agenda-list.test.tsx`
+- FOUND: commit `17228b2` (Task 1)
+- FOUND: commit `02a4bd5` (Task 2)
+- FOUND: commit `5a209ba` (plan metadata)
