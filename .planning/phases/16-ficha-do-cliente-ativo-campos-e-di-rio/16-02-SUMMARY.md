@@ -134,3 +134,14 @@ None - nenhuma configuração externa manual necessária.
 ---
 *Phase: 16-ficha-do-cliente-ativo-campos-e-di-rio*
 *Completed: 2026-08-09*
+
+## Self-Check: PASSED
+
+- FOUND: app/actions/listas.ts
+- FOUND: components/configuracoes/ConfiguracoesTabs.tsx
+- FOUND: lib/supabase/queries/clientes.ts
+- FOUND: app/actions/clientes.ts
+- FOUND: tests/configuracoes/frequencias-pedido-catalogo.test.ts
+- FOUND commit: 81fc842 (feat(16-02): add 5th editable-list tab for frequencia de pedidos)
+- FOUND commit: 1ea3f7e (feat(16-02): add frequencias_pedido active-catalog reader + Server Action)
+- Re-ran `npx tsc --noEmit` clean, `npm run lint` clean, `npx vitest run tests/configuracoes/frequencias-pedido-catalogo.test.ts` 10/10 passing
