@@ -167,12 +167,20 @@ Plans:
   3. A ficha do cliente mostra um diário das visitas e tarefas já concluídas, cada entrada com resumo, data e autor, da mais recente para a mais antiga.
   4. Vendedor vê o diário só dos próprios clientes; Supervisor vê o de qualquer cliente do time.
 
-**Plans**: TBD
+**Plans**: 4 plans
 **UI hint**: yes
+
+Plans:
+
+- [ ] 16-01-PLAN.md — Migration da 5ª lista editável `frequencias_pedido` (tabela + RLS 4-policy + valores iniciais), com checkpoint humano antes do push em produção
+- [ ] 16-02-PLAN.md — Vocabulário gerenciável pelo Supervisor (5ª aba em Configurações, sobre a infraestrutura genérica da Fase 3) + leitor do catálogo ativo
+- [ ] 16-03-PLAN.md — Camada de dados: Nome fantasia/CNPJ/frequência de pedidos na leitura, validação e gravação da ficha (com re-validação do vocabulário no servidor), mais a consulta própria do diário e sua Server Action
+- [ ] 16-04-PLAN.md — Tela: `DiarioTimeline` novo, os três campos condicionais e a seção Diário em `ClienteDetailSheet.tsx`, com verificação humana no navegador
 
 **Notas para o planejamento** (da research):
 
 - Fase concentrada no `ClienteDetailSheet.tsx` (campos condicionais + seção nova de diário). Os campos novos não exigem migration nova — as colunas vêm da Fase 13.
+- ⚠️ **Ajuste de escopo no planejamento (2026-08-09), a partir do `16-UI-SPEC.md` aprovado (seção D2):** a nota acima vale para Nome fantasia e CNPJ, mas NÃO para `frequencia_pedidos` — ela deixou de ser texto livre e virou escolha de lista fechada gerenciada pelo Supervisor, o que exige **uma migration nova** (tabela `frequencias_pedido`, 5ª lista editável do projeto) e uma aba nova em Configurações. Daí os 4 planos em vez de 1-2.
 - `frequencia_pedidos` é puramente informativo (ATV-02): não vira visita, não vira alerta, não entra na Agenda.
 - Débito conhecido nesse arquivo: existe um `eslint-disable` documentado em `ClienteDetailSheet.tsx` (~linha 227) no efeito de reset — não piorar; se der para resolver junto, ótimo, mas não é escopo obrigatório desta fase.
 
@@ -218,5 +226,5 @@ Plans:
 | 13. Cliente Ativo e Frequência de Visita | v1.3 | 0/3 | Planned | - |
 | 14. Agenda Unificada | v1.3 | 4/4 | Complete   | 2026-08-08 |
 | 15. Conclusão com Resumo e Próxima Visita | v1.3 | 3/3 | Complete   | 2026-08-09 |
-| 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 0/? | Not started | - |
+| 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 0/4 | Planned | - |
 | 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 0/? | Not started | - |
