@@ -166,3 +166,14 @@ None - nenhuma configuração externa manual necessária. `.env.local` e `supaba
 ---
 *Phase: 16-ficha-do-cliente-ativo-campos-e-di-rio*
 *Completed: 2026-08-09*
+
+## Self-Check: PASSED
+
+- FOUND: lib/clientes/frequenciaPedido.ts
+- FOUND: tests/clientes/cliente-ativo-campos.test.ts
+- FOUND: tests/clientes/diario.test.ts
+- FOUND: .planning/phases/16-ficha-do-cliente-ativo-campos-e-di-rio/16-03-SUMMARY.md
+- FOUND commit: e00ffe9 (feat(16-03): add nome fantasia/CNPJ/frequencia de pedidos to ficha do cliente)
+- FOUND commit: 75f2488 (feat(16-03): add Diario query and Server Action (DIAR-01))
+- FOUND commit: 52ed749 (docs(16-03): complete camada de dados do cliente ativo e diario plan)
+- Re-ran `npx tsc --noEmit` clean, `npm run lint` clean, `npx vitest run tests/clientes/cliente-ativo-campos.test.ts tests/clientes/diario.test.ts` 32/32 passing
