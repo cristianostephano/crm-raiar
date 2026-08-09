@@ -167,3 +167,7 @@ None - nenhuma dependência npm nova, nenhuma migration, nenhuma alteração de 
 *Phase: 15-conclus-o-com-resumo-e-pr-xima-visita*
 *Completed (código): 2026-08-09*
 *Task 3 (checkpoint humano): pendente*
+
+## Self-Check: PASSED
+
+Todos os 6 arquivos criados/modificados (componente novo, teste novo, 2 componentes modificados, 2 testes modificados) confirmados presentes no disco. Os 3 commits deste plano (`edad37c`, `2726609`, `9d3d15b`) confirmados presentes em `git log --oneline --all`.
