@@ -48,3 +48,24 @@ export function isFrequenciaVisita(value: unknown): value is FrequenciaVisita {
     (FREQUENCIAS_VISITA as readonly string[]).includes(value)
   )
 }
+
+/**
+ * Decide se uma frequência gera próxima visita (VIS-03) — autoridade ÚNICA
+ * dessa decisão no código de aplicação: nem a tela (Plano 15-03) nem a
+ * ação de servidor `concluirVisita` (app/actions/agenda.ts, Plano 15-02)
+ * podem comparar a frequência com texto solto ("nenhuma") espalhado pelo
+ * código. A fronteira REAL continua sendo o guard dentro da RPC
+ * `concluir_visita` (supabase/migrations/0015_conclusao_com_resumo.sql,
+ * Fase 15-01), que lê a frequência da própria tabela `clientes` — esta
+ * função é a versão educada, do lado de cá, para decidir o que mostrar na
+ * tela e o que enviar para a RPC, evitando uma ida inútil ao servidor.
+ *
+ * `undefined`/`null` (cliente sem frequência definida, ou item de
+ * prospecção onde o conceito não se aplica) devolve falso, igual a
+ * `"nenhuma"`.
+ */
+export function geraProximaVisita(
+  frequencia: FrequenciaVisita | null | undefined
+): boolean {
+  return frequencia !== null && frequencia !== undefined && frequencia !== "nenhuma"
+}
