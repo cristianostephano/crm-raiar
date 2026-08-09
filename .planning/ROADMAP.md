@@ -167,14 +167,14 @@ Plans:
   3. A ficha do cliente mostra um diário das visitas e tarefas já concluídas, cada entrada com resumo, data e autor, da mais recente para a mais antiga.
   4. Vendedor vê o diário só dos próprios clientes; Supervisor vê o de qualquer cliente do time.
 
-**Plans**: 2/4 plans executed
+**Plans**: 3/4 plans executed
 **UI hint**: yes
 
 Plans:
 
 - [x] 16-01-PLAN.md — Migration da 5ª lista editável `frequencias_pedido` (tabela + RLS 4-policy + valores iniciais), com checkpoint humano antes do push em produção
 - [x] 16-02-PLAN.md — Vocabulário gerenciável pelo Supervisor (5ª aba em Configurações, sobre a infraestrutura genérica da Fase 3) + leitor do catálogo ativo
-- [ ] 16-03-PLAN.md — Camada de dados: Nome fantasia/CNPJ/frequência de pedidos na leitura, validação e gravação da ficha (com re-validação do vocabulário no servidor), mais a consulta própria do diário e sua Server Action
+- [x] 16-03-PLAN.md — Camada de dados: Nome fantasia/CNPJ/frequência de pedidos na leitura, validação e gravação da ficha (com re-validação do vocabulário no servidor), mais a consulta própria do diário e sua Server Action
 - [ ] 16-04-PLAN.md — Tela: `DiarioTimeline` novo, os três campos condicionais e a seção Diário em `ClienteDetailSheet.tsx`, com verificação humana no navegador
 
 **Notas para o planejamento** (da research):
@@ -226,5 +226,5 @@ Plans:
 | 13. Cliente Ativo e Frequência de Visita | v1.3 | 0/3 | Planned | - |
 | 14. Agenda Unificada | v1.3 | 4/4 | Complete   | 2026-08-08 |
 | 15. Conclusão com Resumo e Próxima Visita | v1.3 | 3/3 | Complete   | 2026-08-09 |
-| 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 2/4 | In Progress|  |
+| 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 3/4 | In Progress|  |
 | 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 0/? | Not started | - |
