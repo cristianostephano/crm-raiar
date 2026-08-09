@@ -1,10 +1,11 @@
 "use client"
 
 import { format, parseISO } from "date-fns"
-import { ClipboardCheck, Repeat, TriangleAlert } from "lucide-react"
+import { CheckCircle2, ClipboardCheck, Repeat, TriangleAlert } from "lucide-react"
 import type { KeyboardEvent } from "react"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Tooltip,
@@ -31,20 +32,29 @@ import { cn } from "@/lib/utils"
  * `onClick` que interrompe a propagação) — critério de sucesso 3 da fase
  * exige as MESMAS classes utilitárias, não um equivalente-mas-diferente.
  *
- * PROIBIDO neste componente (pertence à Fase 15 — fluxo de finalização de
- * item): botão de marcar item como feito, campo de anotação de fechamento,
- * sugestão/seletor de data seguinte, chamada de Server Action.
+ * A partir da Fase 15 este componente ganha o botão "Concluir" (CONC-01)
+ * que o comentário de cabeçalho anterior listava como proibido — é
+ * exatamente esta fase que entrega o fluxo de finalização de item. O botão
+ * interrompe a propagação do clique ANTES de chamar `onConcluir`, mesmo
+ * padrão defensivo que o `TooltipTrigger` do triângulo de atraso já usa
+ * logo acima: sem isso, o mesmo clique também dispararia `onOpen` e abriria
+ * a ficha do cliente por cima da janela de conclusão (T-15-36). O
+ * componente continua sem chamar Server Action, sem ler dados e sem
+ * calcular atraso — só expõe o callback para quem o compõe decidir o que
+ * fazer.
  */
 export function AgendaItemRow({
   item,
   atrasado,
   showResponsavel,
   onOpen,
+  onConcluir,
 }: {
   item: AgendaItem
   atrasado: boolean
   showResponsavel: boolean
   onOpen?: () => void
+  onConcluir: () => void
 }) {
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!onOpen) return
@@ -115,6 +125,20 @@ export function AgendaItemRow({
             {item.responsavelNome}
           </p>
         ) : null}
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={(event) => {
+              event.stopPropagation()
+              onConcluir()
+            }}
+          >
+            <CheckCircle2 />
+            Concluir
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

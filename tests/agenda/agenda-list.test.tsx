@@ -10,6 +10,8 @@ import type { AgendaItem } from "@/lib/agenda/itens"
 
 vi.mock("@/app/actions/agenda", () => ({
   getAgendaAction: vi.fn(),
+  concluirTarefaProspeccao: vi.fn(),
+  concluirVisita: vi.fn(),
 }))
 
 // Molde de tests/clientes/filters-popover.test.tsx: a ficha do cliente
@@ -20,10 +22,16 @@ vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({ rpc: vi.fn().mockResolvedValue({ data: [], error: null }) }),
 }))
 
-import { getAgendaAction } from "@/app/actions/agenda"
+import {
+  concluirTarefaProspeccao,
+  concluirVisita,
+  getAgendaAction,
+} from "@/app/actions/agenda"
 import type { GetAgendaResult } from "@/app/actions/agenda"
 
 const mockedAction = vi.mocked(getAgendaAction)
+const mockedConcluirTarefa = vi.mocked(concluirTarefaProspeccao)
+const mockedConcluirVisita = vi.mocked(concluirVisita)
 
 /** Datas montadas a partir do relógio real do teste (nunca literais fixas),
  * para que "hoje"/"atrasado"/"próximos" nunca apodreçam com o tempo. */
@@ -76,6 +84,8 @@ function deferredResult() {
 describe("AgendaList", () => {
   beforeEach(() => {
     mockedAction.mockClear()
+    mockedConcluirTarefa.mockClear()
+    mockedConcluirVisita.mockClear()
   })
 
   it("carregando: no primeiro render, nem a copy de erro nem a de vazio aparecem", () => {
@@ -175,5 +185,57 @@ describe("AgendaList", () => {
     await screen.findByText("Sua agenda está em dia")
     expect(screen.queryByText("Vendedor")).not.toBeInTheDocument()
     expect(screen.queryByText("Todos os vendedores")).not.toBeInTheDocument()
+  })
+
+  it("abre: clicar em Concluir numa linha abre a janela com o título correspondente ao cliente e à origem", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildItem({
+          origem: "visita",
+          razaoSocial: "Padaria Central",
+          titulo: "Visita",
+        }),
+      ],
+    })
+
+    renderList()
+
+    await screen.findByText("Padaria Central")
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+
+    expect(
+      screen.getByText("Concluir visita de Padaria Central?")
+    ).toBeInTheDocument()
+  })
+
+  it("recarrega: uma confirmação bem-sucedida dispara uma nova leitura da agenda", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildItem({
+          origem: "prospeccao",
+          razaoSocial: "Padaria Central",
+          itemId: "tarefa-1",
+        }),
+      ],
+    })
+    mockedConcluirTarefa.mockResolvedValueOnce({ data: true })
+    mockedAction.mockResolvedValueOnce({ data: [] })
+
+    renderList()
+
+    await screen.findByText("Padaria Central")
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Cliente confirmou pedido para a próxima semana." },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Concluir tarefa" }))
+
+    await vi.waitFor(() => {
+      expect(mockedConcluirTarefa).toHaveBeenCalledTimes(1)
+    })
+    await vi.waitFor(() => {
+      expect(mockedAction).toHaveBeenCalledTimes(2)
+    })
   })
 })

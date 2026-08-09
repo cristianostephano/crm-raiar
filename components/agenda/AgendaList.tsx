@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react"
 
-import { getAgendaAction } from "@/app/actions/agenda"
+import {
+  concluirTarefaProspeccao,
+  concluirVisita,
+  getAgendaAction,
+} from "@/app/actions/agenda"
 import { AgendaItemRow } from "@/components/agenda/AgendaItemRow"
+import { ConcluirItemDialog } from "@/components/agenda/ConcluirItemDialog"
 import { ClienteDetailSheet } from "@/components/clientes/ClienteDetailSheet"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -56,9 +61,14 @@ type FetchState =
  * cliente, já que salvar ou apagar um cliente pode mudar o que aparece
  * aqui.
  *
- * PROIBIDO nesta tela (pertence à Fase 15 — fluxo de finalização de item):
- * botão de marcar item como feito, campo de anotação de fechamento,
- * sugestão/seletor de data seguinte, qualquer chamada de escrita.
+ * A partir da Fase 15 esta tela deixa de ser somente leitura: além do par
+ * de estado da ficha do cliente, ganha um par irmão (`concluirItem`/
+ * `concluirDialogOpen`) para `ConcluirItemDialog` (CONC-01/VIS-03). A
+ * confirmação da janela é roteada para `concluirTarefaProspeccao` ou
+ * `concluirVisita` (app/actions/agenda.ts, Plano 15-02) conforme a
+ * `origem` do item selecionado, e o sucesso bumpa o mesmo `reloadKey` que
+ * a ficha do cliente já usa — é essa recarga que faz o item concluído
+ * sumir e a próxima visita (quando houver) aparecer na seção certa.
  */
 export function AgendaList({
   isSupervisor,
@@ -82,6 +92,8 @@ export function AgendaList({
     null
   )
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [concluirItem, setConcluirItem] = useState<AgendaItem | null>(null)
+  const [concluirDialogOpen, setConcluirDialogOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -137,6 +149,38 @@ export function AgendaList({
 
   function handleRecarregar() {
     setReloadKey((key) => key + 1)
+  }
+
+  function handleOpenConcluir(item: AgendaItem) {
+    setConcluirItem(item)
+    setConcluirDialogOpen(true)
+  }
+
+  // Roteia a confirmação da janela única para a ação de servidor correta
+  // conforme a origem do item — nenhuma escrita direta em tarefas/visitas
+  // por aqui, sempre através de app/actions/agenda.ts (Plano 15-02).
+  async function handleConfirmarConclusao(
+    resumo: string,
+    proximaData: string | null
+  ) {
+    if (!concluirItem) return undefined
+
+    const result =
+      concluirItem.origem === "prospeccao"
+        ? await concluirTarefaProspeccao(concluirItem.itemId, resumo)
+        : await concluirVisita(
+            concluirItem.itemId,
+            resumo,
+            concluirItem.frequenciaVisita,
+            proximaData
+          )
+
+    if (result.error) {
+      return { error: { message: result.error.message } }
+    }
+
+    handleRecarregar()
+    return undefined
   }
 
   return (
@@ -229,6 +273,7 @@ export function AgendaList({
                       atrasado={bucket === "atrasado"}
                       showResponsavel={showResponsavel}
                       onOpen={() => handleOpenCliente(item.clienteId)}
+                      onConcluir={() => handleOpenConcluir(item)}
                     />
                   ))}
                 </div>
@@ -249,6 +294,19 @@ export function AgendaList({
         onSaved={handleRecarregar}
         onDeleted={handleRecarregar}
       />
+
+      {concluirItem ? (
+        <ConcluirItemDialog
+          open={concluirDialogOpen}
+          onOpenChange={setConcluirDialogOpen}
+          origem={concluirItem.origem}
+          razaoSocial={concluirItem.razaoSocial}
+          itemTitulo={concluirItem.titulo}
+          frequenciaVisita={concluirItem.frequenciaVisita}
+          proximaDataSugerida={concluirItem.proximaDataSugerida}
+          onConfirm={handleConfirmarConclusao}
+        />
+      ) : null}
     </div>
   )
 }
