@@ -36,12 +36,18 @@ key-decisions:
   - "GENERIC_ERROR redeclarado localmente em ConcluirItemDialog.tsx com a mesma string literal — app/actions/agenda.ts não exporta sua constante homônima, mesmo padrão de duplicação intencional que GanhoFrequenciaDialog.tsx/PerdaMotivoDialog.tsx já usam."
   - "Contador de caracteres usa o comprimento bruto do campo (resumo.length), não o aparado — reflete diretamente o maxLength físico do Textarea; a validação de mínimo (10) usa o comprimento aparado, seguindo a mesma distinção que validarResumo() já faz no lado do servidor."
 
-requirements-completed: []
-# CONC-01/VIS-03 permanecem Pending propositalmente: a implementação e os
-# testes automatizados estão completos e verdes, mas a Task 3 deste plano
-# (checkpoint:human-verify, gate="blocking") ainda não foi confirmada pelo
-# dono do projeto. Só marcar CONC-01/VIS-03 como Complete em
-# REQUIREMENTS.md depois do sinal "approved" no checkpoint.
+requirements-completed: [CONC-01, VIS-03]
+# Checkpoint humano (Task 3) aprovado pelo dono do projeto em 2026-08-08
+# ("approved"). Cobertura mista: passos 1-4 do how-to-verify (resumo
+# obrigatório, clique não sobrepõe a ficha do cliente, item some da Agenda,
+# resumo aparece no histórico com data/autor corretos) foram verificados
+# ao vivo no navegador contra o Supabase real. Não havia visita pendente de
+# cliente com frequência disponível para exercitar ao vivo os passos 6-8
+# (sugestão/edição de próxima data e o caso "nenhuma") — o dono do projeto
+# aceitou explicitamente a cobertura dos 34 testes automatizados de 15-01
+# (incluindo o caso de virada de mês) e dos 9 testes de componente deste
+# plano para esse caminho específico, em vez de bloquear a fase por falta
+# de dado de teste ao vivo.
 
 coverage:
   - id: D1
@@ -62,8 +68,10 @@ coverage:
       - kind: unit
         ref: "tests/agenda/concluir-item-dialog.test.tsx#visita/nenhuma/confirma"
         status: pass
-    human_judgment: true
-    rationale: "O risco real (deslocamento de um dia por fuso horário) só é observável fim-a-fim contra o banco de verdade no navegador — é exatamente o propósito da Task 3 (checkpoint:human-verify), ainda pendente de confirmação do dono do projeto."
+      - kind: manual_procedural
+        ref: "checkpoint Task 3 — sem visita pendente de cliente com frequência disponível para clique ao vivo; dono do projeto aceitou explicitamente a cobertura dos 34 testes automatizados de 15-01 (inclui virada de mês) + os testes unit acima para este caminho, em vez de bloquear a fase"
+        status: pass
+    human_judgment: false
   - id: D3
     description: "Botão Concluir na linha da Agenda, com interrupção de propagação para não abrir a ficha do cliente junto"
     requirement: "CONC-01"
@@ -88,13 +96,16 @@ coverage:
     human_judgment: false
   - id: D5
     description: "Fluxo completo de ponta a ponta no navegador — resumo obrigatório bloqueando envio, data sugerida sem deslocamento de fuso, aviso de cliente sem cadência, recarga da Agenda após confirmar, e limpeza de estado entre clientes diferentes"
-    verification: []
+    verification:
+      - kind: manual_procedural
+        ref: "checkpoint Task 3, aprovado 2026-08-08 — verificado ao vivo: botão desabilitado com resumo vazio/curto ('ok') e habilitado com resumo válido, contador correto; clique em Concluir abre só o ConcluirItemDialog sem sobrepor a ClienteDetailSheet; item some da Agenda após confirmar (volta a 'Sua agenda está em dia'); resumo aparece no histórico do cliente sem prefixo, com data/autor corretos, tarefa marcada concluída"
+        status: pass
     human_judgment: true
-    rationale: "Exige clique real no navegador contra o banco Supabase de verdade (Task 3, checkpoint:human-verify, gate=blocking) — não é auditável por teste de componente isolado. Dev server preparado e rodando em http://localhost:3000 nesta worktree; aguardando o sinal 'approved' do dono do projeto."
+    rationale: "Sign-off do dono do projeto já registrado no checkpoint (2026-08-08, 'approved'). Caminho de próxima-data/aviso de cadência (passos 6-8 do how-to-verify) não pôde ser clicado ao vivo por falta de visita pendente de cliente com frequência — coberto por D2 acima."
 
 # Metrics
-duration: ~50min (Tasks 1-2; Task 3 aguardando checkpoint humano)
-completed: 2026-08-09
+duration: ~55min (Tasks 1-3, incluindo o checkpoint humano aprovado)
+completed: 2026-08-08
 status: complete
 ---
 
@@ -104,10 +115,11 @@ status: complete
 
 ## Performance
 
-- **Duration:** ~50 min (Tasks 1 e 2, ambos `auto`)
+- **Duration:** ~55 min (Tasks 1-2 `auto` + Task 3 checkpoint humano)
 - **Started:** 2026-08-09T01:40:00Z (aprox.)
 - **Completed (código):** 2026-08-09T02:31:36Z
-- **Tasks:** 2/3 (`auto` completos; Task 3 é `checkpoint:human-verify`, gate="blocking", aguardando confirmação do dono do projeto)
+- **Checkpoint aprovado:** 2026-08-08 ("approved")
+- **Tasks:** 3/3 completas
 - **Files modified:** 6 (1 componente novo + 1 teste novo + 2 componentes modificados + 2 testes modificados)
 
 ## Accomplishments
@@ -126,9 +138,9 @@ Each task was committed atomically:
 1. **Task 1: A janela única de conclusão, parametrizada pela origem** - `edad37c` (feat)
 2. **Task 2: Botão de concluir na linha e ligação da janela na lista da Agenda** - `2726609` (feat)
 
-**Task 3 (checkpoint:human-verify, gate="blocking"):** PENDENTE — aguardando o sinal "approved" do dono do projeto no navegador. Nenhum código adicional é produzido por esta task; ela só confirma o que as Tasks 1-2 já entregaram.
+**Task 3 (checkpoint:human-verify, gate="blocking"): APROVADO** — o dono do projeto verificou pessoalmente no navegador (2026-08-08): botão "Concluir tarefa" desabilitado com resumo vazio e com "ok" (2 chars), habilitado com resumo válido, contador correto; clique em "Concluir" abre só o `ConcluirItemDialog`, sem sobrepor a `ClienteDetailSheet`; após confirmar, o item some da Agenda (volta ao estado "Sua agenda está em dia"); no histórico do cliente, o resumo aparece exatamente como escrito, sem prefixo, com a data/hora corretas, e a tarefa aparece marcada como concluída. Não havia visita pendente de cliente com frequência disponível para testar ao vivo a sugestão/edição de próxima data e o caso "nenhuma" (passos 6-8 do how-to-verify) — o dono do projeto aceitou explicitamente a cobertura dos 34 testes automatizados de 15-01 (incluindo o caso de virada de mês) e dos 9 testes de componente deste plano para esse caminho, em vez de bloquear a fase por falta de dado de teste ao vivo. Nenhum código adicional foi produzido por esta task; ela só confirma o que as Tasks 1-2 já entregaram.
 
-**Plan metadata:** commit deste SUMMARY.md (docs) — feito nesta mesma worktree, antes do retorno do checkpoint, por exigência de isolamento de worktree paralela (o orquestrador remove esta worktree após o retorno).
+**Plan metadata:** commits deste SUMMARY.md (docs) — feitos nesta mesma worktree, por exigência de isolamento de worktree paralela (o orquestrador remove esta worktree após o retorno).
 
 ## Files Created/Modified
 - `components/agenda/ConcluirItemDialog.tsx` - janela única de conclusão (novo)
@@ -158,16 +170,17 @@ None - nenhuma dependência npm nova, nenhuma migration, nenhuma alteração de 
 
 ## Next Phase Readiness
 
-- **Bloqueio único e esperado:** a Task 3 (checkpoint humano no navegador) ainda não foi confirmada. Nenhum código adicional falta — é puramente a verificação visual/funcional do fluxo completo, incluindo o ponto de maior risco técnico da fase (deslocamento de data por fuso horário ao trocar a data sugerida).
-- CONC-01/VIS-03 permanecem `Pending` em `REQUIREMENTS.md` até o sinal "approved" — não marcar como `Complete` só com base neste SUMMARY.
-- Após o "approved": nenhuma ação de código adicional é necessária; a fase 15 (conclusão com resumo e próxima visita) fica pronta para ser encerrada.
-- Servidor de desenvolvimento rodando em `http://localhost:3000` nesta worktree (`.env.local`/`supabase/.temp/` copiados do checkout principal, ambos gitignored) — pronto para a verificação humana.
+- **Plano 15-03 completo, checkpoint humano aprovado.** Nenhum bloqueio remanescente — implementação, testes automatizados e verificação humana no navegador todos concluídos.
+- CONC-01/VIS-03 podem ser marcados `Complete` em `REQUIREMENTS.md` (via `requirements.mark-complete`, responsabilidade do orquestrador após a wave, mesma convenção de STATE.md/ROADMAP.md nesta execução em worktree paralela).
+- Cobertura mista documentada no bloco `coverage` acima (D2/D5): os passos de resumo obrigatório, isolamento do diálogo, recarga da Agenda e histórico do cliente foram verificados ao vivo; o caminho de próxima-data por cadência/aviso "nenhuma" não teve dado de teste ao vivo disponível (nenhuma visita pendente de cliente com frequência no momento do checkpoint) e teve sua cobertura automatizada aceita explicitamente pelo dono do projeto.
+- Fase 15 (conclusão com resumo e próxima visita) pronta para ser encerrada — este era o último plano da fase.
+- Servidor de desenvolvimento que rodava em `http://localhost:3000` nesta worktree foi encerrado após a aprovação; `.env.local`/`supabase/.temp/` (copiados do checkout principal para viabilizar a verificação, ambos gitignored) permanecem nesta worktree até sua remoção pelo orquestrador.
 
 ---
 *Phase: 15-conclus-o-com-resumo-e-pr-xima-visita*
-*Completed (código): 2026-08-09*
-*Task 3 (checkpoint humano): pendente*
+*Completed: 2026-08-08*
+*Task 3 (checkpoint humano): aprovado*
 
 ## Self-Check: PASSED
 
-Todos os 6 arquivos criados/modificados (componente novo, teste novo, 2 componentes modificados, 2 testes modificados) confirmados presentes no disco. Os 3 commits deste plano (`edad37c`, `2726609`, `9d3d15b`) confirmados presentes em `git log --oneline --all`.
+Todos os 6 arquivos criados/modificados (componente novo, teste novo, 2 componentes modificados, 2 testes modificados) confirmados presentes no disco. Os 3 commits deste plano (`edad37c`, `2726609`, `9d3d15b`) confirmados presentes em `git log --oneline --all`. Checkpoint humano (Task 3) aprovado pelo dono do projeto — SUMMARY atualizado para refletir a aprovação antes deste commit final.
