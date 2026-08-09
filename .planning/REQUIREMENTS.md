@@ -29,12 +29,12 @@ Requisitos do marco v1.3 (Agenda do Vendedor). Cada um mapeia para uma fase do r
 
 ### Diário do Cliente (DIAR)
 
-- [ ] **DIAR-01**: Cada cliente tem um histórico de visitas/tarefas concluídas (resumo + data + autor), visível ao vendedor responsável e ao Supervisor
+- [x] **DIAR-01**: Cada cliente tem um histórico de visitas/tarefas concluídas (resumo + data + autor), visível ao vendedor responsável e ao Supervisor
 
 ### Cliente Ativo (ATV)
 
-- [ ] **ATV-01**: Cliente "ativo" (= status ganho) passa a aceitar Nome Fantasia e CNPJ no cadastro — nunca exigidos no cadastro inicial rápido
-- [ ] **ATV-02**: Cadastro de cliente ativo aceita frequência de pedidos (só informativo, sem alerta automático)
+- [x] **ATV-01**: Cliente "ativo" (= status ganho) passa a aceitar Nome Fantasia e CNPJ no cadastro — nunca exigidos no cadastro inicial rápido
+- [x] **ATV-02**: Cadastro de cliente ativo aceita frequência de pedidos (só informativo, sem alerta automático)
 - [x] **ATV-03**: Frequência de visitas é o mesmo valor no cadastro e na recorrência da agenda — editar um atualiza o outro, nunca dessincroniza
 
 ### Importação / Exportação (IMP)
@@ -84,9 +84,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIS-03 | Phase 15 | Complete |
 | VIS-04 | Phase 13 | Complete |
 | CONC-01 | Phase 15 | Complete |
-| DIAR-01 | Phase 16 | Pending |
-| ATV-01 | Phase 16 | Pending |
-| ATV-02 | Phase 16 | Pending |
+| DIAR-01 | Phase 16 | Complete |
+| ATV-01 | Phase 16 | Complete |
+| ATV-02 | Phase 16 | Complete |
 | ATV-03 | Phase 13 | Complete |
 | IMP-01 | Phase 17 | Pending |
 | IMP-02 | Phase 17 | Pending |

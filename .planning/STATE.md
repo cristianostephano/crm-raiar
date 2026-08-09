@@ -4,17 +4,17 @@ milestone: v1.3
 milestone_name: Agenda do Vendedor
 current_phase: 16
 current_phase_name: Ficha do Cliente Ativo — Campos e Diário
-status: executing
-stopped_at: Plano 13-01 (fundação de banco) executado e commitado — migration 0013 aplicada em produção com aprovação humana, testes verdes (28/28 nos arquivos novos + 91/91 nos arquivos de maior risco de regressão). Ver `.planning/phases/13-cliente-ativo-e-frequ-ncia-de-visita/13-01-SUMMARY.md`.
-last_updated: "2026-08-09T14:43:27.900Z"
+status: phase_complete
+stopped_at: Plano 16-04 (tela — três campos condicionais + Diário em ClienteDetailSheet.tsx) executado e commitado, checkpoint humano aprovado com verificação ao vivo do Diário contra dado real de produção. Fase 16 completa — ATV-01/ATV-02/DIAR-01 marcados concluídos em REQUIREMENTS.md. Ver `.planning/phases/16-ficha-do-cliente-ativo-campos-e-di-rio/16-04-SUMMARY.md`.
+last_updated: "2026-08-09T21:56:42.179Z"
 last_activity: 2026-08-09
-last_activity_desc: Phase 16 execution started
+last_activity_desc: Plano 16-04 executado, checkpoint humano aprovado, ATV-01/ATV-02/DIAR-01 marcados completos
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 10
-  percent: 60
+  completed_plans: 14
+  percent: 80
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 16 — Ficha do Cliente Ativo — Campos e Diário
+**Current focus:** Phase 17 — Planilhas (Frequência em Massa e Exportação do Diário) — próxima fase do marco v1.3
 
 ## Current Position
 
-Phase: 16 (Ficha do Cliente Ativo — Campos e Diário) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 16
-Last activity: 2026-08-09 — Phase 16 execution started
+Phase: 16 (Ficha do Cliente Ativo — Campos e Diário) — COMPLETE (4 de 4 planos)
+Plan: 4 of 4 — done
+Status: Fase 16 concluída, marco v1.3 com 4 de 5 fases prontas
+Last activity: 2026-08-09 — Plano 16-04 executado, checkpoint humano aprovado, ATV-01/ATV-02/DIAR-01 marcados completos
 
-Progress (v1.3): [██░░░░░░░░] 20% (1 de 5 fases concluída; recálculo automático indisponível neste worktree — gsd-tools.cjs não existe aqui, ver Blockers/Concerns)
+Progress (v1.3): [████████░░] 80% (4 de 5 fases concluídas; só a Fase 17 resta)
 
 ## Performance Metrics
 
@@ -86,6 +86,7 @@ Progress (v1.3): [██░░░░░░░░] 20% (1 de 5 fases concluída; 
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 16 P04 | 35min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -204,6 +205,8 @@ Recent decisions affecting current work:
 
 </details>
 
+- [Phase ?]: Fase 16 concluida (Plano 16-04): frequencia de pedidos e campo comum de formulario sem escrita imediata (diferente da frequencia de visita); Diario renderiza texto generico da caixinha legada de concluir tarefa sem caso especial (D1); ATV-01/ATV-02/DIAR-01 marcados completos
+
 ### Pending Todos
 
 None yet.
@@ -259,7 +262,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-07
+Last session: 2026-08-09T21:55:48.122Z
 Stopped at: Plano 13-01 (fundação de banco) executado e commitado — migration 0013 aplicada em produção com aprovação humana, testes verdes (28/28 nos arquivos novos + 91/91 nos arquivos de maior risco de regressão). Ver `.planning/phases/13-cliente-ativo-e-frequ-ncia-de-visita/13-01-SUMMARY.md`.
 Resume file: None
 
