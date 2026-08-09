@@ -136,7 +136,14 @@ Plans:
   4. Cliente com frequência "nenhuma" conclui a visita normalmente e nenhuma próxima visita é criada.
   5. O resumo escrito na conclusão fica gravado no histórico daquele cliente, com data e autor.
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+
+- [ ] 15-01-PLAN.md — Migration da conclusão: coluna `resumo` em `tarefas`, constraints de tamanho (10..500), gatilhos de histórico estendidos (tarefas recriado + visitas novo), RPCs atômicas `concluir_tarefa_prospeccao` e `concluir_visita`, e `agenda_do_vendedor()` recriada com `frequencia_visita` + `proxima_data_sugerida` — com checkpoint humano antes do push em produção
+- [ ] 15-02-PLAN.md — `lib/validations/agenda.ts` (limites e mensagens do resumo com dono único), função pura de decisão de cadência, item de agenda carregando frequência e data sugerida, e as duas Server Actions de conclusão
+- [ ] 15-03-PLAN.md — `ConcluirItemDialog` (uma janela parametrizada pela origem), botão "Concluir" na linha da Agenda, ligação na lista com recarga, e verificação humana no navegador
+
 **UI hint**: yes
 
 **Notas para o planejamento** (da research — **fase de maior risco do marco**):
