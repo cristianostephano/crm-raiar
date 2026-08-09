@@ -50,12 +50,14 @@ Both items below were explicitly called out by `ROADMAP.md`/the phase brief as d
 
 Migration `0013`'s own comment says explicitly: *"frequencia_pedidos é texto livre de propósito... o vocabulário/validação dele é decisão da Fase 16."*
 
-**Decision: a plain free-text `Input`, not a `Select`/enum.** Rationale:
-- `CLAUDE.md` already names exactly three permission-gated CRUD enums for this project (categoria, produtos consumidos, tipos de tarefa) — inventing a fourth Supervisor-managed vocabulary for a single informational field is disproportionate to what ATV-02 asks for ("só informativo, sem alerta automático").
-- Purchase cadence language varies per client relationship ("toda segunda", "quinzenalmente", "sem padrão fixo", "conforme estoque") in ways a fixed list would clip — a free-text field matches "informação de apoio" literally.
-- Zero new migration, zero new admin screen, zero new RLS surface — the column is already `text`, nullable, no CHECK.
+**Decision (owner-confirmed, overrides the researcher's free-text default): a `Select` backed by a 4th Supervisor-managed CRUD vocabulary, following the exact same pattern already established for categoria/produtos consumidos/tipos de tarefa (Phase 3's "Administração de Listas Editáveis").**
 
-If the project owner later wants a constrained vocabulary instead, only this field's `Input`→`Select` swap and its zod validation change — no other part of this contract depends on the choice.
+**Technical implication the planner MUST account for (this is a real scope change vs. the ROADMAP's "não exigem migration nova" note):**
+- A new lookup table (e.g. `frequencias_pedido`) is needed, mirroring `categorias`/`produtos_consumidos`/`tipos_tarefa`'s existing shape: `id uuid`, `nome text`, RLS readable by all authenticated, write-gated to Supervisor only (`is_supervisor()`), following the exact CRUD-enum pattern already shipped in Phase 3.
+- **This DOES require a new migration** — contradicting the phase's original "no new migration" assumption from the roadmap notes. `clientes.frequencia_pedidos` keeps storing the chosen value as plain `text` (matching the existing column type from migration 0013, rather than switching to a foreign key) — simplest path, avoids an ALTER on `clientes`.
+- The Select's options come from the new table, same `{value, label}` combobox pattern already used for `categoria` and `produtos_consumidos` in the cadastro form.
+- Admin UI: a new CRUD screen/section for Supervisors to manage this vocabulary is in scope for this phase (mirroring the existing categoria/produtos/tipos-tarefa admin UI), since ATV-02 has no value to select from otherwise.
+- Zod validation: value must exist in the current vocabulary list (fetched server-side), same validation shape as categoria.
 
 ---
 
@@ -117,9 +119,10 @@ Rendered only when `cliente.statusAcompanhamento === "ganho"` — identical gati
 | CNPJ — label | `CNPJ` |
 | CNPJ — placeholder | `00.000.000/0000-00` (visual hint only — no input mask, no format validation; free digits-and-punctuation text, matching this project's existing soft-validation posture on `telefone`) |
 | Frequência de pedidos — label | `Frequência de pedidos` |
-| Frequência de pedidos — placeholder | `Ex.: A cada 2 semanas` |
+| Frequência de pedidos — control | `Select` (combobox), same primitive/pattern as `categoria`, options loaded from the new `frequencias_pedido` vocabulary table |
+| Frequência de pedidos — placeholder (empty selection) | `Selecione a frequência` |
 | Frequência de pedidos — helper text (always visible under the field, not just on error) | `Informação de apoio — não gera alerta, cobrança ou tarefa na Agenda.` (this is the literal UI expression of ATV-02's acceptance criterion — the text must be visible by default, not hidden behind a tooltip) |
-| Validation | All three fields are optional strings, no `.min()`/format `.regex()` — mirrors `contato`/`telefone`'s existing `z.string().optional()` pattern in `updateClienteSchema`. No new error copy needed |
+| Validation | Nome fantasia/CNPJ are optional strings, no `.min()`/format `.regex()` — mirrors `contato`/`telefone`'s existing `z.string().optional()` pattern in `updateClienteSchema`. Frequência de pedidos is an optional `z.string()` validated against the live vocabulary list (same shape as `categoria`'s validation), not a free-form string |
 
 ### "Funil" section — new "Diário" subsection (`ClienteDetailSheet.tsx` modified + `DiarioTimeline.tsx` new)
 
@@ -198,7 +201,14 @@ Both new pieces of UI (the 3 conditional fields, the Diário section) are additi
        <FormField control={form.control} name="frequenciaPedidos" render={({ field }) => (
          <FormItem>
            <FormLabel>Frequência de pedidos</FormLabel>
-           <FormControl><Input placeholder="Ex.: A cada 2 semanas" {...field} /></FormControl>
+           <FormControl>
+             <Select value={field.value ?? ""} onValueChange={field.onChange}>
+               <SelectTrigger><SelectValue placeholder="Selecione a frequência" /></SelectTrigger>
+               <SelectContent>
+                 {frequenciasPedido.map((f) => <SelectItem key={f.id} value={f.nome}>{f.nome}</SelectItem>)}
+               </SelectContent>
+             </Select>
+           </FormControl>
            <p className="text-sm text-muted-foreground">Informação de apoio — não gera alerta, cobrança ou tarefa na Agenda.</p>
            <FormMessage />
          </FormItem>
