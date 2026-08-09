@@ -9,8 +9,10 @@ import {
 } from "@/lib/funil/frequencia"
 import { createClient } from "@/lib/supabase/server"
 import {
+  getDiario,
   getHistorico,
   getMotivosPerdaAtivos,
+  type DiarioEntry,
   type HistoricoEntry,
   type LookupOption,
   type StatusAcompanhamento,
@@ -219,6 +221,32 @@ export async function getHistoricoAction(
   }
 
   return { data: await getHistorico(clienteId) }
+}
+
+export type GetDiarioResult =
+  | { data: DiarioEntry[]; error?: undefined }
+  | { data?: undefined; error: { code: "unauthenticated" } }
+
+/**
+ * Thin Server Action wrapper around getDiario() (DIAR-01) — mesmo molde
+ * literal de getHistoricoAction acima: checa usuário autenticado e senão
+ * devolve o resultado da consulta. Nenhuma checagem de papel — a regra de
+ * leitura da trilha de auditoria (migration 0002) é a fronteira real.
+ */
+export async function getDiarioAction(
+  clienteId: string
+): Promise<GetDiarioResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  return { data: await getDiario(clienteId) }
 }
 
 export type GetMotivosPerdaResult =

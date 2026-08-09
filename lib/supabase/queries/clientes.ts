@@ -507,6 +507,71 @@ export async function getHistorico(clienteId: string): Promise<HistoricoEntry[]>
   }))
 }
 
+/**
+ * Read-only "Diário" (DIAR-01) — leitura NOVA e independente do histórico
+ * completo acima, e por quê: o histórico continua sendo a trilha inteira
+ * (mudança de etapa, mudança de status, conclusões) e continua na tela ao
+ * lado, inalterado; o diário é o recorte do que foi de fato executado com o
+ * cliente — só tarefa concluída e visita concluída, filtrado NO SQL (nunca
+ * trazendo tudo e filtrando depois no navegador). Mesma postura de
+ * `getHistorico`: erro ou ausência de dado devolve lista vazia, nunca
+ * exceção — o diário não pode derrubar a ficha inteira.
+ *
+ * Assim como `getHistorico`, não existe (e não pode existir) função de
+ * escrita na trilha de auditoria neste arquivo — só os gatilhos SECURITY
+ * DEFINER das migrations 0002/0015 escrevem em `historico` (T-02-25).
+ *
+ * Autorização: ZERO checagem de papel e ZERO filtro de dono aqui — a regra
+ * de leitura de `historico` condicionada ao cliente pai (migration 0002,
+ * inalterada) é a fronteira INTEIRA do critério de sucesso 4 desta fase. Um
+ * Vendedor que chamar isto para um cliente alheio recebe lista vazia (RLS
+ * filtra a linha), nunca um filtro de responsavel escrito à mão aqui — duas
+ * fontes de verdade que podem divergir é exatamente o que este comentário
+ * (mesmo tom do de `getClientesParaExportacao`) existe para evitar.
+ *
+ * O nome do autor é montado a partir do perfil quando ele existir, e vem
+ * NULO quando não existir — esta camada de dados nunca inventa um texto de
+ * substituição (decisão de tela, plano 16-04).
+ */
+export type DiarioEntry = {
+  id: string
+  tipo: "tarefa_concluida" | "visita_concluida"
+  descricao: string
+  criadoEm: string
+  autorNome: string | null
+}
+
+type DiarioEntryRow = {
+  id: string
+  tipo: string
+  descricao: string
+  criado_em: string
+  profiles: { nome: string; sobrenome: string } | null
+}
+
+export async function getDiario(clienteId: string): Promise<DiarioEntry[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("historico")
+    .select("id, tipo, descricao, criado_em, profiles(nome, sobrenome)")
+    .eq("cliente_id", clienteId)
+    .in("tipo", ["tarefa_concluida", "visita_concluida"])
+    .order("criado_em", { ascending: false })
+
+  if (error || !data) return []
+
+  return (data as unknown as DiarioEntryRow[]).map((row) => ({
+    id: row.id,
+    tipo: row.tipo as DiarioEntry["tipo"],
+    descricao: row.descricao,
+    criadoEm: row.criado_em,
+    autorNome: row.profiles
+      ? `${row.profiles.nome} ${row.profiles.sobrenome}`
+      : null,
+  }))
+}
+
 /** Lookup-table option shape shared by tipos_tarefa/motivos_perda selects. */
 export type LookupOption = { id: string; nome: string }
 
