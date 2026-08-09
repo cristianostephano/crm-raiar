@@ -10,9 +10,11 @@ import {
   atualizarFrequenciaVisita,
   deleteCliente,
   getClienteDetalhe,
+  getFrequenciasPedido,
   updateCliente,
 } from "@/app/actions/clientes"
 import {
+  getDiarioAction,
   getHistoricoAction,
   marcarStatus,
   type MarcarStatusResult,
@@ -67,6 +69,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { PerdaMotivoDialog } from "@/components/clientes/PerdaMotivoDialog"
 import { GanhoFrequenciaDialog } from "@/components/clientes/GanhoFrequenciaDialog"
 import { HistoricoTimeline } from "@/components/clientes/HistoricoTimeline"
+import { DiarioTimeline } from "@/components/clientes/DiarioTimeline"
 import { ETAPA_FINAL } from "@/lib/funil/etapas"
 import { FREQUENCIA_VISITA_ITEMS, type FrequenciaVisita } from "@/lib/funil/frequencia"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
@@ -78,6 +81,7 @@ import {
 } from "@/lib/validations/cliente"
 import type {
   ClienteDetalhe,
+  DiarioEntry,
   HistoricoEntry,
   LookupOption,
   StatusAcompanhamento,
@@ -143,6 +147,15 @@ function toFormValues(cliente: ClienteDetalhe): UpdateClienteInput {
     numeroDeLojas: cliente.numeroDeLojas ?? undefined,
     produtoIds: cliente.produtoIds,
     observacao: cliente.observacao ?? "",
+    // ATV-01/ATV-02: preenchidos a partir do cliente lido para QUALQUER
+    // status, não só "ganho" — os campos só são RENDERIZADOS quando ganho,
+    // mas continuam presentes nos valores do formulário; é isso que faz
+    // salvar a ficha de um cliente que deixou de ser ganho devolver o valor
+    // já guardado em vez de apagá-lo (updateCliente só grava a coluna
+    // quando o campo está presente no envio).
+    nomeFantasia: cliente.nomeFantasia ?? "",
+    cnpj: cliente.cnpj ?? "",
+    frequenciaPedidos: cliente.frequenciaPedidos ?? "",
   }
 }
 
@@ -194,6 +207,12 @@ export function ClienteDetailSheet({
   const [tarefas, setTarefas] = useState<Tarefa[]>([])
   const [historico, setHistorico] = useState<HistoricoEntry[]>([])
   const [tiposTarefa, setTiposTarefa] = useState<LookupOption[]>([])
+  // DIAR-01: dado POR CLIENTE, resetado no bloco abaixo ao trocar/fechar.
+  const [diario, setDiario] = useState<DiarioEntry[]>([])
+  // ATV-02: catálogo GLOBAL (mesmo motivo de tiposTarefa acima não entrar no
+  // bloco de reset) — não muda ao trocar de cliente, resetá-lo só causaria
+  // uma busca a mais.
+  const [frequenciasPedido, setFrequenciasPedido] = useState<LookupOption[]>([])
   const [statusError, setStatusError] = useState<string | null>(null)
   const [isSavingStatus, setIsSavingStatus] = useState(false)
   const [perdaDialogOpen, setPerdaDialogOpen] = useState(false)
@@ -229,6 +248,9 @@ export function ClienteDetailSheet({
       numeroDeLojas: undefined,
       produtoIds: [],
       observacao: "",
+      nomeFantasia: "",
+      cnpj: "",
+      frequenciaPedidos: "",
     },
   })
 
@@ -252,6 +274,7 @@ export function ClienteDetailSheet({
       setDeleteError(null)
       setTarefas([])
       setHistorico([])
+      setDiario([])
       setStatusError(null)
       setPerdaDialogOpen(false)
       setGanhoDialogOpen(false)
@@ -298,6 +321,14 @@ export function ClienteDetailSheet({
       if (cancelled || result.error) return
       setTiposTarefa(result.data)
     })
+    getDiarioAction(clienteId).then((result) => {
+      if (cancelled || result.error) return
+      setDiario(result.data)
+    })
+    getFrequenciasPedido().then((result) => {
+      if (cancelled || result.error) return
+      setFrequenciasPedido(result.data)
+    })
 
     return () => {
       cancelled = true
@@ -311,6 +342,16 @@ export function ClienteDetailSheet({
     if (!clienteId) return
     const result = await getHistoricoAction(clienteId)
     if (!result.error) setHistorico(result.data)
+  }
+
+  // DIAR-01: NÃO reusa refreshHistorico — é uma leitura própria
+  // (getDiarioAction), nunca um filtro sobre o histórico já carregado no
+  // navegador. Chamada nos mesmos pontos em que refreshHistorico já é
+  // chamada, porque as duas escritas caem na mesma tabela `historico`.
+  async function refreshDiario() {
+    if (!clienteId) return
+    const result = await getDiarioAction(clienteId)
+    if (!result.error) setDiario(result.data)
   }
 
   async function handleStatusChange(
@@ -350,6 +391,7 @@ export function ClienteDetailSheet({
       )
       setIsSavingStatus(false)
       await refreshHistorico()
+      await refreshDiario()
       return result
     } catch {
       const error = {
@@ -427,6 +469,7 @@ export function ClienteDetailSheet({
 
     if (concluida) {
       await refreshHistorico()
+      await refreshDiario()
     }
   }
 
@@ -859,6 +902,89 @@ export function ClienteDetailSheet({
                     )}
                   />
 
+                  {cliente.statusAcompanhamento === "ganho" ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={form.control}
+                          name="nomeFantasia"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome fantasia</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="cnpj"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>CNPJ</FormLabel>
+                              <FormControl>
+                                <Input placeholder="00.000.000/0000-00" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="frequenciaPedidos"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Frequência de pedidos</FormLabel>
+                            {frequenciasPedido.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">
+                                Nenhuma frequência cadastrada ainda.
+                              </p>
+                            ) : (
+                              <Select
+                                value={field.value || ""}
+                                onValueChange={(value) =>
+                                  field.onChange(value ?? "")
+                                }
+                                items={frequenciasPedido.map((freq) => ({
+                                  value: freq.nome,
+                                  label: freq.nome,
+                                }))}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Selecione a frequência" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {frequenciasPedido.map((freq) => (
+                                    <SelectItem key={freq.id} value={freq.nome}>
+                                      {freq.nome}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            {/* ATV-02: texto de apoio SEMPRE visível — é a
+                                expressão literal do critério de aceitação,
+                                nunca escondido atrás de tooltip. Campo comum
+                                de formulário, salvo só pelo botão "Salvar
+                                alterações" — diferente da Frequência de
+                                VISITA logo abaixo (seção Funil), que grava
+                                na hora via atualizarFrequenciaVisita; os
+                                dois têm nome parecido e ficam a poucas
+                                linhas um do outro, daí este comentário. */}
+                            <p className="text-sm text-muted-foreground">
+                              Informação de apoio — não gera alerta, cobrança ou tarefa na Agenda.
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  ) : null}
+
                   <Separator />
                   <h2 className="text-xl font-semibold">Funil</h2>
                   <div data-slot="funil-section" className="flex flex-col gap-4">
@@ -1142,6 +1268,11 @@ export function ClienteDetailSheet({
                     <div className="flex flex-col gap-2">
                       <Label>Histórico</Label>
                       <HistoricoTimeline entries={historico} />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label>Diário</Label>
+                      <DiarioTimeline entries={diario} />
                     </div>
                   </div>
                 </div>
