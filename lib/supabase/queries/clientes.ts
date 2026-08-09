@@ -574,3 +574,31 @@ export async function getProdutosAtivos(): Promise<LookupOption[]> {
   if (error || !data) return []
   return data
 }
+
+/**
+ * Full active frequencias_pedido catalog — irmã literal de
+ * getTiposTarefaAtivos/getCategoriasAtivas/getProdutosAtivos acima.
+ * Alimenta o campo de escolha "Frequência de pedidos" na ficha do cliente
+ * ativo (ATV-02, plano 16-04). Devolve SÓ os valores ativos, de propósito:
+ * um valor desativado pelo Supervisor não pode mais ser escolhido para um
+ * cliente novo.
+ *
+ * IMPORTANTE para quem vier depois: a VALIDAÇÃO do valor enviado (plano
+ * 16-03) NÃO pode usar este leitor — um cliente que já tenha guardado um
+ * valor desde então desativado precisa continuar conseguindo salvar a
+ * ficha, então a validação usa uma leitura do catálogo completo (ativos +
+ * inativos), não este. Confundir os dois é o defeito mais provável desta
+ * área.
+ */
+export async function getFrequenciasPedidoAtivas(): Promise<LookupOption[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("frequencias_pedido")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome", { ascending: true })
+
+  if (error || !data) return []
+  return data
+}

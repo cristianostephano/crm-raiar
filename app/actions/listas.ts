@@ -10,13 +10,18 @@ import {
 } from "@/lib/validations/lista"
 import { createClient } from "@/lib/supabase/server"
 
-/** The 4 editable-list lookup tables administered by "Configurações"
- * (ADM-01..04) — all 4 share the exact same schema/RLS shape. */
+/** The 5 editable-list lookup tables administered by "Configurações"
+ * (ADM-01..04) — all 5 share the exact same schema/RLS shape. The 5th,
+ * `frequencias_pedido`, chegou na Fase 16 para o campo "Frequência de
+ * pedidos" da ficha do cliente ativo (ATV-02, migration
+ * 0016_frequencias_pedido.sql) — entra na mesma união genérica sem
+ * nenhuma mudança nas 4 funções abaixo. */
 export type ListaTabela =
   | "categorias"
   | "produtos_consumidos"
   | "tipos_tarefa"
   | "motivos_perda"
+  | "frequencias_pedido"
 
 export type ListaValor = { id: string; nome: string; ativo: boolean }
 
