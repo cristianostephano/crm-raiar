@@ -130,3 +130,11 @@ None - nenhuma configuração externa manual necessária. A migration já foi ap
 ---
 *Phase: 16-ficha-do-cliente-ativo-campos-e-di-rio*
 *Completed: 2026-08-09*
+
+## Self-Check: PASSED
+
+- FOUND: supabase/migrations/0016_frequencias_pedido.sql
+- FOUND: tests/configuracoes/rls-frequencias-pedido.test.ts
+- FOUND: .planning/phases/16-ficha-do-cliente-ativo-campos-e-di-rio/16-01-SUMMARY.md
+- FOUND commit: 85ddd7f (feat(16-01): add frequencias_pedido migration + RLS test)
+- FOUND commit: 1ad8f0d (docs(16-01): complete frequencia de pedidos lista foundation plan)
