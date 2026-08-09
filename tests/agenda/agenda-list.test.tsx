@@ -43,6 +43,8 @@ function buildItem(partial: Partial<AgendaItem> = {}): AgendaItem {
     responsavelNome: "Vendedor Um",
     titulo: "Visitar",
     data: dataRelativa(0),
+    frequenciaVisita: null,
+    proximaDataSugerida: null,
     ...partial,
   }
 }

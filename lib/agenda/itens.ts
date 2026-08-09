@@ -1,5 +1,7 @@
 import { differenceInCalendarDays, parseISO } from "date-fns"
 
+import type { FrequenciaVisita } from "@/lib/funil/frequencia"
+
 /**
  * Agenda unificada (AGD-03/AGD-01/AGD-05 base/AGD-06) — pure functions only,
  * no DB access, no `next/*`, no `@/lib/supabase/*` import. This is the ONLY
@@ -13,6 +15,8 @@ import { differenceInCalendarDays, parseISO } from "date-fns"
  * Mirrors lib/funil/staleness.ts's shape (differenceInCalendarDays +
  * parseISO, `now: Date = new Date()` default parameter so tests can pin
  * "today", and "ISO date string (YYYY-MM-DD)" field documentation).
+ * Importing `FrequenciaVisita` from lib/funil/frequencia.ts is safe here
+ * because that module is equally pure.
  */
 
 /** The two values `agenda_do_vendedor()`'s `origem` column returns. */
@@ -30,6 +34,21 @@ export type AgendaItem = {
   titulo: string
   /** ISO date string (YYYY-MM-DD), the `agenda_do_vendedor()` `data` column. */
   data: string
+  /** Frequência de visita do cliente (CONC-01/VIS-03), vinda pronta da
+   * coluna `frequencia_visita` de `agenda_do_vendedor()` (migration 0015).
+   * `null` para item de `origem: "prospeccao"` (o conceito não se aplica)
+   * e para cliente sem cadência definida. */
+  frequenciaVisita: FrequenciaVisita | null
+  /** Data sugerida (YYYY-MM-DD) da próxima visita, JÁ CALCULADA DO BANCO —
+   * coluna `proxima_data_sugerida` de `agenda_do_vendedor()` (migration
+   * 0015), que reusa `proxima_data_visita` da Fase 13. `null` para item de
+   * `origem: "prospeccao"` e para cliente sem cadência.
+   *
+   * PITFALL 1: esta data atravessa do banco até a tela SEM transformação —
+   * nenhuma linha de código de aplicação (deste arquivo ou de qualquer
+   * outro) pode recalculá-la ou reconstruí-la a partir de aritmética de
+   * data. A autoridade única do cálculo é a função do banco. */
+  proximaDataSugerida: string | null
 }
 
 export type AgendaBucket = "atrasado" | "hoje" | "proximos"

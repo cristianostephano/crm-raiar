@@ -1,4 +1,5 @@
 import type { AgendaItem } from "@/lib/agenda/itens"
+import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 import { createClient } from "@/lib/supabase/server"
 
 /**
@@ -29,6 +30,8 @@ type AgendaRow = {
   responsavel_nome: string | null
   titulo: string
   data: string
+  frequencia_visita: FrequenciaVisita | null
+  proxima_data_sugerida: string | null
 }
 
 function mapRow(row: AgendaRow): AgendaItem {
@@ -41,6 +44,8 @@ function mapRow(row: AgendaRow): AgendaItem {
     responsavelNome: row.responsavel_nome,
     titulo: row.titulo,
     data: row.data,
+    frequenciaVisita: row.frequencia_visita,
+    proximaDataSugerida: row.proxima_data_sugerida,
   }
 }
 

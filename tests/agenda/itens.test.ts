@@ -27,6 +27,8 @@ function item(overrides: Partial<AgendaItem> = {}): AgendaItem {
     responsavelNome: "Ana Vendedora",
     titulo: "Visitar",
     data: "2026-08-08",
+    frequenciaVisita: null,
+    proximaDataSugerida: null,
     ...overrides,
   }
 }
