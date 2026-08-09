@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Agenda do Vendedor
-current_phase: 14
-current_phase_name: Agenda Unificada
+current_phase: 15
+current_phase_name: Conclusão com Resumo e Próxima Visita
 status: executing
 stopped_at: Plano 13-01 (fundação de banco) executado e commitado — migration 0013 aplicada em produção com aprovação humana, testes verdes (28/28 nos arquivos novos + 91/91 nos arquivos de maior risco de regressão). Ver `.planning/phases/13-cliente-ativo-e-frequ-ncia-de-visita/13-01-SUMMARY.md`.
-last_updated: "2026-08-08T13:16:23.834Z"
-last_activity: 2026-08-08
-last_activity_desc: Phase 14 execution started
+last_updated: "2026-08-09T01:30:33.494Z"
+last_activity: 2026-08-09
+last_activity_desc: Phase 15 execution started
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 7
-  completed_plans: 3
-  percent: 20
+  completed_phases: 2
+  total_plans: 10
+  completed_plans: 7
+  percent: 40
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 14 — Agenda Unificada
+**Current focus:** Phase 15 — Conclusão com Resumo e Próxima Visita
 
 ## Current Position
 
-Phase: 14 (Agenda Unificada) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 14
-Last activity: 2026-08-08 — Phase 14 execution started
+Phase: 15 (Conclusão com Resumo e Próxima Visita) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 15
+Last activity: 2026-08-09 — Phase 15 execution started
 
 Progress (v1.3): [██░░░░░░░░] 20% (1 de 5 fases concluída; recálculo automático indisponível neste worktree — gsd-tools.cjs não existe aqui, ver Blockers/Concerns)
 
