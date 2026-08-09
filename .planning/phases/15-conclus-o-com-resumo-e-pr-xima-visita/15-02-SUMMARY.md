@@ -186,3 +186,7 @@ None - nenhuma configuração de serviço externo necessária. Nenhuma dependên
 ---
 *Phase: 15-conclus-o-com-resumo-e-pr-xima-visita*
 *Completed: 2026-08-09*
+
+## Self-Check: PASSED
+
+All 9 created/modified source files and the SUMMARY.md itself confirmed tracked via `git ls-files`. All 3 commits (`f779cbe`, `eac6263`, `f9ba368`) confirmed present in `git log --oneline`.
