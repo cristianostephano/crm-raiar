@@ -5,13 +5,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ListaTabela } from "@/app/actions/listas"
 
 /**
- * Tab shell for "Configurações" (D-01) — the 4 editable-list tabs in the
+ * Tab shell for "Configurações" (D-01) — the 5 editable-list tabs in the
  * exact domain order from the UI-SPEC's Copywriting Contract (client
  * attributes first, then funnel-related lists): Categoria (03-01/03-02),
  * then Produtos consumidos / Tipos de tarefa / Motivos de perda (03-03).
  * Each tab is pure configuration over the same generic EditableListTab —
- * no per-tab CRUD logic, since all 4 lookup tables share the identical
+ * no per-tab CRUD logic, since all 5 lookup tables share the identical
  * { id, nome, ativo } shape (ListaTabela union in app/actions/listas.ts).
+ *
+ * "Frequência de pedidos" (Fase 16, ATV-02) foi acrescentada por último,
+ * fora da ordem "atributos do cliente primeiro, listas do funil depois":
+ * ela É um atributo do cliente, mas só existe para o cliente já ganho —
+ * a mais específica das cinco, por isso entra no fim, para não empurrar
+ * as quatro abas que o Supervisor usa no dia a dia.
  */
 const TABS: {
   tabela: ListaTabela
@@ -42,6 +48,12 @@ const TABS: {
     label: "Motivos de perda",
     inputPlaceholder: "Nome do motivo",
     pluralAtivoLabel: "motivos ativos",
+  },
+  {
+    tabela: "frequencias_pedido",
+    label: "Frequência de pedidos",
+    inputPlaceholder: "Nome da frequência",
+    pluralAtivoLabel: "frequências ativas",
   },
 ]
 
