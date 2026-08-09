@@ -17,6 +17,8 @@ function buildItem(partial: Partial<AgendaItem> = {}): AgendaItem {
     responsavelNome: "Fulano de Tal",
     titulo: "Visitar",
     data: "2026-01-15",
+    frequenciaVisita: null,
+    proximaDataSugerida: null,
     ...partial,
   }
 }
