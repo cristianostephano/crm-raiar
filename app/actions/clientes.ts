@@ -10,7 +10,12 @@ import {
   type UpdateClienteInput,
 } from "@/lib/validations/cliente"
 import { createClient } from "@/lib/supabase/server"
-import { getClienteById, type ClienteDetalhe } from "@/lib/supabase/queries/clientes"
+import {
+  getClienteById,
+  getFrequenciasPedidoAtivas,
+  type ClienteDetalhe,
+  type LookupOption,
+} from "@/lib/supabase/queries/clientes"
 import { isFrequenciaVisita, type FrequenciaVisita } from "@/lib/funil/frequencia"
 
 export type CreateClienteErrorCode =
@@ -420,4 +425,29 @@ export async function atualizarFrequenciaVisita(
 
   revalidatePath("/clientes")
   return { data: { id: updated.id } }
+}
+
+export type GetFrequenciasPedidoResult =
+  | { data: LookupOption[]; error?: undefined }
+  | { data?: undefined; error: { code: "unauthenticated" } }
+
+/**
+ * Thin Server Action wrapper around getFrequenciasPedidoAtivas() (ATV-02) —
+ * no mesmo molde de getMotivosPerda/getTiposTarefa. Leitura de catálogo é
+ * aberta a qualquer autenticado, sem checagem de papel: é o que faz o campo
+ * "Frequência de pedidos" funcionar para o Vendedor também. A fronteira real
+ * continua sendo a regra de leitura da tabela (RLS, migration 0016).
+ */
+export async function getFrequenciasPedido(): Promise<GetFrequenciasPedidoResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated" } }
+  }
+
+  return { data: await getFrequenciasPedidoAtivas() }
 }
