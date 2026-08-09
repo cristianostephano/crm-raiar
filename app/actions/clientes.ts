@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { cidadeValida } from "@/lib/clientes/cidadeValida"
 import {
+  frequenciaPedidoCanonica,
+  frequenciaPedidoValida,
+} from "@/lib/clientes/frequenciaPedido"
+import {
   createClienteSchema,
   updateClienteSchema,
   type CreateClienteInput,
@@ -228,6 +232,33 @@ export async function updateCliente(
     return { error: { code: "validation" } }
   }
 
+  // ATV-02: re-validar frequência de pedidos contra o catálogo COMPLETO do
+  // vocabulário (ativos + inativos) — nunca getFrequenciasPedidoAtivas()
+  // (plano 16-02), cujo próprio comentário avisa que ela é só para o campo
+  // de escolha, não para esta re-validação: um cliente que já guardou um
+  // valor desde então desativado precisa continuar conseguindo salvar a
+  // ficha inteira (T-16-20). Seleção estreita de só a coluna nome, sem
+  // filtro de ativo.
+  const { data: vocabularioFrequenciaPedidos } = await supabase
+    .from("frequencias_pedido")
+    .select("nome")
+
+  if (
+    !frequenciaPedidoValida(
+      parsed.data.frequenciaPedidos,
+      vocabularioFrequenciaPedidos ?? []
+    )
+  ) {
+    return { error: { code: "validation" } }
+  }
+
+  // O valor gravado é sempre o nome canônico do vocabulário, nunca o texto
+  // cru vindo do navegador (T-16-19).
+  const frequenciaPedidosCanonica = frequenciaPedidoCanonica(
+    parsed.data.frequenciaPedidos,
+    vocabularioFrequenciaPedidos ?? []
+  )
+
   const { data: updated, error } = await supabase
     .from("clientes")
     .update({
@@ -247,6 +278,25 @@ export async function updateCliente(
       // FUN-07: saved together with the rest of "Salvar alterações" — no
       // separate salvarObservacao action.
       observacao: parsed.data.observacao || null,
+      // T-16-18: gravação CONDICIONAL à presença — os três campos do
+      // cliente ativo só são renderizados quando o cliente está ganho
+      // (16-UI-SPEC.md), então um envio vindo da ficha de um cliente
+      // não-ganho não os traz. Se essas colunas entrassem incondicionalmente
+      // no objeto de atualização, o primeiro salvamento de QUALQUER cliente
+      // não-ganho apagaria em silêncio os dados de qualquer cliente ganho
+      // que já os tivesse preenchido. Um campo PRESENTE e vazio continua
+      // significando "limpar" (vira nulo), como os demais campos opcionais
+      // acima — só a AUSÊNCIA do campo no envio já validado impede a
+      // coluna de sequer aparecer aqui.
+      ...(parsed.data.nomeFantasia !== undefined
+        ? { nome_fantasia: parsed.data.nomeFantasia || null }
+        : {}),
+      ...(parsed.data.cnpj !== undefined
+        ? { cnpj: parsed.data.cnpj || null }
+        : {}),
+      ...(parsed.data.frequenciaPedidos !== undefined
+        ? { frequencia_pedidos: frequenciaPedidosCanonica }
+        : {}),
     })
     .eq("id", parsed.data.id)
     .select("id")

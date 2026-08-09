@@ -22,6 +22,11 @@ import { UFS } from "@/lib/clientes/ufs"
  * ZodEffects type, which breaks @hookform/resolvers' generic inference
  * against zod v4 (see 02-PATTERNS.md and InviteUserForm.tsx's identical
  * comment for `role`).
+ *
+ * ATV-01/ATV-02: os três campos do cliente ativo (nome fantasia, CNPJ,
+ * frequência de pedidos) entram SÓ no esquema de EDIÇÃO abaixo, nunca aqui —
+ * é o mecanismo literal por trás do critério de sucesso 1 da Fase 16 ("o
+ * cadastro rápido continua sem pedir nenhum dos dois").
  */
 export const createClienteSchema = z
   .object({
@@ -73,6 +78,13 @@ export type CreateClienteInput = z.infer<typeof createClienteSchema>
  * client-sent responsavel change server-side for a non-Supervisor caller
  * (defense in depth; the real boundary is the UPDATE ... WITH CHECK RLS
  * policy from 02-01).
+ *
+ * ATV-01/ATV-02 (Fase 16): nome fantasia, CNPJ e frequência de pedidos são
+ * três campos opcionais de texto a mais, ao lado de contato/telefone/email —
+ * mesma postura branda (sem `.min()`, sem `.regex()`): a validação de CNPJ
+ * está explicitamente fora de escopo do projeto. A frequência de pedidos é
+ * re-validada contra o vocabulário do banco no servidor (updateCliente),
+ * não aqui — o zod não sabe o catálogo dinâmico.
  */
 export const updateClienteSchema = z
   .object({
@@ -97,6 +109,11 @@ export const updateClienteSchema = z
     // separate "salvarObservacao" action — saved together with the rest of
     // "Salvar alterações" (02-07).
     observacao: z.string().optional(),
+    // ATV-01: opcionais, sem tamanho mínimo, sem formato exigido.
+    nomeFantasia: z.string().optional(),
+    cnpj: z.string().optional(),
+    // ATV-02: re-validado contra o vocabulário do banco em updateCliente().
+    frequenciaPedidos: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.responsavel === "") {

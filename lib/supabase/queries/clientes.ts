@@ -91,6 +91,15 @@ export type ClienteDetalhe = {
   /** Cadência de pós-venda (VIS-01/VIS-02/ATV-03) — vale para qualquer
    * status, mas só é editável na ficha quando o cliente está ganho. */
   frequenciaVisita: FrequenciaVisita | null
+  /** Campos do cliente ativo (ATV-01/ATV-02) — só fazem sentido depois do
+   * ganho, mas continuam nulos num cliente ganho antigo como dado histórico
+   * esperado, nunca erro (a tela do plano 16-04 não trata isso como estado
+   * de erro). `frequenciaPedidos` guarda o nome canônico do vocabulário
+   * `frequencias_pedido` (lib/clientes/frequenciaPedido.ts), texto simples
+   * sem chave estrangeira (decisão D2). */
+  nomeFantasia: string | null
+  cnpj: string | null
+  frequenciaPedidos: string | null
 }
 
 type ClienteDetalheRow = {
@@ -115,6 +124,9 @@ type ClienteDetalheRow = {
   motivo_perda_id: string | null
   observacao: string | null
   frequencia_visita: FrequenciaVisita | null
+  nome_fantasia: string | null
+  cnpj: string | null
+  frequencia_pedidos: string | null
 }
 
 /**
@@ -133,7 +145,7 @@ export async function getClienteById(
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao, frequencia_visita"
+      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao, frequencia_visita, nome_fantasia, cnpj, frequencia_pedidos"
     )
     .eq("id", id)
     .maybeSingle()
@@ -166,6 +178,9 @@ export async function getClienteById(
     motivoPerdaId: row.motivo_perda_id,
     observacao: row.observacao,
     frequenciaVisita: row.frequencia_visita,
+    nomeFantasia: row.nome_fantasia,
+    cnpj: row.cnpj,
+    frequenciaPedidos: row.frequencia_pedidos,
   }
 }
 
