@@ -57,7 +57,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.2-ROADMAP
 
 - [x] **Phase 13: Cliente Ativo e Frequência de Visita** - Ao marcar um card como "ganho" o vendedor já define a frequência de visita, e essa frequência fica editável depois na ficha do cliente.
 - [x] **Phase 14: Agenda Unificada** - Nova tela "Agenda" no topo do menu, juntando tarefas de prospecção e visitas pendentes numa lista só, ordenada por urgência. (completed 2026-08-08)
-- [ ] **Phase 15: Conclusão com Resumo e Próxima Visita** - Concluir um item da agenda exige um resumo curto; ao concluir uma visita o sistema sugere a próxima data e o vendedor confirma ou ajusta.
+- [x] **Phase 15: Conclusão com Resumo e Próxima Visita** - Concluir um item da agenda exige um resumo curto; ao concluir uma visita o sistema sugere a próxima data e o vendedor confirma ou ajusta. (completed 2026-08-09)
 - [ ] **Phase 16: Ficha do Cliente Ativo — Campos e Diário** - A ficha do cliente ganha Nome Fantasia, CNPJ, frequência de pedidos e o diário de visitas/tarefas concluídas.
 - [ ] **Phase 17: Planilhas — Frequência em Massa e Exportação do Diário** - Supervisor define a frequência de visita de vários clientes de uma vez por planilha, e o diário pode ser exportado.
 
@@ -136,13 +136,13 @@ Plans:
   4. Cliente com frequência "nenhuma" conclui a visita normalmente e nenhuma próxima visita é criada.
   5. O resumo escrito na conclusão fica gravado no histórico daquele cliente, com data e autor.
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 Plans:
 
 - [x] 15-01-PLAN.md — Migration da conclusão: coluna `resumo` em `tarefas`, constraints de tamanho (10..500), gatilhos de histórico estendidos (tarefas recriado + visitas novo), RPCs atômicas `concluir_tarefa_prospeccao` e `concluir_visita`, e `agenda_do_vendedor()` recriada com `frequencia_visita` + `proxima_data_sugerida` — com checkpoint humano antes do push em produção
 - [x] 15-02-PLAN.md — `lib/validations/agenda.ts` (limites e mensagens do resumo com dono único), função pura de decisão de cadência, item de agenda carregando frequência e data sugerida, e as duas Server Actions de conclusão
-- [ ] 15-03-PLAN.md — `ConcluirItemDialog` (uma janela parametrizada pela origem), botão "Concluir" na linha da Agenda, ligação na lista com recarga, e verificação humana no navegador
+- [x] 15-03-PLAN.md — `ConcluirItemDialog` (uma janela parametrizada pela origem), botão "Concluir" na linha da Agenda, ligação na lista com recarga, e verificação humana no navegador
 
 **UI hint**: yes
 
@@ -217,6 +217,6 @@ Plans:
 | 12. Comparativo por Vendedor | v1.2 | 4/4 | Complete | 2026-08-05 |
 | 13. Cliente Ativo e Frequência de Visita | v1.3 | 0/3 | Planned | - |
 | 14. Agenda Unificada | v1.3 | 4/4 | Complete   | 2026-08-08 |
-| 15. Conclusão com Resumo e Próxima Visita | v1.3 | 2/3 | In Progress|  |
+| 15. Conclusão com Resumo e Próxima Visita | v1.3 | 3/3 | Complete   | 2026-08-09 |
 | 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 0/? | Not started | - |
 | 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 0/? | Not started | - |

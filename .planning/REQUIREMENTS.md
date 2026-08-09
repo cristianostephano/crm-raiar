@@ -20,12 +20,12 @@ Requisitos do marco v1.3 (Agenda do Vendedor). Cada um mapeia para uma fase do r
 
 - [x] **VIS-01**: Ao mover um card para "ganho", o vendedor define a frequência de visita (semanal/quinzenal/mensal/nenhuma)
 - [x] **VIS-02**: A frequência de visita pode ser editada ou cancelada a qualquer momento
-- [ ] **VIS-03**: Ao concluir uma visita, o sistema sugere a próxima data com base na frequência — o vendedor confirma ou ajusta, nunca é automático e silencioso
+- [x] **VIS-03**: Ao concluir uma visita, o sistema sugere a próxima data com base na frequência — o vendedor confirma ou ajusta, nunca é automático e silencioso
 - [x] **VIS-04**: Clientes já "ganho" antes do lançamento da Agenda começam sem frequência definida (nada é suposto automaticamente)
 
 ### Conclusão (CONC)
 
-- [ ] **CONC-01**: Ao concluir uma tarefa de prospecção ou uma visita, o vendedor escreve um resumo curto (1-2 frases) antes da conclusão ser aceita
+- [x] **CONC-01**: Ao concluir uma tarefa de prospecção ou uma visita, o vendedor escreve um resumo curto (1-2 frases) antes da conclusão ser aceita
 
 ### Diário do Cliente (DIAR)
 
@@ -81,9 +81,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGD-06 | Phase 14 | Complete |
 | VIS-01 | Phase 13 | Complete |
 | VIS-02 | Phase 13 | Complete |
-| VIS-03 | Phase 15 | Pending |
+| VIS-03 | Phase 15 | Complete |
 | VIS-04 | Phase 13 | Complete |
-| CONC-01 | Phase 15 | Pending |
+| CONC-01 | Phase 15 | Complete |
 | DIAR-01 | Phase 16 | Pending |
 | ATV-01 | Phase 16 | Pending |
 | ATV-02 | Phase 16 | Pending |
