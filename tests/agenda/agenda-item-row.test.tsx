@@ -30,6 +30,7 @@ function renderRow(props: Partial<ComponentProps<typeof AgendaItemRow>> = {}) {
         item={buildItem()}
         atrasado={false}
         showResponsavel={false}
+        onConcluir={vi.fn()}
         {...props}
       />
     </TooltipProvider>
@@ -90,6 +91,7 @@ describe("AgendaItemRow", () => {
           item={buildItem()}
           atrasado={false}
           showResponsavel={true}
+          onConcluir={vi.fn()}
         />
       </TooltipProvider>
     )
@@ -104,5 +106,25 @@ describe("AgendaItemRow", () => {
     fireEvent.keyDown(card, { key: "Enter" })
 
     expect(onOpen).toHaveBeenCalledTimes(1)
+  })
+
+  it("concluir: o botão aparece com o rótulo do contrato e clicar nele chama onConcluir", () => {
+    const onConcluir = vi.fn()
+    renderRow({ onConcluir })
+
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+
+    expect(onConcluir).toHaveBeenCalledTimes(1)
+  })
+
+  it("propagacao: clicar no botão de concluir não dispara onOpen (abertura da ficha do cliente)", () => {
+    const onOpen = vi.fn()
+    const onConcluir = vi.fn()
+    renderRow({ onOpen, onConcluir })
+
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+
+    expect(onConcluir).toHaveBeenCalledTimes(1)
+    expect(onOpen).not.toHaveBeenCalled()
   })
 })
