@@ -178,3 +178,14 @@ None - nenhuma configuração de serviço externo necessária; nenhuma dependên
 ---
 *Phase: 17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio*
 *Completed: 2026-08-10*
+
+## Self-Check: PASSED
+
+- FOUND: `components/importacao/ColumnMappingTable.tsx` (modified)
+- FOUND: `components/importacao/FrequenciaPreviewTable.tsx`, `components/importacao/FrequenciaImportSummary.tsx` (created)
+- FOUND: `lib/importacao/annotarLinhaFrequencia.ts` (modified — deviation)
+- FOUND: `tests/importacao/column-mapping-table.test.tsx`, `tests/importacao/frequencia-preview-table.test.tsx`, `tests/importacao/frequencia-import-summary.test.tsx` (created, 16 cases total)
+- FOUND: `.planning/phases/17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio/17-04-SUMMARY.md` (this file)
+- FOUND: commit `f16f25d` (Task 1), `e324cbe` (Task 2), `9b30a2c` (plan metadata/docs)
+- CONFIRMED: `git diff --name-only HEAD` empty for the full client-import flow file list (ImportWizard.tsx, ImportPreviewTable.tsx, ImportSummary.tsx, FileDropzone.tsx, lib/importacao/preview.ts, lib/importacao/confirmar.ts, app/actions/importacao.ts, supabase/migrations/)
+- CONFIRMED: 16/16 new tests passing (column-mapping-table 4/4, frequencia-preview-table 8/8, frequencia-import-summary 4/4); `npx tsc --noEmit` clean; `npm run lint` clean; the 7 pre-existing import-flow suites (import-summary, mapping, modelo, confirmar, frequencia-vocabulario, annotarLinhaFrequencia, confirmarFrequencia) still 49/49 green
