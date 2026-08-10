@@ -22,6 +22,7 @@ function makeResolved(
   return {
     clienteId: "cliente-1",
     razaoSocial: "Distribuidora ABC Ltda",
+    clienteEncontradoRazaoSocial: "Distribuidora ABC Ltda",
     frequenciaVisita: "mensal",
     ...overrides,
   }

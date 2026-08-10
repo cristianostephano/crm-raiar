@@ -34,10 +34,20 @@ export type ClienteFrequenciaLookup = {
 
 /** Linha resolvida — identificador do cliente (ou nulo, quando a linha não
  * pode carregar um dado confiável adiante) e a frequência reconhecida (ou
- * nula). */
+ * nula).
+ *
+ * `clienteEncontradoRazaoSocial` (Fase 17, Plano 17-04) é a razão social lida
+ * do BANCO quando exatamente um cliente casa com a linha — nunca a mesma
+ * fonte que `razaoSocial` (que é sempre a célula da planilha, saneada). É
+ * essa diferença de fonte que a tabela de revisão usa para o Supervisor
+ * confirmar visualmente que o casamento foi o certo antes de gravar (T-17-31
+ * do plano 17-04). Fica nulo quando não há casamento OU quando há mais de um
+ * (ambiguidade, L1) — não há um único nome de banco para mostrar nesses
+ * casos. */
 export type ResolvedRowFrequencia = {
   clienteId: string | null
   razaoSocial: string
+  clienteEncontradoRazaoSocial: string | null
   frequenciaVisita: FrequenciaVisita | null
 }
 
@@ -137,6 +147,11 @@ function annotarComIndice(
   const reasons: string[] = []
 
   let clienteId: string | null = null
+  // Nome do banco do cliente casado (Plano 17-04) — preenchido sempre que
+  // exatamente um cliente casa com a linha, mesmo quando ele não está apto
+  // (a coluna de revisão precisa mostrar QUEM foi encontrado mesmo nesse
+  // caso, para o motivo de "não está com status Ganho" fazer sentido).
+  let clienteEncontradoRazaoSocial: string | null = null
   const razaoSocialValor = sanitized.razaoSocial?.trim() ?? ""
 
   if (!razaoSocialValor) {
@@ -149,10 +164,12 @@ function annotarComIndice(
       reasons.push(CLIENTE_NAO_ENCONTRADO_REASON)
     } else if (encontrados.length > 1) {
       // Lacuna L1: mais de um cliente casa com a mesma chave normalizada —
-      // erro, identificador nulo, nunca escolhe um "no achismo".
+      // erro, identificador nulo, nunca escolhe um "no achismo". Sem um
+      // único cliente para apontar, não há nome de banco a exibir.
       reasons.push(CLIENTE_AMBIGUO_REASON)
     } else {
       const cliente = encontrados[0]
+      clienteEncontradoRazaoSocial = cliente.razaoSocial
       if (cliente.statusAcompanhamento !== "ganho") {
         // Encontrado, mas inapto: o identificador FICA nulo — uma linha
         // inapta nunca pode carregar identificador para a fase de gravação.
@@ -185,6 +202,7 @@ function annotarComIndice(
     resolved: {
       clienteId,
       razaoSocial: sanitized.razaoSocial ?? "",
+      clienteEncontradoRazaoSocial,
       frequenciaVisita,
     },
   }
