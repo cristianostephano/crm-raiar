@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Um CRM de acompanhamento de vendas (funil/kanban) para substituir um CRM pago de custo elevado. Vendedores cadastram e trabalham clientes PJ ao longo de um funil de 7 etapas, do primeiro contato até a primeira venda concluída; um supervisor acompanha todos os clientes do time, tem um dashboard gerencial, e pode importar clientes em massa via planilha ou exportar a lista que enxerga. Construído com custo zero de infraestrutura, pra validar a ideia antes de qualquer investimento em escala.
+Um CRM de acompanhamento de vendas (funil/kanban) para substituir um CRM pago de custo elevado. Vendedores cadastram e trabalham clientes PJ ao longo de um funil de 7 etapas, do primeiro contato até a primeira venda concluída; um supervisor acompanha todos os clientes do time, tem um dashboard gerencial, e pode importar clientes em massa via planilha ou exportar a lista que enxerga. A partir do v1.3, o sistema também cuida do pós-venda: cliente "ganho" entra numa rotina de visitas recorrentes, e uma Agenda única junta tarefas de prospecção e visitas de pós-venda numa lista só, ordenada por urgência — com conclusão registrada (resumo + data + autor), diário por cliente, e planilhas para operar a frequência de visita e a exportação do diário em escala. Construído com custo zero de infraestrutura, pra validar a ideia antes de qualquer investimento em escala.
 
 ## Core Value
 
@@ -17,27 +17,13 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 ## Current State
 
-**Shipped:** v1.0 MVP (Autenticação, Cadastro + Funil, Administração de Listas, Dashboard Gerencial), v1.1 Importação e Exportação de Clientes (2026-07-25), e v1.2 Gestão de Equipe, Análises de Funil e Filtros (2026-08-06).
+**Shipped:** v1.0 MVP (Autenticação, Cadastro + Funil, Administração de Listas, Dashboard Gerencial), v1.1 Importação e Exportação de Clientes (2026-07-25), v1.2 Gestão de Equipe, Análises de Funil e Filtros (2026-08-06), e v1.3 Agenda do Vendedor (2026-08-10).
 
-O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor agora consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), e os filtros de Estado/Cidade viram listas estruturadas confiáveis em vez de texto livre.
-
-## Current Milestone: v1.3 Agenda do Vendedor
-
-**Goal:** Dar ao vendedor uma agenda única mostrando o que ele precisa fazer, hoje e nos próximos dias — juntando as tarefas de prospecção que já existem no funil com uma nova rotina de visitas recorrentes para clientes que já viraram "ganho".
-
-**Target features:**
-- Novo item de menu "Agenda", no topo, acima de "Clientes"
-- Tarefas de prospecção (já existentes nos cards do funil) entram automaticamente na agenda, sem cadastro duplicado
-- Ao marcar um card como "ganho", o vendedor define a frequência de visita (semanal/quinzenal/mensal/nenhuma), editável depois
-- Ao concluir uma visita, o sistema sugere a próxima data com base na frequência; o vendedor confirma ou ajusta
-- Toda conclusão (tarefa de prospecção ou visita) pede um resumo curto, guardado como histórico por cliente
-- Campos novos de cliente, só exigidos quando o cliente vira "ativo" (nunca no cadastro inicial): Nome Fantasia, CNPJ, frequência de pedidos (informativo), frequência de visitas
-
-Origem: `SEED-001` (`.planning/seeds/SEED-001-agenda-do-vendedor.md`), plantado durante a discussão do v1.2.
+O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, e agora o sistema também cobre o pós-venda: cliente "ganho" define uma frequência de visita (individualmente ou em massa via planilha), uma Agenda única junta o que precisa ser feito (prospecção + visitas), concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado.
 
 ## Next Milestone Goals
 
-Nada capturado ainda. Definir ao fechar o v1.3.
+Nada capturado ainda. Rode `/gsd-new-milestone` para começar o próximo marco.
 
 ## Requirements
 
@@ -72,10 +58,24 @@ Nada capturado ainda. Definir ao fechar o v1.3.
 - ✓ Cada coluna do kanban tem rolagem própria com altura fixa, em vez de crescer a página infinitamente — v1.2
 - ✓ Filtro de clientes usa Estado (sigla) antes de Cidade, e Cidade vira lista dependente do Estado escolhido — v1.2
 - ✓ Estado é padronizado como lista de siglas em todo lugar que aparece (cadastro, edição, filtro, importação) — v1.2
+- ✓ Vendedor vê uma agenda única com tarefas de prospecção e visitas de pós-venda juntas, ordenada por atrasado → hoje → próximos dias — v1.3
+- ✓ Item de menu "Agenda" aparece no topo do menu principal, acima de "Clientes", mostrando a contagem de itens pendentes — v1.3
+- ✓ Itens atrasados na Agenda ficam destacados visualmente, mesmo padrão do kanban — v1.3
+- ✓ Vendedor vê só a própria agenda; Supervisor vê a agenda de todo o time e filtra por vendedor — v1.3
+- ✓ Ao marcar um card como "ganho", o vendedor define a frequência de visita (semanal/quinzenal/mensal/nenhuma) — v1.3
+- ✓ A frequência de visita pode ser editada ou cancelada a qualquer momento, sempre o mesmo valor entre ficha e agenda — v1.3
+- ✓ Ao concluir uma visita, o sistema sugere a próxima data com base na frequência (calculada no banco); o vendedor confirma ou ajusta, nunca automático — v1.3
+- ✓ Clientes já "ganho" antes do v1.3 começam sem frequência definida, nada suposto automaticamente — v1.3
+- ✓ Ao concluir uma tarefa de prospecção ou visita pela Agenda, o vendedor escreve um resumo curto (10-500 caracteres) antes da conclusão ser aceita — v1.3
+- ✓ Cada cliente tem um diário de visitas/tarefas concluídas (resumo + data + autor), visível ao vendedor responsável e ao Supervisor — v1.3
+- ✓ Cliente "ativo" (ganho) aceita Nome Fantasia e CNPJ na ficha, nunca exigidos no cadastro rápido — v1.3
+- ✓ Cliente ativo aceita frequência de pedidos (lista fixa gerenciada pelo Supervisor), só informativo — v1.3
+- ✓ Supervisor define a frequência de visita de vários clientes "ganho" de uma vez, via planilha (mesmo fluxo já conhecido de importação) — v1.3
+- ✓ Vendedor/Supervisor exporta o diário de visitas/tarefas concluídas como planilha, respeitando a mesma visibilidade da exportação de clientes — v1.3
 
 ### Active
 
-Marco v1.3 (Agenda do Vendedor) em definição — requisitos detalhados em `.planning/REQUIREMENTS.md` assim que definidos.
+Nada capturado ainda — próximo marco a definir via `/gsd-new-milestone`.
 
 ### Out of Scope
 
@@ -91,6 +91,13 @@ Marco v1.3 (Agenda do Vendedor) em definição — requisitos detalhados em `.pl
 - Filtro de período (últimos 30/90 dias etc.) no funil de conversão detalhado — v1.2 mostra só o total geral desde sempre; filtro de data fica pra quando for pedido
 - Apagar conta do membro desativado por completo — quebraria FKs de histórico (`clientes.responsavel`, `historico.autor_id`); desativação (soft, via `profiles.ativo` + Auth `ban_duration`) preserva integridade — v1.2
 - Cadastro de cidades fora da lista oficial IBGE — a lista oficial cobre todos os municípios brasileiros reais; não há necessidade de entrada livre — v1.2
+- Calendário completo (arrastar entre dias, visão de mês, recorrência customizável) na Agenda — uma lista ordenada por urgência já resolve "o que fazer hoje/essa semana"; as 4 frequências fixas cobrem o caso real — v1.3
+- Reagendamento/troca automática e silenciosa da próxima visita — contradiz a decisão de sempre pedir confirmação do vendedor — v1.3
+- Otimização de rota / mapeamento geográfico de visitas — fora do problema real do time (disciplina de funil, não deslocamento); exigiria serviço pago — v1.3
+- Resumo de visita gerado por IA / transcrição automática — exigiria serviço pago de terceiros; campo de texto curto obrigatório já resolve — v1.3
+- Priorização "inteligente" da Agenda por valor do negócio — CRM não rastreia valor monetário de cliente; ordenação simples por data já é suficiente na escala do time — v1.3
+- Reatribuição de tarefas entre vendedores pela Agenda — sem necessidade demonstrada; o caso real (vendedor desativado) já foi resolvido no v1.2 — v1.3
+- Opções de recorrência de visita além de semanal/quinzenal/mensal/nenhuma — mais opções = mais decisão no momento do "ganho", contra a mínima fricção — v1.3
 
 ## Context
 
@@ -98,8 +105,8 @@ Marco v1.3 (Agenda do Vendedor) em definição — requisitos detalhados em `.pl
 - **Origem do mapeamento de domínio**: existe um wireframe (Excalidraw) do fluxo de vendas atual, já documentado em `CLAUDE.md` — usuários/papéis, cliente PJ, funil de 7 etapas e os 3 enums editáveis originais (categoria, produtos consumidos, tipos de tarefa). O motivo de perda (4º enum editável) surgiu durante esta conversa de inicialização.
 - **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. Na v1.0 isso foi tratado como migração única, fora da UI — na v1.1 essa decisão foi revista e implementada: o time recebe planilhas de clientes/leads com frequência (parceiros, feiras), e a importação agora é uma tela permanente do sistema, restrita ao Supervisor.
 - **Perfil do usuário**: quem pilota o projeto não programa. Explicações devem evitar jargão técnico, focar em sintomas observáveis, e mudanças grandes precisam de um plano em linguagem simples antes de qualquer implementação.
-- **Estado do código pós-v1.2**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. v1.2 adicionou: coluna `profiles.ativo` + duas RPCs `SECURITY DEFINER` documentadas como exceção deliberada (`desativar_membro_equipe`/`reativar_membro_equipe`, únicas que chamam a Auth Admin API via `service_role`), tabela `cidades` (seed IBGE, read-only) + RPC `cidades_por_estado`, e três RPCs `SECURITY INVOKER` novas de dashboard (`dashboard_funil_detalhado`, `dashboard_tempo_ate_fechamento`, `dashboard_comparativo_vendedor`).
-- **Débito técnico conhecido**: nenhum item bloqueante. Um gap de verificação humana ficou formalmente aceito (Fase 8 — drag-and-drop com auto-scroll do kanban não foi exercitado por um teste automatizado nem por um drag real de mouse numa sessão anterior; risco julgado baixo por ser mudança isolada de CSS/layout, ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`). Um `eslint-disable` pontual e documentado ficou em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — corrigir com o padrão "ajustar estado durante o render" fica como quick task futura (ver STATE.md Deferred Items).
+- **Estado do código pós-v1.3**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. v1.3 adicionou: enum `frequencia_visita_enum` + 4 colunas nullable em `clientes` (nome_fantasia/cnpj/frequencia_pedidos/frequencia_visita), tabela `visitas` (RLS parent-gated, espelha `tarefas`), coluna `resumo` em `tarefas`, `mover_card_funil` estendido (6 parâmetros), RPC `agenda_do_vendedor()` (SECURITY INVOKER, une tarefas+visitas pendentes), RPCs atômicas `concluir_tarefa_prospeccao`/`concluir_visita` (SECURITY INVOKER), tabela `frequencias_pedido` (5ª lista editável do projeto), e RPC `atualizar_frequencia_visita_lote` (SECURITY INVOKER, escrita em massa). O projeto continua com exatamente 4 exceções `SECURITY DEFINER` documentadas: `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe`, `cidades_com_clientes_por_estado()` — nenhuma nova em v1.3, apesar de 5 migrations novas (0013-0017).
+- **Débito técnico conhecido**: nenhum item bloqueante. Um gap de verificação humana ficou formalmente aceito (Fase 8 — drag-and-drop com auto-scroll do kanban não foi exercitado por um teste automatizado nem por um drag real de mouse numa sessão anterior; risco julgado baixo por ser mudança isolada de CSS/layout, ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`). Um `eslint-disable` pontual e documentado permanece em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — a Fase 16 acrescentou 3 campos + 1 seção nesse arquivo sem piorar a supressão (verificado mecanicamente), mas a correção com o padrão "ajustar estado durante o render" continua como quick task futura. A decisão de produto da caixinha antiga de "concluir tarefa" na ficha do cliente (não exige resumo, ao contrário do fluxo novo pela Agenda) foi deliberadamente deixada como está na Fase 16 — dois caminhos de conclusão com regras diferentes, aceito de propósito para não expandir o escopo da fase.
 
 ## Constraints
 
@@ -132,6 +139,18 @@ Marco v1.3 (Agenda do Vendedor) em definição — requisitos detalhados em `.pl
 | Cidade sempre vem da lista oficial do IBGE, sem opção de texto livre | A lista cobre todos os municípios reais do Brasil; texto livre só reintroduziria o problema de dado inconsistente que a Fase 9 resolveu | ✓ Good |
 | Tempo médio por etapa do funil inclui clientes ainda parados nela agora (usa o momento atual como saída provisória) | De propósito, para revelar cards travados — é o objetivo da métrica, não um bug | ✓ Good |
 | Ciclo médio em dias (comparativo por vendedor) conta só fechamentos "ganho", nunca "perdido" | "Ciclo de venda" é o tempo até vender, não até desistir — misturar os dois distorceria a métrica | ✓ Good |
+| "Ativo" é sinônimo de `status_acompanhamento = 'ganho'` — sem um segundo campo/estado | Evita duas fontes de verdade pra a mesma pergunta ("esse cliente já é ativo?") | ✓ Good |
+| `frequencia_visita` é um valor só, guardado uma vez em `clientes` — editar pela ficha ou pela Agenda leva ao mesmo lugar | Nunca dessincroniza; ATV-03 e VIS-01/02 são a mesma coluna vista de dois ângulos | ✓ Good |
+| Sem cron/worker de fundo — a próxima data de visita é calculada no momento da escrita (RPC `concluir_visita`), com confirmação síncrona do vendedor | Mantém o custo zero de infraestrutura; nada é agendado silenciosamente | ✓ Good |
+| Cálculo de data feito no Postgres (nunca `new Date(string)` no navegador), coluna sempre `date` puro | Primeiro cálculo de data no servidor do projeto — evita o bug clássico de fuso horário (meia-noite UTC vira o dia anterior em São Paulo) | ✓ Good |
+| Concluir uma visita é uma RPC atômica única (fecha visita + grava histórico + cria próxima), nunca 3 chamadas do cliente | Falha de rede no meio deixaria o cliente com visita fechada e nenhuma próxima marcada | ✓ Good |
+| `resumo` chega ao `historico` pelo trigger `SECURITY DEFINER` já existente, nunca uma policy de INSERT nova | Mantém a trilha de auditoria à prova de adulteração pela API — regra absoluta desde o v1.0 | ✓ Good |
+| Frequência de pedidos (ATV-02) virou lista fixa gerenciada pelo Supervisor, não texto livre — decisão do dono do projeto, override do default de texto livre proposto na pesquisa | Evita "mensal"/"Mensal"/"1x por mês" convivendo na mesma base; consistente com o padrão das outras 4 listas editáveis do projeto | ✓ Good |
+| Caixinha antiga de "concluir tarefa" na ficha do cliente (sem exigir resumo) foi deixada como está, coexistindo com o fluxo novo pela Agenda (que exige resumo) | Menor risco, sem scope creep na Fase 16; o gatilho já trata a ausência de resumo com um texto padrão no histórico | ✓ Good |
+| Renomear um valor de `frequencias_pedido` depois NÃO propaga para clientes que já usam o nome antigo (armazenamento por texto, não por referência) | Evita um ALTER TABLE em `clientes` (que já tem dados reais) só para trocar texto por FK — troca é rara | ✓ Good |
+| `atualizar_frequencia_visita_lote` é uma única instrução UPDATE, sem INSERT, restrita a `status_acompanhamento = 'ganho'` — garantido pela forma do SQL, não por disciplina de tela | Torna estruturalmente impossível a planilha de frequências criar um cliente novo | ✓ Good |
+| Planilha de frequências em massa trata nome ambíguo (2+ clientes com o mesmo nome normalizado) como erro de linha, nunca grava no cliente errado | Descoberto durante a Fase 17: a normalização de nome (remove acento/caixa/sufixo) pode colidir dois clientes distintos | ✓ Good |
+| Exportação do diário sempre usa o escopo total visível por RLS, ignorando o filtro de vendedor ativo na tela da Agenda | Decisão do dono do projeto: exportar é uma ação separada de "tudo que eu posso ver", evita o Supervisor esquecer o filtro ligado e exportar menos do que queria | ✓ Good |
 
 ## Evolution
 
@@ -152,4 +171,4 @@ Este documento evolui nas transições de fase e nos marcos do projeto.
 5. Atualizar Context com o estado atual (usuários, feedback, métricas)
 
 ---
-*Last updated: 2026-08-06 — started v1.3 milestone*
+*Last updated: 2026-08-10 — after v1.3 milestone (Agenda do Vendedor)*

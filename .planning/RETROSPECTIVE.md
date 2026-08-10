@@ -87,6 +87,51 @@
 
 ---
 
+## Milestone: v1.3 — Agenda do Vendedor
+
+**Shipped:** 2026-08-10
+**Phases:** 5 | **Plans:** 19 | **Sessions:** ~1 sessão contínua longa (múltiplas interrupções por limite de uso, todas recuperadas sem perda de trabalho)
+
+### What Was Built
+- Cliente "ganho" define frequência de visita (semanal/quinzenal/mensal/nenhuma) no momento da conversão, com semeadura atômica/idempotente da primeira visita, editável depois na ficha (Fase 13).
+- Tela "Agenda" unificando tarefas de prospecção e visitas de pós-venda numa lista só, ordenada atrasado→hoje→próximos dias, com filtro de vendedor (Supervisor) e contador no menu (Fase 14).
+- Concluir um item da agenda exige resumo curto (10-500 caracteres); concluir uma visita sugere a próxima data (calculada no Postgres, nunca no navegador) que o vendedor confirma ou ajusta (Fase 15).
+- Ficha do cliente ganha Nome Fantasia, CNPJ, frequência de pedidos (5ª lista editável do projeto) e um Diário de visitas/tarefas concluídas (Fase 16).
+- Supervisor define frequência de visita em massa via planilha (reaproveitando o assistente de importação da v1.1); Vendedor/Supervisor exportam o diário como planilha (Fase 17).
+
+### What Worked
+- Verificação humana ao vivo no navegador, feita pessoalmente em todo checkpoint (não delegada), continuou sendo a rede de segurança real — pegou nada de errado desta vez, mas confirmou positivamente comportamentos de risco (data de virada de mês, isolamento de diálogo, histórico sem prefixo) que só um teste automatizado não provaria com a mesma confiança.
+- Planejadores de fase leram o código-fonte real (não só a spec) e encontraram 3 lacunas genuínas não previstas na pesquisa/UI-SPEC antes de qualquer linha de implementação: nome de cliente ambíguo na planilha de frequências (Fase 17), cliente repetido na mesma planilha (Fase 17), e o prop `fields` faltando no sketch original do `ColumnMappingTable` genérico (Fase 17).
+- Pesquisadores de UI, ao não terem a ferramenta de pergunta interativa disponível em seu contexto isolado, documentaram decisões-padrão explícitas e sinalizadas em vez de travar silenciosamente — o orquestrador conseguiu revisar e confirmar/reverter cada uma no checkpoint seguinte (ex.: frequência de pedidos virou lista fixa em vez do texto livre default, por decisão explícita do dono).
+- RLS como única fronteira de autorização se manteve sem exceção nova em 5 migrations (0013-0017) — o projeto continua com as mesmas 4 exceções `SECURITY DEFINER` documentadas desde o v1.2.
+
+### What Was Inefficient
+- **Push de migration bloqueado pelo classificador de modo automático do harness**: em 3 fases (14, 15, 16, 17), o comando `supabase db push` foi bloqueado tanto para o subagente executor quanto, na primeira tentativa, para o próprio orquestrador — resolvido rodando o comando manualmente a partir da pasta certa do worktree (o erro real na maioria das vezes era rodar no checkout principal em vez do worktree, não o bloqueio em si).
+- **Perda de isolamento de worktree em pleno meio de execução** (Fase 16, plano 16-04): uma interrupção por limite de sessão fez o worktree do subagente desaparecer do disco entre um commit e outro; o commit da Task 1 acabou pousando direto no `master` (na base certa, sem divergência) — resolvido continuando a execução das tasks restantes diretamente no checkout principal, sem recriar isolamento para o único plano restante da fase.
+- **Ferramenta de automação de navegador falhando em clicar em elementos reais** (recorrente em várias fases): cliques via `ref` simples não registravam em cards do Kanban/Agenda envolvidos por `dnd-kit`, mas um clique programático (`dispatchEvent` de `pointerdown`/`pointerup` seguido de `.click()`) sempre funcionou — confirmado repetidas vezes como peculiaridade do ambiente de automação, nunca um bug real de código, comparando com o comportamento idêntico em componentes já em produção e não tocados na fase.
+- Um falso positivo não corrigível na regex de verificação mecânica de uma task (Fase 17-05) — o padrão que proíbe reusar `ImportSummary` também casava dentro de `FrequenciaImportSummary`, o componente que a própria task pedia para criar; confirmado manualmente que nenhuma peça real do fluxo de clientes foi reusada.
+
+### Patterns Established
+- Toda fase com migration nova segue o mesmo roteiro: checkpoint humano com explicação em português simples do que a migration faz e não faz → aprovação → push feito pelo orquestrador (não pelo subagente) → testes rodados até GREEN → SUMMARY.md.
+- `frequencia_visita`/`frequencia_pedidos` seguem a mesma regra: um valor único guardado em `clientes`, nunca duplicado entre tela e recorrência — qualquer fase nova que tocar cadência de cliente deve reusar a coluna existente, nunca criar uma segunda fonte de verdade.
+- Cálculo de data sempre no Postgres (nunca `new Date(string)` no navegador) — regra herdada da Fase 15 e reaplicada sem exceção nas Fases 16/17.
+- RPCs de escrita em massa (padrão: `atualizar_frequencia_visita_lote`) seguem o mesmo molde de `importar_clientes_lote`: instrução única set-based, guard explícito de papel, nunca `SECURITY DEFINER`, e — quando a operação é só de atualização — estruturalmente incapazes de criar linha nova (garantido pela forma do SQL, verificado mecanicamente por contagem de instruções).
+- Verificação pessoal em produção sempre que possível (login com a conta real do Supervisor, dados reais de clientes de teste) em vez de só aceitar a palavra do subagente — inclusive reproduzindo bugs suspeitos comparando com componentes não tocados na fase antes de concluir se é regressão ou ambiente.
+
+### Key Lessons
+1. Um bloqueio de segurança do harness em ação de escrita em produção (`supabase db push`) não é um bug — é a proteção funcionando; a resposta certa é rodar a ação manualmente, com aprovação explícita do dono, nunca tentar contornar por outro caminho (ex.: API administrativa direta).
+2. Quando um subagente perde isolamento de worktree em pleno meio de plano (por interrupção de sessão), a recuperação mais segura costuma ser continuar diretamente no checkout principal para o restante daquele plano específico, não recriar um worktree novo — desde que o HEAD já esteja exatamente na base esperada, sem divergência.
+3. Cliques de automação de navegador em elementos envolvidos por bibliotecas de drag-and-drop (`dnd-kit`) são pouco confiáveis via evento sintético simples; `pointerdown`+`pointerup`+`click` programático é o fallback que sempre funcionou neste projeto.
+4. Pesquisadores/planejadores sem acesso à ferramenta de pergunta interativa devem documentar decisões-padrão como *decisões explícitas sinalizadas para revisão*, nunca como fato consumado — permite ao orquestrador confirmar ou reverter no checkpoint seguinte sem re-fazer o trabalho.
+5. Ler o código-fonte real do fluxo análogo (não só a spec ou a pesquisa) antes de planejar continua sendo o que revela lacunas genuínas (ambiguidade de nome, duplicata de linha, prop faltando) antes que virem bugs em produção.
+
+### Cost Observations
+- Model mix: planner em opus, executor/researcher em sonnet, plan-checker/ui-checker em haiku — mesmo padrão de v1.2, mantido estável.
+- Rate-limit do Supabase Auth apareceu de novo (mesmo padrão de v1.2/v1.1) — mitigado com re-execução isolada dos arquivos de teste específicos após um período de espera, nunca tratado como regressão de código.
+- Nenhum retrabalho de funcionalidade foi necessário — todos os desvios encontrados (3 lacunas de planejamento, 1 perda de isolamento de worktree, falsos positivos de verificação mecânica) foram absorvidos dentro da própria execução da fase, sem reabrir trabalho já fechado.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -96,6 +141,7 @@
 | v1.0 | — (not retrospected; shipped before this document existed) | 4 | — |
 | v1.1 | ~2-3 | 3 | Primeira retrospectiva formal; verificação manual no navegador ao final de cada fase virou padrão consistente |
 | v1.2 | ~1 (com interrupção por limite de uso) | 5 | Fases rodando em paralelo via worktree (8/9, e depois 10/11) virou padrão — trouxe junto o risco novo de colisão de numeração de migration, agora documentado como lição |
+| v1.3 | ~1 sessão contínua longa (múltiplas interrupções por limite recuperadas) | 5 | Verificação pessoal ao vivo em TODO checkpoint (não delegada) virou disciplina consistente; primeira vez que o bloqueio de segurança do harness em `supabase db push` apareceu — resolvido com push manual do orquestrador, nunca contornado |
 
 ### Cumulative Quality
 
@@ -103,9 +149,11 @@
 |-----------|-------|----------|---------------------|
 | v1.1 | 72+ (tests/importacao/*, incluindo 3 casos de integração contra RLS real) | Não medido formalmente | `@e965/xlsx`, `papaparse` (ambos avaliados por legitimidade antes da instalação) |
 | v1.2 | Suite completa passando (falhas remanescentes isoladas a rate-limit de Auth do free-tier, não regressão); novos arquivos de integração em `tests/equipe/*` e `tests/dashboard/*` | Não medido formalmente | Nenhuma dependência nova — v1.2 foi só RPCs/migrations + componentes reaproveitando a stack já instalada |
+| v1.3 | Centenas de casos novos across `tests/agenda/*`, `tests/clientes/*`, `tests/configuracoes/*`, `tests/importacao/*` (RLS/integração contra o banco real em todas as fases com migration) | Não medido formalmente | Nenhuma dependência nova — v1.3 reaproveitou `@e965/xlsx` (v1.1) e toda a stack já instalada |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Fechar cada marco formalmente antes de iniciar o próximo evita perda de registro histórico (v1.1 pagou esse custo ao fechar o v1.0 tardiamente).
-2. Testes de integração contra o banco real (não mockado) seguem sendo a forma mais confiável de pegar bugs de RLS/PL/pgSQL — confirmado de novo em v1.2.
-3. Verificação humana ao vivo no navegador continua pegando bugs que nenhum teste automatizado alcança (v1.1: nenhum caso; v1.2: o bug de `avancou_pct` acima de 100%) — vale manter como gate obrigatório de toda fase de UI/dashboard.
+2. Testes de integração contra o banco real (não mockado) seguem sendo a forma mais confiável de pegar bugs de RLS/PL/pgSQL — confirmado de novo em v1.2 e v1.3.
+3. Verificação humana ao vivo no navegador continua pegando bugs que nenhum teste automatizado alcança (v1.1: nenhum caso; v1.2: o bug de `avancou_pct` acima de 100%; v1.3: nenhum bug real desta vez, mas confirmou positivamente vários comportamentos de risco) — vale manter como gate obrigatório de toda fase de UI/dashboard.
+4. Ler o código-fonte real do fluxo análogo antes de planejar (não só a spec/pesquisa) revela lacunas genuínas antes que virem bugs — confirmado repetidamente em v1.3 (ambiguidade de nome, duplicata de linha, prop faltando, todos encontrados na fase de planejamento).
