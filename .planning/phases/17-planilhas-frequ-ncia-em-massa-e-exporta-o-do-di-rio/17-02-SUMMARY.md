@@ -157,3 +157,16 @@ None - no external service configuration required. `@e965/xlsx` was already inst
 ---
 *Phase: 17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio*
 *Completed: 2026-08-10*
+
+## Self-Check: PASSED
+
+- FOUND: `lib/supabase/queries/clientes.ts`
+- FOUND: `lib/clientes/exportacaoDiario.ts`
+- FOUND: `app/api/agenda/exportar-diario/route.ts`
+- FOUND: `components/agenda/AgendaList.tsx`
+- FOUND: `tests/clientes/exportacao-diario.test.ts`
+- FOUND: `tests/clientes/rls-exportacao-diario.test.ts`
+- FOUND: `.planning/phases/17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio/17-02-SUMMARY.md`
+- FOUND commit: `893c4fe` (Task 1)
+- FOUND commit: `ccce5a1` (Task 2)
+- FOUND commit: `bd33a5e` (docs: plan metadata)
