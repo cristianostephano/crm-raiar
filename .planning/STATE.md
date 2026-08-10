@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Agenda do Vendedor
-current_phase: 3
-status: Awaiting next milestone
-stopped_at: Plano 13-01 (fundação de banco) executado e commitado — migration 0013 aplicada em produção com aprovação humana, testes verdes (28/28 nos arquivos novos + 91/91 nos arquivos de maior risco de regressão). Ver `.planning/phases/13-cliente-ativo-e-frequ-ncia-de-visita/13-01-SUMMARY.md`.
-last_updated: "2026-08-10T17:21:05.851Z"
+milestone: v1.4
+milestone_name: CNPJ Obrigatório no Ganho
+status: planning
+last_updated: "2026-08-10T18:02:43.858Z"
 last_activity: 2026-08-10
-last_activity_desc: Milestone v1.3 completed and archived
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
-current_phase_name: Planilhas — Frequência em Massa e Exportação do Diário
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 
 ## Current Position
 
-Phase: Milestone v1.3 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-10 — Milestone v1.3 completed and archived
+Status: Defining requirements
+Last activity: 2026-08-10 — Milestone v1.4 started
 
 ## Performance Metrics
 

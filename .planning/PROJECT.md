@@ -21,6 +21,17 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, e agora o sistema também cobre o pós-venda: cliente "ganho" define uma frequência de visita (individualmente ou em massa via planilha), uma Agenda única junta o que precisa ser feito (prospecção + visitas), concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado.
 
+## Current Milestone: v1.4 CNPJ Obrigatório no Ganho
+
+**Goal:** CNPJ passa a ser exigido a partir do momento em que um cliente vira "ganho", com um caminho de planilha para regularizar em massa os clientes que já são "ganho" hoje.
+
+**Target features:**
+- CNPJ obrigatório ao mover um card para "ganho" (trava no RPC `mover_card_funil`, não só na tela)
+- Clientes já "ganho" sem CNPJ continuam funcionando normalmente até serem regularizados (grandfathering, mesmo padrão de VIS-04)
+- Planilha "Importar clientes" (v1.1) ganha CNPJ + Nome Fantasia como colunas opcionais
+- Nova planilha "CNPJ em massa" para clientes já "ganho", no molde da planilha de Frequência em Massa (Fase 17)
+- Antes do "ganho", cadastro rápido não muda em nada
+
 ## Next Milestone Goals
 
 Nada capturado ainda. Rode `/gsd-new-milestone` para começar o próximo marco.
