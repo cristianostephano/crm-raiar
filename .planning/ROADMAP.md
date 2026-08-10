@@ -198,14 +198,14 @@ Plans:
   4. Uma linha ruim não trava o lote: as linhas válidas são gravadas mesmo assim, e o resumo final diz quantas entraram e quantas foram puladas.
   5. Vendedor e Supervisor exportam o histórico de visitas/tarefas concluídas como planilha, respeitando a mesma regra de visibilidade da exportação de clientes (próprios x todos).
 
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 
 Plans:
 
 - [x] 17-01-PLAN.md — Migration da RPC `atualizar_frequencia_visita_lote` (UPDATE set-based, guard `is_supervisor()`, sem SECURITY DEFINER, restrita a `status_acompanhamento = 'ganho'`) + testes de integração contra o banco real + checkpoint humano antes do push
 - [x] 17-02-PLAN.md — IMP-02 completo: `getDiarioParaExportacao`, `lib/clientes/exportacaoDiario.ts` (reusando o `sanitizeCell` da Fase 5), rota `/api/agenda/exportar-diario` sem parâmetro (D3) e o botão "Exportar diário" em `AgendaList.tsx` (D2)
 - [x] 17-03-PLAN.md — Camada não visual do IMP-01: generalização retrocompatível de `types.ts`/`mapping.ts` (D4), `typesFrequencia`/`modeloFrequencia`/`annotarLinhaFrequencia`/`confirmarFrequencia` e as duas Server Actions
-- [ ] 17-04-PLAN.md — Peças visuais reutilizáveis: prop `fields` em `ColumnMappingTable` (D4), `FrequenciaPreviewTable` (5 colunas, sem coluna de Ação) e `FrequenciaImportSummary`
+- [x] 17-04-PLAN.md — Peças visuais reutilizáveis: prop `fields` em `ColumnMappingTable` (D4), `FrequenciaPreviewTable` (5 colunas, sem coluna de Ação) e `FrequenciaImportSummary`
 - [ ] 17-05-PLAN.md — Montagem final: `FrequenciaImportWizard`, rota `/clientes/importar-frequencias` só para Supervisor (D1), entrada no menu, teste e2e de guarda por papel e checkpoint humano de fechamento do marco
 
 **UI hint**: yes
@@ -236,4 +236,4 @@ Plans:
 | 14. Agenda Unificada | v1.3 | 4/4 | Complete   | 2026-08-08 |
 | 15. Conclusão com Resumo e Próxima Visita | v1.3 | 3/3 | Complete   | 2026-08-09 |
 | 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 4/4 | Complete   | 2026-08-09 |
-| 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 3/5 | In Progress|  |
+| 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 4/5 | In Progress|  |
