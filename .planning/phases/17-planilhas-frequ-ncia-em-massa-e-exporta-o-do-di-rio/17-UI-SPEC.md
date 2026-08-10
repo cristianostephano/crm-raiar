@@ -1,7 +1,7 @@
 ---
 phase: 17
 slug: planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio
-status: draft
+status: approved
 shadcn_initialized: true
 preset: "components.json (style: base-nova, baseColor: neutral) — already initialized in Phase 1, not reinitialized here"
 created: 2026-08-09
@@ -289,11 +289,11 @@ No third-party registries declared or needed this phase (`components.json` → `
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved
