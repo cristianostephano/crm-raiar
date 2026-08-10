@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Agenda do Vendedor
-current_phase: 16
-current_phase_name: Ficha do Cliente Ativo — Campos e Diário
-status: phase_complete
+current_phase: 17
+current_phase_name: Planilhas — Frequência em Massa e Exportação do Diário
+status: executing
 stopped_at: Plano 16-04 (tela — três campos condicionais + Diário em ClienteDetailSheet.tsx) executado e commitado, checkpoint humano aprovado com verificação ao vivo do Diário contra dado real de produção. Fase 16 completa — ATV-01/ATV-02/DIAR-01 marcados concluídos em REQUIREMENTS.md. Ver `.planning/phases/16-ficha-do-cliente-ativo-campos-e-di-rio/16-04-SUMMARY.md`.
-last_updated: "2026-08-09T21:56:42.179Z"
-last_activity: 2026-08-09
-last_activity_desc: Plano 16-04 executado, checkpoint humano aprovado, ATV-01/ATV-02/DIAR-01 marcados completos
+last_updated: "2026-08-10T11:15:50.162Z"
+last_activity: 2026-08-10
+last_activity_desc: Phase 17 execution started
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 14
+  total_plans: 19
   completed_plans: 14
-  percent: 80
+  percent: 74
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 17 — Planilhas (Frequência em Massa e Exportação do Diário) — próxima fase do marco v1.3
+**Current focus:** Phase 17 — Planilhas — Frequência em Massa e Exportação do Diário
 
 ## Current Position
 
-Phase: 16 (Ficha do Cliente Ativo — Campos e Diário) — COMPLETE (4 de 4 planos)
-Plan: 4 of 4 — done
-Status: Fase 16 concluída, marco v1.3 com 4 de 5 fases prontas
-Last activity: 2026-08-09 — Plano 16-04 executado, checkpoint humano aprovado, ATV-01/ATV-02/DIAR-01 marcados completos
+Phase: 17 (Planilhas — Frequência em Massa e Exportação do Diário) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 17
+Last activity: 2026-08-10 — Phase 17 execution started
 
 Progress (v1.3): [████████░░] 80% (4 de 5 fases concluídas; só a Fase 17 resta)
 
