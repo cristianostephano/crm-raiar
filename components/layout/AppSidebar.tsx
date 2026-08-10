@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  RefreshCw,
   Settings,
   Users,
   UsersRound,
@@ -88,6 +89,14 @@ const ADMIN_SECTION: NavSection = {
     { href: "/equipe", label: "Gerenciar equipe", icon: UsersRound },
     { href: "/configuracoes", label: "Configurações", icon: Settings },
     { href: "/clientes/importar", label: "Importar clientes", icon: FileUp },
+    // RefreshCw é deliberadamente diferente do ícone Repeat já usado no selo
+    // de "Visita" em outro lugar do app — são conceitos diferentes, e usar o
+    // mesmo símbolo sugeriria que são a mesma coisa.
+    {
+      href: "/clientes/importar-frequencias",
+      label: "Importar frequências",
+      icon: RefreshCw,
+    },
   ],
 }
 
