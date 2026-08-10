@@ -27,8 +27,15 @@ export type SystemField =
   | "responsavel"
   | "numeroDeLojas"
 
-export interface SystemFieldDefinition {
-  key: SystemField
+/**
+ * Parametrizada pela chave (`K`), com valor padrão igual à união de 14
+ * chaves de sempre — toda menção existente sem parâmetro genérico continua
+ * significando exatamente o que significava antes desta generalização. O
+ * parâmetro existe só para permitir uma segunda lista de campos
+ * (lib/importacao/typesFrequencia.ts, Fase 17) sem duplicar esta interface.
+ */
+export interface SystemFieldDefinition<K extends string = SystemField> {
+  key: K
   label: string
   required: boolean
   multi?: boolean
