@@ -40,7 +40,7 @@ Requisitos do marco v1.3 (Agenda do Vendedor). Cada um mapeia para uma fase do r
 ### Importação / Exportação (IMP)
 
 - [ ] **IMP-01**: Supervisor define a frequência de visita para vários clientes "ganho" de uma vez, via upload de planilha (reaproveita o padrão de importação já existente)
-- [ ] **IMP-02**: Vendedor/Supervisor exporta o histórico de visitas/tarefas concluídas, reaproveitando o padrão de exportação já existente
+- [x] **IMP-02**: Vendedor/Supervisor exporta o histórico de visitas/tarefas concluídas, reaproveitando o padrão de exportação já existente
 
 ## v2 Requirements
 
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ATV-02 | Phase 16 | Complete |
 | ATV-03 | Phase 13 | Complete |
 | IMP-01 | Phase 17 | Pending |
-| IMP-02 | Phase 17 | Pending |
+| IMP-02 | Phase 17 | Complete |
 
 **Coverage:**
 
