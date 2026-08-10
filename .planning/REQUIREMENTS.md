@@ -32,21 +32,19 @@ Nenhum item deferido identificado neste marco.
 
 ## Traceability
 
-Preenchido durante a criação do roadmap.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CNPJ-01 | TBD | Pending |
-| CNPJ-02 | TBD | Pending |
-| IMP-01 | TBD | Pending |
-| IMP-02 | TBD | Pending |
-| IMP-03 | TBD | Pending |
+| CNPJ-01 | Phase 18 | Pending |
+| CNPJ-02 | Phase 18 | Pending |
+| IMP-01 | Phase 19 | Pending |
+| IMP-02 | Phase 19 | Pending |
+| IMP-03 | Phase 19 | Pending |
 
 **Coverage:**
 - v1 requirements: 5 total
-- Mapped to phases: 0
-- Unmapped: 5 ⚠️ (aguardando roadmap)
+- Mapped to phases: 5
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-10*
-*Last updated: 2026-08-10 after initial definition*
+*Last updated: 2026-08-10 after roadmap creation (Phases 18-19)*

@@ -2,7 +2,7 @@
 
 ## Overview
 
-O CRM Raiar nasce de dentro para fora: primeiro a fundação de login e permissões, depois o cadastro de clientes PJ e o funil kanban, as telas de administração das listas editáveis, e o dashboard gerencial (v1.0 MVP). Em seguida, com o CRM já em uso no dia a dia, o marco v1.1 adicionou importação em massa de clientes via planilha (restrita ao Supervisor) e exportação da lista de clientes. O marco v1.2 deu ao Supervisor mais controle sobre a equipe (desativar membros), mais visibilidade sobre onde o funil trava (análises por etapa e por vendedor) e deixou os filtros de localização mais confiáveis (Estado/Cidade estruturados). O marco v1.3 abriu a segunda frente do CRM: além da prospecção (levar o cliente até a 1ª venda), o sistema passou a cuidar também do pós-venda — clientes "ganho" entram numa rotina de visitas recorrentes, com uma Agenda única unificando tarefas de prospecção e visitas, conclusão com resumo e diário do cliente, e planilhas para operar em escala.
+O CRM Raiar nasce de dentro para fora: primeiro a fundação de login e permissões, depois o cadastro de clientes PJ e o funil kanban, as telas de administração das listas editáveis, e o dashboard gerencial (v1.0 MVP). Em seguida, com o CRM já em uso no dia a dia, o marco v1.1 adicionou importação em massa de clientes via planilha (restrita ao Supervisor) e exportação da lista de clientes. O marco v1.2 deu ao Supervisor mais controle sobre a equipe (desativar membros), mais visibilidade sobre onde o funil trava (análises por etapa e por vendedor) e deixou os filtros de localização mais confiáveis (Estado/Cidade estruturados). O marco v1.3 abriu a segunda frente do CRM: além da prospecção (levar o cliente até a 1ª venda), o sistema passou a cuidar também do pós-venda — clientes "ganho" entram numa rotina de visitas recorrentes, com uma Agenda única unificando tarefas de prospecção e visitas, conclusão com resumo e diário do cliente, e planilhas para operar em escala. O marco atual, v1.4, fecha uma lacuna de dados desse pós-venda: CNPJ passa a ser exigido no momento em que um cliente vira "ganho" — travado no banco, não só na tela — com os clientes que já são "ganho" sem CNPJ seguindo intocados (grandfathering, mesmo padrão já usado para frequência de visita na Fase 13) e um caminho de planilha para regularizar em massa quem já está nessa situação hoje.
 
 Detalhes completos de cada marco arquivado estão em `.planning/milestones/`.
 
@@ -12,6 +12,7 @@ Detalhes completos de cada marco arquivado estão em `.planning/milestones/`.
 - ✅ **v1.1 Importação e Exportação de Clientes** — Phases 5-7 (shipped 2026-07-25) — see `.planning/milestones/v1.1-ROADMAP.md`
 - ✅ **v1.2 Gestão de Equipe, Análises de Funil e Filtros** — Phases 8-12 (shipped 2026-08-06) — see `.planning/milestones/v1.2-ROADMAP.md`
 - ✅ **v1.3 Agenda do Vendedor** — Phases 13-17 (shipped 2026-08-10) — see `.planning/milestones/v1.3-ROADMAP.md`
+- 🚧 **v1.4 CNPJ Obrigatório no Ganho** — Phases 18-19 (planning started 2026-08-10)
 
 ## Phases
 
@@ -64,6 +65,41 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.3-ROADMAP
 
 </details>
 
-## Next Milestone
+### 🚧 v1.4 CNPJ Obrigatório no Ganho (Phases 18-19) — IN PROGRESS
 
-Planejamento ainda não iniciado — rode `/gsd-new-milestone` para começar.
+- [ ] **Phase 18: CNPJ Obrigatório no Ganho** - Ao mover um card para "ganho" o sistema passa a exigir CNPJ preenchido, travado no RPC `mover_card_funil` — clientes já "ganho" sem CNPJ continuam funcionando normalmente.
+- [ ] **Phase 19: Planilhas de CNPJ e Nome Fantasia** - A planilha "Importar clientes" ganha CNPJ e Nome Fantasia como colunas opcionais, e uma nova planilha "CNPJ em massa" regulariza em lote os clientes já "ganho" sem CNPJ.
+
+## Phase Details
+
+### Phase 18: CNPJ Obrigatório no Ganho
+**Goal**: A partir do momento em que um cliente vira "ganho", o sistema exige CNPJ preenchido — validado no banco, não só na tela — sem afetar clientes já "ganho" sem CNPJ nem o cadastro rápido anterior ao "ganho".
+**Depends on**: Nada dentro do marco (primeira fase da v1.4) — estende o `mover_card_funil` e o `lib/validations/cliente.ts` já existentes desde a Fase 13, mesmo padrão usado para tornar a frequência de visita obrigatória no "ganho" (VIS-01/VIS-04)
+**Requirements**: CNPJ-01, CNPJ-02
+**Success Criteria** (what must be TRUE):
+  1. Ao tentar mover um card para "ganho" sem CNPJ preenchido, o sistema bloqueia a ação com uma mensagem clara — e a trava vale mesmo se alguém tentar contornar a validação da tela, porque o próprio RPC recusa a chamada.
+  2. Preenchendo o CNPJ antes de mover o card, a mudança para "ganho" acontece normalmente (fluxo feliz continua funcionando sem fricção extra).
+  3. Um cliente que já é "ganho" sem CNPJ (cadastrado antes desta trava) continua acessível normalmente na Agenda, na ficha e no diário, sem nenhum bloqueio ou erro.
+  4. Antes do "ganho" — no cadastro rápido e na edição normal do cliente — o CNPJ continua opcional, sem nenhuma mudança de comportamento.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 19: Planilhas de CNPJ e Nome Fantasia
+**Goal**: Dar ao Supervisor dois caminhos de planilha para o CNPJ: trazer CNPJ e Nome Fantasia junto com clientes novos na importação, e regularizar em massa o CNPJ de clientes que já são "ganho" hoje.
+**Depends on**: Fase 18 não é pré-requisito técnico (a coluna `cnpj` já existe desde a Fase 13), mas a Fase 19 é ordenada depois porque a planilha "CNPJ em massa" é o caminho de regularização direto para o que a Fase 18 passa a exigir; IMP-01/IMP-02 reaproveitam o wizard "Importar clientes" já existente (Fases 6-7) e IMP-03 espelha o padrão de planilha em massa da Fase 17 (`atualizar_frequencia_visita_lote`)
+**Requirements**: IMP-01, IMP-02, IMP-03
+**Success Criteria** (what must be TRUE):
+  1. Na planilha "Importar clientes", o Supervisor consegue mapear uma coluna para CNPJ (campo opcional) e o valor é gravado no cliente novo criado.
+  2. Na mesma planilha, o Supervisor consegue mapear uma coluna para Nome Fantasia (campo opcional) e o valor é gravado no cliente novo criado.
+  3. O Supervisor sobe uma nova planilha "CNPJ em massa" (Razão Social + CNPJ) e o sistema grava o CNPJ nos clientes já "ganho" correspondentes, casando por nome.
+  4. Quando o nome normalizado da planilha bate em mais de um cliente (nome ambíguo), a linha vira erro e nenhum CNPJ é gravado no cliente errado.
+  5. A planilha de CNPJ em massa é estruturalmente incapaz de criar um cliente novo — só atualiza clientes existentes com status "ganho".
+**Plans**: TBD
+**UI hint**: yes
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 18. CNPJ Obrigatório no Ganho | 0/TBD | Not started | - |
+| 19. Planilhas de CNPJ e Nome Fantasia | 0/TBD | Not started | - |
