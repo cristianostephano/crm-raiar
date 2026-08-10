@@ -171,3 +171,17 @@ None - nenhuma configuração de serviço externo necessária; nenhuma dependên
 ---
 *Phase: 17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio*
 *Completed: 2026-08-10*
+
+## Self-Check: PASSED
+
+- FOUND: `components/importacao/FrequenciaImportWizard.tsx`
+- FOUND: `app/(app)/clientes/importar-frequencias/page.tsx`
+- FOUND: `components/layout/AppSidebar.tsx` (modified)
+- FOUND: `tests/importacao/AppSidebar.test.tsx` (modified, 5/5 cases passing)
+- FOUND: `tests/e2e/importar-frequencias-guard.spec.ts` (2/2 scenarios passing)
+- FOUND: `.planning/phases/17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio/17-05-SUMMARY.md` (this file)
+- FOUND: `.planning/REQUIREMENTS.md` (IMP-01 marked complete)
+- FOUND: commit `47a3bca` (Task 1), `938840d` (Task 2), `31cc580` (SUMMARY/REQUIREMENTS metadata)
+- CONFIRMED: `git diff --name-only HEAD` empty for the full client-import flow file list in both task commits (ImportWizard.tsx, ImportPreviewTable.tsx, ImportSummary.tsx, FileDropzone.tsx, ColumnMappingTable.tsx, app/actions/importacao.ts, lib/importacao/modelo.ts, app/(app)/clientes/importar/, supabase/migrations/)
+- CONFIRMED: `npx tsc --noEmit` clean; `npm run lint` clean; `npx next build` succeeds with both import routes coexisting
+- CONFIRMED: human checkpoint approved by project owner — final checkpoint of the entire v1.3 milestone
