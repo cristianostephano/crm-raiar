@@ -196,3 +196,14 @@ None - nenhuma configuração de serviço externo necessária; nenhuma dependên
 ---
 *Phase: 17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio*
 *Completed: 2026-08-10*
+
+## Self-Check: PASSED
+
+- FOUND: `lib/importacao/types.ts`, `lib/importacao/mapping.ts` (modified)
+- FOUND: `lib/importacao/typesFrequencia.ts`, `lib/importacao/modeloFrequencia.ts`, `lib/importacao/annotarLinhaFrequencia.ts`, `lib/importacao/confirmarFrequencia.ts` (created)
+- FOUND: `app/actions/importacaoFrequencia.ts` (created)
+- FOUND: `tests/importacao/frequencia-vocabulario.test.ts`, `tests/importacao/annotarLinhaFrequencia.test.ts`, `tests/importacao/confirmarFrequencia.test.ts` (created, 26 cases total)
+- FOUND: commit `d467b34` (Task 1), `2d84e78` (Task 2), `e66a3d4` (Task 3)
+- FOUND: `.planning/phases/17-planilhas-frequ-ncia-em-massa-e-exporta-o-do-di-rio/17-03-SUMMARY.md` (this file)
+- CONFIRMED: `git diff --name-only HEAD` empty for the full client-import flow file list (tests/importacao/mapping.test.ts, tests/importacao/modelo.test.ts, tests/importacao/confirmar.test.ts, lib/importacao/modelo.ts, lib/importacao/annotarLinha.ts, lib/importacao/confirmar.ts, lib/importacao/dedupe.ts, lib/importacao/preview.ts, app/actions/importacao.ts, components/importacao/, supabase/migrations/)
+- CONFIRMED: 47/47 tests passing across all six import-flow test suites (6 files); `npx tsc --noEmit` clean; `npm run lint` clean
