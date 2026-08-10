@@ -81,7 +81,13 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.3-ROADMAP
   2. Preenchendo o CNPJ antes de mover o card, a mudança para "ganho" acontece normalmente (fluxo feliz continua funcionando sem fricção extra).
   3. Um cliente que já é "ganho" sem CNPJ (cadastrado antes desta trava) continua acessível normalmente na Agenda, na ficha e no diário, sem nenhum bloqueio ou erro.
   4. Antes do "ganho" — no cadastro rápido e na edição normal do cliente — o CNPJ continua opcional, sem nenhuma mudança de comportamento.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+
+- [ ] 18-01-PLAN.md — Migration que recria `mover_card_funil` com o 7º parâmetro `p_cnpj` e o guard de CNPJ-obrigatório condicionado à TRANSIÇÃO para ganho (grandfathering do CNPJ-02, zero mudança de schema), mais os testes de integração contra o banco real — com checkpoint humano antes do push em produção
+- [ ] 18-02-PLAN.md — Campo CNPJ no `GanhoFrequenciaDialog` já existente, `marcarStatus` levando o valor até `p_cnpj` na mesma chamada da frequência, e a sincronização na ficha que impede o salvamento seguinte de apagar o CNPJ — com verificação humana no navegador
+
 **UI hint**: yes
 
 ### Phase 19: Planilhas de CNPJ e Nome Fantasia
@@ -101,5 +107,5 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.3-ROADMAP
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 18. CNPJ Obrigatório no Ganho | 0/TBD | Not started | - |
+| 18. CNPJ Obrigatório no Ganho | 0/2 | Planned | - |
 | 19. Planilhas de CNPJ e Nome Fantasia | 0/TBD | Not started | - |
