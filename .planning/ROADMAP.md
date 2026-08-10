@@ -223,7 +223,7 @@ Plans:
 | 10. Desativação de Membro da Equipe | v1.2 | 6/6 | Complete | 2026-08-03 |
 | 11. Funil de Conversão Detalhado | v1.2 | 5/5 | Complete | 2026-07-28 |
 | 12. Comparativo por Vendedor | v1.2 | 4/4 | Complete | 2026-08-05 |
-| 13. Cliente Ativo e Frequência de Visita | v1.3 | 0/3 | Planned | - |
+| 13. Cliente Ativo e Frequência de Visita | v1.3 | 3/3 | Complete   | 2026-08-08 |
 | 14. Agenda Unificada | v1.3 | 4/4 | Complete   | 2026-08-08 |
 | 15. Conclusão com Resumo e Próxima Visita | v1.3 | 3/3 | Complete   | 2026-08-09 |
 | 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 4/4 | Complete   | 2026-08-09 |
