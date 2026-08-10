@@ -1,5 +1,6 @@
 "use client"
 
+import { Download } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import {
@@ -94,6 +95,8 @@ export function AgendaList({
   const [sheetOpen, setSheetOpen] = useState(false)
   const [concluirItem, setConcluirItem] = useState<AgendaItem | null>(null)
   const [concluirDialogOpen, setConcluirDialogOpen] = useState(false)
+  const [isExportingDiario, setIsExportingDiario] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -183,8 +186,85 @@ export function AgendaList({
     return undefined
   }
 
+  /**
+   * Cópia estrutural de KanbanBoard.tsx's handleExport (IMP-02, D3), com uma
+   * simplificação: sem etapa de coleta de identificadores e sem corpo na
+   * requisição — este download não tem parâmetro nenhum, sempre significa
+   * "tudo o que eu posso ver". O estado do Select de filtro renderizado
+   * acima (só existe para o Supervisor) NUNCA é consultado por esta
+   * função de propósito — ler esse estado aqui devolveria a fronteira de
+   * autorização para o navegador, e a fronteira real é a regra de leitura
+   * no servidor.
+   */
+  async function handleExportDiario() {
+    if (isExportingDiario) return
+
+    setIsExportingDiario(true)
+    setExportError(null)
+    try {
+      const res = await fetch("/api/agenda/exportar-diario", {
+        method: "POST",
+      })
+
+      if (!res.ok) {
+        setExportError("Não foi possível exportar o diário. Tente novamente.")
+        return
+      }
+
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const filename = `diario_${new Date().toISOString().slice(0, 10)}.xlsx`
+
+      const anchor = document.createElement("a")
+      anchor.href = url
+      anchor.download = filename
+      document.body.appendChild(anchor)
+      anchor.click()
+      document.body.removeChild(anchor)
+      window.URL.revokeObjectURL(url)
+    } catch {
+      setExportError("Não foi possível exportar o diário. Tente novamente.")
+    } finally {
+      setIsExportingDiario(false)
+    }
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-6">
+      {/* IMP-02 (D2/D3) — botão de exportar o diário, sempre o primeiro
+          elemento da tela, antes do cabeçalho de título/filtro. O rótulo
+          alterna pelo indicador `isSupervisor` que este componente já
+          recebe como propriedade — esse indicador escolhe SÓ o rótulo; o
+          escopo do que baixa vem sempre da regra de leitura no servidor
+          (RLS de `historico`), nunca deste valor. Sem estado de desabilitado
+          por contagem (diferente do Kanban): a Agenda não pré-carrega uma
+          contagem de diário, e buscar uma só para desabilitar o botão está
+          fora de escopo — um diário vazio baixa uma planilha só com a linha
+          de cabeçalho, resultado autoexplicativo, não um erro. */}
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleExportDiario}
+          disabled={isExportingDiario}
+        >
+          <Download />
+          {isExportingDiario
+            ? "Exportando…"
+            : isSupervisor
+              ? "Exportar diário do time"
+              : "Exportar meu diário"}
+        </Button>
+      </div>
+      {exportError ? (
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {exportError}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold">Agenda</h1>
