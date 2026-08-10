@@ -1,21 +1,37 @@
 import { SYSTEM_FIELDS, type SystemField, type SystemFieldDefinition } from "@/lib/importacao/types"
-import type { MappedRow } from "@/lib/importacao/annotarLinha"
 
 /**
  * Pure column-mapping logic for the import wizard's Step 2 (IMP-03/IMP-04).
  * No "use client"/"use server" directive, no Supabase import — unit-testable
  * in isolation, mirroring lib/importacao/dedupe.ts's shape (06-PATTERNS.md).
+ *
+ * Fase 17 (D4): as três funções exportadas abaixo foram generalizadas para
+ * servir QUALQUER lista de campos (parâmetro genérico `K`, valor padrão
+ * igual à união de 14 chaves de SYSTEM_FIELDS) — sem essa generalização, a
+ * segunda lista de campos da importação de frequências
+ * (lib/importacao/typesFrequencia.ts) precisaria duplicar toda esta tabela
+ * de mapeamento, que é exatamente o que a decisão D4 proíbe. Toda chamada
+ * existente sem o segundo parâmetro continua se comportando exatamente como
+ * antes — os testes de tests/importacao/mapping.test.ts (intocados) são a
+ * prova mecânica disso.
  */
 
 /** Sentinel mapping target meaning "this column should not be imported" —
  * always the last option in ColumnMappingTable's per-column Select. */
 export const NAO_IMPORTAR = "nao_importar" as const
 
-export type MappingTarget = SystemField | typeof NAO_IMPORTAR
+/** Versões parametrizadas dos dois tipos de mapeamento (Fase 17, D4). */
+export type MappingTargetOf<K extends string = SystemField> = K | typeof NAO_IMPORTAR
 
 /** Keyed by column INDEX (not header text) — spreadsheet headers can repeat
  * or be blank, so the index is the only unambiguous column identity. */
-export type ColumnMapping = Record<number, MappingTarget>
+export type ColumnMappingOf<K extends string = SystemField> = Record<number, MappingTargetOf<K>>
+
+/** Apelidos retrocompatíveis — todo consumidor existente que usa estes dois
+ * nomes continua significando exatamente a mesma coisa que significava antes
+ * da generalização (Fase 17, D4). */
+export type MappingTarget = MappingTargetOf<SystemField>
+export type ColumnMapping = ColumnMappingOf<SystemField>
 
 /** Strips diacritics (NFD + explicit combining-mark code-point filter, same
  * approach as dedupe.ts's normalizeRazaoSocial — avoids embedding a literal
@@ -35,7 +51,9 @@ function normalizeHeader(value: string): string {
 
 /** Extra normalized aliases beyond each SYSTEM_FIELDS label itself — covers
  * the common spreadsheet header variations this phase must recognize,
- * notably "vendedor" for responsavel (IMP-04). */
+ * notably "vendedor" for responsavel (IMP-04). Fixado na união de 14 chaves
+ * (SystemField) — suggestMapping abaixo confere se o resultado pertence à
+ * lista de campos efetivamente recebida antes de devolvê-lo (Fase 17, D4). */
 const ALIASES: Record<string, SystemField> = {
   razaosocial: "razaoSocial",
   empresa: "razaoSocial",
@@ -71,14 +89,26 @@ const ALIASES: Record<string, SystemField> = {
 
 /**
  * Best-guess mapping target for one raw spreadsheet header. Matches first
- * against each SYSTEM_FIELDS label (normalized), then against the ALIASES
- * table; a header with no good match suggests NAO_IMPORTAR rather than
- * guessing wrong.
+ * against each `fields` label (normalized), then against the ALIASES table;
+ * a header with no good match suggests NAO_IMPORTAR rather than guessing
+ * wrong.
+ *
+ * Fase 17 (D4) conserto obrigatório: um apelido só é aplicado se a chave que
+ * ele aponta PERTENCER à lista de campos recebida. Sem essa conferência, uma
+ * planilha de frequências com um cabeçalho "CEP" devolveria a chave "cep",
+ * que não existe naquela lista, e o Select da tela receberia um valor fora
+ * das suas próprias opções. Para a lista de 14 (SYSTEM_FIELDS) essa
+ * conferência nunca dispara — todo apelido aponta para um campo dela — então
+ * o comportamento de sempre é preservado por construção.
  */
-export function suggestMapping(
+export function suggestMapping<K extends string = SystemField>(
   header: string,
-  fields: SystemFieldDefinition[] = SYSTEM_FIELDS
-): MappingTarget {
+  // O cast abaixo é necessário porque o compilador não consegue provar, na
+  // posição de valor padrão de um parâmetro genérico, que SYSTEM_FIELDS
+  // (tipado pela união de 14 chaves) é o próprio valor padrão de K — nunca o
+  // tipo curinga proibido pelo CLAUDE.md.
+  fields: SystemFieldDefinition<K>[] = SYSTEM_FIELDS as unknown as SystemFieldDefinition<K>[]
+): MappingTargetOf<K> {
   const normalized = normalizeHeader(header)
 
   const byLabel = fields.find(
@@ -87,25 +117,29 @@ export function suggestMapping(
   if (byLabel) return byLabel.key
 
   const alias = ALIASES[normalized]
-  if (alias) return alias
+  if (alias && fields.some((field) => (field.key as string) === alias)) {
+    // O pertencimento já foi conferido acima — o cast duplo é necessário
+    // porque ALIASES está fixada em SystemField, não em K.
+    return alias as unknown as MappingTargetOf<K>
+  }
 
   return NAO_IMPORTAR
 }
 
 /**
- * Transforms parsed spreadsheet rows (string[][]) into MappedRow[] using the
- * Supervisor's column mapping — columns marked NAO_IMPORTAR are dropped.
- * `produtos` (multi-value) is preserved as a single raw string per cell;
- * splitting into individual product tokens happens later in annotarLinha
- * (06-02), not here.
+ * Transforms parsed spreadsheet rows (string[][]) into mapped row objects
+ * using the Supervisor's column mapping — columns marked NAO_IMPORTAR are
+ * dropped. `produtos` (multi-value) is preserved as a single raw string per
+ * cell; splitting into individual product tokens happens later in
+ * annotarLinha (06-02), not here.
  */
-export function applyMapping(
+export function applyMapping<K extends string = SystemField>(
   headers: string[],
   rows: string[][],
-  mapping: ColumnMapping
-): MappedRow[] {
+  mapping: ColumnMappingOf<K>
+): Partial<Record<K, string>>[] {
   return rows.map((row) => {
-    const mappedRow: MappedRow = {}
+    const mappedRow: Partial<Record<K, string>> = {}
 
     headers.forEach((_header, columnIndex) => {
       const target = mapping[columnIndex]
@@ -114,7 +148,7 @@ export function applyMapping(
       const value = row[columnIndex]
       if (value === undefined) return
 
-      mappedRow[target] = value
+      mappedRow[target as K] = value
     })
 
     return mappedRow
@@ -122,17 +156,18 @@ export function applyMapping(
 }
 
 /**
- * Required SYSTEM_FIELDS (e.g. Responsável) not yet associated with any
- * column in the current mapping — drives Step 2's inline warning and the
- * "Continuar" disabled state.
+ * Required `fields` (e.g. Responsável) not yet associated with any column in
+ * the current mapping — drives Step 2's inline warning and the "Continuar"
+ * disabled state.
  */
-export function requiredFieldsFaltando(
-  mapping: ColumnMapping,
-  fields: SystemFieldDefinition[] = SYSTEM_FIELDS
-): SystemFieldDefinition[] {
+export function requiredFieldsFaltando<K extends string = SystemField>(
+  mapping: ColumnMappingOf<K>,
+  // Mesma justificativa de cast do valor padrão de suggestMapping acima.
+  fields: SystemFieldDefinition<K>[] = SYSTEM_FIELDS as unknown as SystemFieldDefinition<K>[]
+): SystemFieldDefinition<K>[] {
   const mappedFields = new Set(
     Object.values(mapping).filter(
-      (target): target is SystemField => target !== NAO_IMPORTAR
+      (target): target is K => target !== NAO_IMPORTAR
     )
   )
 
