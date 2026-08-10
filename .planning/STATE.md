@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Agenda do Vendedor
-current_phase: 17
-current_phase_name: Planilhas — Frequência em Massa e Exportação do Diário
-status: executing
-stopped_at: Plano 16-04 (tela — três campos condicionais + Diário em ClienteDetailSheet.tsx) executado e commitado, checkpoint humano aprovado com verificação ao vivo do Diário contra dado real de produção. Fase 16 completa — ATV-01/ATV-02/DIAR-01 marcados concluídos em REQUIREMENTS.md. Ver `.planning/phases/16-ficha-do-cliente-ativo-campos-e-di-rio/16-04-SUMMARY.md`.
-last_updated: "2026-08-10T11:15:50.162Z"
+current_phase: 3
+status: Awaiting next milestone
+stopped_at: Plano 13-01 (fundação de banco) executado e commitado — migration 0013 aplicada em produção com aprovação humana, testes verdes (28/28 nos arquivos novos + 91/91 nos arquivos de maior risco de regressão). Ver `.planning/phases/13-cliente-ativo-e-frequ-ncia-de-visita/13-01-SUMMARY.md`.
+last_updated: "2026-08-10T17:21:05.851Z"
 last_activity: 2026-08-10
-last_activity_desc: Phase 17 execution started
+last_activity_desc: Milestone v1.3 completed and archived
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 19
-  completed_plans: 14
-  percent: 74
+  completed_plans: 19
+  percent: 100
+current_phase_name: Planilhas — Frequência em Massa e Exportação do Diário
 ---
 
 # Project State
@@ -28,12 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 
 ## Current Position
 
-Phase: 17 (Planilhas — Frequência em Massa e Exportação do Diário) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 17
-Last activity: 2026-08-10 — Phase 17 execution started
-
-Progress (v1.3): [████████░░] 80% (4 de 5 fases concluídas; só a Fase 17 resta)
+Phase: Milestone v1.3 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-10 — Milestone v1.3 completed and archived
 
 ## Performance Metrics
 
@@ -268,7 +266,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Nenhuma ação necessária do dono no momento — o schema de "cliente ativo e frequência de visita" já está em produção.
-- Próximo: Plano 13-02 (diálogo `GanhoFrequenciaDialog` ao marcar cliente como ganho) e Plano 13-03 (edição da frequência na ficha do cliente), ambos já desbloqueados por este plano.
-- **Aviso temporário:** entre agora e a conclusão do Plano 13-02, marcar um cliente como "ganho" pela tela vai falhar (o banco já exige a frequência, o diálogo ainda não existe) — esperado, dura só até 13-02 subir.
-- Opcional, fora do escopo de código: revisar o rate limit de `signInWithPassword` nas configurações de Auth do projeto Supabase, já que `npm test` completo não termina limpo numa única execução por causa desse limite (ver Blockers/Concerns).
+- Start the next milestone with /gsd-new-milestone

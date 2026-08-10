@@ -1,6 +1,8 @@
 ---
 id: SEED-001
-status: dormant
+status: implemented
+implemented_in: v1.3 (Agenda do Vendedor, Phases 13-17)
+implemented_date: 2026-08-10
 planted: 2026-07-25
 planted_during: v1.2 discussion (discuss-milestone conversation, before roadmap)
 trigger_when: next milestone after v1.2 ships (Marco B, explicitly split out for size)
