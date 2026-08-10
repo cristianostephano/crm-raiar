@@ -59,7 +59,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.2-ROADMAP
 - [x] **Phase 14: Agenda Unificada** - Nova tela "Agenda" no topo do menu, juntando tarefas de prospecção e visitas pendentes numa lista só, ordenada por urgência. (completed 2026-08-08)
 - [x] **Phase 15: Conclusão com Resumo e Próxima Visita** - Concluir um item da agenda exige um resumo curto; ao concluir uma visita o sistema sugere a próxima data e o vendedor confirma ou ajusta. (completed 2026-08-09)
 - [x] **Phase 16: Ficha do Cliente Ativo — Campos e Diário** - A ficha do cliente ganha Nome Fantasia, CNPJ, frequência de pedidos e o diário de visitas/tarefas concluídas. (completed 2026-08-09)
-- [ ] **Phase 17: Planilhas — Frequência em Massa e Exportação do Diário** - Supervisor define a frequência de visita de vários clientes de uma vez por planilha, e o diário pode ser exportado.
+- [x] **Phase 17: Planilhas — Frequência em Massa e Exportação do Diário** - Supervisor define a frequência de visita de vários clientes de uma vez por planilha, e o diário pode ser exportado. (completed 2026-08-10)
 
 ## Phase Details
 
@@ -198,7 +198,7 @@ Plans:
   4. Uma linha ruim não trava o lote: as linhas válidas são gravadas mesmo assim, e o resumo final diz quantas entraram e quantas foram puladas.
   5. Vendedor e Supervisor exportam o histórico de visitas/tarefas concluídas como planilha, respeitando a mesma regra de visibilidade da exportação de clientes (próprios x todos).
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans complete
 
 Plans:
 
@@ -206,7 +206,7 @@ Plans:
 - [x] 17-02-PLAN.md — IMP-02 completo: `getDiarioParaExportacao`, `lib/clientes/exportacaoDiario.ts` (reusando o `sanitizeCell` da Fase 5), rota `/api/agenda/exportar-diario` sem parâmetro (D3) e o botão "Exportar diário" em `AgendaList.tsx` (D2)
 - [x] 17-03-PLAN.md — Camada não visual do IMP-01: generalização retrocompatível de `types.ts`/`mapping.ts` (D4), `typesFrequencia`/`modeloFrequencia`/`annotarLinhaFrequencia`/`confirmarFrequencia` e as duas Server Actions
 - [x] 17-04-PLAN.md — Peças visuais reutilizáveis: prop `fields` em `ColumnMappingTable` (D4), `FrequenciaPreviewTable` (5 colunas, sem coluna de Ação) e `FrequenciaImportSummary`
-- [ ] 17-05-PLAN.md — Montagem final: `FrequenciaImportWizard`, rota `/clientes/importar-frequencias` só para Supervisor (D1), entrada no menu, teste e2e de guarda por papel e checkpoint humano de fechamento do marco
+- [x] 17-05-PLAN.md — Montagem final: `FrequenciaImportWizard`, rota `/clientes/importar-frequencias` só para Supervisor (D1), entrada no menu, teste e2e de guarda por papel e checkpoint humano de fechamento do marco
 
 **UI hint**: yes
 
@@ -236,4 +236,4 @@ Plans:
 | 14. Agenda Unificada | v1.3 | 4/4 | Complete   | 2026-08-08 |
 | 15. Conclusão com Resumo e Próxima Visita | v1.3 | 3/3 | Complete   | 2026-08-09 |
 | 16. Ficha do Cliente Ativo — Campos e Diário | v1.3 | 4/4 | Complete   | 2026-08-09 |
-| 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 4/5 | In Progress|  |
+| 17. Planilhas — Frequência em Massa e Exportação do Diário | v1.3 | 5/5 | Complete   | 2026-08-10 |
