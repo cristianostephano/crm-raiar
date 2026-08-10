@@ -572,6 +572,93 @@ export async function getDiario(clienteId: string): Promise<DiarioEntry[]> {
   }))
 }
 
+/**
+ * Export-shaped diário row (IMP-02, plano 17-02) — irmã de `DiarioEntry`
+ * acima, mas de escopo diferente: `getDiario` lê UM cliente só, para a
+ * ficha; esta lê TUDO que o chamador enxerga, para download. Razão social e
+ * responsável do cliente entram aqui porque a planilha agrega vários
+ * clientes de uma vez (a ficha não precisa disso — já está dentro do
+ * cliente).
+ */
+export type DiarioExportRow = {
+  razaoSocial: string
+  responsavelNome: string | null
+  tipo: "tarefa_concluida" | "visita_concluida"
+  descricao: string
+  criadoEm: string
+  autorNome: string | null
+}
+
+/**
+ * Raw shape returned by getDiarioParaExportacao's embedded-select query.
+ * `historico` e `clientes` cada uma tem uma ligação com `profiles`, então o
+ * autor da entrada precisa vir apelidado ("autor") para não colidir com o
+ * `profiles` aninhado dentro de `clientes` — mesma postura do plano 16-03.
+ */
+type DiarioExportQueryRow = {
+  descricao: string
+  tipo: string
+  criado_em: string
+  clientes: {
+    razao_social: string
+    profiles: { nome: string; sobrenome: string } | null
+  } | null
+  autor: { nome: string; sobrenome: string } | null
+}
+
+/**
+ * Leitura do diário para exportação (IMP-02, critério de sucesso 5) — irmã
+ * de `getDiario`, mas SEM parâmetro nenhum de propósito (D3, 17-UI-SPEC.md):
+ * o filtro de vendedor ativo na tela de Agenda não deve atravessar para a
+ * exportação. Sem parâmetro, não existe caminho pelo qual um chamador possa
+ * tentar ampliar o escopo nem pelo qual o filtro da tela possa vazar para o
+ * servidor.
+ *
+ * Autorização: ZERO checagem de papel e ZERO filtro de dono aqui — a regra
+ * de leitura de `historico` condicionada ao cliente pai (migration 0002,
+ * inalterada) é a fronteira INTEIRA do critério de sucesso 5. Um Vendedor
+ * recebe só as conclusões dos próprios clientes; um Supervisor recebe as de
+ * todo o time — de graça, sem uma linha de checagem escrita à mão aqui (o
+ * mesmo comentário que já vale para `getClientesParaExportacao`).
+ *
+ * Diferente de `getDiario` (que devolve lista vazia em erro, porque alimenta
+ * uma seção de ficha que não pode derrubar a tela), esta função LANÇA em
+ * erro — mesma postura de `getClientesParaExportacao`, chamada de dentro de
+ * uma rota que já trata exceção.
+ */
+export async function getDiarioParaExportacao(): Promise<DiarioExportRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("historico")
+    .select(
+      "descricao, tipo, criado_em, clientes(razao_social, profiles(nome, sobrenome)), autor:profiles!historico_autor_id_fkey(nome, sobrenome)"
+    )
+    .in("tipo", ["tarefa_concluida", "visita_concluida"])
+    .order("criado_em", { ascending: false })
+
+  if (error) {
+    throw new Error(`Falha ao carregar diário para exportação: ${error.message}`)
+  }
+
+  return (data ?? []).map((row) => {
+    const r = row as unknown as DiarioExportQueryRow
+
+    return {
+      razaoSocial: r.clientes?.razao_social ?? "",
+      responsavelNome: r.clientes?.profiles
+        ? `${r.clientes.profiles.nome} ${r.clientes.profiles.sobrenome}`
+        : null,
+      tipo: r.tipo as DiarioExportRow["tipo"],
+      descricao: r.descricao,
+      criadoEm: r.criado_em,
+      autorNome: r.autor
+        ? `${r.autor.nome} ${r.autor.sobrenome}`
+        : null,
+    }
+  })
+}
+
 /** Lookup-table option shape shared by tipos_tarefa/motivos_perda selects. */
 export type LookupOption = { id: string; nome: string }
 
