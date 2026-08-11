@@ -357,7 +357,8 @@ export function ClienteDetailSheet({
   async function handleStatusChange(
     novoStatus: StatusAcompanhamento,
     motivoPerdaId?: string,
-    frequenciaVisita?: FrequenciaVisita
+    frequenciaVisita?: FrequenciaVisita,
+    cnpj?: string
   ): Promise<MarcarStatusResult> {
     if (!cliente) return { error: { code: "cliente_nao_encontrado", message: LOAD_ERROR } }
 
@@ -365,13 +366,21 @@ export function ClienteDetailSheet({
     setIsSavingStatus(true)
 
     try {
-      const result = await marcarStatus(cliente.id, novoStatus, motivoPerdaId, frequenciaVisita)
+      const result = await marcarStatus(
+        cliente.id,
+        novoStatus,
+        motivoPerdaId,
+        frequenciaVisita,
+        cnpj
+      )
 
       if (result.error) {
         setStatusError(result.error.message)
         setIsSavingStatus(false)
         return result
       }
+
+      const cnpjTrimmed = cnpj?.trim()
 
       setCliente((prev) =>
         prev
@@ -386,9 +395,28 @@ export function ClienteDetailSheet({
                 novoStatus === "ganho"
                   ? (frequenciaVisita ?? prev.frequenciaVisita)
                   : prev.frequenciaVisita,
+              // CNPJ-01 (18-02): same defensive coalesce as frequenciaVisita
+              // above — only overwrite when a non-empty CNPJ was actually
+              // informed in the ganho dialog, otherwise keep whatever the
+              // cliente already had.
+              cnpj:
+                novoStatus === "ganho" && cnpjTrimmed
+                  ? cnpjTrimmed
+                  : prev.cnpj,
             }
           : prev
       )
+
+      // O formulário de "Dados do cliente" foi preenchido quando a gaveta
+      // abriu e não é recarregado depois de uma mudança de status — sem
+      // sincronizar aqui, "marco ganho informando o CNPJ" seguido de um
+      // "Salvar alterações" mandaria o CNPJ vazio que ainda está no
+      // formulário, e updateCliente gravaria nulo, apagando o valor que o
+      // sistema acabou de exigir (T-18-11).
+      if (novoStatus === "ganho" && cnpjTrimmed) {
+        form.setValue("cnpj", cnpjTrimmed)
+      }
+
       setIsSavingStatus(false)
       await refreshHistorico()
       await refreshDiario()
@@ -1342,7 +1370,14 @@ export function ClienteDetailSheet({
             open={ganhoDialogOpen}
             onOpenChange={setGanhoDialogOpen}
             razaoSocial={cliente.razaoSocial}
-            onConfirm={(frequencia) => handleStatusChange("ganho", undefined, frequencia)}
+            cnpjAtual={cliente.cnpj ?? ""}
+            // CNPJ-02: mesma condição de TRANSIÇÃO do guard do RPC (18-01) e
+            // da pré-checagem de marcarStatus (18-02) — um cliente que já é
+            // ganho nunca é cobrado retroativamente.
+            exigirCnpj={cliente.statusAcompanhamento !== "ganho"}
+            onConfirm={(frequencia, cnpj) =>
+              handleStatusChange("ganho", undefined, frequencia, cnpj)
+            }
           />
         </>
       ) : null}
