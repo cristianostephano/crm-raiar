@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -25,6 +26,8 @@ import {
 
 const REQUIRED_FREQUENCIA_MESSAGE =
   "Selecione a frequência de visita antes de confirmar."
+const REQUIRED_CNPJ_MESSAGE = "Informe o CNPJ antes de confirmar."
+const CNPJ_SUPPORT_TEXT = "Informe o CNPJ para concluir o ganho deste cliente."
 const GENERIC_ERROR = "Não foi possível salvar as alterações. Tente novamente."
 
 /**
@@ -38,25 +41,38 @@ const GENERIC_ERROR = "Não foi possível salvar as alterações. Tente novament
  * async load: the four options are a static, pure vocabulary
  * (FREQUENCIA_VISITA_ITEMS), so there's no useEffect, loading state, or
  * load-error state here.
+ *
+ * `exigirCnpj` (CNPJ-01/CNPJ-02, 18-02): when false, the CNPJ field never
+ * blocks confirmation — a cliente that is ALREADY "ganho" can't be charged
+ * retroactively, and the `mover_card_funil` guard (18-01) uses the exact
+ * same transition-only condition.
  */
 export function GanhoFrequenciaDialog({
   open,
   onOpenChange,
   razaoSocial,
+  cnpjAtual,
+  exigirCnpj,
   onConfirm,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   razaoSocial: string
+  cnpjAtual: string
+  exigirCnpj: boolean
   // Typed with FrequenciaVisita (not string) for strict typing, per CLAUDE.md.
   onConfirm: (
-    frequencia: FrequenciaVisita
+    frequencia: FrequenciaVisita,
+    cnpj: string
   ) => Promise<{ error?: { message: string } } | undefined>
 }) {
   const [selectedFrequencia, setSelectedFrequencia] = useState("")
+  const [cnpj, setCnpj] = useState(cnpjAtual)
   const [validationError, setValidationError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const cnpjTrimmed = cnpj.trim()
 
   /** Resets this dialog's own local state whenever it closes — via the
    * onOpenChange handler (not a synchronous setState-in-effect on `open`
@@ -65,6 +81,10 @@ export function GanhoFrequenciaDialog({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       setSelectedFrequencia("")
+      // Reset to cnpjAtual (not "") for the same reason as the other resets
+      // above: the field should reopen showing whatever the cliente already
+      // has, not a blank one.
+      setCnpj(cnpjAtual)
       setValidationError(null)
       setSubmitError(null)
     }
@@ -73,10 +93,15 @@ export function GanhoFrequenciaDialog({
 
   async function handleConfirm() {
     // The button itself is `disabled` (see below) whenever no frequência is
-    // selected, so this only guards a stray Enter-key submit — kept as a
-    // defense-in-depth check, not the primary gate.
+    // selected (or, when exigirCnpj, no CNPJ is filled), so this only guards
+    // a stray Enter-key submit — kept as a defense-in-depth check, not the
+    // primary gate.
     if (!selectedFrequencia) {
       setValidationError(REQUIRED_FREQUENCIA_MESSAGE)
+      return
+    }
+    if (exigirCnpj && !cnpjTrimmed) {
+      setValidationError(REQUIRED_CNPJ_MESSAGE)
       return
     }
 
@@ -85,7 +110,10 @@ export function GanhoFrequenciaDialog({
     setIsSubmitting(true)
 
     try {
-      const result = await onConfirm(selectedFrequencia as FrequenciaVisita)
+      const result = await onConfirm(
+        selectedFrequencia as FrequenciaVisita,
+        cnpjTrimmed
+      )
 
       if (result?.error) {
         setSubmitError(result.error.message)
@@ -128,13 +156,35 @@ export function GanhoFrequenciaDialog({
               ))}
             </SelectContent>
           </Select>
-          {validationError ? (
+          {validationError === REQUIRED_FREQUENCIA_MESSAGE ? (
             <p role="alert" className="text-sm text-destructive">
               {validationError}
             </p>
           ) : !selectedFrequencia ? (
             <p className="text-sm text-muted-foreground">
               Escolha a frequência de visita para este cliente.
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ganho-cnpj-input">CNPJ</Label>
+          <Input
+            id="ganho-cnpj-input"
+            placeholder="00.000.000/0000-00"
+            value={cnpj}
+            onChange={(e) => {
+              setCnpj(e.target.value)
+              setValidationError(null)
+            }}
+          />
+          {validationError === REQUIRED_CNPJ_MESSAGE ? (
+            <p role="alert" className="text-sm text-destructive">
+              {validationError}
+            </p>
+          ) : exigirCnpj && !cnpjTrimmed ? (
+            <p className="text-sm text-muted-foreground">
+              {CNPJ_SUPPORT_TEXT}
             </p>
           ) : null}
         </div>
@@ -157,7 +207,11 @@ export function GanhoFrequenciaDialog({
           <Button
             type="button"
             onClick={handleConfirm}
-            disabled={isSubmitting || !selectedFrequencia}
+            disabled={
+              isSubmitting ||
+              !selectedFrequencia ||
+              (exigirCnpj && !cnpjTrimmed)
+            }
           >
             {isSubmitting ? "Salvando..." : "Confirmar ganho"}
           </Button>

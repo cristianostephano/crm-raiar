@@ -13,6 +13,8 @@ function renderDialog(overrides: Partial<Parameters<typeof GanhoFrequenciaDialog
       open
       onOpenChange={onOpenChange}
       razaoSocial="Padaria Central"
+      cnpjAtual=""
+      exigirCnpj
       onConfirm={onConfirm}
       {...overrides}
     />
@@ -76,5 +78,76 @@ describe("GanhoFrequenciaDialog (VIS-01, 260807-13-02)", () => {
       "mensal",
       "nenhuma",
     ])
+  })
+
+  it("cnpjvazio: com CNPJ vazio e exigirCnpj, Confirmar ganho está desabilitado e mostra o texto de apoio do CNPJ", () => {
+    renderDialog({ exigirCnpj: true, cnpjAtual: "" })
+
+    const confirmar = screen.getByRole("button", { name: "Confirmar ganho" })
+    expect(confirmar).toBeDisabled()
+    expect(
+      screen.getByText("Informe o CNPJ para concluir o ganho deste cliente.")
+    ).toBeInTheDocument()
+  })
+
+  it("cnpjpreenchido: com cnpjAtual não-vazio, o campo já renderiza preenchido e o texto de apoio não aparece", () => {
+    renderDialog({ exigirCnpj: true, cnpjAtual: "12.345.678/0001-90" })
+
+    const cnpjInput = screen.getByLabelText("CNPJ") as HTMLInputElement
+    expect(cnpjInput.value).toBe("12.345.678/0001-90")
+    expect(
+      screen.queryByText("Informe o CNPJ para concluir o ganho deste cliente.")
+    ).not.toBeInTheDocument()
+  })
+
+  it("cnpjdispensado: com exigirCnpj falso e CNPJ vazio, a tela não cobra CNPJ de quem já é ganho", async () => {
+    const { onConfirm } = renderDialog({ exigirCnpj: false, cnpjAtual: "" })
+
+    const select = screen.getByRole("combobox", { name: "Frequência de visita" })
+    fireEvent.click(select)
+    fireEvent.click(await screen.findByRole("option", { name: "Semanal" }))
+
+    const confirmar = screen.getByRole("button", { name: "Confirmar ganho" })
+    expect(confirmar).not.toBeDisabled()
+
+    fireEvent.click(confirmar)
+
+    expect(onConfirm).toHaveBeenCalledWith("semanal", "")
+  })
+
+  it("cnpjrepassa: confirmar com CNPJ digitado com espaços nas pontas chama onConfirm com o CNPJ aparado", async () => {
+    const { onConfirm } = renderDialog({ exigirCnpj: true, cnpjAtual: "" })
+
+    const select = screen.getByRole("combobox", { name: "Frequência de visita" })
+    fireEvent.click(select)
+    fireEvent.click(await screen.findByRole("option", { name: "Semanal" }))
+
+    const cnpjInput = screen.getByLabelText("CNPJ")
+    fireEvent.change(cnpjInput, { target: { value: "  12.345.678/0001-90  " } })
+
+    const confirmar = screen.getByRole("button", { name: "Confirmar ganho" })
+    expect(confirmar).not.toBeDisabled()
+
+    fireEvent.click(confirmar)
+
+    expect(onConfirm).toHaveBeenCalledWith("semanal", "12.345.678/0001-90")
+  })
+
+  it("cnpjformato (Out of Scope, decisão travada): um CNPJ obviamente inválido habilita o botão e é aceito normalmente — nenhuma validação de formato existe no frontend", async () => {
+    const { onConfirm } = renderDialog({ exigirCnpj: true, cnpjAtual: "" })
+
+    const select = screen.getByRole("combobox", { name: "Frequência de visita" })
+    fireEvent.click(select)
+    fireEvent.click(await screen.findByRole("option", { name: "Semanal" }))
+
+    const cnpjInput = screen.getByLabelText("CNPJ")
+    fireEvent.change(cnpjInput, { target: { value: "123" } })
+
+    const confirmar = screen.getByRole("button", { name: "Confirmar ganho" })
+    expect(confirmar).not.toBeDisabled()
+
+    fireEvent.click(confirmar)
+
+    expect(onConfirm).toHaveBeenCalledWith("semanal", "123")
   })
 })

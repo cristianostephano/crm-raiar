@@ -101,6 +101,7 @@ export type MarcarStatusErrorCode =
   | "ganho_travado"
   | "motivo_obrigatorio"
   | "frequencia_obrigatoria"
+  | "cnpj_obrigatorio"
   | "mover_falhou"
 
 export type MarcarStatusResult =
@@ -118,18 +119,26 @@ export type MarcarStatusResult =
  * between columns), so the AFTER UPDATE trigger writes exactly one
  * historico row for the status change (FUN-10) — this action never inserts
  * into `historico` itself (T-02-25).
+ *
+ * CNPJ-01/CNPJ-02 (18-02): a quinta chamada opcional carrega o CNPJ digitado
+ * no diálogo de ganho. `status_acompanhamento` entra no mesmo `select` de
+ * `etapa` acima só para esta pré-checagem saber se a chamada é uma
+ * TRANSIÇÃO para ganho (cliente ainda não é ganho) ou uma reafirmação num
+ * cliente que já é ganho — é a mesma condição do guard do RPC (18-01), para
+ * a tela nunca cobrar CNPJ de quem já é ganho (grandfathering).
  */
 export async function marcarStatus(
   clienteId: string,
   novoStatus: StatusAcompanhamento,
   motivoPerdaId?: string,
-  frequenciaVisita?: FrequenciaVisita
+  frequenciaVisita?: FrequenciaVisita,
+  cnpj?: string
 ): Promise<MarcarStatusResult> {
   const supabase = await createClient()
 
   const { data: cliente, error: fetchError } = await supabase
     .from("clientes")
-    .select("etapa")
+    .select("etapa, status_acompanhamento, cnpj")
     .eq("id", clienteId)
     .single()
 
@@ -177,12 +186,34 @@ export async function marcarStatus(
     }
   }
 
+  const cnpjEfetivo = (cnpj?.trim() || cliente.cnpj?.trim()) ?? ""
+
+  // Mesma relação cortesia/backstop acima: só reprova aqui quando o CNPJ
+  // EFETIVO (parâmetro OU coluna já gravada, ambos aparados) está vazio —
+  // nunca só o parâmetro, senão esta pré-checagem bloquearia uma chamada
+  // que o RPC (18-01) aceitaria (cliente que já tem CNPJ na ficha e não
+  // reenviou o valor). E só na TRANSIÇÃO para ganho: um cliente que já é
+  // ganho (grandfathering, CNPJ-02) nunca é cobrado aqui.
+  if (
+    novoStatus === "ganho" &&
+    cliente.status_acompanhamento !== "ganho" &&
+    !cnpjEfetivo
+  ) {
+    return {
+      error: {
+        code: "cnpj_obrigatorio",
+        message: "Informe o CNPJ antes de confirmar.",
+      },
+    }
+  }
+
   const { error } = await supabase.rpc("mover_card_funil", {
     p_cliente_id: clienteId,
     p_nova_etapa: cliente.etapa,
     p_novo_status: novoStatus,
     p_motivo_perda_id: novoStatus === "perdido" ? motivoPerdaId : null,
     p_frequencia_visita: novoStatus === "ganho" ? frequenciaVisita : null,
+    p_cnpj: novoStatus === "ganho" ? (cnpj?.trim() || null) : null,
   })
 
   if (error) {
