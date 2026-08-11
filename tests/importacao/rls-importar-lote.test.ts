@@ -223,4 +223,45 @@ describe("RLS/behavior: importar_clientes_lote RPC (IMP-01/IMP-06/IMP-09/T-07-01
 
     await cleanup()
   })
+
+  it("cnpjfantasia: cnpj e nome_fantasia chegam gravados no cliente criado", async () => {
+    const supervisor = await signInAs(
+      SEED_ACCOUNTS.supervisor.email,
+      SEED_ACCOUNTS.supervisor.password
+    )
+    const vendedorA = await signInAs(
+      SEED_ACCOUNTS.vendedorA.email,
+      SEED_ACCOUNTS.vendedorA.password
+    )
+    const vendedorAId = await getUserId(vendedorA)
+
+    const razaoSocial = uniqueRazaoSocial("cnpj-fantasia")
+    const row = {
+      ...baseRowFields(razaoSocial, vendedorAId),
+      cnpj: "99.999.999/0001-99",
+      nome_fantasia: "Nome Fantasia de Teste",
+      produto_ids: [],
+    }
+
+    const { data, error } = await supervisor.rpc("importar_clientes_lote", {
+      p_clientes: [row],
+    })
+
+    expect(error).toBeNull()
+    expect(data).not.toBeNull()
+    expect(data!.length).toBe(1)
+    createdClienteIds.push(data![0].id)
+
+    const { data: releitura, error: releituraError } = await serviceClient()
+      .from("clientes")
+      .select("cnpj, nome_fantasia")
+      .eq("id", data![0].id)
+      .single()
+
+    expect(releituraError).toBeNull()
+    expect(releitura?.cnpj).toBe("99.999.999/0001-99")
+    expect(releitura?.nome_fantasia).toBe("Nome Fantasia de Teste")
+
+    await cleanup()
+  })
 })
