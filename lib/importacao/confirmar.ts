@@ -32,6 +32,8 @@ const DUPLICADO_ENCONTRADO_AO_CONFIRMAR_REASON =
  * jsonb_to_recordset expects (supabase/migrations/0006_...sql). */
 export type RpcClienteRow = {
   razao_social: string
+  cnpj: string | null
+  nome_fantasia: string | null
   cep: string
   rua: string
   numero: string
@@ -65,6 +67,8 @@ function toRpcClienteRow(resolved: ResolvedRow): RpcClienteRow {
 
   return {
     razao_social: resolved.razaoSocial,
+    cnpj: resolved.cnpj,
+    nome_fantasia: resolved.nomeFantasia,
     cep: resolved.cep,
     rua: resolved.rua,
     numero: resolved.numero,

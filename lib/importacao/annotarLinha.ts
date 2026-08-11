@@ -47,6 +47,8 @@ export type AnnotarLinhaLookups = {
  * written to the database by this phase (read-only preview). */
 export type ResolvedRow = {
   razaoSocial: string
+  cnpj: string | null
+  nomeFantasia: string | null
   cep: string
   rua: string
   numero: string
@@ -221,8 +223,17 @@ export function annotarLinha(
 
   const dedupedReasons = Array.from(new Set(reasons))
 
+  // 6. CNPJ / Nome Fantasia (IMP-01/IMP-02) — puramente carregados a partir
+  // da célula já saneada por sanitizeRow acima; sem checagem de formato, sem
+  // motivo de erro, aparados e convertidos para nulo quando ficam vazios
+  // (célula ausente ou só espaço em branco).
+  const cnpjValor = sanitized.cnpj?.trim()
+  const nomeFantasiaValor = sanitized.nomeFantasia?.trim()
+
   const resolved: ResolvedRow = {
     razaoSocial: sanitized.razaoSocial ?? "",
+    cnpj: cnpjValor ? cnpjValor : null,
+    nomeFantasia: nomeFantasiaValor ? nomeFantasiaValor : null,
     cep: sanitized.cep ?? "",
     rua: sanitized.rua ?? "",
     numero: sanitized.numero ?? "",
