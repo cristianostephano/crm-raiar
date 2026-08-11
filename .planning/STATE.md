@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: CNPJ Obrigatório no Ganho
-current_phase: 18
-current_phase_name: CNPJ Obrigatório no Ganho
-status: verifying
-stopped_at: "Plano 18-02 concluido: campo CNPJ no dialogo de ganho, marcarStatus repassando p_cnpj, ClienteDetailSheet sincronizando o CNPJ pos-ganho. Checkpoint humano aprovado. Fase 18 (CNPJ Obrigatorio no Ganho) completa — CNPJ-01/CNPJ-02 entregues de ponta a ponta."
-last_updated: "2026-08-11T20:08:44.783Z"
+current_phase: 19
+current_phase_name: Planilhas de CNPJ e Nome Fantasia
+status: executing
+stopped_at: "Plano 19-01 concluido: importar_clientes_lote grava cnpj/nome_fantasia, nova RPC atualizar_cnpj_lote para CNPJ em massa em clientes ja ganho. Migrations 0019/0020 aplicadas em producao com aprovacao humana (checkpoint Task 2). IMP-01/IMP-02/IMP-03 (camada de banco) entregues."
+last_updated: "2026-08-11T22:27:06.087Z"
 last_activity: 2026-08-11
-last_activity_desc: Phase 18 execution started
+last_activity_desc: Phase 19 execution started
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 6
+  completed_plans: 3
   percent: 50
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-06)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 18 — CNPJ Obrigatório no Ganho
+**Current focus:** Phase 19 — Planilhas de CNPJ e Nome Fantasia
 
 ## Current Position
 
-Phase: 18 (CNPJ Obrigatório no Ganho) — COMPLETE
-Plan: 2 of 2
-Status: Phase complete — ready for verification
-Last activity: 2026-08-11 — Phase 18 execution complete (18-01 + 18-02)
+Phase: 19 (Planilhas de CNPJ e Nome Fantasia) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-08-11 — Phase 19 execution started
 
 ## Performance Metrics
 
@@ -87,6 +87,7 @@ Last activity: 2026-08-11 — Phase 18 execution complete (18-01 + 18-02)
 | Phase 16 P04 | 35min | 3 tasks | 3 files |
 | Phase 18 P01 | 35min | 3 tasks | 4 files |
 | Phase 18 P02 | ~20min | 3 tasks | 4 files |
+| Phase 19 P01 | 20min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -211,6 +212,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 18-01] (2026-08-11) Migration 0018 aplicada em producao: mover_card_funil recriada com o 7o parametro p_cnpj, guard condicionado a TRANSICAO para ganho (nao ao estado), grandfathering de clientes ja ganho sem CNPJ provado por 13 testes de integracao contra o banco real (cnpj-ganho.test.ts). CLI do Supabase pinado em 2.111.0 para o push (mesma decisao da Fase 13). npm test completo nao fechou limpo por rate-limit conhecido de signInWithPassword; mitigado provando isoladamente os 6 arquivos de risco do plano + as 5 suites de dashboard que marcam ganho via UPDATE direto, mesma convencao da 13-01.
 - [Phase ?]: Pre-checagem de marcarStatus usa o CNPJ efetivo (parametro OU coluna ja gravada) para nao bloquear no servidor uma chamada que o RPC aceitaria — cliente que ja tem CNPJ na ficha e nao reenviou o valor no dialogo nao pode ser bloqueado pela pre-checagem
 - [Phase ?]: Testes de Select (base-ui) em jsdom so clicam de forma confiavel no primeiro item da lista (Semanal) — os 3 casos novos que dependem de frequencia escolhida usam esse item; comportamento real no navegador confirmado no checkpoint humano (Task 3)
+- [Phase ?]: CLI do Supabase pinado em 2.111.0 para o push das migrations 0019/0020 (mesma decisao das Fases 13/17/18) — 2.112.0+ tem bug de validacao de schema conhecido do projeto
+- [Phase ?]: Push das migrations 0019/0020 executado diretamente pelo dono do projeto, apos o classificador de modo automatico bloquear a tentativa do executor — mesmo padrao ja observado na Fase 18-01
+- [Phase ?]: IMP-01/IMP-02/IMP-03 deixados como Pending em REQUIREMENTS.md apos o plano 19-01 (nao marcados Complete) — o proprio source_audit do plano mostra que cada requisito so fecha depois dos planos 19-02/19-03/19-04 (aplicacao); mesma convencao ja travada na Fase 9-01 para requisitos multi-plano
 
 ### Pending Todos
 
@@ -263,8 +267,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-11T20:08:44.774Z
-Stopped at: Plano 18-02 concluido: campo CNPJ no dialogo de ganho, marcarStatus repassando p_cnpj, ClienteDetailSheet sincronizando o CNPJ pos-ganho. Checkpoint humano aprovado. Fase 18 (CNPJ Obrigatorio no Ganho) completa — CNPJ-01/CNPJ-02 entregues de ponta a ponta.
+Last session: 2026-08-11T22:26:20.594Z
+Stopped at: Plano 19-01 concluido: importar_clientes_lote grava cnpj/nome_fantasia, nova RPC atualizar_cnpj_lote para CNPJ em massa em clientes ja ganho. Migrations 0019/0020 aplicadas em producao com aprovacao humana (checkpoint Task 2). IMP-01/IMP-02/IMP-03 (camada de banco) entregues.
 Resume file: None
 
 ## Operator Next Steps
