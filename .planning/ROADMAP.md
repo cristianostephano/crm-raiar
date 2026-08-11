@@ -106,7 +106,15 @@ Plans:
   4. Quando o nome normalizado da planilha bate em mais de um cliente (nome ambíguo), a linha vira erro e nenhum CNPJ é gravado no cliente errado.
   5. A planilha de CNPJ em massa é estruturalmente incapaz de criar um cliente novo — só atualiza clientes existentes com status "ganho".
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+- [ ] 19-01-PLAN.md — Camada de banco das duas planilhas, num único push de produção: `importar_clientes_lote` recriada aceitando e gravando `cnpj`/`nome_fantasia` (hoje ela descarta essas chaves em silêncio) e a função nova `atualizar_cnpj_lote` no molde de `atualizar_frequencia_visita_lote` (Fase 17) — mais os testes de integração contra o banco real, com checkpoint humano antes do push
+- [ ] 19-02-PLAN.md — CNPJ e Nome Fantasia atravessando a cadeia inteira do assistente "Importar clientes" já existente: vocabulário de campos, modelo baixável, apelidos de cabeçalho, resolução da linha e carga da chamada em lote — com testes unitários em cada elo
+- [ ] 19-03-PLAN.md — Camada sem tela da planilha "CNPJ em massa": terceiro vocabulário de campos, modelo baixável, anotação por linha com casamento por nome normalizado e recusa de nome ambíguo (a correção já provada na Fase 17), planejamento da carga/reconciliação e as duas ações de servidor
+- [ ] 19-04-PLAN.md — Tela da planilha "CNPJ em massa": assistente de três passos, tabela de revisão que mostra o cliente encontrado no banco antes de gravar, resumo pós-gravação, rota exclusiva de Supervisor e entrada no menu — com verificação humana no navegador incluindo o caso de nome ambíguo
+
 **UI hint**: yes
 
 ## Progress
@@ -114,4 +122,4 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 18. CNPJ Obrigatório no Ganho | 2/2 | Complete   | 2026-08-11 |
-| 19. Planilhas de CNPJ e Nome Fantasia | 0/TBD | Not started | - |
+| 19. Planilhas de CNPJ e Nome Fantasia | 0/4 | Planned | - |
