@@ -20,6 +20,8 @@ import { SYSTEM_FIELDS } from "@/lib/importacao/types"
 /** Uma única linha de exemplo (IMP-02: "vazio + uma linha de exemplo"), com valores plausíveis por campo. */
 const EXAMPLE_VALUES: Record<(typeof SYSTEM_FIELDS)[number]["key"], string> = {
   razaoSocial: "Distribuidora Exemplo Ltda",
+  cnpj: "12.345.678/0001-90",
+  nomeFantasia: "Distribuidora Exemplo",
   cep: "01310-100",
   rua: "Av. Paulista",
   numero: "1000",

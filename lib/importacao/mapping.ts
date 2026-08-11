@@ -51,13 +51,21 @@ function normalizeHeader(value: string): string {
 
 /** Extra normalized aliases beyond each SYSTEM_FIELDS label itself — covers
  * the common spreadsheet header variations this phase must recognize,
- * notably "vendedor" for responsavel (IMP-04). Fixado na união de 14 chaves
+ * notably "vendedor" for responsavel (IMP-04). Fixado na união de 16 chaves
  * (SystemField) — suggestMapping abaixo confere se o resultado pertence à
- * lista de campos efetivamente recebida antes de devolvê-lo (Fase 17, D4). */
+ * lista de campos efetivamente recebida antes de devolvê-lo (Fase 17, D4).
+ *
+ * Fase 19 (IMP-01/IMP-02): "CNPJ"/"cnpj"/"C.N.P.J."/"Cnpj" e "Nome
+ * Fantasia"/"nome_fantasia"/"NOME FANTASIA" já normalizam para o mesmo texto
+ * do respectivo label de SYSTEM_FIELDS ("cnpj"/"nomefantasia") — o match por
+ * label acima já resolve essas variações, sem entrada redundante aqui. Só
+ * "fantasia" sozinho não bate com o label completo, daí a única entrada
+ * nova abaixo. */
 const ALIASES: Record<string, SystemField> = {
   razaosocial: "razaoSocial",
   empresa: "razaoSocial",
   nomeempresa: "razaoSocial",
+  fantasia: "nomeFantasia",
   cep: "cep",
   rua: "rua",
   logradouro: "rua",
