@@ -14,8 +14,8 @@ Requisitos do marco v1.4 — CNPJ Obrigatório no Ganho.
 
 ### Planilhas
 
-- [ ] **IMP-01**: Planilha "Importar clientes" (clientes novos, v1.1) ganha CNPJ como coluna opcional
-- [ ] **IMP-02**: Planilha "Importar clientes" (clientes novos, v1.1) ganha Nome Fantasia como coluna opcional
+- [x] **IMP-01**: Planilha "Importar clientes" (clientes novos, v1.1) ganha CNPJ como coluna opcional
+- [x] **IMP-02**: Planilha "Importar clientes" (clientes novos, v1.1) ganha Nome Fantasia como coluna opcional
 - [ ] **IMP-03**: Supervisor sobe uma nova planilha "CNPJ em massa" (Razão Social + CNPJ) para regularizar clientes já "ganho" hoje — casamento por nome (mesmo padrão de `atualizar_frequencia_visita_lote`, Fase 17), nome ambíguo vira erro de linha, estruturalmente incapaz de criar cliente novo
 
 ## v2 Requirements
@@ -36,8 +36,8 @@ Nenhum item deferido identificado neste marco.
 |-------------|-------|--------|
 | CNPJ-01 | Phase 18 | Complete |
 | CNPJ-02 | Phase 18 | Complete |
-| IMP-01 | Phase 19 | Pending |
-| IMP-02 | Phase 19 | Pending |
+| IMP-01 | Phase 19 | Complete |
+| IMP-02 | Phase 19 | Complete |
 | IMP-03 | Phase 19 | Pending |
 
 **Coverage:**

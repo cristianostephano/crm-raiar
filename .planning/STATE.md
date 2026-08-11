@@ -5,15 +5,15 @@ milestone_name: CNPJ Obrigatório no Ganho
 current_phase: 19
 current_phase_name: Planilhas de CNPJ e Nome Fantasia
 status: executing
-stopped_at: "Plano 19-01 concluido: importar_clientes_lote grava cnpj/nome_fantasia, nova RPC atualizar_cnpj_lote para CNPJ em massa em clientes ja ganho. Migrations 0019/0020 aplicadas em producao com aprovacao humana (checkpoint Task 2). IMP-01/IMP-02/IMP-03 (camada de banco) entregues."
-last_updated: "2026-08-11T22:27:06.087Z"
+stopped_at: "Plano 19-02 concluido: cnpj/nomeFantasia atravessam vocabulario, modelo, mapeamento, linha resolvida e carga da chamada em lote do assistente Importar clientes. IMP-01/IMP-02 (camada de aplicacao) entregues."
+last_updated: "2026-08-11T22:41:31.861Z"
 last_activity: 2026-08-11
 last_activity_desc: Phase 19 execution started
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 4
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 ## Current Position
 
 Phase: 19 (Planilhas de CNPJ e Nome Fantasia) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-11 — Phase 19 execution started
 
@@ -88,6 +88,7 @@ Last activity: 2026-08-11 — Phase 19 execution started
 | Phase 18 P01 | 35min | 3 tasks | 4 files |
 | Phase 18 P02 | ~20min | 3 tasks | 4 files |
 | Phase 19 P01 | 20min | 3 tasks | 4 files |
+| Phase 19 P02 | ~25min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -215,6 +216,9 @@ Recent decisions affecting current work:
 - [Phase ?]: CLI do Supabase pinado em 2.111.0 para o push das migrations 0019/0020 (mesma decisao das Fases 13/17/18) — 2.112.0+ tem bug de validacao de schema conhecido do projeto
 - [Phase ?]: Push das migrations 0019/0020 executado diretamente pelo dono do projeto, apos o classificador de modo automatico bloquear a tentativa do executor — mesmo padrao ja observado na Fase 18-01
 - [Phase ?]: IMP-01/IMP-02/IMP-03 deixados como Pending em REQUIREMENTS.md apos o plano 19-01 (nao marcados Complete) — o proprio source_audit do plano mostra que cada requisito so fecha depois dos planos 19-02/19-03/19-04 (aplicacao); mesma convencao ja travada na Fase 9-01 para requisitos multi-plano
+- [Phase ?]: [Fase 19-02] cnpj/nomeFantasia inseridos logo apos razaoSocial na lista de 16 campos do vocabulario de importacao, nao no final
+- [Phase ?]: [Fase 19-02] Apenas um apelido novo em ALIASES ('fantasia' -> nomeFantasia) - as demais variacoes de cabecalho ja batem por correspondencia direta de label apos a normalizacao existente
+- [Phase ?]: [Fase 19-02] tests/importacao/modelo.test.ts nao precisou de edicao - suas assercoes ja derivam de SYSTEM_FIELDS e continuam corretas com 16 campos
 
 ### Pending Todos
 
@@ -267,8 +271,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-11T22:26:20.594Z
-Stopped at: Plano 19-01 concluido: importar_clientes_lote grava cnpj/nome_fantasia, nova RPC atualizar_cnpj_lote para CNPJ em massa em clientes ja ganho. Migrations 0019/0020 aplicadas em producao com aprovacao humana (checkpoint Task 2). IMP-01/IMP-02/IMP-03 (camada de banco) entregues.
+Last session: 2026-08-11T22:41:31.813Z
+Stopped at: Plano 19-02 concluido: cnpj/nomeFantasia atravessam vocabulario, modelo, mapeamento, linha resolvida e carga da chamada em lote do assistente Importar clientes. IMP-01/IMP-02 (camada de aplicacao) entregues.
 Resume file: None
 
 ## Operator Next Steps
