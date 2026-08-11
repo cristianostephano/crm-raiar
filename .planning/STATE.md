@@ -2,14 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: CNPJ Obrigatório no Ganho
-status: planning
-last_updated: "2026-08-10T18:08:16.180Z"
-last_activity: 2026-08-10
+current_phase: 18
+current_phase_name: CNPJ Obrigatório no Ganho
+status: executing
+stopped_at: "Plano 18-01 concluido: migration 0018 aplicada em producao, 18-01-SUMMARY.md criado. Pronto para /gsd-plan-phase 18 continuar com 18-02 (campo CNPJ no dialogo de ganho) ou /gsd-execute-phase 18 se 18-02 ja estiver planejado."
+last_updated: "2026-08-11T19:05:32.983Z"
+last_activity: 2026-08-11
+last_activity_desc: Phase 18 execution started
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 
 ## Current Position
 
-Phase: 18 of 19 (CNPJ Obrigatório no Ganho)
-Plan: TBD (ready to plan)
-Status: Ready to plan
-Last activity: 2026-08-10 — Roadmap v1.4 criado (Fases 18-19)
+Phase: 18 (CNPJ Obrigatório no Ganho) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-08-11 — Phase 18 execution started
 
 ## Performance Metrics
 
@@ -81,6 +85,7 @@ Last activity: 2026-08-10 — Roadmap v1.4 criado (Fases 18-19)
 
 *Updated after each plan completion*
 | Phase 16 P04 | 35min | 3 tasks | 3 files |
+| Phase 18 P01 | 35min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -202,6 +207,7 @@ Recent decisions affecting current work:
 </details>
 
 - [Phase ?]: Fase 16 concluida (Plano 16-04): frequencia de pedidos e campo comum de formulario sem escrita imediata (diferente da frequencia de visita); Diario renderiza texto generico da caixinha legada de concluir tarefa sem caso especial (D1); ATV-01/ATV-02/DIAR-01 marcados completos
+- [Phase ?]: [Fase 18-01] (2026-08-11) Migration 0018 aplicada em producao: mover_card_funil recriada com o 7o parametro p_cnpj, guard condicionado a TRANSICAO para ganho (nao ao estado), grandfathering de clientes ja ganho sem CNPJ provado por 13 testes de integracao contra o banco real (cnpj-ganho.test.ts). CLI do Supabase pinado em 2.111.0 para o push (mesma decisao da Fase 13). npm test completo nao fechou limpo por rate-limit conhecido de signInWithPassword; mitigado provando isoladamente os 6 arquivos de risco do plano + as 5 suites de dashboard que marcam ganho via UPDATE direto, mesma convencao da 13-01.
 
 ### Pending Todos
 
@@ -254,8 +260,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-10T18:08:16.180Z
-Stopped at: Roadmap v1.4 criado (Fases 18-19), 5/5 requisitos mapeados sem órfãos. `.planning/ROADMAP.md`, `.planning/STATE.md` e a rastreabilidade de `.planning/REQUIREMENTS.md` atualizados. Pronto para `/gsd-plan-phase 18`.
+Last session: 2026-08-11T19:05:32.973Z
+Stopped at: Plano 18-01 concluido: migration 0018 aplicada em producao, 18-01-SUMMARY.md criado. Pronto para /gsd-plan-phase 18 continuar com 18-02 (campo CNPJ no dialogo de ganho) ou /gsd-execute-phase 18 se 18-02 ja estiver planejado.
 Resume file: None
 
 ## Operator Next Steps

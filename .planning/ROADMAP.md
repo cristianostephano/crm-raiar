@@ -73,33 +73,39 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.3-ROADMAP
 ## Phase Details
 
 ### Phase 18: CNPJ Obrigatório no Ganho
+
 **Goal**: A partir do momento em que um cliente vira "ganho", o sistema exige CNPJ preenchido — validado no banco, não só na tela — sem afetar clientes já "ganho" sem CNPJ nem o cadastro rápido anterior ao "ganho".
 **Depends on**: Nada dentro do marco (primeira fase da v1.4) — estende o `mover_card_funil` e o `lib/validations/cliente.ts` já existentes desde a Fase 13, mesmo padrão usado para tornar a frequência de visita obrigatória no "ganho" (VIS-01/VIS-04)
 **Requirements**: CNPJ-01, CNPJ-02
 **Success Criteria** (what must be TRUE):
+
   1. Ao tentar mover um card para "ganho" sem CNPJ preenchido, o sistema bloqueia a ação com uma mensagem clara — e a trava vale mesmo se alguém tentar contornar a validação da tela, porque o próprio RPC recusa a chamada.
   2. Preenchendo o CNPJ antes de mover o card, a mudança para "ganho" acontece normalmente (fluxo feliz continua funcionando sem fricção extra).
   3. Um cliente que já é "ganho" sem CNPJ (cadastrado antes desta trava) continua acessível normalmente na Agenda, na ficha e no diário, sem nenhum bloqueio ou erro.
   4. Antes do "ganho" — no cadastro rápido e na edição normal do cliente — o CNPJ continua opcional, sem nenhuma mudança de comportamento.
-**Plans**: 2 plans
+
+**Plans**: 1/2 plans executed
 
 Plans:
 
-- [ ] 18-01-PLAN.md — Migration que recria `mover_card_funil` com o 7º parâmetro `p_cnpj` e o guard de CNPJ-obrigatório condicionado à TRANSIÇÃO para ganho (grandfathering do CNPJ-02, zero mudança de schema), mais os testes de integração contra o banco real — com checkpoint humano antes do push em produção
+- [x] 18-01-PLAN.md — Migration que recria `mover_card_funil` com o 7º parâmetro `p_cnpj` e o guard de CNPJ-obrigatório condicionado à TRANSIÇÃO para ganho (grandfathering do CNPJ-02, zero mudança de schema), mais os testes de integração contra o banco real — com checkpoint humano antes do push em produção
 - [ ] 18-02-PLAN.md — Campo CNPJ no `GanhoFrequenciaDialog` já existente, `marcarStatus` levando o valor até `p_cnpj` na mesma chamada da frequência, e a sincronização na ficha que impede o salvamento seguinte de apagar o CNPJ — com verificação humana no navegador
 
 **UI hint**: yes
 
 ### Phase 19: Planilhas de CNPJ e Nome Fantasia
+
 **Goal**: Dar ao Supervisor dois caminhos de planilha para o CNPJ: trazer CNPJ e Nome Fantasia junto com clientes novos na importação, e regularizar em massa o CNPJ de clientes que já são "ganho" hoje.
 **Depends on**: Fase 18 não é pré-requisito técnico (a coluna `cnpj` já existe desde a Fase 13), mas a Fase 19 é ordenada depois porque a planilha "CNPJ em massa" é o caminho de regularização direto para o que a Fase 18 passa a exigir; IMP-01/IMP-02 reaproveitam o wizard "Importar clientes" já existente (Fases 6-7) e IMP-03 espelha o padrão de planilha em massa da Fase 17 (`atualizar_frequencia_visita_lote`)
 **Requirements**: IMP-01, IMP-02, IMP-03
 **Success Criteria** (what must be TRUE):
+
   1. Na planilha "Importar clientes", o Supervisor consegue mapear uma coluna para CNPJ (campo opcional) e o valor é gravado no cliente novo criado.
   2. Na mesma planilha, o Supervisor consegue mapear uma coluna para Nome Fantasia (campo opcional) e o valor é gravado no cliente novo criado.
   3. O Supervisor sobe uma nova planilha "CNPJ em massa" (Razão Social + CNPJ) e o sistema grava o CNPJ nos clientes já "ganho" correspondentes, casando por nome.
   4. Quando o nome normalizado da planilha bate em mais de um cliente (nome ambíguo), a linha vira erro e nenhum CNPJ é gravado no cliente errado.
   5. A planilha de CNPJ em massa é estruturalmente incapaz de criar um cliente novo — só atualiza clientes existentes com status "ganho".
+
 **Plans**: TBD
 **UI hint**: yes
 
@@ -107,5 +113,5 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 18. CNPJ Obrigatório no Ganho | 0/2 | Planned | - |
+| 18. CNPJ Obrigatório no Ganho | 1/2 | In Progress|  |
 | 19. Planilhas de CNPJ e Nome Fantasia | 0/TBD | Not started | - |
