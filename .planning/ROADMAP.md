@@ -67,7 +67,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.3-ROADMAP
 
 ### 🚧 v1.4 CNPJ Obrigatório no Ganho (Phases 18-19) — IN PROGRESS
 
-- [ ] **Phase 18: CNPJ Obrigatório no Ganho** - Ao mover um card para "ganho" o sistema passa a exigir CNPJ preenchido, travado no RPC `mover_card_funil` — clientes já "ganho" sem CNPJ continuam funcionando normalmente.
+- [x] **Phase 18: CNPJ Obrigatório no Ganho** - Ao mover um card para "ganho" o sistema passa a exigir CNPJ preenchido, travado no RPC `mover_card_funil` — clientes já "ganho" sem CNPJ continuam funcionando normalmente. (completed 2026-08-11)
 - [ ] **Phase 19: Planilhas de CNPJ e Nome Fantasia** - A planilha "Importar clientes" ganha CNPJ e Nome Fantasia como colunas opcionais, e uma nova planilha "CNPJ em massa" regulariza em lote os clientes já "ganho" sem CNPJ.
 
 ## Phase Details
@@ -84,12 +84,12 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.3-ROADMAP
   3. Um cliente que já é "ganho" sem CNPJ (cadastrado antes desta trava) continua acessível normalmente na Agenda, na ficha e no diário, sem nenhum bloqueio ou erro.
   4. Antes do "ganho" — no cadastro rápido e na edição normal do cliente — o CNPJ continua opcional, sem nenhuma mudança de comportamento.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 
 Plans:
 
 - [x] 18-01-PLAN.md — Migration que recria `mover_card_funil` com o 7º parâmetro `p_cnpj` e o guard de CNPJ-obrigatório condicionado à TRANSIÇÃO para ganho (grandfathering do CNPJ-02, zero mudança de schema), mais os testes de integração contra o banco real — com checkpoint humano antes do push em produção
-- [ ] 18-02-PLAN.md — Campo CNPJ no `GanhoFrequenciaDialog` já existente, `marcarStatus` levando o valor até `p_cnpj` na mesma chamada da frequência, e a sincronização na ficha que impede o salvamento seguinte de apagar o CNPJ — com verificação humana no navegador
+- [x] 18-02-PLAN.md — Campo CNPJ no `GanhoFrequenciaDialog` já existente, `marcarStatus` levando o valor até `p_cnpj` na mesma chamada da frequência, e a sincronização na ficha que impede o salvamento seguinte de apagar o CNPJ — com verificação humana no navegador
 
 **UI hint**: yes
 
@@ -113,5 +113,5 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 18. CNPJ Obrigatório no Ganho | 1/2 | In Progress|  |
+| 18. CNPJ Obrigatório no Ganho | 2/2 | Complete   | 2026-08-11 |
 | 19. Planilhas de CNPJ e Nome Fantasia | 0/TBD | Not started | - |

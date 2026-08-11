@@ -9,8 +9,8 @@ Requisitos do marco v1.4 — CNPJ Obrigatório no Ganho.
 
 ### CNPJ Obrigatório
 
-- [ ] **CNPJ-01**: Ao mover um card para "ganho", o sistema exige CNPJ preenchido — validação no RPC `mover_card_funil` (banco), não só na tela
-- [ ] **CNPJ-02**: Clientes que já são "ganho" sem CNPJ continuam funcionando normalmente (Agenda, ficha, diário) sem qualquer bloqueio, até serem regularizados
+- [x] **CNPJ-01**: Ao mover um card para "ganho", o sistema exige CNPJ preenchido — validação no RPC `mover_card_funil` (banco), não só na tela
+- [x] **CNPJ-02**: Clientes que já são "ganho" sem CNPJ continuam funcionando normalmente (Agenda, ficha, diário) sem qualquer bloqueio, até serem regularizados
 
 ### Planilhas
 
@@ -34,13 +34,14 @@ Nenhum item deferido identificado neste marco.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CNPJ-01 | Phase 18 | Pending |
-| CNPJ-02 | Phase 18 | Pending |
+| CNPJ-01 | Phase 18 | Complete |
+| CNPJ-02 | Phase 18 | Complete |
 | IMP-01 | Phase 19 | Pending |
 | IMP-02 | Phase 19 | Pending |
 | IMP-03 | Phase 19 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 5 total
 - Mapped to phases: 5
 - Unmapped: 0 ✓

@@ -4,17 +4,17 @@ milestone: v1.4
 milestone_name: CNPJ Obrigatório no Ganho
 current_phase: 18
 current_phase_name: CNPJ Obrigatório no Ganho
-status: executing
-stopped_at: "Plano 18-01 concluido: migration 0018 aplicada em producao, 18-01-SUMMARY.md criado. Pronto para /gsd-plan-phase 18 continuar com 18-02 (campo CNPJ no dialogo de ganho) ou /gsd-execute-phase 18 se 18-02 ja estiver planejado."
-last_updated: "2026-08-11T19:05:32.983Z"
+status: verifying
+stopped_at: "Plano 18-02 concluido: campo CNPJ no dialogo de ganho, marcarStatus repassando p_cnpj, ClienteDetailSheet sincronizando o CNPJ pos-ganho. Checkpoint humano aprovado. Fase 18 (CNPJ Obrigatorio no Ganho) completa — CNPJ-01/CNPJ-02 entregues de ponta a ponta."
+last_updated: "2026-08-11T20:08:44.783Z"
 last_activity: 2026-08-11
 last_activity_desc: Phase 18 execution started
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 
 ## Current Position
 
-Phase: 18 (CNPJ Obrigatório no Ganho) — EXECUTING
+Phase: 18 (CNPJ Obrigatório no Ganho) — COMPLETE
 Plan: 2 of 2
-Status: Ready to execute
-Last activity: 2026-08-11 — Phase 18 execution started
+Status: Phase complete — ready for verification
+Last activity: 2026-08-11 — Phase 18 execution complete (18-01 + 18-02)
 
 ## Performance Metrics
 
@@ -86,6 +86,7 @@ Last activity: 2026-08-11 — Phase 18 execution started
 *Updated after each plan completion*
 | Phase 16 P04 | 35min | 3 tasks | 3 files |
 | Phase 18 P01 | 35min | 3 tasks | 4 files |
+| Phase 18 P02 | ~20min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -208,6 +209,8 @@ Recent decisions affecting current work:
 
 - [Phase ?]: Fase 16 concluida (Plano 16-04): frequencia de pedidos e campo comum de formulario sem escrita imediata (diferente da frequencia de visita); Diario renderiza texto generico da caixinha legada de concluir tarefa sem caso especial (D1); ATV-01/ATV-02/DIAR-01 marcados completos
 - [Phase ?]: [Fase 18-01] (2026-08-11) Migration 0018 aplicada em producao: mover_card_funil recriada com o 7o parametro p_cnpj, guard condicionado a TRANSICAO para ganho (nao ao estado), grandfathering de clientes ja ganho sem CNPJ provado por 13 testes de integracao contra o banco real (cnpj-ganho.test.ts). CLI do Supabase pinado em 2.111.0 para o push (mesma decisao da Fase 13). npm test completo nao fechou limpo por rate-limit conhecido de signInWithPassword; mitigado provando isoladamente os 6 arquivos de risco do plano + as 5 suites de dashboard que marcam ganho via UPDATE direto, mesma convencao da 13-01.
+- [Phase ?]: Pre-checagem de marcarStatus usa o CNPJ efetivo (parametro OU coluna ja gravada) para nao bloquear no servidor uma chamada que o RPC aceitaria — cliente que ja tem CNPJ na ficha e nao reenviou o valor no dialogo nao pode ser bloqueado pela pre-checagem
+- [Phase ?]: Testes de Select (base-ui) em jsdom so clicam de forma confiavel no primeiro item da lista (Semanal) — os 3 casos novos que dependem de frequencia escolhida usam esse item; comportamento real no navegador confirmado no checkpoint humano (Task 3)
 
 ### Pending Todos
 
@@ -260,8 +263,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-11T19:05:32.973Z
-Stopped at: Plano 18-01 concluido: migration 0018 aplicada em producao, 18-01-SUMMARY.md criado. Pronto para /gsd-plan-phase 18 continuar com 18-02 (campo CNPJ no dialogo de ganho) ou /gsd-execute-phase 18 se 18-02 ja estiver planejado.
+Last session: 2026-08-11T20:08:44.774Z
+Stopped at: Plano 18-02 concluido: campo CNPJ no dialogo de ganho, marcarStatus repassando p_cnpj, ClienteDetailSheet sincronizando o CNPJ pos-ganho. Checkpoint humano aprovado. Fase 18 (CNPJ Obrigatorio no Ganho) completa — CNPJ-01/CNPJ-02 entregues de ponta a ponta.
 Resume file: None
 
 ## Operator Next Steps
