@@ -83,7 +83,12 @@ async function levarAteEtapaFinal(
   }
 }
 
-/** Mirrors the exact call the ganho dialog (13-02) will send. */
+/**
+ * Mirrors the exact call the ganho dialog (13-02/18-02) will send. Sempre
+ * manda p_cnpj (Fase 18): a partir da migration 0018, o RPC recusa a
+ * transição para ganho sem CNPJ, então todo caminho feliz destes testes
+ * precisa de um valor não-vazio para continuar passando.
+ */
 async function marcarGanhoRpc(
   client: SupabaseClient,
   clienteId: string,
@@ -93,6 +98,7 @@ async function marcarGanhoRpc(
     p_cliente_id: clienteId,
     p_nova_etapa: ETAPA_FINAL,
     p_novo_status: "ganho",
+    p_cnpj: "12.345.678/0001-99",
   }
   if (frequenciaVisita !== undefined) {
     params.p_frequencia_visita = frequenciaVisita
