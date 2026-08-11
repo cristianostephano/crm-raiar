@@ -7,7 +7,7 @@ import { SYSTEM_FIELDS } from "@/lib/importacao/types"
 import { SYSTEM_FIELDS_FREQUENCIA } from "@/lib/importacao/typesFrequencia"
 
 describe("ColumnMappingTable", () => {
-  it("padrao: sem a propriedade fields, o Select oferece os 14 rótulos da lista de clientes mais o item de não importar", () => {
+  it("padrao: sem a propriedade fields, o Select oferece os 16 rótulos da lista de clientes mais o item de não importar", () => {
     render(
       <ColumnMappingTable
         columns={["Razão social"]}
@@ -51,10 +51,10 @@ describe("ColumnMappingTable", () => {
       screen.getByRole("option", { name: "Não importar esta coluna" })
     ).toBeInTheDocument()
 
-    const rotulosDaListaDeQuatorze = SYSTEM_FIELDS.filter(
+    const rotulosDaListaDeDezesseis = SYSTEM_FIELDS.filter(
       (field) => !SYSTEM_FIELDS_FREQUENCIA.some((f) => f.label === field.label)
     )
-    for (const field of rotulosDaListaDeQuatorze) {
+    for (const field of rotulosDaListaDeDezesseis) {
       expect(screen.queryByRole("option", { name: field.label })).not.toBeInTheDocument()
     }
   })

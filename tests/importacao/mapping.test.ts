@@ -6,6 +6,7 @@ import {
   requiredFieldsFaltando,
   suggestMapping,
 } from "@/lib/importacao/mapping"
+import { SYSTEM_FIELDS_FREQUENCIA } from "@/lib/importacao/typesFrequencia"
 
 describe("suggestMapping", () => {
   it("suggests razaoSocial for 'razao_social' and 'Razão Social'", () => {
@@ -13,7 +14,7 @@ describe("suggestMapping", () => {
     expect(suggestMapping("Razão Social")).toBe("razaoSocial")
   })
 
-  it("suggests responsavel for 'vendedor' and 'responsavel' (IMP-04)", () => {
+  it("suggests responsavel for 'vendedor' e 'responsavel' (IMP-04)", () => {
     expect(suggestMapping("vendedor")).toBe("responsavel")
     expect(suggestMapping("responsavel")).toBe("responsavel")
     expect(suggestMapping("Responsável")).toBe("responsavel")
@@ -29,6 +30,27 @@ describe("suggestMapping", () => {
     expect(suggestMapping("CEP")).toBe("cep")
     expect(suggestMapping("Número de lojas")).toBe("numeroDeLojas")
     expect(suggestMapping("Produtos consumidos")).toBe("produtos")
+  })
+
+  it("suggests cnpj for spelling variations of the header (IMP-01)", () => {
+    expect(suggestMapping("CNPJ")).toBe("cnpj")
+    expect(suggestMapping("cnpj")).toBe("cnpj")
+    expect(suggestMapping("C.N.P.J.")).toBe("cnpj")
+    expect(suggestMapping("Cnpj")).toBe("cnpj")
+  })
+
+  it("suggests nomeFantasia for spelling variations of the header (IMP-02)", () => {
+    expect(suggestMapping("Nome Fantasia")).toBe("nomeFantasia")
+    expect(suggestMapping("nome_fantasia")).toBe("nomeFantasia")
+    expect(suggestMapping("NOME FANTASIA")).toBe("nomeFantasia")
+    expect(suggestMapping("fantasia")).toBe("nomeFantasia")
+  })
+
+  it("does not leak the new cnpj/nomeFantasia aliases into the frequência vocabulary (Fase 17, D4)", () => {
+    expect(suggestMapping("CNPJ", SYSTEM_FIELDS_FREQUENCIA)).toBe(NAO_IMPORTAR)
+    expect(suggestMapping("Nome Fantasia", SYSTEM_FIELDS_FREQUENCIA)).toBe(
+      NAO_IMPORTAR
+    )
   })
 })
 
