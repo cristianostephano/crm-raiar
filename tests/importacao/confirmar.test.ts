@@ -21,6 +21,8 @@ const DUPLICADO_CONFIRMAR_REASON =
 function makeResolved(overrides: Partial<ResolvedRow> = {}): ResolvedRow {
   return {
     razaoSocial: "Distribuidora ABC Ltda",
+    cnpj: "12.345.678/0001-90",
+    nomeFantasia: "Distribuidora Exemplo",
     cep: "01310-100",
     rua: "Av. Paulista",
     numero: "1000",
@@ -68,6 +70,8 @@ describe("planConfirmacao", () => {
     const inserted: RpcClienteRow = result.rowsToInsert[0]
     expect(inserted).toEqual({
       razao_social: "Distribuidora ABC Ltda",
+      cnpj: "12.345.678/0001-90",
+      nome_fantasia: "Distribuidora Exemplo",
       cep: "01310-100",
       rua: "Av. Paulista",
       numero: "1000",
@@ -216,6 +220,35 @@ describe("planConfirmacao", () => {
       ["Empresa A", "Empresa D"].sort()
     )
   })
+
+  it("maps cnpj and nomeFantasia from the resolved row to the RPC's snake_case keys (IMP-01/IMP-02)", () => {
+    const linha = makeRow({
+      row: 0,
+      status: "ok",
+      resolved: makeResolved({
+        cnpj: "98.765.432/0001-10",
+        nomeFantasia: "Outra Fantasia",
+      }),
+    })
+
+    const result = planConfirmacao([linha], {}, [])
+
+    expect(result.rowsToInsert[0].cnpj).toBe("98.765.432/0001-10")
+    expect(result.rowsToInsert[0].nome_fantasia).toBe("Outra Fantasia")
+  })
+
+  it("maps a null cnpj/nomeFantasia on the resolved row to null in the RPC payload (IMP-01/IMP-02)", () => {
+    const linha = makeRow({
+      row: 0,
+      status: "ok",
+      resolved: makeResolved({ cnpj: null, nomeFantasia: null }),
+    })
+
+    const result = planConfirmacao([linha], {}, [])
+
+    expect(result.rowsToInsert[0].cnpj).toBeNull()
+    expect(result.rowsToInsert[0].nome_fantasia).toBeNull()
+  })
 })
 
 describe("reconcileImportados", () => {
@@ -258,6 +291,8 @@ describe("reconcileImportados", () => {
 function emptyRpcRow(): RpcClienteRow {
   return {
     razao_social: "",
+    cnpj: null,
+    nome_fantasia: null,
     cep: "",
     rua: "",
     numero: "",

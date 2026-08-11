@@ -214,4 +214,55 @@ describe("annotarLinha", () => {
     expect(result.resolved.estado).toBe("SP")
     expect(result.resolved.cidade).toBe("Campinas")
   })
+
+  it("resolves cnpj and nomeFantasia from sanitized cells when present (IMP-01/IMP-02)", () => {
+    const result = annotarLinha(
+      {
+        ...baseRow(),
+        cnpj: "12.345.678/0001-90",
+        nomeFantasia: "Distribuidora Exemplo",
+      },
+      lookups
+    )
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.cnpj).toBe("12.345.678/0001-90")
+    expect(result.resolved.nomeFantasia).toBe("Distribuidora Exemplo")
+  })
+
+  it("resolves cnpj and nomeFantasia to null when the cells are absent, never adding a reason (IMP-01/IMP-02)", () => {
+    const result = annotarLinha(baseRow(), lookups)
+
+    expect(result.status).toBe("ok")
+    expect(result.reasons).toEqual([])
+    expect(result.resolved.cnpj).toBeNull()
+    expect(result.resolved.nomeFantasia).toBeNull()
+  })
+
+  it("resolves a whitespace-only cnpj cell to null, not an empty string", () => {
+    const result = annotarLinha({ ...baseRow(), cnpj: "   " }, lookups)
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.cnpj).toBeNull()
+  })
+
+  it("accepts any non-empty cnpj value regardless of format — no format-validation reason exists", () => {
+    const result = annotarLinha(
+      { ...baseRow(), cnpj: "formato-qualquer-nao-e-cnpj-de-verdade" },
+      lookups
+    )
+
+    expect(result.status).toBe("ok")
+    expect(result.reasons).toEqual([])
+    expect(result.resolved.cnpj).toBe("formato-qualquer-nao-e-cnpj-de-verdade")
+  })
+
+  it("sanitizes a formula-risk cnpj cell through the same row-wide sanitization path (T-19-11)", () => {
+    const result = annotarLinha(
+      { ...baseRow(), cnpj: "=cmd|' /C calc'!A1" },
+      lookups
+    )
+
+    expect(result.resolved.cnpj).toBe("'=cmd|' /C calc'!A1")
+  })
 })
