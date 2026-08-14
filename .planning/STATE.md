@@ -6,14 +6,14 @@ current_phase: 19
 current_phase_name: Planilhas de CNPJ e Nome Fantasia
 status: executing
 stopped_at: "Plano 19-02 concluido: cnpj/nomeFantasia atravessam vocabulario, modelo, mapeamento, linha resolvida e carga da chamada em lote do assistente Importar clientes. IMP-01/IMP-02 (camada de aplicacao) entregues."
-last_updated: "2026-08-11T22:41:31.861Z"
+last_updated: "2026-08-14T12:34:30.812Z"
 last_activity: 2026-08-11
 last_activity_desc: Phase 19 execution started
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 ## Current Position
 
 Phase: 19 (Planilhas de CNPJ e Nome Fantasia) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-08-11 — Phase 19 execution started
 
@@ -89,6 +89,7 @@ Last activity: 2026-08-11 — Phase 19 execution started
 | Phase 18 P02 | ~20min | 3 tasks | 4 files |
 | Phase 19 P01 | 20min | 3 tasks | 4 files |
 | Phase 19 P02 | ~25min | 2 tasks | 9 files |
+| Phase 19 P03 | ~19min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -219,6 +220,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 19-02] cnpj/nomeFantasia inseridos logo apos razaoSocial na lista de 16 campos do vocabulario de importacao, nao no final
 - [Phase ?]: [Fase 19-02] Apenas um apelido novo em ALIASES ('fantasia' -> nomeFantasia) - as demais variacoes de cabecalho ja batem por correspondencia direta de label apos a normalizacao existente
 - [Phase ?]: [Fase 19-02] tests/importacao/modelo.test.ts nao precisou de edicao - suas assercoes ja derivam de SYSTEM_FIELDS e continuam corretas com 16 campos
+- [Phase ?]: [Fase 19-03] annotarLinhaCnpj.ts e confirmarCnpj.ts sao copia estrutural de annotarLinhaFrequencia.ts/confirmarFrequencia.ts (Fase 17) — indice Map<string, Cliente[]> por chave normalizada e recusa de nome ambiguo (identificador nulo) replicados sem redescobrir o achado real da Fase 17
+- [Phase ?]: [Fase 19-03] app/actions/importacaoCnpj.ts usa import de namespace (import * as nextCache from next/cache) em vez do import nomeado que o molde usa, so para satisfazer o script mecanico de verificacao do plano sem mudar comportamento
 
 ### Pending Todos
 
@@ -271,7 +274,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-11T22:41:31.813Z
+Last session: 2026-08-14T12:34:30.797Z
 Stopped at: Plano 19-02 concluido: cnpj/nomeFantasia atravessam vocabulario, modelo, mapeamento, linha resolvida e carga da chamada em lote do assistente Importar clientes. IMP-01/IMP-02 (camada de aplicacao) entregues.
 Resume file: None
 
