@@ -1,5 +1,20 @@
 # Milestones
 
+## v1.4 CNPJ Obrigatório no Ganho (Shipped: 2026-08-14)
+
+**Phases completed:** 2 phases, 6 plans, 17 tasks
+
+**Key accomplishments:**
+
+- `mover_card_funil` recriada com o 7º parâmetro `p_cnpj`, exigindo CNPJ apenas na transição para "ganho" e preservando intocados os clientes já "ganho" sem CNPJ — migration 0018 aplicada em produção.
+- Diálogo de ganho (`GanhoFrequenciaDialog`) ganha campo CNPJ ao lado da frequência de visita, `marcarStatus` repassa `p_cnpj` na mesma chamada de RPC, e `ClienteDetailSheet` sincroniza o CNPJ recém-informado de volta no formulário para sobreviver a um "Salvar alterações" seguinte.
+- `importar_clientes_lote` recriada para gravar `cnpj`/`nome_fantasia`, e nova RPC `atualizar_cnpj_lote` para regularizar em massa o CNPJ de clientes já "ganho" — migrations 0019 e 0020 aplicadas em produção.
+- CNPJ e Nome Fantasia atravessam a cadeia inteira do assistente "Importar clientes" já existente — vocabulário, modelo baixável, sugestão automática de coluna, Select de mapeamento, linha resolvida e carga da chamada em lote — sem tocar em nenhuma validação de formato.
+- Camada sem tela da planilha "CNPJ em massa" — vocabulário, modelo, anotação com recusa de nome ambíguo, planejamento de carga e as duas Server Actions ligadas a `atualizar_cnpj_lote`, espelhando arquivo por arquivo o fluxo de frequência da Fase 17.
+- Assistente de três passos, tabela de revisão com casamento por nome visível, resumo pós-gravação, rota exclusiva de Supervisor e entrada de menu — montados por cima das Server Actions do plano 19-03, no mesmo molde do fluxo de frequência (Fase 17); verificado de ponta a ponta no navegador pelo dono do projeto, incluindo o caso de nome ambíguo.
+
+---
+
 ## v1.3 Agenda do Vendedor (Shipped: 2026-08-10)
 
 **Phases completed:** 5 phases, 19 plans, 50 tasks

@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: CNPJ Obrigatório no Ganho
-current_phase: 19
-current_phase_name: Planilhas de CNPJ e Nome Fantasia
-status: verifying
+current_phase: 4
+status: Awaiting next milestone
 stopped_at: "Plano 19-04 concluido: tela CNPJ em massa (wizard, revisao, resumo, rota, menu), verificado no navegador pelo dono do projeto. Fase 19 e marco v1.4 completos."
-last_updated: "2026-08-14T13:35:14.961Z"
-last_activity: 2026-08-11
-last_activity_desc: Phase 19 execution started
+last_updated: "2026-08-14T13:54:08.425Z"
+last_activity: 2026-08-14
+last_activity_desc: Milestone v1.4 completed and archived
 progress:
   total_phases: 2
   completed_phases: 2
   total_plans: 6
   completed_plans: 6
   percent: 100
+current_phase_name: Planilhas de CNPJ e Nome Fantasia
 ---
 
 # Project State
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 
 ## Current Position
 
-Phase: 19 (Planilhas de CNPJ e Nome Fantasia) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
-Last activity: 2026-08-11 — Phase 19 execution started
+Phase: Milestone v1.4 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-14 — Milestone v1.4 completed and archived
 
 ## Performance Metrics
 
@@ -284,4 +284,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Planejar a Fase 18 com `/gsd-plan-phase 18`
+- Start the next milestone with /gsd-new-milestone

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Um CRM de acompanhamento de vendas (funil/kanban) para substituir um CRM pago de custo elevado. Vendedores cadastram e trabalham clientes PJ ao longo de um funil de 7 etapas, do primeiro contato até a primeira venda concluída; um supervisor acompanha todos os clientes do time, tem um dashboard gerencial, e pode importar clientes em massa via planilha ou exportar a lista que enxerga. A partir do v1.3, o sistema também cuida do pós-venda: cliente "ganho" entra numa rotina de visitas recorrentes, e uma Agenda única junta tarefas de prospecção e visitas de pós-venda numa lista só, ordenada por urgência — com conclusão registrada (resumo + data + autor), diário por cliente, e planilhas para operar a frequência de visita e a exportação do diário em escala. Construído com custo zero de infraestrutura, pra validar a ideia antes de qualquer investimento em escala.
+Um CRM de acompanhamento de vendas (funil/kanban) para substituir um CRM pago de custo elevado. Vendedores cadastram e trabalham clientes PJ ao longo de um funil de 7 etapas, do primeiro contato até a primeira venda concluída; um supervisor acompanha todos os clientes do time, tem um dashboard gerencial, e pode importar clientes em massa via planilha ou exportar a lista que enxerga. A partir do v1.3, o sistema também cuida do pós-venda: cliente "ganho" entra numa rotina de visitas recorrentes, e uma Agenda única junta tarefas de prospecção e visitas de pós-venda numa lista só, ordenada por urgência — com conclusão registrada (resumo + data + autor), diário por cliente, e planilhas para operar a frequência de visita e a exportação do diário em escala. A partir do v1.4, CNPJ passa a ser exigido no exato momento em que um cliente vira "ganho" — travado no banco, não só na tela — sem afetar quem já é "ganho" sem CNPJ nem o cadastro rápido anterior ao "ganho"; duas planilhas (CNPJ+Nome Fantasia na importação de clientes novos, e "CNPJ em massa" pra regularizar quem já é ganho) dão ao Supervisor os dois caminhos de preenchimento em escala. Construído com custo zero de infraestrutura, pra validar a ideia antes de qualquer investimento em escala.
 
 ## Core Value
 
@@ -17,20 +17,9 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 ## Current State
 
-**Shipped:** v1.0 MVP (Autenticação, Cadastro + Funil, Administração de Listas, Dashboard Gerencial), v1.1 Importação e Exportação de Clientes (2026-07-25), v1.2 Gestão de Equipe, Análises de Funil e Filtros (2026-08-06), e v1.3 Agenda do Vendedor (2026-08-10).
+**Shipped:** v1.0 MVP (Autenticação, Cadastro + Funil, Administração de Listas, Dashboard Gerencial), v1.1 Importação e Exportação de Clientes (2026-07-25), v1.2 Gestão de Equipe, Análises de Funil e Filtros (2026-08-06), v1.3 Agenda do Vendedor (2026-08-10), e v1.4 CNPJ Obrigatório no Ganho (2026-08-14).
 
-O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, e agora o sistema também cobre o pós-venda: cliente "ganho" define uma frequência de visita (individualmente ou em massa via planilha), uma Agenda única junta o que precisa ser feito (prospecção + visitas), concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado.
-
-## Current Milestone: v1.4 CNPJ Obrigatório no Ganho
-
-**Goal:** CNPJ passa a ser exigido a partir do momento em que um cliente vira "ganho", com um caminho de planilha para regularizar em massa os clientes que já são "ganho" hoje.
-
-**Target features:**
-- CNPJ obrigatório ao mover um card para "ganho" (trava no RPC `mover_card_funil`, não só na tela)
-- Clientes já "ganho" sem CNPJ continuam funcionando normalmente até serem regularizados (grandfathering, mesmo padrão de VIS-04)
-- Planilha "Importar clientes" (v1.1) ganha CNPJ + Nome Fantasia como colunas opcionais
-- Nova planilha "CNPJ em massa" para clientes já "ganho", no molde da planilha de Frequência em Massa (Fase 17)
-- Antes do "ganho", cadastro rápido não muda em nada
+O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, o sistema cobre o pós-venda (cliente "ganho" define uma frequência de visita, uma Agenda única junta o que precisa ser feito, concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado), e agora CNPJ é exigido no banco no momento do "ganho" — com clientes antigos preservados e duas planilhas (importação de clientes novos e regularização em massa) para lidar com o campo em escala.
 
 ## Next Milestone Goals
 
@@ -83,6 +72,11 @@ Nada capturado ainda. Rode `/gsd-new-milestone` para começar o próximo marco.
 - ✓ Cliente ativo aceita frequência de pedidos (lista fixa gerenciada pelo Supervisor), só informativo — v1.3
 - ✓ Supervisor define a frequência de visita de vários clientes "ganho" de uma vez, via planilha (mesmo fluxo já conhecido de importação) — v1.3
 - ✓ Vendedor/Supervisor exporta o diário de visitas/tarefas concluídas como planilha, respeitando a mesma visibilidade da exportação de clientes — v1.3
+- ✓ Ao mover um card para "ganho", o sistema exige CNPJ preenchido — validado no RPC `mover_card_funil` (banco), não só na tela — v1.4
+- ✓ Clientes que já são "ganho" sem CNPJ continuam funcionando normalmente (Agenda, ficha, diário) sem qualquer bloqueio, até serem regularizados — v1.4
+- ✓ Planilha "Importar clientes" ganha CNPJ como coluna opcional — v1.4
+- ✓ Planilha "Importar clientes" ganha Nome Fantasia como coluna opcional — v1.4
+- ✓ Supervisor sobe uma planilha "CNPJ em massa" (Razão Social + CNPJ) para regularizar clientes já "ganho" hoje, casando por nome, nome ambíguo vira erro de linha — v1.4
 
 ### Active
 
@@ -95,7 +89,8 @@ Nada capturado ainda — próximo marco a definir via `/gsd-new-milestone`.
 - App mobile nativo — web responsivo é suficiente
 - Integração contínua (sync/API) com o CRM pago atual — o objetivo é substituí-lo, não integrar com ele
 - Importação em massa pelo Vendedor — restrita ao Supervisor, decisão explícita do dono do projeto, confirmada e implementada em v1.1
-- Validação de CNPJ na importação — adiado para uma v2 se vier a ser necessário (v1.1 valida só os campos mínimos de cadastro)
+- Validação de formato/dígito verificador de CNPJ — nunca implementada, em nenhum ponto do sistema (importação v1.1, obrigatoriedade no "ganho" v1.4, planilhas v1.4); o sistema só confere presença, nunca formato — adiar para v2 se vier a ser necessário
+- CNPJ obrigatório retroativamente — clientes já "ganho" sem CNPJ nunca são bloqueados; grandfathering deliberado (v1.4), mesmo padrão de VIS-04 (frequência de visita, v1.3)
 - Lembrar o mapeamento de colunas entre importações — cada planilha é mapeada do zero por enquanto (v1.1); útil se o volume de importações recorrentes crescer
 - Importação como atualização de cliente existente — v1.1 só cria clientes novos; atualizar em massa fica para uma versão futura, se necessário
 - Valor em R$ / ticket médio por negócio — o CRM não rastreia valor monetário de cliente hoje; adiado até virar necessidade real (v1.2 só trouxe métricas de tempo/conversão)
@@ -116,7 +111,7 @@ Nada capturado ainda — próximo marco a definir via `/gsd-new-milestone`.
 - **Origem do mapeamento de domínio**: existe um wireframe (Excalidraw) do fluxo de vendas atual, já documentado em `CLAUDE.md` — usuários/papéis, cliente PJ, funil de 7 etapas e os 3 enums editáveis originais (categoria, produtos consumidos, tipos de tarefa). O motivo de perda (4º enum editável) surgiu durante esta conversa de inicialização.
 - **Migração de dados**: existe uma base de clientes no CRM pago atual que precisa ser trazida para o sistema novo. Na v1.0 isso foi tratado como migração única, fora da UI — na v1.1 essa decisão foi revista e implementada: o time recebe planilhas de clientes/leads com frequência (parceiros, feiras), e a importação agora é uma tela permanente do sistema, restrita ao Supervisor.
 - **Perfil do usuário**: quem pilota o projeto não programa. Explicações devem evitar jargão técnico, focar em sintomas observáveis, e mudanças grandes precisam de um plano em linguagem simples antes de qualquer implementação.
-- **Estado do código pós-v1.3**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. v1.3 adicionou: enum `frequencia_visita_enum` + 4 colunas nullable em `clientes` (nome_fantasia/cnpj/frequencia_pedidos/frequencia_visita), tabela `visitas` (RLS parent-gated, espelha `tarefas`), coluna `resumo` em `tarefas`, `mover_card_funil` estendido (6 parâmetros), RPC `agenda_do_vendedor()` (SECURITY INVOKER, une tarefas+visitas pendentes), RPCs atômicas `concluir_tarefa_prospeccao`/`concluir_visita` (SECURITY INVOKER), tabela `frequencias_pedido` (5ª lista editável do projeto), e RPC `atualizar_frequencia_visita_lote` (SECURITY INVOKER, escrita em massa). O projeto continua com exatamente 4 exceções `SECURITY DEFINER` documentadas: `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe`, `cidades_com_clientes_por_estado()` — nenhuma nova em v1.3, apesar de 5 migrations novas (0013-0017).
+- **Estado do código pós-v1.4**: Next.js 16 (App Router) + Supabase (Postgres/Auth/RLS), sem backend Node separado. v1.3 adicionou: enum `frequencia_visita_enum` + 4 colunas nullable em `clientes` (nome_fantasia/cnpj/frequencia_pedidos/frequencia_visita), tabela `visitas` (RLS parent-gated, espelha `tarefas`), coluna `resumo` em `tarefas`, `mover_card_funil` estendido (6 parâmetros), RPC `agenda_do_vendedor()` (SECURITY INVOKER, une tarefas+visitas pendentes), RPCs atômicas `concluir_tarefa_prospeccao`/`concluir_visita` (SECURITY INVOKER), tabela `frequencias_pedido` (5ª lista editável do projeto), e RPC `atualizar_frequencia_visita_lote` (SECURITY INVOKER, escrita em massa). v1.4 adicionou 3 migrations (0018-0020, sem alterar schema de tabela nenhuma): `mover_card_funil` estendido de novo (7 parâmetros, `p_cnpj`) com guard condicionado à transição pra "ganho" (nunca ao estado — grandfathering); `importar_clientes_lote` recriada para gravar `cnpj`/`nome_fantasia` (antes descartados em silêncio); e a nova RPC `atualizar_cnpj_lote` (escrita em massa, espelha `atualizar_frequencia_visita_lote` arquivo por arquivo). O projeto continua com exatamente 4 exceções `SECURITY DEFINER` documentadas: `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe`, `cidades_com_clientes_por_estado()` — nenhuma nova desde a v1.2, apesar de 8 migrations novas entre v1.3 e v1.4 (0013-0020).
 - **Débito técnico conhecido**: nenhum item bloqueante. Um gap de verificação humana ficou formalmente aceito (Fase 8 — drag-and-drop com auto-scroll do kanban não foi exercitado por um teste automatizado nem por um drag real de mouse numa sessão anterior; risco julgado baixo por ser mudança isolada de CSS/layout, ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`). Um `eslint-disable` pontual e documentado permanece em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — a Fase 16 acrescentou 3 campos + 1 seção nesse arquivo sem piorar a supressão (verificado mecanicamente), mas a correção com o padrão "ajustar estado durante o render" continua como quick task futura. A decisão de produto da caixinha antiga de "concluir tarefa" na ficha do cliente (não exige resumo, ao contrário do fluxo novo pela Agenda) foi deliberadamente deixada como está na Fase 16 — dois caminhos de conclusão com regras diferentes, aceito de propósito para não expandir o escopo da fase.
 
 ## Constraints
@@ -162,6 +157,13 @@ Nada capturado ainda — próximo marco a definir via `/gsd-new-milestone`.
 | `atualizar_frequencia_visita_lote` é uma única instrução UPDATE, sem INSERT, restrita a `status_acompanhamento = 'ganho'` — garantido pela forma do SQL, não por disciplina de tela | Torna estruturalmente impossível a planilha de frequências criar um cliente novo | ✓ Good |
 | Planilha de frequências em massa trata nome ambíguo (2+ clientes com o mesmo nome normalizado) como erro de linha, nunca grava no cliente errado | Descoberto durante a Fase 17: a normalização de nome (remove acento/caixa/sufixo) pode colidir dois clientes distintos | ✓ Good |
 | Exportação do diário sempre usa o escopo total visível por RLS, ignorando o filtro de vendedor ativo na tela da Agenda | Decisão do dono do projeto: exportar é uma ação separada de "tudo que eu posso ver", evita o Supervisor esquecer o filtro ligado e exportar menos do que queria | ✓ Good |
+| Guard de CNPJ obrigatório é de TRANSIÇÃO pra "ganho", nunca de estado — três condições juntas (pediu ganho + status atual ainda não é ganho + CNPJ efetivo vazio) | É o mecanismo literal que garante o grandfathering (CNPJ-02); condicionar só ao estado bloquearia clientes legados | ✓ Good |
+| CNPJ efetivo no guard é `coalesce(nullif(btrim(p_cnpj),''), nullif(btrim(cnpj_já_gravado),''))` | Quem já preencheu a ficha não precisa redigitar no diálogo de ganho; espaço em branco não engana a trava | ✓ Good |
+| Sem validação de formato/dígito verificador de CNPJ em lugar nenhum do sistema — só presença é exigida | Fora do pedido original; mesma postura já usada quando CNPJ era opcional (v1.3) | ✓ Good |
+| `importar_clientes_lote` precisou de migration própria pra aceitar `cnpj`/`nome_fantasia` — achado do planejamento da Fase 19, não estava no escopo original | O `jsonb_to_recordset` da função não declarava essas chaves; sem a migration, a planilha teria "sucesso" na tela mas o dado sumiria em silêncio | ✓ Good |
+| `atualizar_cnpj_lote` espelha `atualizar_frequencia_visita_lote` (Fase 17) arquivo por arquivo — mesma estrutura de UPDATE único, guard de `status_acompanhamento='ganho'`, sem SECURITY DEFINER | Reaproveita um padrão já provado em produção em vez de desenhar um novo | ✓ Good |
+| Planilha "CNPJ em massa" reaproveita a recusa de nome ambíguo já corrigida na Fase 17 (2+ clientes com nome normalizado igual vira erro de linha) | Mesmo risco estrutural (normalização de nome pode colidir clientes distintos), correção já provada, não precisa ser redescoberta | ✓ Good |
+| Diálogo de "ganho" sincroniza o CNPJ recém-informado de volta no `ClienteDetailSheet` (form state, não só o registro em memória) | Bug real encontrado no planejamento: sem isso, editar outro campo e salvar logo após o ganho apagaria o CNPJ que acabou de ser exigido | ✓ Good |
 
 ## Evolution
 
@@ -182,4 +184,4 @@ Este documento evolui nas transições de fase e nos marcos do projeto.
 5. Atualizar Context com o estado atual (usuários, feedback, métricas)
 
 ---
-*Last updated: 2026-08-10 — after v1.3 milestone (Agenda do Vendedor)*
+*Last updated: 2026-08-14 — after v1.4 milestone (CNPJ Obrigatório no Ganho)*
