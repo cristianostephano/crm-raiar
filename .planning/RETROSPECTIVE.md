@@ -132,6 +132,48 @@
 
 ---
 
+## Milestone: v1.4 — CNPJ Obrigatório no Ganho
+
+**Shipped:** 2026-08-14
+**Phases:** 2 | **Plans:** 6 | **Sessions:** ~1 sessão longa (múltiplas interrupções por limite de sessão/semanal, todas recuperadas sem perda de trabalho)
+
+### What Was Built
+- `mover_card_funil` estendido com o 7º parâmetro `p_cnpj`: exigir CNPJ passa a valer só na transição pra "ganho" (nunca retroativo), migration 0018 em produção (Fase 18).
+- Diálogo de ganho (`GanhoFrequenciaDialog`) ganha campo CNPJ ao lado da frequência de visita; `ClienteDetailSheet` sincroniza o valor recém-informado de volta no formulário — corrige um bug real encontrado no planejamento (o salvamento seguinte apagaria o CNPJ que acabou de ser exigido) (Fase 18).
+- `importar_clientes_lote` recriada para gravar `cnpj`/`nome_fantasia` (antes descartados em silêncio) e CNPJ/Nome Fantasia atravessam toda a cadeia do assistente "Importar clientes" já existente (Fase 19).
+- Nova RPC `atualizar_cnpj_lote` e planilha "CNPJ em massa" completa (vocabulário, anotação com recusa de nome ambíguo, assistente de três passos, rota exclusiva de Supervisor, menu) — espelha o padrão de "Frequência em Massa" da Fase 17 arquivo por arquivo (Fase 19).
+
+### What Worked
+- Pular discuss-phase e research nas duas fases (decisão do dono do projeto, confirmada via pergunta explícita antes de cada planejamento) foi a escolha certa: o escopo já estava fechado pela conversa e o precedente no código (Fase 13 pra guard de transição, Fase 17 pra planilha em massa) era forte o suficiente pra não precisar de investigação nova.
+- Grep no código antes de escrever o brief do planejador (em vez de deixar o planner descobrir do zero) trouxe o precedente exato — arquivos, assinatura de RPC, guard de status — direto pro contexto do agente, o que ajudou o planejador a encontrar sozinho a lacuna real da Fase 19 (ver "What Was Inefficient").
+- Verificação humana ao vivo no navegador, feita pessoalmente pelo dono do projeto em cada checkpoint, continuou sendo a rede de segurança real — incluindo testar deliberadamente o caso de nome ambíguo com dados semeados no banco antes do teste.
+- RLS/RPC como única fronteira de autorização se manteve sem exceção nova em 3 migrations (0018-0020) — o projeto continua com as mesmas 4 exceções `SECURITY DEFINER` documentadas desde o v1.2.
+
+### What Was Inefficient
+- **Push de migration bloqueado pelo classificador de modo automático do harness**: em ambas as fases (18-01, 19-01), o comando `supabase db push` foi recusado para o subagente executor — resolvido, como em v1.3, rodando o comando diretamente pelo orquestrador com aprovação explícita do dono, nunca contornado.
+- **Lacuna real encontrada só no planejamento da Fase 19**: o brief inicial assumia que sub-escopo A (CNPJ/Nome Fantasia na importação de clientes novos) não precisava de mudança de RPC — mas `importar_clientes_lote` não declarava essas duas chaves no `jsonb_to_recordset`, então a planilha teria "sucesso" na tela e o dado sumiria em silêncio. O planejador encontrou isso lendo o código-fonte real da função em vez de confiar no brief, e a correção (uma migration a mais, dividida em duas na mesma fase pra economizar checkpoints) ficou registrada no próprio PLAN.md.
+- **Duas quedas de sessão por limite** (uma de sessão, uma semanal) interromperam execução de plano no meio — em ambos os casos nenhum commit tinha sido feito ainda no ponto da queda, então o reinício foi limpo (sem estado parcial pra reconciliar), só uma repetição do `Agent()` de execução.
+- Pausa deliberada do usuário no meio de um checkpoint de verificação ("marcar pendente, já retorno") — tratada como uma pausa legítima, não como reprovação; a sessão retomou do mesmo ponto exato (dados de teste ainda no banco, servidor religado) sem precisar re-executar nada.
+
+### Patterns Established
+- Toda fase com migration nova continua seguindo o mesmo roteiro do v1.3: checkpoint humano com explicação em português simples do que a migration faz e não faz → aprovação → push feito pelo orquestrador (não pelo subagente) → testes rodados até GREEN → SUMMARY.md.
+- Guard de "campo obrigatório a partir de X" (CNPJ no ganho, como frequência de visita antes dele) é sempre condicionado à TRANSIÇÃO, nunca ao estado — três condições AND (pediu o novo estado + estado atual ainda não é esse + campo vazio) é o mecanismo literal que garante grandfathering; remover a condição do meio transforma a trava em retroativa.
+- RPCs de escrita em massa continuam seguindo o molde de `atualizar_frequencia_visita_lote`: UPDATE único set-based, guard de papel explícito, nunca `SECURITY DEFINER`, estruturalmente incapaz de criar linha nova, e recusa de nome ambíguo (2+ clientes com nome normalizado igual) como erro de linha em vez de adivinhar.
+- Quando uma fase estende uma função existente que já é usada por um fluxo de tela com diálogo de confirmação (ex. o diálogo de "ganho"), verificar explicitamente se o valor recém-gravado precisa ser sincronizado de volta no estado do formulário que segue montado na tela — é exatamente o tipo de bug que só aparece numa sequência de duas ações do usuário, não numa ação isolada.
+
+### Key Lessons
+1. Ler o código-fonte real da função que será estendida (não confiar no brief nem na spec) antes de planejar continua sendo o que revela lacunas genuínas — confirmado de novo em v1.4 (a chave `cnpj`/`nome_fantasia` faltando no recordset de `importar_clientes_lote`), mesma lição da v1.3.
+2. Pular discuss-phase/research quando o escopo já está resolvido na conversa e o precedente no código é forte é uma economia real, não um atalho arriscado — mas só funciona se alguém (o orquestrador) já verificou o precedente antes de perguntar ao usuário se pode pular.
+3. Uma queda de sessão por limite de uso, quando acontece ANTES do primeiro commit de um plano, não deixa estado sujo pra reconciliar — vale checar `git log`/`git status` antes de decidir como retomar, em vez de assumir que precisa de recuperação complexa.
+4. Quando o usuário pede pra pausar um checkpoint ("volto depois"), a sessão deve preservar o ambiente de teste (dados semeados, servidor) exatamente como estava, pra retomar sem re-trabalho quando ele voltar.
+
+### Cost Observations
+- Model mix: planner em opus, executor/researcher em sonnet, plan-checker/verifier em haiku/sonnet — mesmo padrão de v1.2/v1.3, mantido estável.
+- Duas quedas por limite de uso (sessão + semanal) no meio da execução — ambas recuperadas sem retrabalho porque nenhum commit tinha acontecido ainda no ponto da interrupção.
+- Nenhum retrabalho de funcionalidade foi necessário — a única lacuna de planejamento encontrada (RPC de importação não gravava as duas colunas novas) foi corrigida dentro do próprio ciclo de planejamento da Fase 19, antes de qualquer execução.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -142,6 +184,7 @@
 | v1.1 | ~2-3 | 3 | Primeira retrospectiva formal; verificação manual no navegador ao final de cada fase virou padrão consistente |
 | v1.2 | ~1 (com interrupção por limite de uso) | 5 | Fases rodando em paralelo via worktree (8/9, e depois 10/11) virou padrão — trouxe junto o risco novo de colisão de numeração de migration, agora documentado como lição |
 | v1.3 | ~1 sessão contínua longa (múltiplas interrupções por limite recuperadas) | 5 | Verificação pessoal ao vivo em TODO checkpoint (não delegada) virou disciplina consistente; primeira vez que o bloqueio de segurança do harness em `supabase db push` apareceu — resolvido com push manual do orquestrador, nunca contornado |
+| v1.4 | ~1 sessão longa (2 quedas por limite recuperadas, mais uma pausa deliberada do usuário no meio de um checkpoint) | 2 | Primeiro marco a pular discuss-phase/research deliberadamente nas duas fases (escopo já resolvido em conversa + precedente forte no código, confirmado via pergunta explícita); primeiro marco pequeno o suficiente (2 fases) pra caber inteiro numa sessão só, incluindo fechamento |
 
 ### Cumulative Quality
 
@@ -150,10 +193,13 @@
 | v1.1 | 72+ (tests/importacao/*, incluindo 3 casos de integração contra RLS real) | Não medido formalmente | `@e965/xlsx`, `papaparse` (ambos avaliados por legitimidade antes da instalação) |
 | v1.2 | Suite completa passando (falhas remanescentes isoladas a rate-limit de Auth do free-tier, não regressão); novos arquivos de integração em `tests/equipe/*` e `tests/dashboard/*` | Não medido formalmente | Nenhuma dependência nova — v1.2 foi só RPCs/migrations + componentes reaproveitando a stack já instalada |
 | v1.3 | Centenas de casos novos across `tests/agenda/*`, `tests/clientes/*`, `tests/configuracoes/*`, `tests/importacao/*` (RLS/integração contra o banco real em todas as fases com migration) | Não medido formalmente | Nenhuma dependência nova — v1.3 reaproveitou `@e965/xlsx` (v1.1) e toda a stack já instalada |
+| v1.4 | Dezenas de casos novos em `tests/clientes/cnpj-ganho.test.ts`, `tests/importacao/rls-cnpj-lote.test.ts`, `tests/importacao/annotarLinhaCnpj.test.ts`/`confirmarCnpj.test.ts` (integração contra o banco real, incluindo caso de nome ambíguo); zero regressão nos arquivos que não deveriam ser tocados (`funil-status`, `funil-constraints`, `rls-visitas`, `rls-frequencia-lote`) | Não medido formalmente | Nenhuma dependência nova — v1.4 reaproveitou toda a stack já instalada |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Fechar cada marco formalmente antes de iniciar o próximo evita perda de registro histórico (v1.1 pagou esse custo ao fechar o v1.0 tardiamente).
-2. Testes de integração contra o banco real (não mockado) seguem sendo a forma mais confiável de pegar bugs de RLS/PL/pgSQL — confirmado de novo em v1.2 e v1.3.
-3. Verificação humana ao vivo no navegador continua pegando bugs que nenhum teste automatizado alcança (v1.1: nenhum caso; v1.2: o bug de `avancou_pct` acima de 100%; v1.3: nenhum bug real desta vez, mas confirmou positivamente vários comportamentos de risco) — vale manter como gate obrigatório de toda fase de UI/dashboard.
-4. Ler o código-fonte real do fluxo análogo antes de planejar (não só a spec/pesquisa) revela lacunas genuínas antes que virem bugs — confirmado repetidamente em v1.3 (ambiguidade de nome, duplicata de linha, prop faltando, todos encontrados na fase de planejamento).
+2. Testes de integração contra o banco real (não mockado) seguem sendo a forma mais confiável de pegar bugs de RLS/PL/pgSQL — confirmado de novo em v1.2, v1.3 e v1.4.
+3. Verificação humana ao vivo no navegador continua pegando bugs que nenhum teste automatizado alcança (v1.1: nenhum caso; v1.2: o bug de `avancou_pct` acima de 100%; v1.3: nenhum bug real, mas confirmou comportamentos de risco; v1.4: nenhum bug real, mas provou o caso de nome ambíguo com dados reais) — vale manter como gate obrigatório de toda fase de UI/dashboard.
+4. Ler o código-fonte real do fluxo análogo antes de planejar (não só a spec/pesquisa) revela lacunas genuínas antes que virem bugs — confirmado repetidamente em v1.3 (ambiguidade de nome, duplicata de linha, prop faltando) e de novo em v1.4 (RPC de importação não gravava as colunas novas).
+5. Um bloqueio de segurança do harness em `supabase db push` não é um bug — é a proteção funcionando; a resposta certa é sempre rodar a ação manualmente com aprovação explícita do dono, nunca contornar por outro caminho — confirmado em v1.3 e de novo em v1.4 (duas vezes na mesma sessão).
+6. Quando o escopo de uma fase pequena já foi resolvido em conversa e existe precedente forte no código, pular discuss-phase/research é uma economia real — mas só depois de o orquestrador verificar o precedente por conta própria (grep/leitura direta) antes de perguntar ao usuário se pode pular (v1.4).
