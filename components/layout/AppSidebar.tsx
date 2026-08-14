@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import {
   ChevronLeft,
   ChevronRight,
+  FileDigit,
   FileUp,
   LayoutDashboard,
   ListChecks,
@@ -96,6 +97,15 @@ const ADMIN_SECTION: NavSection = {
       href: "/clientes/importar-frequencias",
       label: "Importar frequências",
       icon: RefreshCw,
+    },
+    // FileDigit (documento com números) é deliberadamente diferente de
+    // FileUp (usado em "Importar clientes") e de RefreshCw (usado em
+    // "Importar frequências") — as três telas fazem coisas distintas, e
+    // repetir símbolo sugeriria que são a mesma coisa.
+    {
+      href: "/clientes/importar-cnpj",
+      label: "Importar CNPJ",
+      icon: FileDigit,
     },
   ],
 }

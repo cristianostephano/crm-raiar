@@ -117,4 +117,60 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     expect(importarClientesIndex).toBeGreaterThanOrEqual(0)
     expect(importarFrequenciasIndex).toBeGreaterThan(importarClientesIndex)
   })
+
+  it("shows Importar CNPJ for a supervisor with the correct route (cnpjsupervisor)", () => {
+    const { container } = render(
+      <AppSidebar
+        fullName="Ana Souza"
+        roleLabel="Supervisor"
+        role="supervisor"
+        initials="AS"
+        agendaCount={0}
+      />
+    )
+    expandSidebar(container)
+
+    const link = screen.getByText("Importar CNPJ").closest("a")
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute("href", "/clientes/importar-cnpj")
+  })
+
+  it("hides Importar CNPJ for a vendedor (cnpjvendedor)", () => {
+    const { container } = render(
+      <AppSidebar
+        fullName="João Silva"
+        roleLabel="Vendedor"
+        role="vendedor"
+        initials="JS"
+        agendaCount={0}
+      />
+    )
+    expandSidebar(container)
+
+    expect(screen.queryByText("Importar CNPJ")).not.toBeInTheDocument()
+  })
+
+  it("renders Importar CNPJ after Importar frequências in DOM order (cnpjordem)", () => {
+    const { container } = render(
+      <AppSidebar
+        fullName="Ana Souza"
+        roleLabel="Supervisor"
+        role="supervisor"
+        initials="AS"
+        agendaCount={0}
+      />
+    )
+    expandSidebar(container)
+
+    const links = Array.from(container.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href")
+    )
+    const importarFrequenciasIndex = links.indexOf(
+      "/clientes/importar-frequencias"
+    )
+    const importarCnpjIndex = links.indexOf("/clientes/importar-cnpj")
+
+    expect(importarFrequenciasIndex).toBeGreaterThanOrEqual(0)
+    expect(importarCnpjIndex).toBeGreaterThan(importarFrequenciasIndex)
+  })
 })
