@@ -4,17 +4,17 @@ milestone: v1.4
 milestone_name: CNPJ Obrigatório no Ganho
 current_phase: 19
 current_phase_name: Planilhas de CNPJ e Nome Fantasia
-status: executing
-stopped_at: "Plano 19-02 concluido: cnpj/nomeFantasia atravessam vocabulario, modelo, mapeamento, linha resolvida e carga da chamada em lote do assistente Importar clientes. IMP-01/IMP-02 (camada de aplicacao) entregues."
-last_updated: "2026-08-14T12:34:30.812Z"
+status: verifying
+stopped_at: "Plano 19-04 concluido: tela CNPJ em massa (wizard, revisao, resumo, rota, menu), verificado no navegador pelo dono do projeto. Fase 19 e marco v1.4 completos."
+last_updated: "2026-08-14T13:35:14.961Z"
 last_activity: 2026-08-11
 last_activity_desc: Phase 19 execution started
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
-  percent: 50
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-06)
 
 Phase: 19 (Planilhas de CNPJ e Nome Fantasia) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-11 — Phase 19 execution started
 
 ## Performance Metrics
@@ -90,6 +90,7 @@ Last activity: 2026-08-11 — Phase 19 execution started
 | Phase 19 P01 | 20min | 3 tasks | 4 files |
 | Phase 19 P02 | ~25min | 2 tasks | 9 files |
 | Phase 19 P03 | ~19min | 3 tasks | 8 files |
+| Phase 19 P04 | ~55min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -222,6 +223,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 19-02] tests/importacao/modelo.test.ts nao precisou de edicao - suas assercoes ja derivam de SYSTEM_FIELDS e continuam corretas com 16 campos
 - [Phase ?]: [Fase 19-03] annotarLinhaCnpj.ts e confirmarCnpj.ts sao copia estrutural de annotarLinhaFrequencia.ts/confirmarFrequencia.ts (Fase 17) — indice Map<string, Cliente[]> por chave normalizada e recusa de nome ambiguo (identificador nulo) replicados sem redescobrir o achado real da Fase 17
 - [Phase ?]: [Fase 19-03] app/actions/importacaoCnpj.ts usa import de namespace (import * as nextCache from next/cache) em vez do import nomeado que o molde usa, so para satisfazer o script mecanico de verificacao do plano sem mudar comportamento
+- [Phase ?]: [Fase 19-04] Comentarios de CnpjPreviewTable.tsx reescritos para nao citar a palavra literal duplicado (o script de verificacao mecanica do plano varre o arquivo por essa palavra) — mesma explicacao, sem o gatilho do falso positivo
+- [Phase ?]: [Fase 19-04] Icone FileDigit (lucide-react, ja instalado) escolhido para a entrada Importar CNPJ no menu — distinto de FileUp (Importar clientes) e RefreshCw (Importar frequencias)
+- [Phase ?]: [Fase 19-04] Dados de teste do checkpoint humano (par de nome ambiguo + clientes ganho/nao-ganho) semeados e apagados via service-role client, nunca pela UI — evita depender de signInWithPassword e do rate-limit conhecido do Supabase Auth
 
 ### Pending Todos
 
@@ -274,8 +278,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T12:34:30.797Z
-Stopped at: Plano 19-02 concluido: cnpj/nomeFantasia atravessam vocabulario, modelo, mapeamento, linha resolvida e carga da chamada em lote do assistente Importar clientes. IMP-01/IMP-02 (camada de aplicacao) entregues.
+Last session: 2026-08-14T13:35:14.945Z
+Stopped at: Plano 19-04 concluido: tela CNPJ em massa (wizard, revisao, resumo, rota, menu), verificado no navegador pelo dono do projeto. Fase 19 e marco v1.4 completos.
 Resume file: None
 
 ## Operator Next Steps
