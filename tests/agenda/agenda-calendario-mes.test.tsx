@@ -313,7 +313,7 @@ describe("AgendaCalendarioMes", () => {
 
   it("chips não têm papel de botão nem índice de tabulação próprio", () => {
     const item = buildItem({ razaoSocial: "Cliente Único", data: "2026-08-14" })
-    const { container } = renderMes({ porData: buildPorData([item]) })
+    renderMes({ porData: buildPorData([item]) })
 
     const chip = screen.getByText("Cliente Único").closest("div")
     expect(chip).not.toHaveAttribute("role", "button")

@@ -2,11 +2,15 @@
 
 import { format, isSameDay, isSameMonth } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { ClipboardCheck, Repeat } from "lucide-react"
 import type { KeyboardEvent } from "react"
 
 import {
+  MAX_ITENS_NA_CELULA,
+  bucketDoItem,
   chaveDoDia,
   diasDaGradeDoMes,
+  dividirCelula,
   itensDoDia,
   rotulosDosDiasDaSemana,
   type AgendaItem,
@@ -71,6 +75,7 @@ export function AgendaCalendarioMes({
             ehHoje={isSameDay(dia, now)}
             ultimaColuna={(idx + 1) % 7 === 0}
             itens={itensDoDia(porData, dia)}
+            now={now}
             onSelecionar={onSelecionarDia}
           />
         ))}
@@ -84,9 +89,15 @@ export function AgendaCalendarioMes({
  * generosa (`min-h-28`) — chips individualmente clicáveis dentro de uma
  * célula de poucas dezenas de pixels tornariam a ação inalcançável na
  * prática, e contradiriam a leitura do esboço ("clique no dia abre a lista
- * completa daquele dia"). O conteúdo de itens (chips + indicador de
- * excedente) é preenchido na Task 2; esta task deixa a estrutura, os dois
- * estados visuais e a acessibilidade prontos.
+ * completa daquele dia"). Nenhum chip nem o indicador de excedente recebe
+ * tratador de clique próprio: o clique sobe (bubbling) até esta `div`, que
+ * já é o alvo.
+ *
+ * Os itens visíveis e o excedente vêm de UMA ÚNICA chamada a
+ * `dividirCelula`, sobre a MESMA lista obtida de `itensDoDia` — dois
+ * cálculos independentes (um para os chips, outro para o "+N") poderiam
+ * divergir quando o Supervisor troca o filtro de vendedor, que é a falha
+ * exata registrada no Pitfall 10.
  */
 function MonthDayCell({
   dia,
@@ -94,6 +105,7 @@ function MonthDayCell({
   ehHoje,
   ultimaColuna,
   itens,
+  now,
   onSelecionar,
 }: {
   dia: Date
@@ -101,6 +113,7 @@ function MonthDayCell({
   ehHoje: boolean
   ultimaColuna: boolean
   itens: AgendaItem[]
+  now: Date
   onSelecionar: (dia: Date) => void
 }) {
   function handleClick() {
@@ -114,6 +127,7 @@ function MonthDayCell({
     }
   }
 
+  const { visiveis, excedente } = dividirCelula(itens, MAX_ITENS_NA_CELULA)
   const rotuloAcessivel = `${format(dia, "EEEE, d 'de' MMMM", {
     locale: ptBR,
   })}, ${itens.length} ${itens.length === 1 ? "item" : "itens"}`
@@ -140,6 +154,65 @@ function MonthDayCell({
       >
         {format(dia, "d")}
       </span>
+      {visiveis.length > 0 ? (
+        <div className="flex flex-1 flex-col gap-1">
+          {visiveis.map((item) => (
+            <MonthItemChip
+              key={item.itemId}
+              item={item}
+              atrasado={bucketDoItem(item.data, now) === "atrasado"}
+            />
+          ))}
+          {excedente > 0 ? (
+            <span className="rounded px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
+              +{excedente} mais
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * Chip de um item dentro da célula de mês — resumo visual, não alvo de
+ * clique independente (por isso não tem `role`, `tabIndex` nem `onClick`
+ * próprio). Reproduz em escala reduzida a mesma linguagem visual do cartão
+ * da Lista (`AgendaItemRow`, AGD-12): ícone de prancheta + tratamento cinza
+ * para prospecção, ícone de repetição + tratamento azul para visita.
+ *
+ * A cor é decidida em DUAS etapas, na mesma ordem do cartão pequeno do
+ * plano 20-02 (`WeekItemChip`): primeiro o par fundo/texto/borda-lateral da
+ * origem, depois — só depois, via `cn`, que resolve utilitários conflitantes
+ * mantendo o último — o acento de erro sobrescrevendo apenas a cor da borda
+ * lateral quando atrasado. O acento SE SOMA à origem, não a substitui (D-10):
+ * um item de visita atrasado continua mostrando o ícone de repetição, e um
+ * item atrasado numa célula de mês vizinho esmaecida continua com a borda
+ * vermelha legível (Pitfall 9).
+ */
+function MonthItemChip({
+  item,
+  atrasado,
+}: {
+  item: AgendaItem
+  atrasado: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-1 rounded border-l-2 px-1.5 py-0.5 text-xs",
+        item.origem === "prospeccao"
+          ? "bg-muted text-muted-foreground border-l-muted-foreground"
+          : "bg-primary/10 text-primary border-l-primary",
+        atrasado && "border-l-destructive"
+      )}
+    >
+      {item.origem === "prospeccao" ? (
+        <ClipboardCheck className="size-3 shrink-0 text-muted-foreground" />
+      ) : (
+        <Repeat className="size-3 shrink-0 text-primary" />
+      )}
+      <span className="min-w-0 flex-1 truncate">{item.razaoSocial}</span>
     </div>
   )
 }
