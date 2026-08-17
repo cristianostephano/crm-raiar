@@ -10,7 +10,7 @@ Requisitos do marco v1.5 — Calendário na Agenda e Conclusão Remota.
 ### Agenda em Calendário
 
 - [ ] **AGD-07**: Vendedor alterna entre Lista e Calendário na tela da Agenda
-- [ ] **AGD-08**: Calendário tem 3 modos (dia/semana/mês), navegação de data e botão "Hoje"; semana começa na segunda-feira
+- [x] **AGD-08**: Calendário tem 3 modos (dia/semana/mês), navegação de data e botão "Hoje"; semana começa na segunda-feira
 - [x] **AGD-09**: Visão de mês mostra até 3 itens por dia + contador "+N"; clicar no dia abre a lista completa daquele dia
 - [x] **AGD-10**: Visão de semana mostra 7 colunas (uma por dia) com os itens de cada dia
 - [x] **AGD-11**: Visão de dia mostra os itens daquele dia em formato de lista, igual ao card já usado hoje
@@ -46,7 +46,7 @@ Preenchido durante a criação do roadmap (2026-08-17).
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AGD-07 | Phase 20 | Pending |
-| AGD-08 | Phase 20 | Pending |
+| AGD-08 | Phase 20 | Complete |
 | AGD-09 | Phase 20 | Complete |
 | AGD-10 | Phase 20 | Complete |
 | AGD-11 | Phase 20 | Complete |

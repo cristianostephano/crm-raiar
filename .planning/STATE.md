@@ -5,15 +5,15 @@ milestone_name: Calendário na Agenda e Conclusão Remota
 current_phase: 20
 current_phase_name: Calendário da Agenda — Mês, Semana e Dia
 status: executing
-stopped_at: "Concluido plano 20-01 (camada pura de calendario: grade mes/semana, navegacao, rotulos pt-BR, agrupamento por dia)"
-last_updated: "2026-08-17T20:51:59.875Z"
+stopped_at: Completed 20-04-PLAN.md
+last_updated: "2026-08-17T21:08:58.515Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 20 execution started
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 20 (Calendário da Agenda — Mês, Semana e Dia) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-08-17 — Phase 20 execution started
 
@@ -100,6 +100,7 @@ Last activity: 2026-08-17 — Phase 20 execution started
 | Phase 20-calend-rio-da-agenda-m-s-semana-e-dia P01 | ~20min | 2 tasks | 2 files |
 | Phase 20 P02 | 25min | 2 tasks | 4 files |
 | Phase 20 P03 | 35min | 2 tasks | 2 files |
+| Phase 20-calend-rio-da-agenda-m-s-semana-e-dia P04 | 30min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -254,6 +255,8 @@ Recent decisions affecting current work:
 - [Phase 20]: Cartão pequeno da visão de semana abre mão do botão Concluir de propósito (D-07) — conclusão continua alcançável pela visão de dia e pelo diálogo do dia.
 - [Phase 20-03]: MonthDayCell wires itensDoDia/item-count in Task 1 so Task 2 reuses the exact same array for dividirCelula -- the single-computation guarantee (Pitfall 10) spans the whole component history
 - [Phase 20-03]: Chip text truncation uses min-w-0 flex-1 truncate on the inner span (no fixed width) so ellipsis works inside the chip's flex row
+- [Phase ?]: visao/onVisaoChange ficam como props em AgendaCalendario (nunca estado local), para o plano 20-05 controlar o alternador Lista/Calendário sem herdar esse controle
+- [Phase ?]: O diálogo do dia da grade de mês reusa AgendaCalendarioDia verbatim (D-03/D-05) e deriva seu estado de aberto só de diaDialogo !== null, sem par de booleanos separado
 
 ### Pending Todos
 
@@ -313,8 +316,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T20:51:24.403Z
-Stopped at: Concluido plano 20-01 (camada pura de calendario: grade mes/semana, navegacao, rotulos pt-BR, agrupamento por dia)
+Last session: 2026-08-17T21:08:58.499Z
+Stopped at: Completed 20-04-PLAN.md
 Resume file: 
 
 None
