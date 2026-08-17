@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sketch 003: Agenda em Calendário</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding-top: 48px;
+  }
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  #variant-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+    background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+    padding: 8px 16px; display: flex; gap: 8px; align-items: center;
+  }
+  .variant-tab {
+    font-family: var(--font-sans); font-size: var(--text-sm);
+    padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid transparent;
+    background: transparent; cursor: pointer; color: var(--color-text-muted);
+    transition: all 0.15s ease;
+  }
+  .variant-tab:hover { background: var(--color-bg); color: var(--color-text); }
+  .variant-tab.active { background: var(--color-primary); color: white; font-weight: 500; }
+
+  /* ---- Shared app-shell chrome (sidebar + topbar), matches real app ---- */
+  .shell { display: flex; min-height: calc(100vh - 48px); }
+  .sidebar {
+    width: 220px; flex-shrink: 0; background: var(--sidebar-bg);
+    color: var(--sidebar-text); padding: var(--space-4) 0;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .sidebar .brand { padding: 0 var(--space-4) var(--space-4); font-weight: 700; color: white; font-size: var(--text-lg); }
+  .sidebar a {
+    display: flex; align-items: center; gap: 10px; padding: 9px var(--space-4);
+    color: var(--sidebar-text); text-decoration: none; font-size: var(--text-sm);
+  }
+  .sidebar a.active { background: var(--sidebar-bg-active); color: var(--sidebar-text-active); font-weight: 500; border-right: 3px solid var(--color-primary); }
+  .sidebar a:hover:not(.active) { background: var(--sidebar-bg-hover); }
+  .main { flex: 1; padding: var(--space-6); min-width: 0; }
+
+  h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-1); }
+  .subtitle { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-6); }
+
+  /* ---- Toolbar: view switcher + date nav ---- */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-3);
+  }
+  .segmented {
+    display: inline-flex; background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); padding: 3px; gap: 2px;
+  }
+  .segmented button {
+    border: none; background: transparent; padding: 6px 14px; border-radius: var(--radius-sm);
+    font-size: var(--text-sm); font-family: var(--font-sans); cursor: pointer; color: var(--color-text-muted);
+    transition: all 0.15s ease;
+  }
+  .segmented button.active { background: var(--color-primary); color: white; font-weight: 500; }
+  .segmented button:hover:not(.active) { background: var(--color-bg); color: var(--color-text); }
+
+  .date-nav { display: flex; align-items: center; gap: var(--space-2); }
+  .date-nav button {
+    width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--color-border);
+    background: var(--color-surface); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--color-text-muted); transition: all .15s ease;
+  }
+  .date-nav button:hover { background: var(--color-bg); color: var(--color-text); }
+  .date-nav .label { font-weight: 600; font-size: var(--text-lg); min-width: 190px; text-align: center; }
+  .today-btn {
+    border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-sm);
+    padding: 6px 12px; font-size: var(--text-sm); cursor: pointer; color: var(--color-text);
+  }
+  .today-btn:hover { background: var(--color-bg); }
+
+  .legend { display: flex; gap: var(--space-4); margin-bottom: var(--space-4); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.prospeccao { background: #71717a; border: 1px solid #a1a1aa; }
+  .dot.ativo { background: var(--color-primary); }
+
+  /* ---- Month grid ---- */
+  .month-grid {
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .month-head, .month-body { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .month-head div {
+    padding: 10px 8px; font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted);
+    text-align: center; border-bottom: 1px solid var(--color-border); text-transform: uppercase; letter-spacing: .03em;
+  }
+  .day-cell {
+    min-height: 108px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);
+    padding: 6px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background .15s ease;
+    position: relative;
+  }
+  .day-cell:hover { background: #fafafa; }
+  .day-cell:nth-child(7n) { border-right: none; }
+  .day-cell.other-month { background: #fbfbfc; }
+  .day-cell.other-month .day-num { color: #c4c4c8; }
+  .day-num { font-size: var(--text-sm); font-weight: 500; color: var(--color-text); }
+  .day-cell.today .day-num {
+    background: var(--color-primary); color: white; width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: var(--text-xs);
+  }
+  .item-chip {
+    font-size: 11px; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 2px solid transparent;
+  }
+  .item-chip.prospeccao { background: #f4f4f5; color: #3f3f46; border-left-color: #71717a; }
+  .item-chip.ativo { background: #eff6ff; color: #1e40af; border-left-color: var(--color-primary); }
+  .item-chip.atrasado { border-left-color: var(--color-danger) !important; }
+  .more-count {
+    font-size: 11px; color: var(--color-text-muted); padding: 2px 6px; cursor: pointer; font-weight: 500;
+  }
+  .more-count:hover { color: var(--color-primary); text-decoration: underline; }
+
+  /* ---- Week view (columns, no hour grid — items don't carry time-of-day) ---- */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-3); align-items: start; }
+  .week-col {
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    min-height: 320px; display: flex; flex-direction: column;
+  }
+  .week-col-head {
+    padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); text-align: center;
+  }
+  .week-col-head .wd { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; }
+  .week-col-head .dn { font-size: var(--text-lg); font-weight: 600; }
+  .week-col.today .week-col-head { background: #eff6ff; }
+  .week-col.today .dn { color: var(--color-primary); }
+  .week-col-body { padding: var(--space-2); display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .week-item {
+    background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: 6px 8px; font-size: var(--text-xs); cursor: pointer; border-left: 3px solid transparent;
+    transition: all .15s ease;
+  }
+  .week-item:hover { border-color: var(--color-primary); background: #fff; box-shadow: var(--shadow-sm); }
+  .week-item.prospeccao { border-left-color: #71717a; }
+  .week-item.ativo { border-left-color: var(--color-primary); }
+  .week-item.atrasado { border-left-color: var(--color-danger); }
+  .week-item .titulo { font-weight: 500; margin-bottom: 2px; }
+  .week-item .sub { color: var(--color-text-muted); }
+
+  /* ---- Day view (single list, mirrors existing AgendaList card) ---- */
+  .day-list { display: flex; flex-direction: column; gap: 8px; max-width: 560px; }
+  .day-card {
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    padding: 12px 14px; cursor: pointer; transition: all .15s ease; border-left: 4px solid transparent;
+  }
+  .day-card:hover { box-shadow: var(--shadow-md); }
+  .day-card.atrasado { border-left-color: var(--color-danger); }
+  .day-card-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 4px; }
+  .day-card-head .nome { font-weight: 600; font-size: var(--text-base); }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .badge.prospeccao { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-muted); }
+  .badge.ativo { background: var(--color-bg); color: var(--color-text); border: 1px solid var(--color-border); }
+  .day-card .titulo { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .empty-day { color: var(--color-text-muted); font-size: var(--text-sm); padding: var(--space-8); text-align: center; border: 1px dashed var(--color-border); border-radius: var(--radius-md); max-width: 560px; }
+
+  /* ---- Variant B: mini calendar sidebar ---- */
+  .b-layout { display: flex; gap: var(--space-6); align-items: flex-start; }
+  .mini-cal {
+    width: 240px; flex-shrink: 0; background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg); padding: var(--space-4);
+  }
+  .mini-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); font-size: var(--text-sm); font-weight: 600; }
+  .mini-cal-head button { border: none; background: none; cursor: pointer; color: var(--color-text-muted); font-size: 14px; }
+  .mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: 11px; }
+  .mini-grid .wd { text-align: center; color: var(--color-text-muted); padding: 2px 0; font-weight: 600; }
+  .mini-grid .d { text-align: center; padding: 5px 0; border-radius: 4px; cursor: pointer; color: var(--color-text); }
+  .mini-grid .d:hover { background: var(--color-bg); }
+  .mini-grid .d.today { background: var(--color-primary); color: white; }
+  .mini-grid .d.has-items::after { content: ''; display: block; width: 3px; height: 3px; border-radius: 50%; background: var(--color-primary); margin: 2px auto 0; }
+  .mini-cal-legend { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: 11px; color: var(--color-text-muted); }
+  .b-main { flex: 1; min-width: 0; }
+</style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" onclick="showVariant('a', this)">A: Toolbar simples ★</button>
+  <button class="variant-tab" onclick="showVariant('b', this)">B: Com mini-calendário lateral</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- VARIANT A: Toolbar simples (view switcher + nav, sem sidebar de calendário) -->
+<!-- ============================================================ -->
+<div id="variant-a" class="variant active">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand">CRM Raiar</div>
+      <a class="active">📅 Agenda</a>
+      <a>👥 Clientes</a>
+      <a>📊 Dashboard</a>
+      <a>⚙️ Configurações</a>
+    </div>
+    <div class="main">
+      <h1>Agenda</h1>
+      <p class="subtitle">Tarefas de prospecção e visitas de pós-venda, num lugar só.</p>
+
+      <div class="toolbar">
+        <div class="date-nav">
+          <button onclick="alert('Mês anterior (mock)')">‹</button>
+          <div class="label" id="a-month-label">Agosto 2026</div>
+          <button onclick="alert('Próximo mês (mock)')">›</button>
+          <button class="today-btn" onclick="alert('Voltar para hoje (mock)')">Hoje</button>
+        </div>
+        <div class="segmented" id="a-view-switch">
+          <button data-view="lista" onclick="switchView('a', this)">Lista</button>
+          <button data-view="dia" onclick="switchView('a', this)">Dia</button>
+          <button data-view="semana" onclick="switchView('a', this)">Semana</button>
+          <button data-view="mes" class="active" onclick="switchView('a', this)">Mês</button>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><span class="dot prospeccao"></span> Prospecção</span>
+        <span><span class="dot ativo"></span> Visita (cliente ativo)</span>
+        <span><span class="dot" style="background:var(--color-danger)"></span> Atrasado</span>
+      </div>
+
+      <!-- MÊS -->
+      <div id="a-view-mes" class="calview">
+        <div class="month-grid">
+          <div class="month-head">
+            <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+          </div>
+          <div class="month-body" id="a-month-body"></div>
+        </div>
+      </div>
+
+      <!-- SEMANA -->
+      <div id="a-view-semana" class="calview" style="display:none">
+        <div class="week-grid" id="a-week-grid"></div>
+      </div>
+
+      <!-- DIA -->
+      <div id="a-view-dia" class="calview" style="display:none">
+        <h3 style="margin:0 0 12px;font-size:var(--text-lg);">Sexta-feira, 14 de agosto</h3>
+        <div class="day-list" id="a-day-list"></div>
+      </div>
+
+      <!-- LISTA (placeholder — a tela que já existe hoje) -->
+      <div id="a-view-lista" class="calview" style="display:none">
+        <div class="day-list">
+          <div class="day-card atrasado">
+            <div class="day-card-head"><span class="nome">Padaria Bom Trigo Ltda</span><span class="badge prospeccao">📋 Prospecção</span></div>
+            <div class="titulo">Mandar mensagem — atrasado há 2 dias</div>
+          </div>
+          <div class="day-card">
+            <div class="day-card-head"><span class="nome">Mercado São José</span><span class="badge ativo">🔁 Visita</span></div>
+            <div class="titulo">Visita de acompanhamento — hoje</div>
+          </div>
+        </div>
+        <p style="color:var(--color-text-muted);font-size:var(--text-sm);margin-top:12px;">↑ Esta é a tela de lista que já existe — só ilustrativa aqui, não muda neste marco.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VARIANT B: Com mini-calendário lateral (mais parecido com o Google Agenda) -->
+<!-- ============================================================ -->
+<div id="variant-b" class="variant">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand">CRM Raiar</div>
+      <a class="active">📅 Agenda</a>
+      <a>👥 Clientes</a>
+      <a>📊 Dashboard</a>
+      <a>⚙️ Configurações</a>
+    </div>
+    <div class="main">
+      <h1>Agenda</h1>
+      <p class="subtitle">Tarefas de prospecção e visitas de pós-venda, num lugar só.</p>
+
+      <div class="toolbar">
+        <div class="date-nav">
+          <button onclick="alert('Mês anterior (mock)')">‹</button>
+          <div class="label">Agosto 2026</div>
+          <button onclick="alert('Próximo mês (mock)')">›</button>
+          <button class="today-btn" onclick="alert('Voltar para hoje (mock)')">Hoje</button>
+        </div>
+        <div class="segmented" id="b-view-switch">
+          <button data-view="dia" onclick="switchView('b', this)">Dia</button>
+          <button data-view="semana" onclick="switchView('b', this)">Semana</button>
+          <button data-view="mes" class="active" onclick="switchView('b', this)">Mês</button>
+        </div>
+      </div>
+
+      <div class="b-layout">
+        <div class="mini-cal">
+          <div class="mini-cal-head">
+            <button onclick="alert('mês anterior (mock)')">‹</button>
+            <span>Agosto 2026</span>
+            <button onclick="alert('próximo mês (mock)')">›</button>
+          </div>
+          <div class="mini-grid" id="mini-grid"></div>
+          <div class="mini-cal-legend">
+            <span class="dot ativo" style="display:inline-block;vertical-align:middle;margin-right:4px;"></span>
+            Dias com pontinho têm itens pendentes
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="legend">
+            <span><span class="dot prospeccao"></span> Prospecção</span>
+            <span><span class="dot ativo"></span> Visita (cliente ativo)</span>
+            <span><span class="dot" style="background:var(--color-danger)"></span> Atrasado</span>
+          </div>
+          <div class="month-grid">
+            <div class="month-head">
+              <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+            </div>
+            <div class="month-body" id="b-month-body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.7);color:white;padding:8px 12px;border-radius:8px;opacity:0.4;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.4'">
+  <select id="theme-switcher" onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value+'.css'">
+    <option value="default">Default</option>
+  </select>
+</div>
+
+<script>
+function showVariant(id, btn) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('#variant-nav .variant-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function switchView(variant, btn) {
+  const group = btn.parentElement;
+  group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const view = btn.dataset.view;
+  document.querySelectorAll('#variant-' + variant + ' .calview').forEach(v => v.style.display = 'none');
+  const target = document.getElementById(variant + '-view-' + view);
+  if (target) target.style.display = 'block';
+  if (variant === 'b') {
+    // B has no separate view containers pre-built for day/semana — mock feedback only
+    if (view !== 'mes') {
+      document.querySelector('.b-main .month-grid').style.opacity = '0.35';
+      document.querySelector('.b-main .month-grid').insertAdjacentHTML('afterend',
+        '<p id="b-mock-note" style="color:var(--color-text-muted);font-size:var(--text-sm);margin-top:8px;">↑ Visão de ' + view + ' seguiria o mesmo padrão da Variante A, só que com o mini-calendário sempre visível ao lado.</p>');
+    } else {
+      document.querySelector('.b-main .month-grid').style.opacity = '1';
+      const note = document.getElementById('b-mock-note');
+      if (note) note.remove();
+    }
+  }
+}
+
+// ---- Mock data: item shape mirrors AgendaItem (origem, atrasado, razaoSocial, titulo) ----
+const MOCK_ITEMS = {
+  1: [{o:'prospeccao', t:'Padaria Bom Trigo', tit:'Mandar mensagem'}],
+  3: [{o:'ativo', t:'Mercado São José', tit:'Visita mensal'}],
+  5: [{o:'prospeccao', t:'Empório Verde', tit:'Ligar'}, {o:'ativo', t:'Distribuidora Alfa', tit:'Visita quinzenal'}],
+  8: [{o:'ativo', t:'Restaurante Sabor', tit:'Visita', atrasado:true}],
+  12: [{o:'prospeccao', t:'Hortifruti Bela Vista', tit:'Reunião inicial'}],
+  14: [ // today, busy day — the overflow case
+    {o:'prospeccao', t:'Padaria Bom Trigo', tit:'Mandar mensagem', atrasado:true},
+    {o:'ativo', t:'Mercado São José', tit:'Visita de acompanhamento'},
+    {o:'prospeccao', t:'Empório Verde', tit:'Ligar'},
+    {o:'ativo', t:'Distribuidora Alfa', tit:'Visita quinzenal'},
+    {o:'prospeccao', t:'Hortifruti Bela Vista', tit:'Reunião inicial'},
+    {o:'ativo', t:'Restaurante Sabor', tit:'Visita mensal'},
+    {o:'prospeccao', t:'Casa do Pão', tit:'Enviar proposta'},
+  ],
+  18: [{o:'ativo', t:'Padaria Central', tit:'Visita semanal'}],
+  21: [{o:'prospeccao', t:'Mini Mercado Sol', tit:'Ligar'}],
+  25: [{o:'ativo', t:'Açougue Popular', tit:'Visita mensal'}, {o:'prospeccao', t:'Feira Livre Norte', tit:'Reunião'}],
+};
+const TODAY = 14;
+const MONTH_DAYS = 31;
+const FIRST_WEEKDAY = 6; // Aug 1 2026 = Saturday -> 6 blanks before day 1 (Sun=0)
+
+function chipHtml(item) {
+  const atrasadoClass = item.atrasado ? ' atrasado' : '';
+  const icon = item.o === 'prospeccao' ? '📋' : '🔁';
+  return '<div class="item-chip ' + item.o + atrasadoClass + '">' + icon + ' ' + item.t + '</div>';
+}
+
+function buildMonthGrid(targetId, maxVisible) {
+  const el = document.getElementById(targetId);
+  let html = '';
+  for (let i = 0; i < FIRST_WEEKDAY; i++) html += '<div class="day-cell other-month"></div>';
+  for (let d = 1; d <= MONTH_DAYS; d++) {
+    const items = MOCK_ITEMS[d] || [];
+    const isToday = d === TODAY;
+    html += '<div class="day-cell' + (isToday ? ' today' : '') + '" onclick="openDay(' + d + ')">';
+    html += '<div class="day-num">' + d + '</div>';
+    items.slice(0, maxVisible).forEach(it => html += chipHtml(it));
+    if (items.length > maxVisible) {
+      html += '<div class="more-count">+' + (items.length - maxVisible) + ' mais</div>';
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function openDay(d) {
+  const items = MOCK_ITEMS[d] || [];
+  alert('Dia ' + d + ': abre a lista completa (' + items.length + ' ' + (items.length === 1 ? 'item' : 'itens') + ') — mock');
+}
+
+function buildWeekGrid() {
+  const el = document.getElementById('a-week-grid');
+  const weekDays = [11, 12, 13, 14, 15, 16, 17];
+  const wd = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  let html = '';
+  weekDays.forEach((d, idx) => {
+    const items = MOCK_ITEMS[d] || [];
+    const isToday = d === TODAY;
+    html += '<div class="week-col' + (isToday ? ' today' : '') + '">';
+    html += '<div class="week-col-head"><div class="wd">' + wd[idx] + '</div><div class="dn">' + d + '</div></div>';
+    html += '<div class="week-col-body">';
+    if (items.length === 0) {
+      html += '<div style="color:var(--color-text-muted);font-size:11px;text-align:center;padding-top:8px;">—</div>';
+    } else {
+      items.forEach(it => {
+        html += '<div class="week-item ' + it.o + (it.atrasado ? ' atrasado' : '') + '" onclick="alert(\'Abre item: ' + it.t + '\')">';
+        html += '<div class="titulo">' + it.t + '</div><div class="sub">' + it.tit + '</div></div>';
+      });
+    }
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function buildDayList() {
+  const el = document.getElementById('a-day-list');
+  const items = MOCK_ITEMS[TODAY] || [];
+  let html = '';
+  items.forEach(it => {
+    html += '<div class="day-card' + (it.atrasado ? ' atrasado' : '') + '" onclick="alert(\'Abre item: ' + it.t + '\')">';
+    html += '<div class="day-card-head"><span class="nome">' + it.t + '</span>';
+    html += '<span class="badge ' + it.o + '">' + (it.o === 'prospeccao' ? '📋 Prospecção' : '🔁 Visita') + '</span></div>';
+    html += '<div class="titulo">' + it.tit + '</div></div>';
+  });
+  el.innerHTML = html || '<div class="empty-day">Nada pendente para este dia 🎉</div>';
+}
+
+function buildMiniCal() {
+  const el = document.getElementById('mini-grid');
+  const wd = ['D','S','T','Q','Q','S','S'];
+  let html = wd.map(w => '<div class="wd">' + w + '</div>').join('');
+  for (let i = 0; i < FIRST_WEEKDAY; i++) html += '<div class="d"></div>';
+  for (let d = 1; d <= MONTH_DAYS; d++) {
+    const hasItems = !!MOCK_ITEMS[d];
+    const isToday = d === TODAY;
+    html += '<div class="d' + (isToday ? ' today' : '') + (hasItems && !isToday ? ' has-items' : '') + '" onclick="alert(\'Ir para dia ' + d + ' (mock)\')">' + d + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+buildMonthGrid('a-month-body', 3);
+buildWeekGrid();
+buildDayList();
+buildMonthGrid('b-month-body', 3);
+buildMiniCal();
+</script>
+</body>
+</html>

@@ -28,3 +28,4 @@ not a new color system or rebrand.
 |---|------|----------------|--------|------|
 | 001 | sidebar-nav | Does a dark left sidebar (vs. our current top nav) fit the app, adapted to our real Vendedor/Supervisor nav items? | B (compact/collapsible) | layout, navigation |
 | 002 | stat-numbers | How should Dashboard KPI numbers (Ganhos/Perdidos/Taxa de conversão) look without the traffic-light colored-box treatment? | C (left accent bar) | dashboard, typography, color |
+| 003 | agenda-calendario | How should the Agenda's new day/week/month calendar view look, reusing the existing list's Prospecção/Ativo badge language, with a counter for busy days? | A (simple toolbar, no mini-calendar sidebar) | agenda, calendario, layout |
