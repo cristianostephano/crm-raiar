@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Calendário na Agenda e Conclusão Remota
 status: planning
-last_updated: "2026-08-17T16:21:18.989Z"
+last_updated: "2026-08-17T17:05:00.000Z"
 last_activity: 2026-08-17
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,23 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-06)
+See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 19 — Planilhas de CNPJ e Nome Fantasia
+**Current focus:** Phase 20 — Calendário da Agenda — Mês, Semana e Dia
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 20 — Calendário da Agenda — Mês, Semana e Dia (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-08-17 — Milestone v1.5 started
+Status: Roadmap v1.5 criado (Fases 20-22), aguardando planejamento da Fase 20
+Last activity: 2026-08-17 — Roadmap do marco v1.5 escrito, 12/12 requisitos mapeados
+
+**Progresso do marco v1.5:** 0/3 fases
+
+```
+[                    ] 0%
+```
 
 ## Performance Metrics
 
@@ -95,6 +101,12 @@ Last activity: 2026-08-17 — Milestone v1.5 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- **Roadmap v1.5 (2026-08-17):** 3 fases (20 Calendário da Agenda — Mês, Semana e Dia / 21 Calendário — O Que Já Foi Feito em Datas Passadas / 22 Conclusão Remota com Motivo) derivadas dos 12 requisitos do marco, numeração continuando da v1.4 (última = Fase 19). Diferente de todos os marcos anteriores, este tem **duas frentes praticamente disjuntas em arquivos** (calendário: `lib/agenda/itens.ts` + componentes novos + refactor de `AgendaList.tsx`; conclusão remota: migrations novas + `ConcluirItemDialog.tsx` + `listas.ts`/`ConfiguracoesTabs.tsx`) — não há corrente linear de dependência de schema como nas v1.3/v1.4. A Fase 22 é ordenada por último apenas por conveniência de fiação (o refactor de `AgendaList.tsx` da Fase 20 muda onde o diálogo de conclusão vive; fazer o calendário antes evita mexer nessa fiação duas vezes), não por dependência técnica.
+- **Roadmap v1.5 — AGD-13 isolado na Fase 21 de propósito:** o requisito de mostrar itens JÁ CONCLUÍDOS em datas passadas surgiu numa rodada de Discuss posterior à pesquisa paralela. `STACK.md` e `ARCHITECTURE.md` foram escritos antes disso e ambos concluem "o calendário não precisa de mudança nenhuma no banco" — **essa conclusão está errada para o AGD-13** e não deve ser repetida no planejamento. `agenda_do_vendedor()` filtra `t.concluida = false` / `v.data_realizada is null`. A Fase 21 tem migration/RPC própria, limitada por período (nunca o histórico multi-ano inteiro de uma vez), preferencialmente como leitura NOVA e complementar somada no navegador ao conjunto de pendentes — deixando `agenda_do_vendedor()` e a Lista intocados.
+- **Roadmap v1.5 — Fase 20 antes de tudo:** a Fase 20 reorganiza quem é o dono da busca/filtro/diálogo dentro de `AgendaList.tsx` (hoje o mesmo componente busca, filtra e renderiza). Esse ponto único de busca é o que permite a Fase 21 acrescentar a segunda fonte de dados sem reescrever a navegação, e a Fase 22 encaixar a conclusão remota já na estrutura nova.
+- **Roadmap v1.5 — zero dependência npm nova em todo o marco** (confirmado na pesquisa de stack): grade de calendário à mão com `date-fns` + CSS Grid + primitivos shadcn/ui já instalados. `react-day-picker` (já instalado) **não** deve ser estendido para a visão de mês — é um seletor de data única, não um calendário de eventos.
+- **Roadmap v1.5 — contrato visual travado:** `.planning/sketches/003-agenda-calendario/index.html`, Variante A (barra de ferramentas simples, sem mini-calendário lateral), já aprovada pelo dono do projeto. Semana começa na segunda-feira, e isso precisa virar uma constante única compartilhada pelas três visões (`startOfWeek`/`endOfWeek` do date-fns não derivam isso do locale).
+- **Roadmap v1.5 — zero exceção `SECURITY DEFINER` nova:** o marco deve terminar com exatamente as mesmas 4 exceções documentadas de hoje. As duas RPCs de conclusão continuam `SECURITY INVOKER`; a tabela nova é protegida por RLS comum com `is_supervisor()` na escrita.
 - **Roadmap v1.4 (2026-08-10):** 2 fases (18 CNPJ Obrigatório no Ganho / 19 Planilhas de CNPJ e Nome Fantasia) derivadas dos 5 requisitos do marco, numeração continuando da v1.3 (última = Fase 17). Granularidade deliberadamente baixa (marco pequeno e bem precedenciado): Fase 18 é a trava no RPC `mover_card_funil` + grandfathering (mesmo padrão de VIS-01/VIS-04 da Fase 13); Fase 19 junta os dois requisitos de planilha (colunas novas no wizard de importação + nova planilha "CNPJ em massa" no molde de `atualizar_frequencia_visita_lote` da Fase 17), já que os dois mexem na mesma vocabulário de campos do sistema. Fase 19 não tem dependência técnica dura da Fase 18 (coluna `cnpj` já existe desde a Fase 13), mas é ordenada depois por ser o caminho de regularização do que a Fase 18 passa a exigir.
 - **[Fase 13-01] (2026-08-07):** Migration 0013 aplicada em produção — `frequencia_visita_enum`, 4 colunas nullable em `clientes` (nome_fantasia/cnpj/frequencia_pedidos/frequencia_visita), tabela `visitas` com RLS 4-policy parent-gated (espelhando `tarefas`), `proxima_data_visita` (immutable, clamp de fim de mês) e `mover_card_funil` recriado com o 6º parâmetro `p_frequencia_visita` (assinatura antiga de 5 removida no mesmo arquivo, sem sobrecarga ambígua). VIS-01/VIS-04/ATV-03 provados por 28/28 testes de integração contra o banco real. Pin do Supabase CLI em `2.111.0` para o push (2.112.0 tem bug de validação de schema em link/API keys). `npm test` completo (433 testes) não terminou limpo em nenhuma tentativa por causa do rate limit conhecido de `signInWithPassword` do Supabase Auth (ver Blockers/Concerns) — mitigado com 91 testes isolados nos arquivos de maior risco de regressão (funil-status/funil-constraints + as 5 suítes de dashboard), todos verdes. Ver `13-01-SUMMARY.md`.
 - **Roadmap v1.3 (2026-08-07):** 5 fases (13 Cliente Ativo e Frequência / 14 Agenda Unificada / 15 Conclusão e Próxima Visita / 16 Ficha do Cliente Ativo / 17 Planilhas) derivadas dos 17 requisitos do marco, numeração continuando da v1.2 (última = Fase 12). Ordem pela build-order da research: 13 é a fundação de schema (colunas de `clientes` + tabela `visitas` + `mover_card_funil` estendido) e precede tudo; 14 é leitura pura sobre 13; 15 é o fluxo de escrita e é a fase de maior risco; 16 e 17 são payoff/escala e dependem de 13 + 15.
@@ -110,18 +122,22 @@ Recent decisions affecting current work:
 - Roadmap v1.2: decisão de produto travada — Cidade (LOC-02) vem da lista oficial IBGE (tabela `cidades` + RPC), NÃO de um SELECT DISTINCT sobre clientes existentes.
 - Roadmap v1.1: fases derivadas dos 13 requisitos IMP/EXP, ordenadas por risco crescente — Export (5) → Import preview (6) → Import commit (7). Só a Fase 7 grava no banco.
 
-**Convenções de código/arquitetura acumuladas (v1.0–v1.2), as mais relevantes para o v1.3/v1.4:**
+**Convenções de código/arquitetura acumuladas (v1.0–v1.4), as mais relevantes para o v1.5:**
 
 - Um `clientes` É o card do funil (modelo 1:1) — `etapa`/`status_acompanhamento`/`motivo_perda_id`/`observacao`/`posicao` vivem direto em `clientes`, não há tabela `cards` separada.
 - `mover_card_funil` NÃO é security definer — roda como o chamador, então o RLS ainda se aplica ao UPDATE. Todo RPC novo deve seguir isso.
-- `historico` não tem policy de INSERT para usuários — só triggers `SECURITY DEFINER` escrevem nela, mantendo a trilha de auditoria à prova de adulteração pela API.
+- `historico` não tem policy de INSERT para usuários — só triggers `SECURITY DEFINER` escrevem nela, mantendo a trilha de auditoria à prova de adulteração pela API. Estender o corpo desses 2 triggers já existentes é precedente (a migration 0015 fez isso para o `resumo`); criar uma policy de INSERT nova, nunca.
 - Toda função `dashboard_*` é SECURITY INVOKER por omissão (mirror de `mover_card_funil`); RLS em `clientes`/`historico`/`cliente_produtos` é a única fronteira de autorização.
+- Mudança de contagem de parâmetros de RPC exige `drop function if exists <assinatura antiga>` ANTES do `create function`, no mesmo arquivo — `create or replace` com assinatura diferente cria sobrecarga ambígua e derruba toda chamada existente pelo PostgREST (documentado na migration 0018). Parâmetro novo sempre no fim, sempre `default null`.
 - `cidades` espelha a postura read-only do `historico` (RLS ligada, SELECT-only, zero policy de escrita) — padrão para datasets de referência.
-- `chk_estado_valido` mostrou que o passo final `VALIDATE CONSTRAINT` de uma constraint `NOT VALID` precisa vir dentro de `DO $$ ... EXCEPTION WHEN check_violation ... $$`, senão aborta o `supabase db push` inteiro se alguma linha legada violar. Padrão para futuras migrations com `NOT VALID`.
+- Listas editáveis (5 hoje) usam sempre a mesma forma de RLS de 4 policies: SELECT aberto a `authenticated`, INSERT/UPDATE/DELETE atrás de `is_supervisor()`. Restringir o SELECT ao Supervisor por engano deixa o dropdown do Vendedor permanentemente vazio SEM erro nenhum — modo de falha silenciosa já documentado na própria migration 0016.
+- Registrar uma lista editável nova exige 3 lugares: migration, união `ListaTabela` em `app/actions/listas.ts`, e uma aba em `ConfiguracoesTabs.tsx`. O TypeScript só pega o segundo sozinho.
+- `chk_estado_valido` mostrou que o passo final `VALIDATE CONSTRAINT` de uma constraint `NOT VALID` precisa vir dentro de `DO $$ ... EXCEPTION WHEN check_violation ... $$`, senão aborta o `supabase db push` inteiro se alguma linha legada violar.
 - `importar_clientes_lote` precisou do pragma `#variable_conflict use_column` (colisão entre coluna e OUT var) e teve que separar os inserts de `clientes` e `cliente_produtos` em dois statements sequenciais — encadear como duas CTEs de escrita quebra o RLS parent-EXISTS do filho.
 - Efeitos de fetch-on-mount neste projeto seguem o padrão `EditableListTab` (setState síncrono no corpo do efeito + guarda `cancelled` + contador `reloadKey`).
 - `keepMounted` é obrigatório nos `TabsContent` (Base UI desmonta o painel ao trocar de aba e re-dispara o fetch).
-- `atualizar_frequencia_visita_lote` (Fase 17) é o modelo direto para a planilha "CNPJ em massa" (IMP-03): UPDATE set-based único, não-security-definer, guard `is_supervisor()`, restrito a `status_acompanhamento = 'ganho'`, nome ambíguo tratado como erro de linha na camada de anotação pura.
+- Data que afeta correção de dado é calculada no Postgres; no navegador é sempre `parseISO`, nunca `new Date(string)` — `bucketDoItem` (`lib/agenda/itens.ts`) é a autoridade única de decisão atrasado/hoje/próximos e documenta o bug de fuso que o projeto já levou uma vez.
+- `atualizar_frequencia_visita_lote` (Fase 17) é o modelo direto para escrita em massa: UPDATE set-based único, não-security-definer, guard `is_supervisor()`, nome ambíguo tratado como erro de linha na camada de anotação pura.
 
 <details>
 <summary><strong>Histórico completo de decisões por plano (Fases 01-09)</strong> — preservado aqui porque os diretórios de fase e os SUMMARY.md correspondentes foram limpos do disco; só existem no histórico do git</summary>
@@ -229,16 +245,22 @@ None yet.
 
 ### Blockers/Concerns
 
-**Ativos para o v1.4:**
+**Ativos para o v1.5:**
 
-- **Grandfathering (Fase 18):** CNPJ-02 exige que a trava nova nunca bloqueie clientes já "ganho" sem CNPJ — mesmo cuidado com colunas `nullable` já aplicado a `frequencia_visita` na Fase 13 (Pitfall 3 herdado). A exigência vai só no guard do RPC `mover_card_funil` no momento da transição para "ganho", nunca num `NOT NULL`/`CHECK` de schema.
-- **Nome ambíguo na planilha (Fase 19, IMP-03):** achado real da Fase 17 — a normalização de nome (remove acento/caixa/sufixo) pode colidir dois clientes distintos com o mesmo nome normalizado. IMP-03 precisa tratar isso como erro de linha desde o início, replicando a correção já feita em `atualizar_frequencia_visita_lote`/`FrequenciaImportWizard`, não redescobrir o problema.
-- **Limite de ~10s do Vercel Hobby (Fase 19):** gravação em lote set-based, nunca loop linha a linha — mesma regra que já valeu para `importar_clientes_lote` e `atualizar_frequencia_visita_lote`.
+- **Pesquisa desatualizada sobre o calendário (Fases 20/21):** `STACK.md` e `ARCHITECTURE.md` afirmam que o calendário não precisa de mudança nenhuma no banco. Isso valia antes do AGD-13 ser travado no Discuss e **não vale mais**. `agenda_do_vendedor()` só devolve pendentes (`t.concluida = false` / `v.data_realizada is null`); mostrar o que já foi feito em datas passadas exige leitura nova no banco (Fase 21). Não repetir a conclusão antiga durante o planejamento.
+- **Volume do histórico (Fase 21):** a leitura de itens concluídos precisa ser limitada ao período visível. Baixar o histórico multi-ano inteiro de um vendedor de uma vez é o risco de performance/egress desta fase (free tier).
+- **Autoridade única de data no calendário (Fase 20):** `startOfWeek`/`endOfWeek` do date-fns NÃO derivam o primeiro dia da semana do locale, mesmo recebendo `{ locale: ptBR }`. Segunda-feira precisa virar uma constante única compartilhada pelas visões de mês/semana/dia, senão as duas discordam sobre em qual coluna cai cada data. E colocar item na célula é sempre `parseISO`, nunca `new Date(string)` — mesmo bug de fuso que `bucketDoItem` já documenta.
+- **Contagem "+N" x filtro de vendedor (Fase 20):** os chips e o contador de cada dia precisam ser calculados sobre o MESMO conjunto já filtrado que a Lista usa (`filtrarPorVendedor`), nunca sobre o conjunto bruto — senão o Supervisor troca o filtro e os números da grade não acompanham.
+- **RPCs gêmeas (Fase 22):** `concluir_tarefa_prospeccao` e `concluir_visita` são duas funções separadas chamadas por dois wrappers separados, mas usam UM diálogo só. Estender só uma delas quebra silenciosamente metade da funcionalidade. Alterar as duas na mesma migration, com parâmetro novo `default null` no fim, e provar os dois caminhos (prospecção E visita) na mesma verificação. Os testes antigos de `tests/agenda/*.test.ts` devem passar SEM edição.
+- **Gatilhos de histórico (Fase 22, CONC-05):** o texto do diário é escrito pelos gatilhos `tarefas_before_update_historico`/`visitas_after_update_historico`, não pelas RPCs. Sem mexer neles, o motivo é gravado na tabela mas nunca aparece no diário. E não existe precedente no projeto de gatilho resolvendo FK de lista em texto legível (o motivo de perda nunca faz isso) — é lógica nova, não cópia; gravar o NOME resolvido, nunca o identificador.
+- **RLS da 6ª lista (Fase 22):** a policy de SELECT precisa ficar aberta a qualquer usuário autenticado. Restringir ao Supervisor deixa o dropdown do Vendedor permanentemente vazio, sem erro nenhum — modo de falha silenciosa que a própria migration 0016 documenta. Verificar com conta de Vendedor, não só de Supervisor.
 
 **Herdados, ainda relevantes:**
 
 - Gap de verificação humana aceito formalmente (Fase 8): o drag-and-drop com auto-scroll do kanban foi revisado por código, não exercitado por um drag real de mouse. Risco julgado baixo. Ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`.
-- `eslint-disable` documentado em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — a Fase 18/19 pode voltar a mexer neste arquivo (campo CNPJ na ficha); não piorar a supressão.
+- `eslint-disable` documentado em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — a Fase 22 pode voltar a mexer perto do Diário neste arquivo; não piorar a supressão.
+- Rate limit conhecido de `signInWithPassword` do Supabase Auth impede rodar `npm test` inteiro limpo numa tacada; convenção do projeto (Fases 13/18/19) é provar isoladamente os arquivos de maior risco de regressão.
+- CLI do Supabase pinado em `2.111.0` para `db push` (2.112.0+ tem bug conhecido de validação de schema).
 - A tabela `clientes` ao vivo tem uma linha de teste com `estado='ZZ'`; `chk_estado_valido` está enforced-but-NOT-VALID nela (bloqueia escritas futuras, só não foi validada retroativamente). Sem ação necessária a menos que o dono queira re-rodar `VALIDATE CONSTRAINT` depois de apagar os dados de teste.
 - `gsd-tools.cjs` não existe dentro de worktrees git criados a partir deste repo (está em `.claude/gsd-core/bin/` mas é untracked). Em execução paralela por worktree, as atualizações de STATE/ROADMAP precisam de edição manual.
 - **RESOLVIDO 2026-07-20 — 01-05 Task 4 (verificação de email real):** o limite de 2 envios/hora do free tier foi contornado dividindo a checagem em (a) caminho de token/sessão/UI, verificado via `supabase.auth.admin.generateLink()` — reset de senha e aceite de convite confirmados de ponta a ponta contra o projeto hospedado real — e (b) entregabilidade bruta na caixa de entrada, não re-observada, mas indiretamente confirmada. AUTH-01/AUTH-02 aprovados pelo dono do projeto.
@@ -254,6 +276,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- **Marco v1.5 roteirizado (2026-08-17):** 3 fases novas (20 Calendário da Agenda — Mês, Semana e Dia / 21 Calendário — O Que Já Foi Feito em Datas Passadas / 22 Conclusão Remota com Motivo) derivadas dos 12 requisitos do marco (AGD-07..AGD-14, CONC-02..CONC-05), numeração continuando da v1.4 (última = Fase 19). 12/12 requisitos mapeados, sem órfãos nem duplicados. Primeiro marco do projeto com duas frentes de arquivos disjuntos — as Fases 20/21 (calendário) e a Fase 22 (conclusão remota) não têm dependência técnica entre si; a ordem escolhida só evita mexer duas vezes na fiação do diálogo de conclusão dentro de `AgendaList.tsx`. AGD-13 (mostrar concluídos em datas passadas) foi isolado numa fase própria por ser o único requisito do calendário que exige trabalho novo de banco, e por ter chegado depois da pesquisa paralela — a Fase 20 é construída para que a Fase 21 acrescente a segunda fonte de dados num ponto só. Fases 20-22 marcadas "Not started".
 - **Marco v1.4 roteirizado (2026-08-10):** 2 fases novas (18 CNPJ Obrigatório no Ganho / 19 Planilhas de CNPJ e Nome Fantasia) derivadas dos 5 requisitos do marco (CNPJ/IMP), numeração continuando da v1.3 (última = Fase 17). 5/5 requisitos mapeados, sem órfãos nem duplicados. Granularidade deliberadamente baixa dado o tamanho e o precedente forte do marco (2 fases, não 4-6). Fases 18-19 marcadas "Not started".
 - **Marco v1.3 roteirizado (2026-08-07):** 5 fases novas (13 Cliente Ativo e Frequência de Visita / 14 Agenda Unificada / 15 Conclusão com Resumo e Próxima Visita / 16 Ficha do Cliente Ativo — Campos e Diário / 17 Planilhas — Frequência em Massa e Exportação do Diário) derivadas dos 17 requisitos do marco (AGD/VIS/CONC/DIAR/ATV/IMP), numeração continuando da v1.2 (última = Fase 12). 17/17 requisitos mapeados, sem órfãos nem duplicados. Fases 13-17 marcadas "Not started".
 - Marco v1.2 roteirizado (2026-07-25): 5 fases novas (8 KAN / 9 LOC / 10 EQP / 11 FNL / 12 VEND) derivadas dos 14 requisitos do marco, numeração continuando de v1.1 (última = Fase 7). 14/14 requisitos mapeados.
@@ -268,16 +291,18 @@ Items acknowledged and carried forward from previous milestone close:
 |----------|------|--------|-------------|
 | Manual verification | 01-05 Task 4 — real password-reset + invite-accept email round-trips | Resolved 2026-07-20 (caminho de código verificado via links gerados pelo admin) | 2026-07-16 |
 | Manual verification | Fase 8 — drag real de mouse com auto-scroll do kanban não exercitado (revisão de código apenas) | Aberto — risco aceito, baixo | 2026-07-26 |
-| Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` no efeito de reset com ~13 setters, suprimido com `eslint-disable-next-line` em vez de refatorado (o fix correto muda o timing do reset e não há cobertura de teste nesse componente). Recomendada uma quick task dedicada — a Fase 16 mexeu neste arquivo, e a Fase 18/19 pode mexer de novo (campo CNPJ). | Aberto — suprimido, não corrigido | 2026-08-06, quick task 260806-fln |
+| Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` no efeito de reset com ~13 setters, suprimido com `eslint-disable-next-line` em vez de refatorado (o fix correto muda o timing do reset e não há cobertura de teste nesse componente). Recomendada uma quick task dedicada — as Fases 16/18/19 já mexeram neste arquivo. | Aberto — suprimido, não corrigido | 2026-08-06, quick task 260806-fln |
 
-**SECURITY DEFINER exceptions (3 no codebase):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) e `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a). O v1.4 **não deve adicionar uma quarta** — a trava de CNPJ no "ganho" é um guard dentro do `mover_card_funil` já não-security-definer, e a planilha "CNPJ em massa" segue o mesmo molde não-security-definer de `atualizar_frequencia_visita_lote`. Qualquer RPC futuro que precise de dado agregado do sistema inteiro sobre tabela com RLS deve seguir o mesmo padrão: função `SECURITY DEFINER` de saída mínima possível, nunca uma policy de SELECT aberta.
+**SECURITY DEFINER exceptions (4 no codebase):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) e `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a). O v1.5 **não deve adicionar uma quinta** — as duas RPCs de conclusão continuam `SECURITY INVOKER` com RLS como única fronteira, a leitura nova do calendário histórico deve seguir o mesmo padrão de `agenda_do_vendedor()`, e a 6ª lista editável é protegida por RLS comum com `is_supervisor()` só na escrita. Os 2 gatilhos de auditoria `SECURITY DEFINER` (`tarefas_before_update_historico`/`visitas_after_update_historico`) são um balde separado e já existente — estender o corpo deles (necessário para CONC-05) não cria exceção nova.
 
 ## Session Continuity
 
-Last session: 2026-08-14T13:35:14.945Z
-Stopped at: Plano 19-04 concluido: tela CNPJ em massa (wizard, revisao, resumo, rota, menu), verificado no navegador pelo dono do projeto. Fase 19 e marco v1.4 completos.
+Last session: 2026-08-17
+Stopped at: Roadmap do marco v1.5 criado — 3 fases (20-22), 12/12 requisitos mapeados, traceability preenchida em REQUIREMENTS.md.
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Revisar `.planning/ROADMAP.md` (Fases 20-22) e aprovar ou pedir ajuste
+- Depois de aprovado: `/gsd-plan-phase 20` para planejar o calendário da Agenda
+- A Fase 20 tem contrato visual pronto (`.planning/sketches/003-agenda-calendario/index.html`, Variante A) — considerar `/gsd-ui-phase 20` antes do planejamento

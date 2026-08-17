@@ -41,28 +41,36 @@ Nenhum item deferido identificado neste marco.
 
 ## Traceability
 
-Preenchido durante a criação do roadmap.
+Preenchido durante a criação do roadmap (2026-08-17).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AGD-07 | TBD | Pending |
-| AGD-08 | TBD | Pending |
-| AGD-09 | TBD | Pending |
-| AGD-10 | TBD | Pending |
-| AGD-11 | TBD | Pending |
-| AGD-12 | TBD | Pending |
-| AGD-13 | TBD | Pending |
-| AGD-14 | TBD | Pending |
-| CONC-02 | TBD | Pending |
-| CONC-03 | TBD | Pending |
-| CONC-04 | TBD | Pending |
-| CONC-05 | TBD | Pending |
+| AGD-07 | Phase 20 | Pending |
+| AGD-08 | Phase 20 | Pending |
+| AGD-09 | Phase 20 | Pending |
+| AGD-10 | Phase 20 | Pending |
+| AGD-11 | Phase 20 | Pending |
+| AGD-12 | Phase 20 | Pending |
+| AGD-13 | Phase 21 | Pending |
+| AGD-14 | Phase 20 | Pending |
+| CONC-02 | Phase 22 | Pending |
+| CONC-03 | Phase 22 | Pending |
+| CONC-04 | Phase 22 | Pending |
+| CONC-05 | Phase 22 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️ (aguardando roadmap)
+- Mapped to phases: 12
+- Unmapped: 0 ✓
+
+**Por fase:**
+
+| Phase | Requisitos | Total |
+|-------|------------|-------|
+| Phase 20 — Calendário da Agenda — Mês, Semana e Dia | AGD-07, AGD-08, AGD-09, AGD-10, AGD-11, AGD-12, AGD-14 | 7 |
+| Phase 21 — Calendário — O Que Já Foi Feito em Datas Passadas | AGD-13 | 1 |
+| Phase 22 — Conclusão Remota com Motivo | CONC-02, CONC-03, CONC-04, CONC-05 | 4 |
 
 ---
 *Requirements defined: 2026-08-14*
-*Last updated: 2026-08-14 after initial definition, informed by parallel research (STACK/FEATURES/ARCHITECTURE/PITFALLS)*
+*Last updated: 2026-08-17 — traceability preenchida na criação do roadmap v1.5 (Fases 20-22)*
