@@ -6,11 +6,16 @@ import {
   filtrarPorVendedor,
   vendedoresDaAgenda,
   INICIO_DA_SEMANA,
+  MAX_ITENS_NA_CELULA,
   diasDaGradeDoMes,
   diasDaSemana,
   rotulosDosDiasDaSemana,
   navegarData,
   rotuloDoPeriodo,
+  chaveDoDia,
+  agruparPorData,
+  itensDoDia,
+  dividirCelula,
   type AgendaItem,
 } from "../../lib/agenda/itens"
 
@@ -291,5 +296,149 @@ describe("rotuloDoPeriodo", () => {
     expect(rotuloDoPeriodo(new Date(2026, 6, 30), "semana")).toBe(
       "27 de julho - 2 de agosto de 2026"
     )
+  })
+})
+
+/**
+ * Agrupamento por dia e reparticao de celula (20-01 Task 2). O agrupamento
+ * usa a string de data do item VERBATIM como chave — nunca converte para
+ * objeto de data — pelo mesmo motivo de fuso horario que bucketDoItem ja
+ * documenta.
+ */
+
+describe("chaveDoDia", () => {
+  it("devolve a data no mesmo formato de texto (YYYY-MM-DD) do campo data do item", () => {
+    expect(chaveDoDia(new Date(2026, 7, 8))).toBe("2026-08-08")
+  })
+
+  it("usa zero a esquerda em mes e dia de um digito", () => {
+    expect(chaveDoDia(new Date(2026, 0, 1))).toBe("2026-01-01")
+  })
+})
+
+describe("agruparPorData", () => {
+  it("particao verdadeira: a soma dos tamanhos das listas bate com o total de entrada", () => {
+    const itens: AgendaItem[] = [
+      item({ itemId: "1", data: "2026-08-08" }),
+      item({ itemId: "2", data: "2026-08-08" }),
+      item({ itemId: "3", data: "2026-08-09" }),
+    ]
+
+    const porData = agruparPorData(itens)
+    const total = Array.from(porData.values()).reduce(
+      (acc, lista) => acc + lista.length,
+      0
+    )
+
+    expect(total).toBe(itens.length)
+  })
+
+  it("preserva a ordem de entrada dentro de cada dia (nao reordena)", () => {
+    const itens: AgendaItem[] = [
+      item({ itemId: "z", data: "2026-08-08" }),
+      item({ itemId: "a", data: "2026-08-08" }),
+      item({ itemId: "m", data: "2026-08-08" }),
+    ]
+
+    const porData = agruparPorData(itens)
+
+    expect(porData.get("2026-08-08")?.map((i) => i.itemId)).toEqual([
+      "z",
+      "a",
+      "m",
+    ])
+  })
+
+  it("entrada vazia devolve um mapa vazio", () => {
+    expect(agruparPorData([]).size).toBe(0)
+  })
+
+  it("um item no dia 1 de um mes cai na celula do proprio dia 1, nunca na vespera (regressao de fuso horario)", () => {
+    const porData = agruparPorData([item({ itemId: "1", data: "2026-09-01" })])
+
+    expect(porData.has("2026-09-01")).toBe(true)
+    expect(porData.has("2026-08-31")).toBe(false)
+  })
+
+  it("um item no dia 1 de janeiro cai no proprio dia 1, nunca em 31 de dezembro do ano anterior", () => {
+    const porData = agruparPorData([item({ itemId: "1", data: "2026-01-01" })])
+
+    expect(porData.has("2026-01-01")).toBe(true)
+    expect(porData.has("2025-12-31")).toBe(false)
+  })
+
+  it("concorda com bucketDoItem: o item classificado como hoje e recuperado pelo dia de hoje", () => {
+    const hoje = item({ itemId: "h", data: "2026-08-08" })
+    expect(bucketDoItem(hoje.data, NOW)).toBe("hoje")
+
+    const porData = agruparPorData([hoje])
+
+    expect(
+      porData.get(chaveDoDia(new Date(2026, 7, 8)))?.map((i) => i.itemId)
+    ).toEqual(["h"])
+  })
+})
+
+describe("itensDoDia", () => {
+  it("devolve a lista de itens do dia pedido", () => {
+    const porData = agruparPorData([item({ itemId: "1", data: "2026-08-08" })])
+
+    expect(itensDoDia(porData, new Date(2026, 7, 8)).map((i) => i.itemId)).toEqual([
+      "1",
+    ])
+  })
+
+  it("devolve lista vazia (nunca indefinido) para um dia sem itens", () => {
+    const porData = agruparPorData([])
+    const resultado = itensDoDia(porData, new Date(2026, 7, 8))
+
+    expect(resultado).toEqual([])
+    expect(resultado).not.toBeUndefined()
+  })
+})
+
+describe("dividirCelula", () => {
+  it("lista vazia: visiveis vazio e excedente zero", () => {
+    expect(dividirCelula([])).toEqual({ visiveis: [], excedente: 0 })
+  })
+
+  it("menos itens que o teto: todos visiveis, excedente zero", () => {
+    const itens: AgendaItem[] = [item({ itemId: "1" }), item({ itemId: "2" })]
+
+    expect(dividirCelula(itens)).toEqual({ visiveis: itens, excedente: 0 })
+  })
+
+  it("exatamente no teto: todos visiveis, excedente zero", () => {
+    const itens: AgendaItem[] = [
+      item({ itemId: "1" }),
+      item({ itemId: "2" }),
+      item({ itemId: "3" }),
+    ]
+
+    expect(dividirCelula(itens)).toEqual({ visiveis: itens, excedente: 0 })
+  })
+
+  it("sete itens com o teto padrao: tres visiveis e excedente quatro", () => {
+    const itens: AgendaItem[] = Array.from({ length: 7 }, (_, i) =>
+      item({ itemId: String(i) })
+    )
+
+    const resultado = dividirCelula(itens)
+
+    expect(resultado.visiveis.map((i) => i.itemId)).toEqual(["0", "1", "2"])
+    expect(resultado.excedente).toBe(4)
+  })
+
+  it("respeita um teto explicito diferente do padrao, sem deixar de usar a constante como padrao", () => {
+    expect(MAX_ITENS_NA_CELULA).toBe(3)
+
+    const itens: AgendaItem[] = Array.from({ length: 5 }, (_, i) =>
+      item({ itemId: String(i) })
+    )
+
+    const resultado = dividirCelula(itens, 2)
+
+    expect(resultado.visiveis.map((i) => i.itemId)).toEqual(["0", "1"])
+    expect(resultado.excedente).toBe(3)
   })
 })
