@@ -291,3 +291,72 @@ export function rotuloDoPeriodo(
 
   return `${format(primeiro, "d 'de' MMMM", { locale: ptBR })} - ${format(ultimo, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}`
 }
+
+/**
+ * A ÚNICA ponte entre o mundo dos objetos de data (a grade, construída por
+ * `diasDaGradeDoMes`/`diasDaSemana`) e o mundo das strings de data (o campo
+ * `data` do item, que já chega do banco como texto ISO curto). A ponte é
+ * atravessada num só sentido — de objeto para texto — no mesmo formato
+ * `YYYY-MM-DD` do campo `data` do item.
+ */
+export function chaveDoDia(dia: Date): string {
+  return format(dia, "yyyy-MM-dd")
+}
+
+/**
+ * Reparte a lista recebida por dia, numa única passagem, empurrando cada
+ * item para a lista da sua própria string de data — usada VERBATIM como
+ * chave. A string de data do item **jamais** é passada ao construtor de
+ * data do JavaScript nem a `parseISO`: comparar texto com texto é imune a
+ * fuso horário, e é por isso que o agrupamento é feito assim, e não
+ * convertendo os dois lados para objeto de data (a mesma regressão que
+ * `bucketDoItem` já documenta no próprio comentário). A ordem de entrada é
+ * preservada dentro de cada dia, pelo mesmo motivo que `agruparAgenda` já
+ * documenta para as três seções: nenhuma segunda autoridade de ordenação.
+ */
+export function agruparPorData(itens: AgendaItem[]): Map<string, AgendaItem[]> {
+  const porData = new Map<string, AgendaItem[]>()
+
+  for (const item of itens) {
+    const chave = item.data
+    const lista = porData.get(chave)
+    if (lista) {
+      lista.push(item)
+    } else {
+      porData.set(chave, [item])
+    }
+  }
+
+  return porData
+}
+
+/**
+ * Consulta o mapa já agrupado (por `agruparPorData`) pela chave derivada de
+ * `chaveDoDia`, devolvendo lista vazia quando não há nada — nunca
+ * indefinido. Receber o mapa pronto, em vez da lista crua de itens, é
+ * intencional: garante que a grade e as contagens leiam o MESMO
+ * agrupamento, calculado uma vez a partir do conjunto já estreitado pelo
+ * filtro de vendedor.
+ */
+export function itensDoDia(
+  porData: Map<string, AgendaItem[]>,
+  dia: Date
+): AgendaItem[] {
+  return porData.get(chaveDoDia(dia)) ?? []
+}
+
+/**
+ * Reparte os itens de uma célula (AGD-09) em "os que aparecem" e "quantos
+ * sobraram". O excedente é DERIVADO do mesmo arranjo que produz os
+ * visíveis — nunca um segundo número calculado à parte —, para que o
+ * contador da célula não possa discordar do que a célula desenha. O teto
+ * vem de `MAX_ITENS_NA_CELULA` por padrão, mas pode ser sobrescrito.
+ */
+export function dividirCelula(
+  itens: AgendaItem[],
+  maxVisiveis: number = MAX_ITENS_NA_CELULA
+): { visiveis: AgendaItem[]; excedente: number } {
+  const visiveis = itens.slice(0, maxVisiveis)
+
+  return { visiveis, excedente: itens.length - visiveis.length }
+}
