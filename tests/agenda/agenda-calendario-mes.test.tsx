@@ -148,7 +148,7 @@ describe("AgendaCalendarioMes", () => {
 
     const celulas = container.querySelectorAll('[role="button"]')
     const celulaHoje = Array.from(celulas).find((c) =>
-      c.getAttribute("aria-label")?.startsWith("Sexta")
+      c.getAttribute("aria-label")?.includes("14 de agosto")
     )
 
     expect(celulaHoje?.getAttribute("aria-label")).toMatch(/1 item/)
