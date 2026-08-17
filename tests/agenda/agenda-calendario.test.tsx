@@ -82,7 +82,7 @@ describe("AgendaCalendario", () => {
     renderCalendario({ visao: "dia" })
 
     expect(
-      screen.getByText("Sexta-feira, 14 de agosto de 2026")
+      screen.getByRole("heading", { name: "Sexta-feira, 14 de agosto de 2026" })
     ).toBeInTheDocument()
     expect(
       screen.getByText("Nada pendente para este dia.")
@@ -111,7 +111,7 @@ describe("AgendaCalendario", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Próximo período" }))
     expect(
-      screen.getByText("Sábado, 15 de agosto de 2026")
+      screen.getByRole("heading", { name: "Sábado, 15 de agosto de 2026" })
     ).toBeInTheDocument()
   })
 
@@ -148,7 +148,9 @@ describe("AgendaCalendario", () => {
     // referência preservada em 14/09/2026 (segunda-feira), não voltou para
     // o now (14/08/2026).
     expect(
-      screen.getByText("Segunda-feira, 14 de setembro de 2026")
+      screen.getByRole("heading", {
+        name: "Segunda-feira, 14 de setembro de 2026",
+      })
     ).toBeInTheDocument()
   })
 
