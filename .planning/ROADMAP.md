@@ -99,7 +99,14 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
   4. Todo item no calendário mantém a mesma sinalização visual da Lista — Prospecção em cinza, Ativo/Visita em azul — e um item atrasado continua legível como atrasado mesmo caindo numa célula de mês vizinho na borda da grade.
   5. O Supervisor filtra o calendário por vendedor igual já filtra a Lista, e as contagens/chips de cada dia acompanham o filtro (nunca mostram um número de "todos" enquanto a grade mostra só um vendedor).
 
-**Plans**: TBD
+**Plans**: 1/5 plans executed
+
+- [x] 20-01-PLAN.md
+- [ ] 20-02-PLAN.md
+- [ ] 20-03-PLAN.md
+- [ ] 20-04-PLAN.md
+- [ ] 20-05-PLAN.md
+
 **UI hint**: yes
 
 **Notas para o planejamento** (não são requisitos, são travas já decididas):
@@ -162,6 +169,6 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 20. Calendário da Agenda — Mês, Semana e Dia | 0/TBD | Not started | - |
+| 20. Calendário da Agenda — Mês, Semana e Dia | 1/5 | In Progress|  |
 | 21. Calendário — O Que Já Foi Feito em Datas Passadas | 0/TBD | Not started | - |
 | 22. Conclusão Remota com Motivo | 0/TBD | Not started | - |

@@ -2,14 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Calendário na Agenda e Conclusão Remota
-status: planning
-last_updated: "2026-08-17T17:05:00.000Z"
+current_phase: 20
+current_phase_name: Calendário da Agenda — Mês, Semana e Dia
+status: executing
+stopped_at: "Concluido plano 20-01 (camada pura de calendario: grade mes/semana, navegacao, rotulos pt-BR, agrupamento por dia)"
+last_updated: "2026-08-17T20:28:26.796Z"
 last_activity: 2026-08-17
+last_activity_desc: Phase 20 execution started
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 ## Current Position
 
-Phase: 20 — Calendário da Agenda — Mês, Semana e Dia (not started)
-Plan: —
-Status: Roadmap v1.5 criado (Fases 20-22), aguardando planejamento da Fase 20
-Last activity: 2026-08-17 — Roadmap do marco v1.5 escrito, 12/12 requisitos mapeados
+Phase: 20 (Calendário da Agenda — Mês, Semana e Dia) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-08-17 — Phase 20 execution started
 
 **Progresso do marco v1.5:** 0/3 fases
 
@@ -93,6 +97,7 @@ Last activity: 2026-08-17 — Roadmap do marco v1.5 escrito, 12/12 requisitos ma
 | Phase 19 P02 | ~25min | 2 tasks | 9 files |
 | Phase 19 P03 | ~19min | 3 tasks | 8 files |
 | Phase 19 P04 | ~55min | 3 tasks | 8 files |
+| Phase 20-calend-rio-da-agenda-m-s-semana-e-dia P01 | ~20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -238,6 +243,10 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 19-04] Comentarios de CnpjPreviewTable.tsx reescritos para nao citar a palavra literal duplicado (o script de verificacao mecanica do plano varre o arquivo por essa palavra) — mesma explicacao, sem o gatilho do falso positivo
 - [Phase ?]: [Fase 19-04] Icone FileDigit (lucide-react, ja instalado) escolhido para a entrada Importar CNPJ no menu — distinto de FileUp (Importar clientes) e RefreshCw (Importar frequencias)
 - [Phase ?]: [Fase 19-04] Dados de teste do checkpoint humano (par de nome ambiguo + clientes ganho/nao-ganho) semeados e apagados via service-role client, nunca pela UI — evita depender de signInWithPassword e do rate-limit conhecido do Supabase Auth
+- [Phase 20-01]: Month label follows the plan action's literal spec ('nome do mes' + 'de' + ano -> 'Agosto de 2026'), not the sketch's year-less header
+- [Phase 20-01]: Short weekday labels use date-fns EEEEEE (narrow) token; installed pt-BR locale renders unaccented 3-letter abbreviations, capitalized via one internal helper reused by rotulosDosDiasDaSemana and rotuloDoPeriodo
+- [Phase 20-01]: chaveDoDia formats a Date object's LOCAL calendar components (never UTC/ISO conversion), consistent with diasDaGradeDoMes/diasDaSemana already producing local Date objects
+- [Phase 20-01]: AGD-08/09/10/11 deixados como Pending em REQUIREMENTS.md apos o plano 20-01 (nao marcados Complete) - o proprio source_audit do plano mostra que cada requisito so fica funcionalmente coberto depois dos planos 20-02/20-03/20-04 (UI); mesma convencao ja travada na Fase 9-01 para requisitos multi-plano
 
 ### Pending Todos
 
@@ -297,9 +306,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17
-Stopped at: Roadmap do marco v1.5 criado — 3 fases (20-22), 12/12 requisitos mapeados, traceability preenchida em REQUIREMENTS.md.
-Resume file: None
+Last session: 2026-08-17T20:27:50.156Z
+Stopped at: Concluido plano 20-01 (camada pura de calendario: grade mes/semana, navegacao, rotulos pt-BR, agrupamento por dia)
+Resume file: 
 
 ## Operator Next Steps
 
