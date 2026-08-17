@@ -6,14 +6,14 @@ current_phase: 20
 current_phase_name: Calendário da Agenda — Mês, Semana e Dia
 status: executing
 stopped_at: "Concluido plano 20-01 (camada pura de calendario: grade mes/semana, navegacao, rotulos pt-BR, agrupamento por dia)"
-last_updated: "2026-08-17T20:38:30.980Z"
+last_updated: "2026-08-17T20:51:59.875Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 20 execution started
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 20 (Calendário da Agenda — Mês, Semana e Dia) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-08-17 — Phase 20 execution started
 
@@ -99,6 +99,7 @@ Last activity: 2026-08-17 — Phase 20 execution started
 | Phase 19 P04 | ~55min | 3 tasks | 8 files |
 | Phase 20-calend-rio-da-agenda-m-s-semana-e-dia P01 | ~20min | 2 tasks | 2 files |
 | Phase 20 P02 | 25min | 2 tasks | 4 files |
+| Phase 20 P03 | 35min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -251,6 +252,8 @@ Recent decisions affecting current work:
 - [Phase 20]: AgendaCalendarioDia nunca renderiza o título do dia — o composer (plano 20-04) fornece o título nos dois lugares que reusam o componente (visão de dia própria e diálogo de dia da grade de mês).
 - [Phase 20]: Cabeçalho de coluna da visão de semana reusa rotulosDosDiasDaSemana() (20-01) em vez de formatar localmente, zipado por índice contra diasDaSemana(referencia).
 - [Phase 20]: Cartão pequeno da visão de semana abre mão do botão Concluir de propósito (D-07) — conclusão continua alcançável pela visão de dia e pelo diálogo do dia.
+- [Phase 20-03]: MonthDayCell wires itensDoDia/item-count in Task 1 so Task 2 reuses the exact same array for dividirCelula -- the single-computation guarantee (Pitfall 10) spans the whole component history
+- [Phase 20-03]: Chip text truncation uses min-w-0 flex-1 truncate on the inner span (no fixed width) so ellipsis works inside the chip's flex row
 
 ### Pending Todos
 
@@ -310,7 +313,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T20:38:30.971Z
+Last session: 2026-08-17T20:51:24.403Z
 Stopped at: Concluido plano 20-01 (camada pura de calendario: grade mes/semana, navegacao, rotulos pt-BR, agrupamento por dia)
 Resume file: 
 
