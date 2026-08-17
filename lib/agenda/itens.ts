@@ -1,4 +1,18 @@
-import { differenceInCalendarDays, parseISO } from "date-fns"
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 
@@ -137,4 +151,143 @@ export function vendedoresDaAgenda(
   return Array.from(porId, ([id, nome]) => ({ id, nome })).sort((a, b) =>
     a.nome.localeCompare(b.nome, "pt-BR")
   )
+}
+
+// ---------------------------------------------------------------------------
+// Camada de calendário (AGD-07..AGD-12/AGD-14) — mês, semana e dia. Vive
+// neste mesmo arquivo de propósito: este continua sendo o único lugar que
+// decide como os itens da agenda são organizados (ver comentário de
+// cabeçalho acima); um arquivo novo criaria uma segunda autoridade sobre a
+// mesma pergunta. Como o resto do arquivo, a camada abaixo permanece pura —
+// nenhuma importação de `next/*` nem de `@/lib/supabase/*`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Segunda-feira, o único início de semana usado pela grade de mês, pela
+ * grade de semana e pelos rótulos de cabeçalho. O date-fns NÃO deriva o
+ * primeiro dia da semana do idioma passado — mesmo `startOfWeek`/`endOfWeek`
+ * recebendo `{ locale: ptBR }`, o padrão da biblioteca continua sendo o dia
+ * usado nos calendários americanos (domingo). Sem esta constante
+ * compartilhada, a grade de mês e a de semana poderiam discordar sobre em
+ * qual coluna cada data cai (Pitfall 8 da pesquisa da Fase 20).
+ */
+export const INICIO_DA_SEMANA = 1
+
+/**
+ * Teto de itens visíveis por célula da grade de mês (AGD-09) antes de virar
+ * "+N mais". Exportada para que a grade (`dividirCelula`) e o contador de
+ * excedente concordem sempre sobre o mesmo número.
+ */
+export const MAX_ITENS_NA_CELULA = 3
+
+/** Os três modos de visualização de calendário (AGD-08). */
+export type CalendarioModo = "dia" | "semana" | "mes"
+
+/**
+ * Vocabulário completo de visão da Agenda (AGD-07): a lista já existente
+ * somada aos três modos de calendário. Mora aqui, e não no componente, para
+ * que a tela e o calendário concordem sobre o vocabulário sem uma delas
+ * importar a outra.
+ */
+export type AgendaVisao = "lista" | CalendarioModo
+
+/** Auxiliar interno de capitalização — evita repetir a mesma manipulação de
+ * string nos três ramos de `rotuloDoPeriodo` e em `rotulosDosDiasDaSemana`. */
+function capitalizarPrimeiraLetra(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+/**
+ * As células da grade de mês (AGD-09): semanas completas cobrindo o mês
+ * inteiro, sempre em múltiplo de 7. Composição pura de aritmética de
+ * calendário sobre objetos `Date` (início do mês → início da semana, fim do
+ * mês → fim da semana, ambos usando a constante de início de semana) — sem
+ * nenhum componente de fuso horário. Diferente do agrupamento por dia mais
+ * abaixo, que jamais converte a data de um item.
+ */
+export function diasDaGradeDoMes(referencia: Date): Date[] {
+  const inicio = startOfWeek(startOfMonth(referencia), {
+    weekStartsOn: INICIO_DA_SEMANA,
+  })
+  const fim = endOfWeek(endOfMonth(referencia), {
+    weekStartsOn: INICIO_DA_SEMANA,
+  })
+
+  return eachDayOfInterval({ start: inicio, end: fim })
+}
+
+/**
+ * Os 7 dias da semana (AGD-10) que contém `referencia`, sempre de segunda a
+ * domingo — inclusive quando `referencia` cai num domingo, o caso que a
+ * escolha de segunda-feira como início torna delicado.
+ */
+export function diasDaSemana(referencia: Date): Date[] {
+  const inicio = startOfWeek(referencia, { weekStartsOn: INICIO_DA_SEMANA })
+  const fim = endOfWeek(referencia, { weekStartsOn: INICIO_DA_SEMANA })
+
+  return eachDayOfInterval({ start: inicio, end: fim })
+}
+
+/**
+ * Rótulos curtos dos 7 dias da semana, de segunda a domingo. DERIVADOS de
+ * `diasDaSemana` (nunca uma lista escrita à mão) — é isso que garante que o
+ * cabeçalho da grade de mês/semana e as colunas nunca desalinhem.
+ */
+export function rotulosDosDiasDaSemana(): string[] {
+  return diasDaSemana(new Date()).map((dia) =>
+    capitalizarPrimeiraLetra(format(dia, "EEEEEE", { locale: ptBR }))
+  )
+}
+
+/**
+ * Avança ou volta a data de referência conforme o modo: um dia, uma semana
+ * (sete dias) ou um mês, multiplicado pelo passo. Navegar um mês a partir do
+ * dia 31 usa o comportamento de aparar (clamp) do próprio date-fns — 31 de
+ * janeiro vira o último dia de fevereiro, não transborda para março — pinado
+ * em teste para não surpreender depois.
+ */
+export function navegarData(
+  referencia: Date,
+  modo: CalendarioModo,
+  passo: 1 | -1
+): Date {
+  if (modo === "dia") return addDays(referencia, passo)
+  if (modo === "semana") return addWeeks(referencia, passo)
+  return addMonths(referencia, passo)
+}
+
+/**
+ * Rótulo em português do período mostrado, um formato por modo, usando o
+ * idioma `ptBR` do subcaminho de idiomas do date-fns já instalado (nada a
+ * instalar). Mês: nome do mês por extenso, "de", e o ano, com inicial
+ * maiúscula. Semana: quando o primeiro e o último dia caem no mesmo mês, só
+ * o número do primeiro seguido do último por extenso; quando atravessam
+ * meses, os dois lados por extenso, com o ano só no fim. Dia: dia da semana
+ * por extenso, o dia, o mês por extenso e o ano, com inicial maiúscula.
+ */
+export function rotuloDoPeriodo(
+  referencia: Date,
+  modo: CalendarioModo
+): string {
+  if (modo === "mes") {
+    return capitalizarPrimeiraLetra(
+      format(referencia, "MMMM 'de' yyyy", { locale: ptBR })
+    )
+  }
+
+  if (modo === "dia") {
+    return capitalizarPrimeiraLetra(
+      format(referencia, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })
+    )
+  }
+
+  const dias = diasDaSemana(referencia)
+  const primeiro = dias[0]
+  const ultimo = dias[6]
+
+  if (isSameMonth(primeiro, ultimo)) {
+    return `${format(primeiro, "d")} - ${format(ultimo, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}`
+  }
+
+  return `${format(primeiro, "d 'de' MMMM", { locale: ptBR })} - ${format(ultimo, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}`
 }
