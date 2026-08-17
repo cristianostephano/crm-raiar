@@ -21,6 +21,20 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, o sistema cobre o pós-venda (cliente "ganho" define uma frequência de visita, uma Agenda única junta o que precisa ser feito, concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado), e agora CNPJ é exigido no banco no momento do "ganho" — com clientes antigos preservados e duas planilhas (importação de clientes novos e regularização em massa) para lidar com o campo em escala.
 
+## Current Milestone: v1.5 Calendário na Agenda e Conclusão Remota
+
+**Goal:** dar ao vendedor uma visão de calendário (dia/semana/mês) da Agenda, além da lista que já existe, e permitir concluir um item sem visita presencial registrando o motivo.
+
+**Target features:**
+- Alternância Lista ↔ Calendário na tela da Agenda, 3 modos (dia/semana/mês), navegação de data e botão "Hoje"
+- Visão de mês em grid com chips coloridos por item (até 3 + contador "+N"); clique no dia abre a lista completa daquele dia
+- Visão de semana em 7 colunas (uma por dia); visão de dia reaproveita o card da lista atual
+- Mesma sinalização visual Prospecção (cinza) / Ativo-Visita (azul) já usada na lista; só visualização, sem arrastar
+- Visual segue o esboço aprovado (sketch 003, Variante A — sem mini-calendário lateral)
+- Nova opção ao concluir um item da Agenda (tarefa de prospecção OU visita de cliente ativo): marcar que não foi presencial e escolher um motivo de uma 6ª lista editável pelo Supervisor ("Motivos de conclusão remota")
+- Conclusão remota conta como conclusão normal — entra no diário do cliente, e para visita de cliente ativo, ainda sugere a próxima data pela frequência
+- Resumo continua obrigatório junto com o motivo (motivo é a categoria, resumo é o texto livre)
+
 ## Next Milestone Goals
 
 Nada capturado ainda. Rode `/gsd-new-milestone` para começar o próximo marco.
