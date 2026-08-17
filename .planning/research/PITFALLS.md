@@ -1,215 +1,288 @@
-# Pitfalls Research — v1.3 Agenda do Vendedor
+# Pitfalls Research
 
-**Domain:** Retrofitting recurring-schedule + unified-agenda + graduated-entity-field features onto an existing Supabase/Postgres (RLS-only auth) schema with real production rows, on Vercel Hobby (no dedicated background-worker infra)
-**Researched:** 2026-08-07
-**Confidence:** MEDIUM-HIGH (schema/RLS findings verified directly against this repo's own migrations — HIGH; Vercel cron limits and Postgres NOT NULL migration mechanics cross-checked across multiple independent sources — MEDIUM; recurring-date timezone bug patterns synthesized from multiple community reports of the same failure mode — MEDIUM)
+**Domain:** Adding a calendar (day/week/month) view + "conclusão remota" to the existing CRM Raiar Agenda screen (v1.5)
+**Researched:** 2026-08-17
+**Confidence:** HIGH for codebase-specific findings (read directly from `supabase/migrations/`, `lib/agenda/`, `components/agenda/`, `app/actions/agenda.ts`, `app/actions/listas.ts`); MEDIUM for the date-fns/locale specific claim (single web source, but corroborated by an authoritative date-fns GitHub issue title).
 
-This file assumes the reader already knows this codebase: `clientes` is a 1:1 funnel-card model (`supabase/migrations/0002_clientes_and_funil.sql`), `tarefas`/`historico` are RLS-gated via an `EXISTS`-on-`clientes` parent policy (no RLS inheritance from the parent table), `historico` has **no user INSERT policy** (only `SECURITY DEFINER` triggers write it), and `mover_card_funil` is the existing precedent for "RPC that enforces a business rule with a `CHECK`-constraint-style guard, not `SECURITY DEFINER`." The Agenda milestone repeats several of these same shapes — recurrence, multi-table writes, graduated required fields — at a point where `clientes`/`tarefas`/`historico` already hold real rows, which is what makes this milestone materially riskier than v1.0's greenfield schema.
+This file deliberately skips generic calendar-UI or generic RLS advice — everything below is scoped to what breaks specifically in **this** codebase's existing conventions.
 
 ## Critical Pitfalls
 
-### Pitfall 1: `new Date("2026-08-07")` and friends — the next-visit-date suggestion lands on the wrong day
+### Pitfall 1: `agenda_do_vendedor()` only returns pending items — a calendar invites an expectation it can't fulfill
 
 **What goes wrong:**
-The frequência-based "próxima data sugerida" (semanal/quinzenal/mensal) is computed either in the browser or on the server, and the two disagree by one day — or the suggestion itself silently lands a day earlier/later than the frequency implies. The classic root cause: `new Date("2026-08-14")` in JavaScript parses the string as **UTC midnight**, not local midnight. Rendered in `America/Sao_Paulo` (UTC−3), that becomes `2026-08-13 21:00` — so any `.getDate()`/`.toLocaleDateString()` call downstream shows the 13th, not the 14th. This is independently one of the most commonly reported bugs in recurring-task systems (Microsoft To Do, Discourse, Obsidian Tasks plugins all have open issues from exactly this).
+The moment a user can page a calendar backward to "last month," they expect to see what they *did* that month, the way Google Calendar shows past events. But `agenda_do_vendedor()` (migration `0014`/recreated in `0015`) filters `t.concluida = false` and `v.data_realizada is null` — a completed item disappears from the RPC's result set the instant it's concluded. `lib/agenda/itens.ts`'s `AgendaItem[]` is therefore always a "pending only" set, never a history.
+
+If the calendar is built by literally reusing `getAgendaAction()`'s already-fetched `itens` (the natural, low-risk implementation, consistent with how `AgendaList.tsx` already filters/groups client-side), then navigating to a past month will render **empty cells for anything already completed**, even though real work happened that day. A vendedor who just concluded 5 visits last Tuesday and clicks back a page in the new calendar will see nothing on that Tuesday and reasonably think the app lost data.
 
 **Why it happens:**
-The existing `tarefas.data_conclusao` is a plain Postgres `date` (no time/timezone component) and the app has gotten away without a rigorous date-handling convention because tasks are input manually, one at a time, by a human picking a date on a calendar widget — there's no server-side date *arithmetic* anywhere in the codebase yet. Agenda's "sugerir próxima data" is the first feature that does `data + intervalo` math, and `date-fns`'s `addWeeks`/`addMonths` (already in the stack) are timezone-safe *only* if fed a genuine local `Date` object — the danger is constructing that `Date` from an ISO string returned by Supabase (`YYYY-MM-DD`), which reintroduces the UTC-midnight bug.
+The milestone's stated scope ("Mesma sinalização visual... já usada na lista; só visualização") reads as "reuse the same items," and the SQL author of `agenda_do_vendedor()` in migration `0014` explicitly commented "não filtro de dono... a RLS é a única fronteira" — but never discusses a *time-window* filter, because the list view never needed to look backward (`bucketDoItem` only ever produces atrasado/hoje/próximos, all forward/present-facing).
 
 **How to avoid:**
-- Keep `data_prevista`/`data_conclusao` on the new visit-tracking table as plain `date` (no `timestamptz`), matching `tarefas` — this sidesteps timezone entirely for storage.
-- Compute the suggested next date **in Postgres**, not in the browser: `p_data_ultima_visita + (case frequencia when 'semanal' then interval '7 days' when 'quinzenal' then interval '14 days' when 'mensal' then interval '1 month' end)`, inside the same RPC that records the visit completion. Postgres's `date + interval '1 month'` correctly clamps (Jan 31 + 1 month = Feb 28/29), matching `date-fns`'s `addMonths` behavior — pick one authority (the RPC) and never duplicate the math client-side.
-- If the client ever needs to *preview* the suggestion before confirming (e.g., an optimistic UI), parse the `date` string with `date-fns`'s `parseISO` (which treats the string as local, not UTC) — never `new Date(dateString)`.
-- Write one Vitest unit test asserting `mensal` from Jan 31 lands on Feb 28 (non-leap) and Feb 29 (leap), matching the "card atrasado" date-logic testing convention `STACK.md` already establishes for this project.
+Confirm explicitly during Discuss/Plan whether "past" cells in month/week view are allowed to be empty (pending-only, matching the list 1:1 — cheapest, zero backend change) or must show completed items too (requires extending `agenda_do_vendedor()` or adding a second read path, out of the stated "view only" scope). Given `PROJECT.md`'s Out of Scope entry for v1.3 ("Calendário completo... uma lista ordenada por urgência já resolve") and this milestone's explicit non-goal of dragging/full recurrence, the low-risk reading is: **pending-only is intentional**, and the UI copy for past days with a `0` count should read neutrally ("Nenhum item pendente" — never "Nenhuma atividade"), not imply an empty history. Lock this down as a phase-planning decision, not an implementation-time guess.
 
 **Warning signs:**
-- A vendor reports "eu marquei a visita de sexta e o sistema sugeriu quinta" (off-by-one).
-- Any code path that does `new Date(row.data_prevista)` where `row.data_prevista` came straight from a Supabase `select()`.
-- Suggested date for `mensal` frequency lands on day 31 of a 30-day month (should have clamped).
+Any plan/spec that says "clique num dia do mês passado abre a lista completa daquele dia" without qualifying "itens pendentes daquele dia" — ambiguous phrasing here is exactly what produces the confusing empty-past-month experience.
 
 **Phase to address:**
-The phase that builds the "concluir visita → sugerir próxima data" RPC. This must be designed and tested before the Agenda UI phase consumes it, since the UI has no way to detect a silently-wrong date.
+The phase that builds the month/week data-grouping logic (before any grid rendering) — should be settled at Discuss-phase, since it changes whether a backend RPC needs touching at all.
 
 ---
 
-### Pitfall 2: Visit completion is really a 3-table write (visita status + `historico` resumo + next-visit row) — doing it as separate client calls loses atomicity and silently breaks `historico`
+### Pitfall 2: Extending `concluir_tarefa_prospeccao`/`concluir_visita` breaks the ~6 existing integration test files if the new param isn't optional-with-default
 
 **What goes wrong:**
-Completing a visit needs to: (1) mark the visit done, (2) insert a `historico` row with the vendor's resumo, and (3) create/update the next pending visit row per the confirmed frequency. If the frontend does this as three sequential Supabase client calls instead of one RPC, a failure between steps 2 and 3 leaves the client's agenda in an inconsistent state (visit shows "done" but no next visit was scheduled, or no resumo was recorded) — and there's no visible error, because each call "succeeded" on its own. Worse: **`historico` currently has zero user-facing INSERT policy** (`supabase/migrations/0002_clientes_and_funil.sql` — only the `SECURITY DEFINER` triggers `clientes_after_update_historico`/`tarefas_before_update_historico` can write it). A naive implementation will either (a) try a direct client insert into `historico` and get silently rejected by RLS (empty-result-shaped failure, not an exception, per this project's own prior pitfall research), or (b) "fix" it by adding a permissive user-facing INSERT policy on `historico`, which lets any authenticated user forge history entries for *any* client, not just their own — a real authorization regression.
+`tests/agenda/agenda-rpc.test.ts`, `concluir-rpc.test.ts`, `rls-conclusao.test.ts`, and `conclusao-validacao.test.ts` all call `supabase.rpc("concluir_tarefa_prospeccao", { p_tarefa_id, p_resumo })` and `supabase.rpc("concluir_visita", { p_visita_id, p_resumo, p_proxima_data })` today, with no motivo parameter. Supabase's PostgREST RPC layer matches parameters **by name** (JSON object), not by position — so this project's own prior pattern (`mover_card_funil` growing from 5→6→7 params across Phases 13/18, `p_motivo_perda_id uuid default null` since migration `0002`) already proves the safe path: append the new parameter with `default null`, never make it required. If the new `p_motivo_conclusao_remota_id` (or whatever it's named) is added **without** a default, every one of those existing calls fails immediately with "function does not exist" or a missing-argument error — not a subtle bug, a hard test-suite break across 4+ files in one migration.
 
 **Why it happens:**
-The existing pattern (`tarefas_before_update_historico`) writes `historico` automatically as a side effect of a *single* row transition (task flips to `concluida`), with a fixed, code-generated description string. Agenda's resumo is free text supplied by the vendor at completion time — it doesn't fit the "trigger writes a canned string" pattern, so it's tempting to bypass triggers with a direct insert, which is exactly where the RLS gap bites.
+It's tempting to make the new parameter required because "conclusão remota" feels like a real decision point (presencial vs remoto) rather than an optional add-on like `p_motivo_perda_id` was. But the RPC's existing contract is "presencial is the default, remote is the exception" — so nullable-with-default is not just safe, it's the correct modeling (`null` = presencial, non-null = remoto with that reason), mirroring exactly how `motivo_perda_id` encodes "not lost" as `null` rather than a separate boolean column.
 
 **How to avoid:**
-- Build one `SECURITY INVOKER` RPC (mirroring `mover_card_funil`'s pattern, not `desativar_membro_equipe`'s `SECURITY DEFINER` exception) that does all three writes inside a single PL/pgSQL function body, wrapped implicitly in one transaction. The function runs as the calling user, so the existing RLS `UPDATE`/`SELECT` policies on `clientes`/visits still gate which rows it can touch — no new privilege escalation.
-- Extend the `historico`-writing trigger (or add a new one) to accept the resumo as part of the visit-completion `UPDATE`, the same way `tarefas_before_update_historico` reads `NEW`/`OLD` — keep `historico` INSERT `SECURITY DEFINER`-trigger-only, matching the existing documented invariant. Do not add a user-facing INSERT policy to `historico`.
-- Test this specifically as a Vendedor (not Supervisor) completing a visit on their own client — confirm exactly one `historico` row and one next-visit row are created, and that a failed step rolls back the whole RPC (a raised exception inside PL/pgSQL rolls back its own transaction automatically).
+- Add the parameter as the **last** positional argument in the SQL signature with `default null`, on **both** RPCs (see Pitfall 3 for why both must change together).
+- Do not introduce a separate boolean (`p_remoto boolean`) alongside the reason id — a non-null reason id already encodes "this was remote," same as `motivo_perda_id`'s existing pattern. Two fields for one fact is an easy way to end up with an invalid state (`p_remoto = true, p_motivo = null`).
+- Re-run the existing agenda test files after the migration, unmodified — they should still pass with zero changes, proving backward compatibility. If any of them need edits just to keep passing, that's a signal the parameter was added wrong (not just "tests need updating for the new feature," which is expected only for *new* test cases, not the old ones).
 
 **Warning signs:**
-- Resumo text is missing from a client's history despite the vendor swearing they typed it in.
-- Any new `create policy ... on historico for insert` appears in a migration diff — treat this as a stop-and-review signal, not routine.
-- Visits marked complete with no corresponding next-visit row (orphaned completions).
+Existing tests calling these RPCs start failing with a Postgres "function ... does not exist" or "no function matches the given name and argument types" error right after the migration — a `create or replace function` doesn't allow removing/reordering existing positional params either, but appending one with a default is safe and won't trigger this.
 
 **Phase to address:**
-The phase implementing "concluir visita" — design the RPC and its trigger/`historico` interaction before the UI is built, since the UI's optimistic-update logic (`@tanstack/react-query`) needs to know it's calling one atomic operation, not three.
+The phase that touches migration `0021`+ for conclusão remota — should be planned as "extend both RPCs, prove old call shape still works" as an explicit acceptance criterion, not just "add motivo support."
 
 ---
 
-### Pitfall 3: Graduated required fields (Nome Fantasia, CNPJ, frequências) as a blanket `CHECK`/`NOT NULL` will fail the migration outright against existing "ganho" rows
+### Pitfall 3: `concluir_tarefa_prospeccao` and `concluir_visita` are twin RPCs — a motivo change applied to only one of them silently breaks the "visita" half of the feature
 
 **What goes wrong:**
-The requirement is "these fields are only required once a client is 'ativo'" — but `clientes` already has real "ganho" rows from before this migration ships, none of which have Nome Fantasia/CNPJ/frequência de visitas populated. If the migration adds these columns with `NOT NULL` (even guarded by a `CHECK` like the existing `chk_perdido_exige_motivo` pattern: `check (status_acompanhamento <> 'ganho' or nome_fantasia is not null)`), Postgres validates the constraint against **every existing row** at `ALTER TABLE` time by default — the migration itself fails to apply in production because pre-existing "ganho" clientes violate it immediately. This is exactly the situation `chk_perdido_exige_motivo` never had to face, because it shipped on day one with zero rows in the table.
+The two conclusion RPCs are structurally near-identical (migration `0015`, sections 5 and 6: same resumo guard, same "0 rows = not found or already concluded" idempotency check) but are two **separate** `create or replace function` statements, called from two separate wrapper functions in `app/actions/agenda.ts` (`concluirTarefaProspeccao` / `concluirVisita`), routed by `AgendaList.tsx`'s `handleConfirmarConclusao` based on `concluirItem.origem`. It is entirely possible to update `concluir_tarefa_prospeccao`'s signature and forget `concluir_visita` (or vice versa), because they live in different sections of the same file and nothing enforces they stay in sync — unlike, say, a single shared function both call into.
 
-There's a second, more fundamental gap here worth flagging before any migration is written: **"ativo" is not yet a defined state in this schema.** The milestone context says fields are gated on "quando o cliente vira 'ativo,'" but the existing enum is `status_acompanhamento` (`em_andamento`/`perdido`/`ganho`) — there's no `ativo` value or column anywhere. Is "ativo" a synonym for `status_acompanhamento = 'ganho'`, or a new, separate lifecycle state (e.g., a client can be "ganho" but not yet "ativo" until onboarding finishes)? This needs an explicit answer in Discuss before any schema is written, because it changes which existing rows the migration needs to consider "already past the gate."
+Since `ConcluirItemDialog.tsx` is **one shared component** for both origins ("a janela ÚNICA de conclusão," per its own doc comment), a UI that renders the motivo picker unconditionally (not gated by `origem`) will call whichever action wrapper is missing the parameter and get a runtime RPC error specifically for visita completions (or prospecção completions) while the other origin works fine in manual testing — an easy miss if only one origin is spot-checked.
 
 **Why it happens:**
-It's natural to reach for the same `CHECK`-constraint idiom already used successfully for `motivo_perda`, without noticing the precondition that made it safe then (an empty table) no longer holds now (a populated table).
+The two RPCs were deliberately kept as separate functions (not one parameterized function) precisely because their bodies diverge past the shared guard (visita also computes `proxima_data_visita`) — but that same divergence is what makes it easy to edit one and skip the other.
 
 **How to avoid:**
-- Resolve the "ativo" definition question in Discuss first — do not let it get implicitly decided by whichever column name a migration happens to use.
-- Add the new columns as nullable, with no blanket `CHECK`. Enforce "required once ativo" the same way `mover_card_funil` enforces "motivo obrigatório ao perder" — as an explicit guard *inside the RPC that performs the ativo/ganho transition*, raising a readable exception if the fields are missing, rather than a table-level constraint. This makes the rule enforceable going forward without ever touching historical rows.
-- If a table-level `CHECK` is still wanted for defense-in-depth, add it with `NOT VALID` (`alter table clientes add constraint chk_ativo_exige_dados check (...) not valid;`) so Postgres skips validating existing rows, and only enforces the rule on future `INSERT`/`UPDATE`. Explicitly decide (with the product owner, in plain language) whether pre-existing "ganho" clients missing Nome Fantasia/CNPJ should be flagged for manual backfill or left as-is — don't let this be an accidental side effect of constraint choice.
-- Whatever is decided, write it down as a Key Decision in `PROJECT.md`, the same way the `motivos_perda`/soft-delete decisions were — this is the kind of ambiguity that silently reappears as a bug report three months later otherwise.
+Treat "add motivo to concluir_tarefa_prospeccao" and "add motivo to concluir_visita" as a single atomic task in the plan, in the same migration file, with a single verification step that exercises both call paths (prospecção AND visita) end-to-end, not just one.
 
 **Warning signs:**
-- `supabase db push` (or the migration apply step) fails with a `CHECK` constraint violation error listing existing row IDs.
-- A vendor opens an existing "ganho" client from before the migration and the UI crashes or shows a broken form because it assumes Nome Fantasia/CNPJ are always present once `ganho`.
+A plan/PR that touches migration SQL for only one of the two functions, or a test file update that only adds cases to `concluir-rpc.test.ts`'s prospecção block without a matching visita block.
 
 **Phase to address:**
-The phase that adds the new `clientes` columns — must run a query against production data (`select count(*) from clientes where status_acompanhamento = 'ganho'`) before deciding the constraint strategy, not after.
+Same phase as Pitfall 2 — the backend RPC-extension phase, verified by a symmetric test pass (both origins).
 
 ---
 
-### Pitfall 4: Trying to auto-generate the next visit via a scheduled/background job when the existing architecture deliberately has none
+### Pitfall 4: The historico-writing triggers must be updated too, or the motivo silently never reaches the diário
 
 **What goes wrong:**
-"On completing a visit, the system suggests the next date" sounds adjacent to "a nightly job scans for clients whose next-visit date has passed and creates a reminder" — and that second shape is a background job, which this project's `CLAUDE.md`/`STACK.md` explicitly avoid (no separate Node backend, "sem notificações ativas... destaque visual no kanban já resolve o problema" was an explicit v1.0 decision). If Agenda's implementation reaches for a cron-triggered Edge Function to pre-compute "overdue" or auto-create next-visit rows, it's solving a problem the existing `tarefas`/kanban "cards parados" feature already solved without a scheduler: **compute "atrasada" and the suggested date at read time**, inside the same query/view that renders the Agenda list, not via a batch job that runs ahead of time and writes state.
+The actual audit trail (`historico.descricao`, and therefore the client-facing "diário") is written by `tarefas_before_update_historico()` and `visitas_after_update_historico()` (migration `0015`, sections 3–4) — **not** by the RPCs themselves. Both triggers currently build `descricao` from `new.resumo` only:
+```sql
+case when new.resumo is not null and btrim(new.resumo) <> '' then btrim(new.resumo)
+     else 'Tarefa marcada como concluída' end
+```
+If the RPCs are extended to accept/store a motivo but the two trigger functions are left untouched, the motivo is saved on `tarefas`/`visitas` but **never appears in `historico`**, and therefore never appears in the diário the milestone explicitly requires ("Conclusão remota conta como conclusão normal — entra no diário do cliente"). This is exactly the kind of "looks done" bug this project has hit before: migration `0019`'s discovery that `importar_clientes_lote`'s `jsonb_to_recordset` silently dropped `cnpj`/`nome_fantasia` because a second piece of the pipeline wasn't updated in lockstep with the first.
 
-Worth noting precisely, since it's easy to get wrong in either direction: Vercel's Hobby plan *does* now support cron jobs (up to 100 per project), but capped at once-per-day cadence — so a daily job isn't technically impossible on this project's plan, but it's still the wrong tool here. A once-a-day cron can't atomically participate in the same transaction as "vendor clicks conclude visit," and it reintroduces exactly the staleness/timing complexity ("did today's cron already run before this visit was completed?") that computing everything on-the-fly avoids entirely.
-
-**Why it happens:**
-Recurring-schedule features read, on the surface, like they need a scheduler — "recurring" implies "something runs periodically." But the actual recurrence here is driven by a *user action* (completing a visit), not by wall-clock time; the "reminder" is just a sort/filter on a `data_prevista` column that's already sitting in the table.
+There is a second, subtler trap here even if the trigger IS updated: the project has **no existing precedent for surfacing a reason-list's display name inside `historico`**. Check `clientes_after_update_historico()` (migration `0002`): when a client is marked "perdido," the historico row is literally `format('Status alterado para "%s"', new.status_acompanhamento::text)` — it never joins `motivos_perda` to embed the reason's `nome`. If the new trigger is written by copying that precedent literally, it will stamp the raw `motivo_conclusao_remota_id` (a UUID) into `historico.descricao`, or omit it entirely — neither is acceptable for a field meant to be human-readable in a non-technical owner's diário.
 
 **How to avoid:**
-- Both the next-visit-date computation (Pitfall 1) and the "is this item overdue" flag happen inside the visit-completion RPC and the Agenda read query, respectively — never in a scheduled job.
-- If a true wall-clock trigger is ever needed later (e.g., a daily digest email), treat that as new scope requiring an explicit cost/complexity conversation per `CLAUDE.md`'s "não introduzir novas dependências/serviços externos sem antes explicar" rule — not something to reach for by default while building Agenda v1.
+- Update both `tarefas_before_update_historico()` and `visitas_after_update_historico()` in the same migration that extends the RPCs, adding a `select nome into ... from motivos_conclusao_remota where id = new.motivo_conclusao_remota_id` (or equivalent join) so the trigger embeds the **resolved reason text**, not the id, into `historico.descricao` — e.g. `resumo || ' (concluído remotamente: ' || v_motivo_nome || ')'`.
+- Because `historico.descricao` is written once and never re-read against the live lookup table afterward (mirrors the already-locked decision that renaming a `frequencias_pedido` value never propagates to `clientes.frequencia_pedidos`, migration `0016`), this text snapshot is correctly immutable — a Supervisor renaming a "Motivo de conclusão remota" value later must not silently rewrite historical diário entries. Confirm this snapshot behavior explicitly as intended, not accidental.
+- Add a direct integration test asserting the resulting `historico.descricao` string contains the resolved motivo text (not just that a row was inserted) — the existing trigger tests likely only assert insertion happened, not content correctness for this new case.
 
 **Warning signs:**
-- Any `supabase/functions/` directory proposal for Agenda that isn't handling something genuinely external (there's nothing external here — no email/SMS in scope).
-- A plan that mentions "cron" or "scheduled function" anywhere in Agenda's design.
+A diário export (`/api/agenda/exportar-diario`) that shows the same generic text for remote and in-person completions, or shows a raw UUID string in a spreadsheet cell.
 
 **Phase to address:**
-Should be settled as an explicit architectural constraint stated up front in the Agenda phase's plan, so it never gets proposed mid-implementation as a "clean" solution to the next-date problem.
+Same backend phase as Pitfalls 2–3; verification must explicitly read back `historico.descricao` after a remote completion, not just check the RPC returned success.
 
 ---
 
-### Pitfall 5: Unified Agenda built as two client-side fetches merged in JavaScript instead of one server-side sorted source
+### Pitfall 5: The 6th Supervisor-editable list can silently leave Vendedor with an empty, non-erroring dropdown
 
 **What goes wrong:**
-The Agenda view needs one chronologically sorted list mixing existing prospecção `tarefas` and new post-sale `visitas`, each with different parent-table shapes and different RLS-gating tables. The easy-to-reach-for approach — fetch `tarefas` (open, not concluída) and fetch `visitas` (pending) as two separate Supabase queries, then `.concat().sort()` client-side — has three compounding problems specific to this project: (1) it can't paginate correctly (page 1 of a merged, client-sorted list requires fetching *all* rows of both sources up front, defeating any `limit()`); (2) each row typically also needs `cliente.razao_social`/`responsavel` for display, so a naive implementation does a second round-trip per source (or worse, per row) to resolve that — an N+1 pattern; (3) this project has an explicit, already-documented cost constraint (Supabase free-tier egress cap, `STACK.md`: "Cache dashboard aggregates... keeps egress low against the 5GB/month free-tier cap") that a full-table-fetch-then-merge pattern works directly against.
-
-**Why it happens:**
-There's no existing precedent in this codebase for merging two heterogeneous tables into one sorted feed — the dashboard RPCs (`dashboard_funil_detalhado`, etc.) all aggregate a *single* source (`clientes`). Agenda is the first feature that needs a `UNION ALL`-shaped read, and reaching for "just fetch both and merge in the component" is the path of least resistance for someone extending existing `@tanstack/react-query` hooks that already fetch `tarefas` and `clientes` separately.
+This project's own migration `0016` comment names this exact failure mode for the previous new list (`frequencias_pedido`): *"Restringi-la ao Supervisor por engano deixaria o campo permanentemente vazio para todo Vendedor, sem dar erro nenhum — é o modo de falha silenciosa mais caro desta migration."* All 5 existing editable lists use an identical 4-policy RLS shape: `SELECT` open to **any authenticated user**, `INSERT`/`UPDATE`/`DELETE` gated by `is_supervisor()`. A 6th list ("Motivos de conclusão remota") that copy-pastes this pattern but fat-fingers the `SELECT` policy to `using (is_supervisor())` instead of `using (true)` will compile fine, pass a Supervisor-only smoke test, and only surface as "the dropdown has no options" the first time a Vendedor tries to complete a remote item — with zero error thrown, since an empty result set from an RLS-filtered SELECT is indistinguishable from "the table happens to be empty."
 
 **How to avoid:**
-- Build a single Postgres view or `SECURITY INVOKER` RPC (same family as the existing dashboard RPCs) that does `select ... from tarefas ... union all select ... from visitas ...`, normalized to a common shape (`id, tipo, cliente_id, razao_social, responsavel, data_prevista, atrasada`), with `order by data_prevista` and pagination (`limit`/`offset`) applied in SQL, not in the client. `UNION ALL` over two RLS-protected tables preserves each source's row-level filtering (Postgres evaluates RLS on the underlying tables before the union), so a Vendedor still only sees their own rows without any extra logic in the view.
-- Add (or confirm) an index on whatever date column drives the sort in each source table (`tarefas.data_conclusao` already lacks one — only `idx_tarefas_cliente_id` exists today; add `idx_tarefas_data_conclusao` and its `visitas` equivalent) so the union's sort doesn't degrade as row counts grow.
-- Select only the columns the Agenda list actually renders — don't `select *` on either side of the union, matching the existing "narrow `select()`" convention already stated in `STACK.md`.
+Copy the RLS block from migration `0016` (`frequencias_pedido`) verbatim, changing only the table name — do not write the 4 policies from scratch. Add an explicit RLS integration test (mirroring the project's existing `tests/agenda/rls-agenda.test.ts` / `rls-conclusao.test.ts` pattern) that logs in as a **Vendedor** (not Supervisor) and asserts a non-empty `SELECT` on the new table.
 
 **Warning signs:**
-- Agenda screen visibly slows down as more clients accumulate visits/tarefas (a client-merge implementation degrades linearly with total row count, not with what's actually displayed).
-- Network tab shows two-plus round trips per Agenda page load, or a round trip per row.
-- No `limit`/pagination on the Agenda query at all.
+Manual verification performed only by the Supervisor account (this project's Fase 19 checkpoint notes explicitly seed both roles for exactly this reason — "par de nome ambíguo... semeado... nunca pela UI").
 
 **Phase to address:**
-The phase that builds the Agenda list/view itself — this is the single highest-leverage design decision in the whole milestone, since every other Agenda feature (filtering, overdue highlighting, drag-free date confirm) sits on top of this read path.
+The migration phase that creates the 6th table — verification step must include a Vendedor-role read check, not just a Supervisor CRUD check.
 
 ---
+
+### Pitfall 6: The 6th list must be registered in three separate places, and the type system only catches one of them for free
+
+**What goes wrong:**
+Adding a new editable list to "Configurações" isn't just a migration. It requires three coordinated changes:
+1. `app/actions/listas.ts` — add the new table name to the `ListaTabela` union type.
+2. `components/configuracoes/ConfiguracoesTabs.tsx` — add a new entry to the `TABS` array (label, `inputPlaceholder`, `pluralAtivoLabel`), inside a `TabsContent` with `keepMounted` set (already-documented pitfall: Base UI unmounts inactive `TabsPanel`s and silently re-fetches/flashes "Carregando" on every switch without it — found in Fase 3's checkpoint).
+3. `supabase/migrations/00XX_motivos_conclusao_remota.sql` — the table + RLS itself (Pitfall 5).
+
+TypeScript will catch a missing `ListaTabela` union entry wherever the new table is *referenced* by name in typed code, but will **not** catch forgetting step 2 entirely — a migration + union-type update with no `ConfiguracoesTabs.tsx` entry compiles cleanly and the Supervisor simply has no UI to manage the list at all, discovered only by manual click-through.
+
+**How to avoid:**
+Since `getListaValores`/`createListaValor`/etc. in `listas.ts` are already fully generic (`supabase.from(tabela)`, no per-table switch statement), no server-side logic branches on the specific table name — the only two places to touch are the type union and the `TABS` array. Make this a literal checklist item in the plan for this migration's UI-side plan, cross-referenced against `frequencias_pedido`'s Fase 16-01/16-02 diff as the "did I touch everywhere Fase 16 touched" template.
+
+**Warning signs:**
+Migration is pushed and RLS tests pass, but "Configurações" screen shows only 5 tabs.
+
+**Phase to address:**
+Same phase as Pitfall 5, its UI counterpart plan (mirrors 16-01→16-02 split: schema first, then screen wiring).
+
+---
+
+### Pitfall 7: Month/week grid boundary-day generation invents a second, uncoordinated "which day is this" authority
+
+**What goes wrong:**
+Every date-comparison decision in this codebase today lives in exactly one place: `lib/agenda/itens.ts`'s `bucketDoItem` (parseISO + `differenceInCalendarDays`, never `new Date(isoString)`, documented with an explicit warning about the fuso-horário bug this project already hit once). Building a month/week grid introduces a **new kind of date logic this project has never needed before**: enumerating calendar cells (including partial weeks at the start/end of a month) and testing "does this item's date fall in this cell." If that logic is written ad hoc inside the calendar component using `new Date(item.data)` (instead of `parseISO(item.data)`) to test membership, it reintroduces the exact fuso-horário bug from Phase 15's own commit history — an item dated `2026-09-01` would render one cell early in São Paulo's UTC-3, exactly the class of bug `bucketDoItem`'s doc comment warns about.
+
+A second, distinct trap: the grid-generation code itself (which day cells to draw) is pure calendar arithmetic with no timezone component (it never touches an item's date string) — so `startOfMonth`/`endOfMonth`/`eachDayOfInterval` on `Date` objects is safe there. The risk is conflating the two: using the *browser's local* `new Date()` for "today" highlighting (fine, matches `bucketDoItem`'s own `now: Date = new Date()` default) is different from using a raw `new Date(stringFromDatabase)` to place an *item* in a cell (not fine).
+
+**How to avoid:**
+- Any function that maps an `AgendaItem.data` (a `YYYY-MM-DD` string) onto a grid cell must go through `parseISO`, never the `Date` constructor — same rule as `bucketDoItem`.
+- Grid-cell generation (which days exist in this month/week view) should live in one new pure file (e.g. `lib/agenda/calendario.ts`, dependency-free like `lib/agenda/itens.ts`), tested in isolation, and reused identically by month view, week view, and the "Hoje" navigation button — not reimplemented per view. This mirrors the project's own repeated pattern of centralizing "the one true way to answer this question" (see `agruparAgenda`'s doc comment on why it never re-sorts, or `ComparativoVendedorTable`'s single-ordering-authority precedent).
+- "Today" for highlighting purposes should reuse the same `now: Date = new Date()` default-parameter convention `bucketDoItem` already establishes, so tests can pin it the same way `itens.test.ts` presumably already does.
+
+**Warning signs:**
+A calendar cell showing an item one day off from its list-view position for the same underlying item — the fastest way to catch this in review is comparing the same test fixture dates against both `bucketDoItem` and the new grid-membership function.
+
+**Phase to address:**
+The phase building the month/week/day grouping logic, before any visual grid component — same phase implied by Pitfall 1's data-scope decision.
+
+---
+
+### Pitfall 8: `startOfWeek`/`endOfWeek` are not locale-aware by default — a hardcoded or divergent `weekStartsOn` misaligns month and week views
+
+**What goes wrong:**
+date-fns's `startOfWeek`/`endOfWeek` default to `weekStartsOn: 0` (Sunday) globally, and — despite accepting a `locale` option — do **not** automatically derive `weekStartsOn` from a passed locale object (this is a known, named date-fns limitation: date-fns/date-fns#3829, "Feature request: Make `startOfWeek` locale aware"). Passing `{ locale: ptBR }` to `startOfWeek` changes month/weekday *names* if formatted nearby, but does **not** change which day the week starts on — that still requires an explicit `weekStartsOn` number. If the month-grid code and the week-column code each hardcode their own `weekStartsOn` literal (one remembers to set it, one forgets and gets the date-fns default), the two views will disagree about which day is "start of week" — a bug that's easy to miss in isolated testing of each view but jarring the moment a user switches between month and week and sees Tuesday land in different grid columns.
+
+**How to avoid:**
+Decide the first-day-of-week convention once (confirm with the project owner — Brazilian consumer calendar apps commonly start Sunday, but this is a business decision, not a technical default) and define it as a single exported constant (e.g. `WEEK_STARTS_ON = 0` in the same `lib/agenda/calendario.ts` from Pitfall 7), imported by every grid/column-generation call — never a bare numeral literal repeated in month view, week view, and any "Hoje" jump logic.
+
+**Warning signs:**
+Month view and week view rendered side by side (or navigated between) show the same date under different weekday columns.
+
+**Phase to address:**
+Same phase as Pitfall 7 — bake the constant into the shared calendar-math module from the start rather than retrofitting later.
+
+---
+
+### Pitfall 9: Month-grid "leading/trailing days from adjacent months" break the existing `isSameMonth`-style overdue/today visual language if reused carelessly
+
+**What goes wrong:**
+The sketch (003, Variant A) shows a month grid where the first and last rows necessarily include a few days from the previous/next month to complete the 7-column weeks. This project's kanban and agenda already have a well-established "overdue" red-highlight convention (`isOverdue`/atrasado styling). If that same highlight logic is applied naively to *every* cell showing a pending item without first checking whether the cell belongs to the currently-viewed month, a leading-edge trailing-month day (e.g., "28, 29, 30" from August shown in September's grid) with an overdue item could visually dominate the wrong month's view, or — the opposite failure — get incorrectly dimmed/suppressed by generic "not this month" styling and hide a genuinely overdue item from view when the user is actually looking at the relevant month.
+
+**How to avoid:**
+Keep two independent visual states per cell explicit in the component's props from the start: "is this day inside the currently-viewed month" (dims styling only) and "is this item atrasado" (reuses `bucketDoItem`'s existing atrasado computation, unaffected by which month is being viewed). Do not let one boolean drive both.
+
+**Warning signs:**
+An overdue item from the tail end of last month rendered with full-opacity red urgency styling inside next month's dimmed leading cells, or conversely invisible because "dimmed" styling overrode "atrasado" styling.
+
+**Phase to address:**
+Same grid-rendering phase as Pitfalls 7–8, as an explicit UAT checklist item ("switch to a month where the 1st is not a Sunday/Monday and confirm adjacent-month overdue items still read as urgent").
+
+---
+
+### Pitfall 10: Dense month cells — the "+N" overflow counter and click targets need to survive the existing vendedor filter and reload-key convention
+
+**What goes wrong:**
+`AgendaList.tsx` already has a working, tested local filter (`vendedorFiltroId` via `filtrarPorVendedor`) applied client-side over the already-fetched `itens`, plus a `reloadKey` that re-fetches after any completion. A month grid's "+N mais" chip counter (sketch 003 shows a day with 7 items collapsing to 3 chips + "+4") must be computed **after** `filtrarPorVendedor` runs, from the same filtered set the list view uses — not from the raw unfiltered `itens`. Computing the counter from the unfiltered set would show a Supervisor viewing "Todos os vendedores" one count, but after picking a specific vendedor the badge counts would not update to match, since the grid and the counter would be reading two different arrays. This is the same class of bug the project's own `showResponsavel`/`vendedorFiltroId` logic in `AgendaList.tsx` was carefully built to avoid for the list view — the calendar view must not accidentally reintroduce it by deriving counts from a different data source.
+
+A second, purely UX concern given this is a desktop-first, non-technical-user internal tool (not a touch device): a 7-day-wide grid with 5-6 rows leaves each day cell only a few dozen pixels tall once a header/date-number is subtracted — a "+4 mais" text link needs a real clickable hit area (padding, not just tight text), and each of the up-to-3 visible chips needs to remain individually clickable to open that item's `ConcluirItemDialog`/`ClienteDetailSheet ` (same click affordance the list rows already have via `onOpen`/`onConcluir`), not just the day cell as a whole triggering a single "show day" action. Conflating "click a chip" and "click the day" into the same target is an easy way to make individual-item actions unreachable except through the day's full-list popover.
+
+**How to avoid:**
+- Reuse `filtrarPorVendedor(itens, vendedorFiltroId)`'s output as the single source both the list view *and* the calendar grid consume — never compute month/week/day groupings from the pre-filter `itens` array.
+- Keep the sketch's own stated interaction model explicit in the plan: chips are visual-only summaries (color + short label, matching the existing gray/blue prospecção/ativo language from `AgendaItemRow.tsx`), clicking a day cell (or its "+N") always opens "the full list for that day" (reusing the existing list-row component, not a second row implementation) rather than trying to make every chip independently actionable inside the cramped grid cell itself — this sidesteps the click-target-size problem entirely per the sketch's own design ("clique no dia abre a lista completa daquele dia"), and is the safer reading of "Visão de dia reaproveita o card da lista atual."
+
+**Warning signs:**
+Chip count in a day cell doesn't match the count shown once you open that day's full list, when a vendedor filter is active.
+
+**Phase to address:**
+The month-grid rendering phase — verification should explicitly re-run the "switch vendedor filter, confirm month-grid counts update" case the list view's existing tests already cover for buckets.
 
 ## Technical Debt Patterns
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|-----------------|------------------|
-| Merge `tarefas` + `visitas` client-side in JS instead of a SQL `UNION ALL` view | Ships faster, no new migration needed | Breaks pagination, multiplies egress against the free-tier cap, silently slows down as data grows | Never — the free-tier egress constraint is explicit in this project's stack decisions |
-| Overload the existing `tarefas` table with nullable `frequencia`/`proxima_data` columns instead of a new `visitas` table | Reuses existing RLS policies and `historico` trigger wiring, less migration surface | Conflates two semantically different entities (ad-hoc prospecção task vs. recurring post-sale visit); every future tarefas query needs to filter out visita-shaped rows; `tipos_tarefa` lookup has no concept of recurrence | Only if the team is certain Agenda never needs visita-specific fields `tarefas` doesn't have (frequência, resumo obrigatório) — given the spec already lists frequência and mandatory resumo, a separate table is the safer default |
-| Table-level blanket `CHECK` constraint for graduated fields instead of an RPC-enforced rule | Feels more "database-enforced," matches the `motivo_perda` precedent | Fails to apply against existing production rows (Pitfall 3); harder to give a friendly Portuguese error message to a non-technical user than a `raise exception` inside a PL/pgSQL RPC | Only once there are zero existing rows that could violate it, or after an explicit backfill/`NOT VALID` decision is made |
-| Skip a Vitest date-math test for the frequency → next-date calculation because "date-fns is well-tested" | Saves time this sprint | The bug isn't in date-fns, it's in how the app constructs/passes dates around it (Pitfall 1) — untested, this exact bug shape recurs across products even with correct libraries | Never — `CLAUDE.md` already requires at least one automated test per feature, and this is the feature most likely to have a silent off-by-one |
+| Client-side-only month/week/day grouping over the already-fetched pending-only `itens` array (no new RPC, no date-range params) | Zero backend risk, reuses `getAgendaAction()` as-is | Calendar can never show completed items in past months without a later RPC change (Pitfall 1) | Acceptable for this milestone — matches the stated "view only, same items as the list" scope; revisit only if the project owner explicitly asks for a history view later |
+| Reusing the existing `AgendaItemRow` component inside a day's full-list popover instead of building a calendar-specific row | Guarantees visual consistency (colors/badges) with zero duplicate styling code | None significant — this is the correct reuse, not a shortcut with a real cost | Always |
+| Storing `motivo_conclusao_remota_id` as a nullable FK on `tarefas`/`visitas` (mirrors `motivo_perda_id`) rather than copying text directly onto those tables | Matches existing schema convention, no redesign | The FK's live value can be repointed if someone edits/deactivates a list row later — the *displayed* audit text must be frozen into `historico.descricao` at completion time (Pitfall 4), not re-derived from the FK on every later read | Never skip the historico text-snapshot step — only acceptable shortcut is skipping a *second* denormalized text column directly on `tarefas`/`visitas` itself, since `historico` already carries the frozen text |
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|-----------------|-------------------|
-| Postgres `date` vs `timestamptz` for visit dates | Using `timestamptz` "to be safe," then having to strip time/timezone everywhere it's displayed or compared | Match `tarefas.data_conclusao`'s existing convention: plain `date`, no time component — this is a date the vendor picks/confirms, not an instant in time |
-| Browser `Date` construction from Supabase-returned ISO date strings | `new Date("2026-08-14")` → parsed as UTC, off by a day in `America/Sao_Paulo` when rendered | Use `date-fns`'s `parseISO`, or better, do the arithmetic server-side in the RPC and only ever *display* the returned date client-side |
-| `date-fns` `addMonths` vs Postgres `date + interval '1 month'` | Computing the suggestion in one place, re-deriving/re-validating it in another, and getting different month-end clamping behavior between the two | Pick one authority (recommend the RPC/Postgres) for the actual computation; the client only renders what the RPC returns |
-| Vercel Hobby cron | Assuming "no cron exists on Hobby" (it does, once/day) and either avoiding a genuinely useful daily job out of an outdated assumption, or reaching for it to solve something that doesn't need wall-clock triggering at all | Confirm current Vercel plan limits before ruling cron in or out for any *future* feature; for Agenda specifically, no cron is needed regardless (Pitfall 4) |
+| Supabase PostgREST RPC calls (`supabase.rpc(...)`) | Assuming argument order matters for backward compatibility when extending a function signature | PostgREST matches by parameter **name** (JSON object), so existing calls stay valid as long as names/types of pre-existing params are untouched and new params have defaults — position in the SQL signature is irrelevant to old callers, but `create or replace function` still forbids removing/reordering pre-existing typed params |
+| date-fns `startOfWeek`/`endOfWeek` + `locale` option | Assuming passing `{ locale: ptBR }` makes the week start on the locale's conventional day | `locale` only affects names/formatting; `weekStartsOn` must be passed explicitly and centralized (Pitfall 8) |
+| Base UI `Tabs`/`TabsContent` (already used by `ConfiguracoesTabs.tsx`) | Adding a 6th `TabsContent` without `keepMounted` | Every `TabsContent` in this file must carry `keepMounted` — Base UI unmounts inactive panels and re-fetches on every switch otherwise (documented root cause from Fase 3's checkpoint) |
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|-----------------|
-| Unindexed `UNION ALL` sort across `tarefas`/`visitas` by date | Agenda page load time grows noticeably as historical (completed) rows accumulate, even though only pending ones should render | Add `WHERE concluida = false` / `WHERE status = 'pendente'` filters *before* the union, plus a date index on each source table | Noticeable at a few hundred open rows per source; this team's scale (small sales team) still means it's worth doing from day one rather than retrofitting |
-| Client-side merge-then-sort of two full result sets | Network payload includes every open tarefa/visita on every Agenda load, not just the visible page | Server-side `UNION ALL` view/RPC with `LIMIT`/`OFFSET` or cursor pagination | Breaks pagination correctness immediately (not a "scale" threshold — it's wrong from the first page with >1 page of data) |
-| Recomputing "quantos dias até a próxima visita" or similar aggregates client-side over full `historico` | Dashboard-adjacent Agenda summary stats slow down and re-fetch full history repeatedly | Follow the existing `dashboard_funil_detalhado`/`dashboard_comparativo_vendedor` precedent: aggregate in a `SECURITY INVOKER` RPC, not in the browser | As soon as any per-client history view is added alongside Agenda |
+| Re-fetching `getAgendaAction()` on every month/week navigation click (treating calendar nav like a new query) | Visible network round-trip / loading flash on every "próximo mês" click for a dataset small enough to have loaded once already | Fetch once (existing `useEffect`/`reloadKey` pattern in `AgendaList.tsx`), do all month/week/day slicing client-side over the already-loaded `itens` — same principle already applied to the vendedor filter | Would only become a real backend cost concern at a client/task volume far beyond a single sales team's realistic pipeline size; not a near-term risk given the free-tier egress constraint already documented in `STACK.md` |
 
 ## Security Mistakes
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Adding a user-facing `INSERT` policy to `historico` to make the resumo-writing "simpler" | Any authenticated user (including a Vendedor for another vendedor's client) can forge history entries once a blanket INSERT policy exists, since the `EXISTS`-on-parent gate is easy to get subtly wrong compared to the current trigger-only design | Keep `historico` writes trigger-only (`SECURITY DEFINER`), extended to accept the resumo text as part of the existing UPDATE-triggering pattern (Pitfall 2) |
-| New `SECURITY DEFINER` RPC for the visit-completion multi-table write, "because it's easier than reasoning about RLS across three tables" | Bypasses RLS entirely inside the function body — a bug in the function's own row-selection logic becomes a cross-vendedor data leak/write, with no RLS safety net catching it, unlike every existing non-definer RPC in this project | Default to `SECURITY INVOKER` (the `mover_card_funil` precedent) for the visit-completion RPC; reserve `SECURITY DEFINER` for the same narrow, explicitly-documented category this project already limits it to (Auth Admin API calls) |
-| Client-side-only enforcement of "Nome Fantasia/CNPJ required before marking ativo" (a form-level required-field check with no matching DB-side guard) | A Vendedor can call the underlying RPC directly (browser devtools, or a future automated import) and skip the requirement entirely — same class of risk `CLAUDE.md` already flags for permission checks | Enforce the graduated-field rule inside the RPC that performs the ativo transition (Pitfall 3), not only in the React form |
-| Assuming the new `visitas` table inherits `clientes`'s RLS because it has a `cliente_id` foreign key | Postgres RLS does **not** cascade through foreign keys — this exact gap is what the existing `EXISTS`-on-parent policies for `tarefas`/`cliente_produtos`/`historico` were built to close, and it's easy to forget when adding yet another child table | Copy the existing `tarefas` RLS policy shape (four explicit `EXISTS (select 1 from clientes c where c.id = visitas.cliente_id and (c.responsavel = auth.uid() or is_supervisor()))` policies) verbatim for `visitas` |
+| New `motivo_conclusao_remota_id` param trusted from the client without server-side re-validation | A tampered/forged reason id (or a deactivated list row's id) gets written straight through, same class of risk the resumo guard already defends against (`app/actions/agenda.ts` re-validates resumo server-side even though the RPC also guards it) | Re-validate the motivo id exists (and is `ativo`, if inactive rows shouldn't be selectable going forward) inside the RPC itself via a `select 1 from motivos_conclusao_remota where id = ... and ativo` guard, mirroring the resumo length guard's fail-closed pattern — don't rely on the dropdown only ever offering valid ids |
+| 6th list's `SELECT` policy accidentally scoped to Supervisor-only | Not a data leak, but a silent functional block for every Vendedor (Pitfall 5) — listed here because it's the *inverse* of the usual RLS mistake (usually RLS is too open; here the risk is RLS too narrow) and this codebase's existing lists all correctly stay `using (true)` for reads | Copy migration `0016`'s RLS block verbatim |
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
-|---------|-------------|-------------------|
-| Forcing a long/multi-field resumo form on every single visit or task completion | Reintroduces the exact "telas longas, esquecimento" friction this CRM was built to replace (`CLAUDE.md`'s stated Core Value) — a vendor stops completing visits promptly if the confirmation step feels heavy | One short free-text field, no extra required metadata beyond what's already specified (resumo + confirmed date) |
-| Auto-suggested next date lands on a weekend/holiday with no easy adjustment | Vendor has to manually retype a whole new date instead of nudging by a day or two | Suggest the date, but make "confirmar" a single tap and adjusting a lightweight date-picker interaction, not a full form re-entry |
-| Agenda list mixes prospecção tasks and post-sale visits with no visual distinction | Vendor can't tell at a glance whether an item is "finish selling" work or "maintain an existing client" work, undermining the "clareza do que está parado" value the kanban already delivers | Reuse a badge/variant pattern consistent with existing kanban status badges (`class-variance-authority` is already in the stack for exactly this) to visually separate the two item types in the unified list |
-| A pre-existing "ganho" client (from before this migration) opened in the UI silently has blank Nome Fantasia/CNPJ with no explanation | Vendor assumes it's a bug ("por que não salvou?") rather than understanding it's historical data that predates the new fields | Explicit, plain-language empty-state messaging on those fields for legacy rows, rather than treating a blank field as an error state |
+|---------|--------------|-------------------|
+| Past months in the calendar rendering as silently empty for completed work (Pitfall 1) | Vendedor thinks the app lost their history | Neutral empty-state copy ("Nenhum item pendente neste dia," never implying "nothing happened") + confirm the pending-only scope explicitly during Discuss so it's a stated decision, not a surprise |
+| Chips in a dense month cell trying to be independently clickable for every action (concluir, abrir ficha) inside a tiny grid cell | Mis-clicks, frustration for non-technical desktop users | Day cell / "+N" opens the existing full-list view for that day (reusing `AgendaItemRow`) rather than cramming every action into the grid cell itself (Pitfall 10) |
+| Month and week views disagreeing on which weekday a date falls under (Pitfall 8) | Confusing, looks like a bug even when both views are individually "correct" by different rules | Single shared `WEEK_STARTS_ON` constant |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Next-date suggestion:** Often missing month-end clamping test (Jan 31 + mensal) and a timezone-safe date construction path — verify with a Vitest test asserting the exact date, not just "a date got returned."
-- [ ] **Visit completion:** Often missing the atomic three-way write (status + `historico` + next visit) — verify by forcing a mid-transaction failure (e.g., temporarily break the next-visit insert) and confirming the whole operation rolls back, not partially commits.
-- [ ] **New `visitas` table RLS:** Often missing per-policy coverage for all four operations (select/insert/update/delete), each independently gated by the `clientes` parent — verify by testing as a Vendedor against another vendedor's client, not just as Supervisor (this project's own prior research already flags "testing only as Supervisor hides RLS bugs" as a recurring failure mode).
-- [ ] **Unified Agenda list:** Often missing pagination/limits and a supporting date index — verify by checking the network payload size and query plan (`EXPLAIN ANALYZE`) once there are a few hundred combined open items, not just with today's small dataset.
-- [ ] **Graduated `clientes` fields (Nome Fantasia/CNPJ/frequências):** Often missing a defined answer for what "ativo" means as a schema state, and a plan for existing "ganho" rows that predate the migration — verify by running the row-count query against production data before finalizing the constraint approach.
-- [ ] **"Frequência: nenhuma":** Often missing explicit handling — verify that choosing "nenhuma" suppresses next-date suggestion entirely rather than defaulting to some fallback interval.
-- [ ] **Historico entries for visita completions:** Often missing a distinct `tipo` value (vs. the existing `'tarefa_concluida'`/`'etapa'`/`'status_acompanhamento'` values) — verify a future dashboard/report could filter visita-history from tarefa-history without string-matching the free-text `descricao`.
+- [ ] **Conclusão remota RPCs:** Confirm BOTH `concluir_tarefa_prospeccao` AND `concluir_visita` accept and store the new motivo param — verify by testing a remote completion through each origin, not just one (Pitfall 3).
+- [ ] **Diário/historico text:** Confirm `historico.descricao` for a remote completion contains the resolved motivo **name**, not a raw UUID and not silently omitted — read the row back after calling the RPC, don't just check for success (Pitfall 4).
+- [ ] **6th list end-to-end:** Confirm a Vendedor account (not just Supervisor) can see the new motivo dropdown populated, AND that the new tab appears in "Configurações" with `keepMounted` set (Pitfalls 5–6).
+- [ ] **Calendar grid date fidelity:** Confirm an item placed near a month boundary (e.g. the 31st) renders in the correct grid cell by comparing against the same item's placement in the existing list view's atrasado/hoje/próximos bucket for the same date (Pitfall 7).
+- [ ] **Calendar + vendedor filter interaction:** Confirm switching the Supervisor's vendedor filter updates month-grid "+N" counts, not just the list view's counts (Pitfall 10).
+- [ ] **Existing test suite untouched:** Run the pre-existing `tests/agenda/*.test.ts` files after the RPC-extension migration with zero modifications and confirm they still pass — any edit required to keep them green is a signal of a breaking (not additive) change (Pitfall 2).
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
-|---------|----------------|------------------|
-| Migration fails against existing "ganho" rows due to a blanket `CHECK` | LOW | Drop the failed constraint attempt, re-add with `NOT VALID`, decide backfill policy separately (no data was touched by the failed migration attempt) |
-| Off-by-one next-date bug already shipped and vendors have confirmed wrong dates | MEDIUM | Identify affected `visitas` rows by re-running the corrected computation against `historico`'s recorded completion dates, flag discrepancies for vendor review rather than silently overwriting confirmed dates |
-| `historico` INSERT policy was mistakenly opened up | HIGH | Immediately revert the migration/policy (new migration removing the policy, per this project's "never edit an applied migration" rule), audit `historico` for any rows inserted directly (not via trigger) during the window it was open, and confirm with the team whether any need manual correction |
-| Client-side merge-then-sort Agenda shipped and is already slow | MEDIUM | Replace with the `UNION ALL` RPC/view without changing the RPC's external contract (same shape the frontend already expects), so the fix is a backend-only migration, not a UI rewrite |
+|---------|-----------------|------------------|
+| Historico trigger missing motivo text (Pitfall 4) | LOW | Recreate the two trigger functions with the join added; no data migration needed for *future* completions, but already-written historico rows from before the fix stay generic text forever (matches this project's existing "renaming a list value doesn't retroactively rewrite history" posture) — acceptable, communicate to the owner if any remote completions happened during the gap |
+| RLS SELECT policy too narrow on the 6th list (Pitfall 5) | LOW | Single `drop policy` + `create policy ... using (true)` migration, no data affected |
+| Calendar grid using `new Date(isoString)` instead of `parseISO` (Pitfall 7) | LOW–MEDIUM | Swap the parsing call in the one shared `lib/agenda/calendario.ts` module (if centralized per the recommended approach) — cost scales with how many places duplicated the mistake, which is exactly why centralizing it first keeps this cheap |
+| Existing RPC callers broken by a non-default new param (Pitfall 2) | MEDIUM | `create or replace function` again with the param made `default null`; requires a second migration file (never edit a pushed migration in place, per this project's own hard rule against altering applied migrations) |
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
-|---------|-------------------|----------------|
-| Timezone/date-math bugs in next-date suggestion | Phase building the visit-completion RPC | Vitest test asserting exact dates across month boundaries (incl. leap year) and a manual test in `America/Sao_Paulo` |
-| Multi-table write atomicity / `historico` RLS gap | Phase building the visit-completion RPC | Test as Vendedor completing own client's visit; force a failure mid-RPC and confirm full rollback; confirm no new `historico` INSERT policy was added |
-| Graduated fields on populated `clientes` table | Phase adding the new `clientes` columns | Run `select count(*) from clientes where status_acompanhamento = 'ganho'` against real data before writing the migration; confirm "ativo" definition was resolved in Discuss |
-| Background-job-shaped next-visit generation | Phase-plan review before implementation starts (architectural constraint, not a coding task) | Plan explicitly states no cron/Edge Function is used for next-date computation or overdue detection |
-| Unified Agenda merge/N+1/pagination | Phase building the Agenda list view | `EXPLAIN ANALYZE` on the union query with a few hundred rows; confirm one round trip per Agenda page load in the network tab |
+|---------|--------------------|----------------|
+| 1. Pending-only scope surprises calendar users | Discuss-phase decision, confirmed before the grouping-logic phase | Explicit product decision recorded in `PROJECT.md` Key Decisions before implementation |
+| 2. Breaking existing RPC callers | Backend RPC-extension phase | Full existing `tests/agenda/*.test.ts` suite passes unmodified |
+| 3. Twin-RPC divergence | Backend RPC-extension phase | Both origins (prospecção + visita) exercised in the same verification pass |
+| 4. Historico trigger missing motivo | Backend RPC-extension phase | Read back `historico.descricao` after a remote completion in the test |
+| 5. RLS too narrow on 6th list | Migration phase for the new list | Vendedor-role RLS read test |
+| 6. 6th list missing from `ConfiguracoesTabs.tsx`/`ListaTabela` | UI-wiring phase for the new list | Manual click-through: "Configurações" shows 6 tabs |
+| 7. Grid date-membership using raw `Date` construction | Calendar grouping-logic phase | Cross-check a boundary-date item's cell against its existing list-view bucket |
+| 8. Week-start convention drift between views | Calendar grouping-logic phase | Single shared constant, unit-tested once |
+| 9. Adjacent-month overdue styling conflict | Calendar grid rendering phase | Manual UAT on a month whose 1st isn't the configured week-start day |
+| 10. Overflow counter / vendedor filter desync | Calendar grid rendering phase | Toggle vendedor filter, confirm counts match the list view |
 
 ## Sources
 
-- `supabase/migrations/0001_profiles_and_roles.sql`, `0002_clientes_and_funil.sql`, `0007_cidades_e_estado_valido.sql`, `0008_desativacao_membro_equipe.sql` — this repo's own applied schema, RLS policies, and RPC/trigger conventions. Confidence: HIGH (primary source, directly read).
-- `.claude/skills/Supabase-conventions/SKILL.md` — project convention for RLS/RPC/Edge Function decision order. Confidence: HIGH (primary source).
-- `.planning/PROJECT.md` — current milestone scope, prior Key Decisions (soft-delete pattern, IBGE cidades decision), Out of Scope items (notificações ativas). Confidence: HIGH (primary source).
-- WebSearch: "Vercel Hobby plan cron jobs limits" — cross-checked across Vercel's own docs/changelog and third-party trackers agreeing on "100 jobs/project, once-per-day cadence cap on Hobby." Confidence: MEDIUM (cross-checked, includes an official Vercel changelog result).
-- WebSearch: "Postgres add NOT NULL column to existing table with rows safe migration pattern" — cross-checked across multiple independent sources agreeing on the `NOT VALID` constraint / three-step migration pattern and the "ALTER TABLE validates all existing rows by default" mechanic. Confidence: MEDIUM.
-- WebSearch: "Supabase RLS multiple tables single transaction RPC security invoker pitfalls" — cross-checked across Supabase community/docs sources agreeing RPC functions are the standard multi-table-transaction mechanism, and `SECURITY DEFINER` bypasses RLS. Confidence: MEDIUM.
-- WebSearch: "recurring task next occurrence date calculation timezone bugs common mistakes" — cross-checked across multiple independent bug reports (Discourse, Microsoft To Do, open-source recurring-task plugins) all describing the same UTC-midnight-parsing / off-by-one failure mode. Confidence: MEDIUM.
-- `gsd-tools query classify-confidence --provider websearch` (and `--verified`) — used to assign LOW (single-source) vs MEDIUM (cross-checked) tiers to the WebSearch findings above.
+- `.planning/PROJECT.md` — Key Decisions table, v1.5 milestone scope, Out of Scope history (v1.3's explicit deferral of a full calendar).
+- `.planning/STATE.md` — Blockers/Concerns, accumulated conventions, SECURITY DEFINER exception count.
+- `supabase/migrations/0002_clientes_and_funil.sql` — original `motivos_perda` RLS pattern, `clientes_after_update_historico()` (precedent for historico NOT resolving FK display names today).
+- `supabase/migrations/0014_agenda_do_vendedor.sql` / `0015_conclusao_com_resumo.sql` — `agenda_do_vendedor()` pending-only filter, `concluir_tarefa_prospeccao`/`concluir_visita` bodies, both historico trigger functions.
+- `supabase/migrations/0016_frequencias_pedido.sql` — 6th-list RLS precedent and its own documented "silent empty dropdown" warning.
+- `lib/agenda/itens.ts`, `components/agenda/AgendaList.tsx`, `components/agenda/ConcluirItemDialog.tsx`, `app/actions/agenda.ts`, `app/actions/listas.ts`, `components/configuracoes/ConfiguracoesTabs.tsx` — direct code read for existing date-handling, filter, and list-CRUD conventions. Confidence: HIGH (primary source, this repository).
+- `.planning/sketches/003-agenda-calendario/README.md` — approved calendar sketch's stated interaction model (no drag, day/list reuse, "+N" chip counter).
+- WebSearch: "date-fns ptBR locale weekStartsOn default startOfWeek" — confirms date-fns's global Sunday default and the `startOfWeek`/locale non-awareness limitation (date-fns/date-fns#3829). Confidence: MEDIUM (web synthesis referencing an authoritative but not directly-fetched GitHub issue).
 
 ---
-*Pitfalls research for: CRM Raiar v1.3 — Agenda do Vendedor (recurring visit scheduling + unified agenda + graduated client fields on existing Supabase/RLS schema)*
-*Researched: 2026-08-07*
+*Pitfalls research for: CRM Raiar v1.5 — Calendário na Agenda e Conclusão Remota*
+*Researched: 2026-08-17*

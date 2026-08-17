@@ -1,175 +1,146 @@
 # Feature Research
 
-**Domain:** B2B/field-sales CRM — unified agenda/task-list + recurring post-sale visit scheduling
-**Researched:** 2026-08-07
-**Confidence:** MEDIUM (HIGH where mapped onto this project's already-established patterns; LOW-MEDIUM where drawn from general CRM market research — see Sources)
-
-## Context Recap
-
-This is not a general "CRM agenda features" survey — it's scoped tightly to what v1.3 (Agenda do Vendedor) needs for a **small internal team** (a handful of vendedores + 1 supervisor), **non-technical owner**, **zero-infra-cost** constraint, and a Core Value that explicitly penalizes friction ("cadastro rápido, poucos campos obrigatórios, mínimo de fricção"). Two things already exist and must be reused, not rebuilt: funnel-card `tarefas` (with `tipos_tarefa` enum + `data_conclusao`) and the automatic `historico` change log. Notificações ativas (push/email) and app mobile nativo are already explicitly Out of Scope in `PROJECT.md` — that decision carries forward into this research.
+**Domain:** Calendar view + "completed differently than planned" pattern, for a small-team B2B sales CRM (Agenda screen add-on, v1.5)
+**Researched:** 2026-08-17
+**Confidence:** LOW-MEDIUM (web-synthesis only; no primary docs fetched, cross-checked across 2+ independent sources per claim where noted)
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features without which the Agenda screen would feel broken or would fail its stated goal ("mostrar o que ele precisa fazer, hoje e nos próximos dias").
+Features users assume exist once a "calendar view" is offered at all. Missing these makes the calendar feel broken or half-built, even for a 2-person-owned tool.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Unified "today / overdue / upcoming" list merging prospecção tasks + pós-venda visits | This is the entire premise of the milestone — a vendedor should never have to check two places. Every CRM task-management pattern found (HubSpot task queue, Zoho Tasks, Salesforce Activities) centers on one merged list, not per-source lists | MEDIUM | Reuses existing `cards.tarefas` (via `data_conclusao`); needs a new `visitas`/`agendamentos` table for pós-venda. The "unification" itself is a query/view concern (e.g. a Postgres view `UNION`-ing both sources), not new domain data |
-| Overdue/atrasado visual highlighting, grouped by today vs. this week vs. late | Directly extends the pattern already shipped and validated in the kanban ("Cards parados/atrasados ficam visualmente destacados") — the team already expects this signal | LOW | Pure date math with `date-fns`, already in the stack; no new library needed |
-| Mark-done flow that requires a short written summary before completion is accepted | Explicit requirement in the milestone scope, and it's the mechanism that turns "did the task" into "here's what happened" — matches the standard CRM pattern of capturing the closing note at the point of closure, not as an afterthought | MEDIUM | **Open dependency question:** does this reuse/extend the existing `historico` table (which already logs etapa/status/task changes automatically) or does it need a new structured table (e.g. `interacoes`)? `historico` today is a system-generated audit log; a user-authored summary is a different kind of record (free text, always present, queryable per client). Recommend a new lightweight table referencing `historico`-style shape (autor, cliente, data, tipo, resumo) rather than overloading the audit log — flag this for the architecture/plan phase |
-| Per-client visit/task history ("diary") visible to vendor and supervisor | Explicitly requested in scope; also the natural payoff of forcing a summary at completion — without a viewer, the summary is write-only and the feature has no value | MEDIUM | Read-side query joining completed prospecção tasks + completed visitas, ordered by date, scoped by the same RLS visibility rule already used for `clientes` (vendedor → own; supervisor → all) |
-| Setting visit frequency at the moment a card is marked "ganho" | Explicit requirement; it's also the only sane trigger point — asking for a cadence before a deal is won has no meaning, and asking for it later reintroduces a manual step the team would forget (which is exactly the friction this CRM exists to remove) | LOW-MEDIUM | Hooks into the existing "mover card para ganho" flow (likely a small modal/step added to that action, not a separate screen) |
-| Editable/cancelable recurrence at any time | Explicit requirement; accounts change (a client pauses orders, a vendor's route changes) — a cadence that can't be adjusted would get abandoned or worked around outside the system, undermining trust in the Agenda | LOW | Simple update on a `frequencia_visita` field per client; no versioning/history needed for the setting itself (the historico of visits already captures what happened over time) |
-| Suggested next visit date on completion, with confirm-or-adjust (never silent auto-schedule) | Explicit requirement, and confirmed by research as the dominant CRM pattern: recurring-task engines (Zoho, SuiteCRM, generic recurrence UIs) universally advance to a system-computed next date but leave it editable at the point of completion — a purely silent auto-reschedule was not found as a default pattern anywhere surveyed | LOW-MEDIUM | Pure date math (`date-fns`) off the stored frequency; UI is a pre-filled date field the vendor can accept or change, not a background job |
-| Role-scoped visibility on the Agenda itself (vendedor sees own agenda; supervisor sees the whole team's) | Direct continuation of the RLS-driven visibility rule already governing `clientes` and the funil — an agenda that leaked cross-vendor tasks would break the existing security model and user expectations in one move | LOW | No new authorization concept — same RLS pattern (`responsavel = auth.uid()` for vendedor, unrestricted for supervisor), applied to the new `visitas` table and to the query backing the unified list |
-| New "ativo" client fields (Nome Fantasia, CNPJ, frequência de pedidos, frequência de visitas), required only once, never at initial cadastro | Explicit requirement, and structurally it's the same pattern already validated for the "cadastro rápido" flow: minimum-required-fields-first, richer fields later — this milestone extends that pattern to a second gate ("ativo") instead of inventing a new one | LOW-MEDIUM | Needs a schema/RLS decision (new nullable columns + a check/trigger enforcing "required when ativo", or a conditional form-level validation backed by a server-side re-check) — flag for architecture research; `frequência de visitas` is very likely the *same underlying value* as the recurrence set at "ganho", not a duplicate field (see Feature Dependencies) |
+| Toggle between list and calendar on the same screen (not a separate page) | Pipedrive, HubSpot, and every SMB CRM surveyed keep list and calendar as two views over the *same* activity data, switched by a button/icon — never a separate module with its own filters/state | LOW | v1.5 scope already frames it this way ("Alternância Lista ↔ Calendário"); reuse existing Agenda query, don't fork it |
+| Day / Week / Month modes with date navigation + "Today" shortcut | Universal across every calendar UI (Pipedrive, Google Calendar-style CRMs); users expect prev/next arrows and a one-click return to today | LOW | Already in v1.5 scope |
+| Visual distinction by item type (color/icon) | Pipedrive color-codes by activity type so a rep scans a week and instantly knows "that's a call, that's a task" without opening it | LOW | v1.5 already reuses the existing Prospecção(gray)/Ativo-Visita(blue) coding from the list — correctly avoids inventing a second visual language |
+| Overflow handling on dense days (month view) | Pipedrive caps visible items and expects a "view more"-style escape hatch once a day gets crowded; without it a busy Monday becomes visually unreadable | LOW-MEDIUM | v1.5 already specifies "até 3 chips + contador '+N', clique abre a lista completa do dia" — matches the standard pattern exactly |
+| Calendar items link back to full detail (not just a label) | Users always expect a chip to be clickable/openable, even on a "read-only" calendar | LOW | v1.5 scope: "clique no dia abre a lista completa" — satisfies this at the day level, which is enough at this item volume (no per-item click-through needed on month view is a reasonable trim, see Anti-Features) |
+| Free-text "reason"/summary stays mandatory regardless of completion path | Every CRM outcome-taxonomy pattern found (HubSpot call/meeting outcomes) treats the *reason* as a category, separate from a *notes/description* field — both coexist, neither replaces the other | LOW | Matches v1.5 scope exactly: motivo (categoria) + resumo (texto livre) both required, mirroring how this project's existing Agenda already requires resumo |
 
-### Differentiators (Nice, Could Defer)
+### Differentiators (Competitive Advantage)
 
-Features that would make the Agenda meaningfully better but are not required for it to be usable and trustworthy on day one.
+Features that go beyond copy-pasting a generic calendar, aligned with this project's actual core value (low-friction updating + visibility of what's stuck).
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Compact weekly strip/mini-calendar alongside the list (not a full calendar app) | Gives a "shape of the week" glance beyond a flat list — useful once a vendor has enough visits to want to see clustering by day | MEDIUM | Genuinely nice-to-have; a flat prioritized list already answers "what do I do today/this week" per the milestone goal. Defer until real usage shows the list alone is insufficient |
-| Quick filters on the Agenda (by tipo — prospecção vs. visita; by cliente) | Helps once the list gets long (more clients "ativo" over time) | LOW | Cheap to add later; not needed at MVP team/client volumes (a handful of vendedores, hundreds of clientes at most, per the existing dashboard's scale) |
-| Supervisor filter by vendedor on the team-wide agenda view | Mirrors the existing dashboard's per-vendor breakdown; useful for a supervisor scanning the whole team's day | LOW | Low cost since the underlying RLS/query already supports "all clients" for supervisor — this is a UI filter, not new authorization logic |
-| Reschedule/snooze a single occurrence without touching the recurring setting | Handles the "client asked to move this one visit, not cancel the cadence" case | MEDIUM | Real value but adds a "single occurrence override vs. series" distinction — exactly the kind of edge case that increases complexity disproportionately for a first release. Confirm/adjust-at-completion already covers the common case (next date wasn't right, fix it when you get there) |
-| Item count badge on the "Agenda" nav item (e.g. "Agenda (5)") | Small UX nicety, mirrors patterns like unread-count badges | LOW | Purely cosmetic; easy to add anytime, doesn't unblock or block anything else |
-| Full-text search across completion summaries | Useful once the visit-history "diary" accumulates months of entries | LOW-MEDIUM | Defer — Postgres full-text search is cheap to add later on the same table; no reason to build it before there's enough data to search |
-| Export of visit/task history (reusing the existing import/export pattern) | Consistent with the CRM's existing export capability | LOW | Natural extension once the underlying table exists; not needed for the Agenda to deliver its core value on day one |
+| No time-of-day scheduling — items are date-only, not time-slotted | Table-stakes CRMs (Pipedrive) treat the calendar as a scheduling tool for calls/meetings *with specific times*. This project's Agenda items (prospecção tasks, pós-venda visits) never had a time-of-day to begin with — the existing list is date + urgency, not date + time. Skipping time-of-day avoids inventing a concept (appointment time) the domain never had | LOW (removes complexity, doesn't add it) | Correctly already decided in v1.5 scope ("visão de mês em grid... sem arrastar"); this IS the differentiator — a calendar that's honest about "day-granularity, not hour-granularity" instead of copying a generic scheduling calendar |
+| "Conclusão remota" as a first-class alternate completion path that still writes the same diary + still triggers next-visit suggestion | Most CRMs treat "outcome" as bolted onto calls/meetings specifically (HubSpot: separate outcome lists *per activity type*, not a universal "how was this done" flag). This project instead layers one binary (presencial vs remoto) + one Supervisor-editable reason list on top of *any* Agenda item type (task or visit), while guaranteeing the downstream effects (diary entry, next-visit-date suggestion for active clients) are identical either way | MEDIUM | This is the actual novel piece — not found as a pre-built pattern anywhere in the research. Complexity is real but contained: it is a completion-time toggle + a 6th editable list, reusing the diary trigger and `concluir_visita` next-date logic already built in v1.3. Not over-engineering — it directly serves "não foi presencial, mas ainda aconteceu" as a real observable outcome for phone-based sales follow-up |
+| Reusing the existing `EditableListTab` component pattern for the 6th list ("Motivos de conclusão remota") | Zero new admin-UI paradigm for the Supervisor to learn; consistent with categoria/produtos/tarefas/perda/frequências | LOW | Direct reuse, not new research — flagged here only to confirm it matches the "table stakes for *this* codebase" bar, same as `motivos_perda` (used for lost-deal reason) is the closest existing analog |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Things that look like natural additions to "an agenda feature" in a generic CRM survey, but would work against this project's actual constraints.
+Features that look like natural extensions of "add a calendar" but are the wrong move at this project's scale (a handful of vendedores, low weekly volume, non-technical single owner, core value = minimum friction).
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|------------------|-------------|
-| Active notifications (email/push/SMS reminders for due tasks/visits) | Standard in most commercial CRMs and field-sales tools; feels like "what an agenda app should do" | Already explicitly ruled out in `PROJECT.md` Out of Scope, and for good reason here: it requires a notification service (cost, even if marginal, breaks the zero-infra-cost posture) and operational complexity (delivery failures, opt-outs) disproportionate to a handful of internal users who already open the app daily | The same visual "atrasado" highlighting pattern already proven in the kanban, now applied to the Agenda list — the team opens the CRM to work the funil anyway, so in-app visibility is sufficient |
-| Full calendar app (drag-to-reschedule across days, multi-day/month views, custom recurrence rules like "every 3rd Tuesday") | Field-sales SFA tools (e.g. Spotio-style products) build genuine route/calendar planning; feels like the "complete" version of an agenda | This project explicitly caps recurrence at weekly/biweekly/monthly/none — anything more expressive is solving a problem this team doesn't have, and a full calendar UI is a large UI/interaction surface (drag-and-drop across a grid, timezone edge cases) for a team whose actual ask is "what do I do today," not "help me plan my month visually" | The prioritized list (today/overdue/upcoming) already satisfies the stated goal; a lightweight weekly strip (see Differentiators) is the ceiling worth considering, not a full calendar |
-| Silent/automatic rescheduling of the next visit with no human step | Some recurring-task engines default to "just advance the date" for pure reminders | Explicitly contradicted by the milestone spec ("o vendedor confirma ou ajusta — não automação silenciosa") — and rightly so: order/visit needs shift per client, and a silently-moving date the vendor never sees is exactly the kind of "system decided something without me" friction that erodes trust in a tool the team already resents (the old CRM) | Suggest-and-confirm, as already specified: pre-fill the computed date, require an explicit accept/adjust action |
-| Territory/route optimization or geo-mapping of visits | A staple of dedicated field-sales apps (Spotio and similar) | Massive scope/cost mismatch: needs a maps/geocoding API (recurring cost, breaks zero-infra-cost), and this team's actual problem (per `PROJECT.md`) is funil discipline and follow-through, not travel-route efficiency | None needed — not a real gap for this team's stated pain point |
-| AI-generated call/visit summaries or auto-transcription | Increasingly common CRM add-on (call recording → AI summary → CRM field) | Requires a paid third-party AI/transcription service and adds a failure-prone dependency for very little gain when the actual requirement is just "a short written summary" a vendor can type in under a minute | A single required short-text field at completion, exactly as scoped — keeps to "mínimo de fricção," no new cost, no new service |
-| Value/deal-size-weighted "smart" prioritization scoring (à la Salesforce Einstein-style ranking) | Enterprise CRMs increasingly auto-rank tasks by deal value/probability, not just date | This CRM doesn't track deal monetary value at all (explicitly Out of Scope per `PROJECT.md`: "Valor em R$ / ticket médio... adiado até virar necessidade real") — building a scoring model on top of data that doesn't exist would require inventing new required fields, directly against "poucos campos obrigatórios" | Simple date-based ordering (overdue → today → this week) is sufficient at this team's scale (a handful of vendedores, each with a manageable client list) and matches how the kanban already surfaces urgency (visual stalled/overdue highlighting, not a scoring algorithm) |
-| Task delegation/reassignment between vendedores from the Agenda | Some CRMs let managers reassign open tasks across reps | No evidence this team needs it — the existing "reassign on deactivation" flow (v1.2) covers the one real reassignment case (a vendor leaving), and open-ended task delegation adds a permission surface (who can reassign what to whom) with no stated business need | If it comes up later, model it the same way deactivation-transfer was modeled: supervisor-only, RLS-backed, not a general-purpose feature |
-| Configurable/custom recurrence patterns beyond weekly/biweekly/monthly/none (e.g. RRULE-style "every N days," specific weekdays) | "More flexible" always sounds better in the abstract | Directly against the explicit milestone scope, and against "mínimo de fricção" — every extra recurrence option is a decision the vendor has to make at "ganho" time, when the goal is a fast, low-friction step, not a scheduling configuration screen | The four fixed options already specified (semanal/quinzenal/mensal/nenhuma) cover the realistic range for a food-distribution B2B relationship cadence |
+| Drag-and-drop rescheduling on the calendar (Pipedrive-style) | "If I can see it on a calendar, I should be able to drag it to another day" — this is Pipedrive's actual default behavior | Adds real complexity (drag state, optimistic update, collision/undo handling) for a rescheduling need that doesn't clearly exist yet — today's Agenda has no manual "move date" affordance at all, only completion-driven date changes (frequência-based next-visit). Building drag-to-reschedule here would be inventing a new capability, not porting an existing one | v1.5 scope already correctly excludes this ("só visualização, sem arrastar"); if rescheduling-by-hand becomes a real ask later, it's a separate, explicitly-scoped feature request, not a calendar-view side effect |
+| Time-of-day / hour-slot scheduling (turning tasks/visits into timed appointments) | Natural next step once you have day/week/month — "why not let me also pick 2pm?" | The domain has never tracked time-of-day (`data_conclusao` is a date, not a timestamp); adding it means a new field, new validation, new UI, and no clear demand — nothing in the existing Agenda, diary, or frequência-visita logic operates on time | Keep items date-only on the calendar, exactly as scoped; if a rep needs to remember "call at 2pm," that's a personal-calendar concern outside this CRM's stated problem (funil discipline, not scheduling) |
+| Free-text reason instead of, or in addition to a long custom list, for "conclusão remota" | Feels flexible — "let the vendedor just type why" | Contradicts the project's own established pattern: `motivos_perda` (deal-lost reason) is already a Supervisor-editable enum specifically *because* it needs to be dashboard-aggregable — the exact same logic applies to "why was this remote" (Supervisor likely wants to know "how many completions were phone-only vs in-person" as a metric later) | Categorized list (as already scoped), resumo field absorbs anything list values can't capture — same division of labor as motivo/resumo already used for lost-deal and now completion |
+| A generic "activity outcome" system that unifies call outcomes, meeting outcomes, task outcomes, and remote-completion reasons into one big configurable taxonomy (HubSpot-style, per-activity-type outcome lists) | HubSpot's own pattern — outcomes vary by activity type, with per-type admin config | Massive over-engineering for a 2-role, single-supervisor tool with ~5-7 total editable lists today; this project has exactly one completion-reason need right now (remote vs presencial) — building a generalized "outcome type system" to serve a single concrete use case adds abstraction with no second consumer | One flat Supervisor-editable list ("Motivos de conclusão remota") scoped only to the remote-completion checkbox, exactly as already decided in v1.5 |
+| Per-item click-through / detail view directly from month-view chips | Feels like it "should" work since day-view and week-view already reuse the existing card | Month view is deliberately a density-first overview (up to 3 chips + "+N"); wiring full detail interactions at that zoom level either forces tiny unreadable click targets or a redundant second detail modal that duplicates the day-drill-down already scoped | Click the day cell to open that day's full list (already scoped) — one level of indirection is enough at this data volume (handful of vendedores, low weekly volume) |
+| Notifications/reminders tied to calendar items (e.g. "remind me the day before") | A calendar naturally suggests "notify me about this" | Explicitly already out of scope project-wide ("Notificações ativas... destaque visual no kanban já resolve") — a calendar view doesn't change that reasoning; visual highlighting (already used for atrasado items) does the same job without a notification service/cost | Keep the existing atrasado visual-highlight convention; extend it into calendar chips (e.g. red outline on chip) instead of adding notifications |
+| Recurrence editing/creation from the calendar (e.g. "set this visit to repeat every 2 weeks" via a calendar UI) | Calendars conventionally support recurring-event creation | Recurrence already exists as `frequencia_visita`, configured on the client record, not per-calendar-event; re-exposing it as calendar-native recurrence would create two places to edit the same fact and risks desync — explicitly the failure mode this project has avoided before ("frequência de visita... sempre o mesmo valor entre ficha e agenda") | Calendar view stays read-only/display-only for recurrence; frequência editing stays where it already lives (ficha do cliente / Agenda's existing frequency control) |
 
 ## Feature Dependencies
 
 ```
-Agenda unificada (today/overdue/upcoming list)
-    └──requires──> Prospecção: existing cards.tarefas (tipos_tarefa, data_conclusao) [already shipped]
-    └──requires──> Pós-venda: new visitas/agendamentos table
-                       └──requires──> frequência de visita set at "ganho" transition
-                                          └──requires──> existing "mover card para ganho" flow [already shipped]
+Calendar view (day/week/month)
+    └──requires──> Existing Agenda unified list (already built, v1.3)
+    └──requires──> Existing urgency/status color coding (Prospecção/Ativo-Visita, already built)
 
-Suggested next visit date on completion
-    └──requires──> frequência de visita (stored per client/recurrence)
-    └──enhances──> Agenda unificada (keeps the pós-venda stream self-sustaining without manual re-entry)
+Month-view chip overflow ("+N")
+    └──requires──> Day-drill-down (click day → full list)
 
-Conclusão com resumo obrigatório (tasks AND visits)
-    └──requires──> new structured summary field/table (recommend: new table, not overloading `historico`)
-    └──feeds──> Per-client visit/task "diary" view
+Conclusão remota (checkbox + motivo list)
+    └──requires──> Existing ConcluirItemDialog.tsx (resumo field, already built)
+    └──requires──> New 6th editable list ("Motivos de conclusão remota")
+                       └──requires──> Existing EditableListTab component pattern (already built)
+    └──requires──> Existing diário trigger (historico table, already built)
+    └──requires──> Existing concluir_visita next-date suggestion logic (already built, v1.3, frequência-based)
 
-Per-client diary view
-    └──requires──> Conclusão com resumo obrigatório (both streams)
-    └──enhances──> existing client detail view (ClienteDetailSheet)
+Conclusão remota ──enhances──> Diário (adds a "how" dimension to each entry, not just "what/when")
 
-Campos novos de cliente "ativo" (Nome Fantasia, CNPJ, frequência de pedidos, frequência de visitas)
-    └──requires──> a definition of the "ativo" gate/trigger (likely tied to reaching "ganho", to confirm in Discuss)
-    └──shares data with──> frequência de visita used by the recurrence engine (same value, not a duplicate — confirm in Discuss/Plan, avoid two sources of truth)
-
-Weekly strip / calendar view (differentiator)
-    └──enhances──> Agenda unificada (does not replace the list)
-
-Notificações ativas (anti-feature)
-    ╳╳conflicts (already Out of Scope)╳╳ Custo zero de infraestrutura constraint
+Calendar view ──conflicts with──> Drag-and-drop rescheduling (explicitly excluded — view-only, no interaction beyond click/navigate)
+Conclusão remota ──conflicts with──> Time-of-day tracking (remote/presencial is orthogonal to timing, no new time field needed)
 ```
 
 ### Dependency Notes
 
-- **Agenda unificada requires both existing `tarefas` and a new `visitas` table:** the milestone's core promise is "no duplicate data entry" for prospecção — this only holds if the unified view is a read-side merge (e.g. a Postgres view/RPC `UNION`-ing two sources), not a data migration of existing tasks into a new shared table. Keep `cards.tarefas` as-is; add `visitas` alongside it.
-- **`frequência de visitas` (new client field) likely shares its value with the recurrence set at "ganho":** the milestone text lists them separately ("frequência de pedidos... frequência de visitas") but describes the same underlying concept (visit cadence) twice — once as a field required at "ativo," once as a setting made at "ganho." These are almost certainly the same piece of data surfaced in two places, not two independent settings. Flag explicitly for the Discuss phase to avoid building two fields that can drift out of sync.
-- **Conclusão com resumo obrigatório feeds the per-client diary, which is the actual payoff feature for the supervisor:** don't treat the summary field as a minor implementation detail of "mark done" — it's structurally required before the diary/history view (an explicitly requested feature) can exist at all. Sequence accordingly: summary-capture must land before or together with the diary view, never after.
-- **Weekly strip/calendar (differentiator) enhances but never replaces the list:** the milestone's own success criterion is "mostrar o que ele precisa fazer, hoje e nos próximos dias" — a list already satisfies this. Don't let calendar-view scope creep into the MVP phase plan.
-- **Notificações ativas conflicts with the zero-infra-cost constraint:** already resolved in `PROJECT.md` Out of Scope; re-litigating it inside this milestone would contradict a standing decision without new information.
+- **Calendar view requires the existing Agenda list:** the calendar is a second projection over the same `agenda_do_vendedor()` data (tasks + visits, urgency-ranked), not a new data source — this keeps RLS/visibility rules (vendedor sees own, supervisor sees team) automatically correct with no new authorization surface.
+- **Month-view "+N" requires day-drill-down:** without a way to see the full list for an overloaded day, the "+3 more" chip is a dead end. This is why v1.5 scoped both together rather than "+N" alone.
+- **Conclusão remota requires the existing `ConcluirItemDialog.tsx` and diary trigger, not new ones:** the whole point (per the milestone framing) is that remote completion is "conta como conclusão normal" — it must flow through the exact same resumo-required, diary-writing, atomic-next-visit-date path that already exists, with the motivo/checkbox as an additive field, not a parallel completion mechanism. Building a second completion path here would reintroduce the exact inconsistency already flagged as accepted tech debt for the older "conclude from ficha" button (Fase 16) — worth avoiding a third variant.
+- **Conclusão remota requires a new 6th editable list, following the `EditableListTab` pattern:** matches the existing `motivos_perda` precedent (categorized reason, Supervisor-managed, dashboard-aggregable later) rather than free text.
+- **Calendar view conflicts with drag-and-drop:** deliberately, per v1.5 scope — including it here to make explicit that this is a scope boundary, not an oversight, so it doesn't creep back in during planning.
 
 ## MVP Definition
 
-### Launch With (v1.3)
+### Launch With (v1.5)
 
-Everything listed under Table Stakes above — this milestone has no meaningful "smaller" version, because the whole point is a *unified* view; shipping only one stream (e.g. prospecção-only) would not deliver the stated goal.
+Minimum viable slice — matches what's already scoped in PROJECT.md; nothing additional identified as missing table-stakes.
 
-- [ ] Unified today/overdue/upcoming agenda list (both streams) — the entire premise of the milestone
-- [ ] Overdue highlighting, reusing the established visual pattern — keeps consistency with the kanban and avoids reinventing a signal that already works
-- [ ] Mark-done with required short summary (tasks and visits) — the mechanism that produces the diary; without it the diary has nothing to show
-- [ ] Per-client visit/task diary view — the requested payoff for both vendedor and supervisor
-- [ ] Frequência de visita set at "ganho," editable/cancelable anytime — required by scope, low complexity, hooks into an existing flow
-- [ ] Suggested next-date with confirm/adjust on completion — required by scope; keeps the pós-venda stream self-sustaining
-- [ ] Role-scoped visibility (RLS, reusing the existing pattern) — non-negotiable given `CLAUDE.md`'s authorization rule
-- [ ] New "ativo"-gated client fields (Nome Fantasia, CNPJ, frequência de pedidos, frequência de visitas) — required by scope; keep them out of the quick-cadastro form
+- [ ] List ↔ Calendar toggle, day/week/month modes, date nav + "Hoje" — core ask, no calendar tool is credible without this
+- [ ] Month grid with chips (≤3 + "+N" counter), click-day → full day list — standard density handling, already right-sized
+- [ ] Week view (7 columns) and day view (reuses existing list card) — minimum to cover the 3 named modes without inventing new card UI
+- [ ] Same Prospecção/Ativo-Visita color coding as list — zero new visual vocabulary
+- [ ] View-only calendar (no drag) — correctly avoids inventing a rescheduling feature that doesn't exist elsewhere in the app
+- [ ] "Não foi presencial" toggle + motivo dropdown (6th editable list) in the existing completion dialog — the actual point of the milestone
+- [ ] Remote completion writes to diário and triggers next-visit-date suggestion identically to in-person completion — non-negotiable per milestone framing ("conta como conclusão normal")
+- [ ] Resumo stays mandatory in both completion paths — preserves the one behavior rule that already exists project-wide
 
 ### Add After Validation (v1.x)
 
-- [ ] Quick filters (tipo, cliente, vendedor for supervisor) — add once the list is long enough to need trimming
-- [ ] Supervisor per-vendor agenda filter — add once a supervisor actually asks to isolate one vendor's day
-- [ ] Item count badge on the nav — cosmetic, add anytime with no dependency risk
-- [ ] Export of visit/task history — natural extension of the existing export feature, once the underlying data exists
+Only reachable if real usage surfaces a need — not implied by current research.
+
+- [ ] Filter calendar by vendedor (Supervisor view) — likely wanted eventually (list view already has this per-vendedor filter for Supervisor), but not explicitly in v1.5 scope; add if Supervisor asks for it once using the calendar day-to-day
+- [ ] Dashboard metric on remote vs presencial completion rate — natural follow-on now that `motivo` is a categorized, aggregable field (mirrors how `motivos_perda` eventually likely feeds dashboard-style reporting), but no such requirement exists yet
 
 ### Future Consideration (v2+)
 
-- [ ] Compact weekly strip/mini-calendar — only if a flat list proves insufficient once real usage accumulates
-- [ ] Single-occurrence reschedule without touching the series — only if the "confirm/adjust at completion" flow proves too coarse in practice
-- [ ] Full-text search over summaries — only once the diary has enough history to be worth searching
+Explicitly not warranted at current scale/maturity — matches the project's own established "Out of Scope" reasoning style.
+
+- [ ] Drag-and-drop rescheduling from calendar — would need a real manual-reschedule use case to justify the complexity; none observed
+- [ ] Time-of-day / appointment scheduling — the domain (funil discipline, not calendar booking) has never needed this; matches existing "Calendário completo... fica fora" reasoning already in PROJECT.md's Out of Scope for v1.3
+- [ ] Generalized outcome-taxonomy system (per-activity-type outcome lists, HubSpot-style) — one flat list solves the one real need (remote vs presencial); no second use case to justify abstraction yet
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
-|---------|------------|----------------------|----------|
-| Unified agenda list (both streams) | HIGH | MEDIUM | P1 |
-| Overdue highlighting | HIGH | LOW | P1 |
-| Mark-done with required summary | HIGH | MEDIUM | P1 |
-| Per-client diary view | HIGH | MEDIUM | P1 |
-| Frequência de visita at "ganho" | HIGH | LOW-MEDIUM | P1 |
-| Suggested next-date, confirm/adjust | HIGH | LOW-MEDIUM | P1 |
-| Role-scoped visibility (RLS) | HIGH | LOW | P1 |
-| New "ativo" client fields | MEDIUM-HIGH | LOW-MEDIUM | P1 |
-| Quick filters | MEDIUM | LOW | P2 |
-| Supervisor per-vendor filter | MEDIUM | LOW | P2 |
-| Nav count badge | LOW | LOW | P3 |
-| Export visit/task history | LOW-MEDIUM | LOW | P2 |
-| Weekly strip/calendar | MEDIUM | MEDIUM | P3 |
-| Single-occurrence reschedule | LOW-MEDIUM | MEDIUM | P3 |
-| Full-text search over summaries | LOW | LOW-MEDIUM | P3 |
+|---------|------------|---------------------|----------|
+| List ↔ Calendar toggle + 3 modes + nav | HIGH | MEDIUM | P1 |
+| Month grid with overflow + day drill-down | HIGH | MEDIUM | P1 |
+| Week/day views reusing existing card | MEDIUM | LOW | P1 |
+| Conclusão remota toggle + motivo list + dialog change | HIGH | MEDIUM | P1 |
+| Remote completion → diário + next-visit-date parity with in-person | HIGH | LOW (reuses existing RPC path) | P1 |
+| Calendar filter by vendedor (Supervisor) | MEDIUM | LOW | P2 |
+| Dashboard metric on remote vs presencial rate | LOW-MEDIUM | LOW | P3 |
+| Drag-and-drop reschedule | LOW (no demonstrated need) | HIGH | P3 / defer indefinitely |
+| Time-of-day scheduling | LOW (domain mismatch) | HIGH | Not planned |
 
 **Priority key:**
-- P1: Must have for v1.3 launch
-- P2: Should have, add once volume/usage justifies it
-- P3: Nice to have, revisit only if real usage shows a gap
+- P1: Must have for v1.5 launch (== current PROJECT.md scope)
+- P2: Should have, add when possible (small, low-risk additions)
+- P3: Nice to have, future consideration only if demand appears
 
-## Competitor/Pattern Analysis
+## Competitor Feature Analysis
 
-Not a direct competitor teardown (no named product was evaluated hands-on) — this synthesizes patterns repeatedly observed across mainstream CRM task/activity systems (HubSpot, Salesforce Activities, Zoho CRM Tasks, SuiteCRM recurring tasks) and field-sales cadence guidance, then maps them onto this project's approach.
-
-| Pattern | How mainstream CRMs do it | This project's approach |
-|---------|---------------------------|--------------------------|
-| Daily prioritization | Weight by deal value/probability/account health (e.g. Salesforce Einstein-style scoring) | Simple date-based ordering (overdue → today → this week) — matches this CRM's existing "visual stalled/overdue" pattern and avoids inventing deal-value data this project deliberately doesn't track |
-| Recurrence engine | Configurable rules (daily/weekly/monthly/custom/yearly), edit-one-vs-edit-series options | Fixed four options (semanal/quinzenal/mensal/nenhuma), no series-vs-occurrence distinction at MVP — deliberately narrower to keep the "ganho" step fast |
-| Completion → next occurrence | Auto-advance to computed date, editable | Same pattern: suggest, never silently commit — matches spec exactly |
-| Reminders | Push/email/SMS as default expectation | Deliberately omitted (Out of Scope) — in-app visual highlighting only, consistent with the zero-infra-cost/no-active-notifications decision already made in v1.0 |
-| Notes/summary on completion | Free-text field(s) at the point of closing an activity | Same pattern, single required short-text field — no separate "call log" vs. "task note" split, to keep it to one action |
+| Feature | Pipedrive | HubSpot | This Project's Approach (v1.5) |
+|---------|-----------|---------|----------------------------------|
+| Calendar granularity | Day/week/month, full drag-and-drop scheduling with specific times | Timed calendar synced to meetings/calls | Day/week/month, date-only (no time-of-day), view-only — deliberately simpler, matches the domain (tasks/visits were never time-stamped) |
+| Multi-type display on calendar | Color-coded chips by activity type, filterable by type | Similar activity-type color coding | Same idea, reuses existing 2-category (Prospecção/Ativo-Visita) coding already in the list — narrower and simpler since this project has 2 categories, not N configurable activity types |
+| Overflow on busy days | Not explicitly documented in sources found | Not explicitly documented in sources found | Explicit "+N" chip + click-to-expand — matches general calendar-UI convention (verified independently, not vendor-specific) |
+| "Completed differently than planned" outcome | Not modeled as a distinct concept — calls/meetings each get their own outcome dropdown, no cross-cutting "in person vs not" flag | Same — per-activity-type custom outcome lists (up to 30 values), immutable once created for reporting integrity | Single Supervisor-editable list scoped specifically to "conclusão remota," layered onto the existing unified completion dialog for both task types (prospecção + visita) — narrower scope than HubSpot's generalized system, appropriately so for this project's size |
+| Outcome-list editability | Not found in sources (Pipedrive activity types are configurable, but no explicit "outcome reason" list surfaced) | Admin-managed, immutable-once-saved outcomes (can delete, not edit) | Follows this project's own existing `motivos_perda`/`EditableListTab` convention (Supervisor CRUD) rather than importing HubSpot's immutability rule — worth a explicit product decision at Discuss-phase whether renamed/deleted motivos should behave like `frequencias_pedido` (rename doesn't propagate to past records, already decided pattern) since that's the more consistent in-house precedent than HubSpot's approach |
 
 ## Sources
 
-- WebSearch: "B2B CRM agenda task list 'today' prioritized view UX patterns for sales reps" — HubSpot task queue, Salesforce Activities capture, general CRM prioritization-by-deal-value pattern. Confidence: LOW (search synthesis, no primary docs fetched)
-- WebSearch: "field sales CRM recurring visit scheduling cadence weekly biweekly monthly best practices" — account segmentation by value/complexity, weekly-lock-in planning pattern. Confidence: LOW
-- WebSearch: "CRM activity feed vs calendar view sales rep daily task prioritization design" — calendar-for-when + list-for-what-matters complementary pattern. Confidence: LOW
-- WebSearch: "post-sale account management visit cadence CRM feature small sales team" — post-sale cadence baseline (day-1/week-1/month-1 then ongoing), account-level (not contact-level) interaction logging. Confidence: LOW
-- WebSearch: "CRM task completion requiring notes visit log call log summary field pattern" — closing-note-at-completion pattern, standard call-log field shapes. Confidence: LOW
-- WebSearch: "CRM recurring task auto-suggest next date confirm override UX pattern" — Zoho/SuiteCRM recurring task behavior (auto-advance + editable, occurrence-vs-series choice). Confidence: LOW
-- `.planning/PROJECT.md` — this project's own validated requirements, Out of Scope decisions, and Key Decisions (v1.0–v1.2). Confidence: HIGH (primary source, already-shipped and validated by the actual user)
+- WebSearch: "Pipedrive calendar view activities month week day all-day tasks" — pipedrive.com/en/features/activity-calendar, support.pipedrive.com/en/article/calendar-view — vendor-documented feature descriptions (day/week/month toggle, color-coding by type, drag-to-reschedule, type filters, 500-item cap). Confidence: LOW (web-search synthesis, not a fetched primary doc)
+- WebSearch: "CRM mark activity done outcome dropdown 'no show' 'call instead'" — knowledge.hubspot.com/calling/create-custom-call-and-meeting-outcomes, community.hubspot.com threads — HubSpot's admin-configurable, per-activity-type outcome list pattern (up to 30 values, immutable once saved). Confidence: LOW
+- WebSearch: "CRM activity feed list view vs calendar view when to use small sales team" — general vendor/blog synthesis (Pipedrive, OpenCRM, Snapforce, You Don't Need a CRM) converging on "list = oversight/work queue, calendar = scheduling/coordination." Confidence: LOW (no single authoritative source, but convergent across independent vendors)
+- WebSearch: "HubSpot custom meeting outcome types call outcome list editable admin" — knowledge.hubspot.com, insidea.com — confirms admin location (Settings > Objects > Activities), 30-value cap, immutability-after-save rule. Confidence: LOW
+- Internal: `.planning/PROJECT.md` (v1.5 milestone scope, existing v1.0-v1.4 requirements and Out of Scope log) — read directly, treated as ground truth for what already exists vs what's newly proposed. Confidence: HIGH (primary project source, not web-derived)
 
 ---
-*Feature research for: B2B/field-sales CRM agenda + recurring visit scheduling, scoped to CRM Raiar v1.3*
-*Researched: 2026-08-07*
+*Feature research for: small-team B2B sales CRM — Agenda calendar view + remote-completion pattern (v1.5)*
+*Researched: 2026-08-17*

@@ -1,108 +1,113 @@
 # Stack Research
 
-**Domain:** Delta stack for v1.3 "Agenda do Vendedor" — unified task/visit agenda, recurring post-sale visit scheduling, next-date suggestion, completion-summary history — inside the existing CRM Raiar (Next.js 16 + Supabase) app
-**Researched:** 2026-08-07
-**Confidence:** MEDIUM-HIGH (headline finding — no new npm dependency is required — is grounded in direct inspection of this repo's `package.json` and `components/ui/`, HIGH confidence; the two supporting pattern recommendations are web-synthesized, LOW confidence individually but consistent with official React/Next.js docs)
+**Domain:** Calendar/agenda view (day/week/month) for an internal sales CRM, plus a small 6th Supervisor-editable reference list
+**Researched:** 2026-08-17
+**Confidence:** MEDIUM (grounded mostly in the existing codebase + primary react-day-picker v10 docs; ecosystem framing is web-search-sourced, LOW-tier by the project's own classifier)
 
-This document does **not** revisit the core stack (Next.js 16 App Router, Supabase Postgres/Auth/RLS, react-hook-form + zod, shadcn/ui, date-fns) — that's already validated in the v1.0 `STACK.md` and unchanged. It answers one question: **does "Agenda do Vendedor" need anything new?**
+## Bottom Line
 
-**Headline finding: no.** Every capability this milestone requires — recurrence math, a date picker for adjusting the suggested visit date, a short-summary form, grouped/sorted list UI, optimistic "mark complete" feedback — is already covered by packages and shadcn components already installed in this repo. The work here is server-side logic (Server Actions / RPCs) and UI composition, not new dependencies.
+**No new npm dependency is needed for v1.5.** Build the day/week/month calendar view with plain `date-fns` date math (already installed, v4.4.0) + CSS Grid + existing shadcn/ui primitives (`Card`, `Badge`, `Dialog`/`Popover`). `react-day-picker@10.0.1` (already installed) stays exactly where it already is — a single-date picker input — and should **not** be extended into the events calendar. The "conclusão remota" flow (new reason field + 6th editable list) needs zero new libraries either: it's the same table+RLS+CRUD-tab pattern the project has repeated four times already (`categoria`, `produtos_consumidos`, `tipos_tarefa`, `motivos_perda`, `frequencias_pedido`), plus one more `react-hook-form`+`zod` field on the existing conclusion dialog.
 
 ## Recommended Stack
 
 ### Core Technologies
 
-No new core technologies. This milestone is built entirely on the stack already running in production:
+No additions. Everything the calendar view needs is already in `package.json`:
 
-| Technology | Version (confirmed in `package.json`) | Role in this milestone |
-|------------|------------------------------------------|-------------------------|
-| Next.js (App Router, Server Actions) | 16.2.10 | Agenda page/route, Server Actions for "concluir tarefa/visita" and "salvar frequência de visita" |
-| React | 19.2.4 | Ships `useOptimistic` — the one *pattern* this milestone newly leans on (not a new package, see below) |
-| Supabase (Postgres/Auth/RLS) | `@supabase/supabase-js` 2.110.5, `@supabase/ssr` 0.12.3 | Source of truth for tasks, visits, and the per-client history entries; RLS continues to be the only authorization boundary (vendedor sees own agenda, supervisor sees team's) |
+| Technology | Version (already installed) | Purpose here | Why it's enough |
+|------------|---------|---------|-----------------|
+| `date-fns` | 4.4.0 | Build the month grid (leading/trailing days), week columns, day math, "is this item on this day" comparisons | Has every function this needs out of the box: `startOfMonth`, `endOfMonth`, `startOfWeek`, `endOfWeek`, `eachDayOfInterval`, `addDays`/`addWeeks`/`addMonths`, `isSameDay`, `isSameMonth`, `isToday`, `format`. The project already committed to "compute dates with `date-fns`/Postgres, never `new Date(string)` in the browser" (see PROJECT.md Key Decisions) — the calendar view is pure client-side *display* grouping of dates already resolved server-side, so this rule is satisfied by reusing `parseISO` exactly as `lib/agenda/itens.ts` already does, not by inventing a new date layer |
+| React (CSS Grid, no library) | — | Month grid layout (7 columns × up to 6 rows), week view (7 columns), day view (reuses `AgendaItemRow` list) | `display: grid; grid-template-columns: repeat(7, 1fr)` is standard, well-documented, and needs no library — the month grid is uniform-width cells, not a component library concern |
+| shadcn/ui (`Card`, `Badge`, `Button`, `Dialog` or `Popover`, `Tabs`/segmented control) | Already installed | Chips (reuse the existing Prospecção/Visita `Badge` variants from `AgendaItemRow.tsx`), day-cell "+N" overflow trigger, view-switcher toolbar (Lista/Dia/Semana/Mês), "Hoje" button, day-detail popover/dialog when a month cell is clicked | Same design system already used across `AgendaList.tsx`/`AgendaItemRow.tsx` — a new calendar library would introduce a second visual language for exactly the parts (chips, cards, colors) this project already has |
 
-### Supporting Libraries (all already installed — reused, not added)
+### Supporting Libraries
 
-| Library | Version (in `package.json`) | New role this milestone |
-|---------|------------------------------|--------------------------|
-| `date-fns` | 4.4.0 | (1) Recurrence math: `addWeeks(date, 1)` for semanal, `addWeeks(date, 2)` for quinzenal, `addMonths(date, 1)` for mensal — computes the *suggested* next visit date. (2) Agenda grouping/highlighting: `isToday`, `isTomorrow`, `isThisWeek`, `isPast`/`differenceInCalendarDays` to bucket the unified task+visit list into Hoje/Próximos dias/Atrasado — the exact same "date math for overdue highlighting" pattern already proven on the kanban board, just applied to a flat list |
-| `react-day-picker` (via shadcn `Calendar` component, already in `components/ui/calendar.tsx`) | 10.0.1 | Date-picker UI for "o vendedor ajusta a data sugerida" — no new install, this component already exists in the repo |
-| `react-hook-form` + `zod` + `@hookform/resolvers` | 7.81.0 / 4.4.3 / 5.4.0 | Completion-summary form (short required text on every conclusão) and the "frequência de visita" selector on a client card — same form pattern already used for cadastro/edição de cliente |
-| shadcn/ui primitives already present: `select.tsx`, `popover.tsx`, `textarea.tsx`, `badge.tsx`, `tabs.tsx`, `table.tsx`, `card.tsx`, `dialog.tsx`/`sheet.tsx` | (copy-paste, no version) | Cover every UI element this milestone needs: frequency `<Select>`, summary `<Textarea>`, status `<Badge>` (e.g. "atrasado"), and a `<Dialog>`/`<Sheet>` for the completion-summary prompt. Confirmed via direct listing of `components/ui/` — nothing missing |
+None new. Reused as-is:
+
+| Library | Version | Purpose here | When to use |
+|---------|---------|---------|-------------|
+| `date-fns/locale` (bundled with `date-fns`, not a separate package) | 4.4.0 | `pt-BR` weekday/month labels (e.g. "seg", "ter"; "agosto de 2026") for the calendar header/grid | Import `{ ptBR }` from `date-fns/locale` and pass as the `locale` option to `format`/`startOfWeek` — first use of this in the codebase (grep found none yet), but it ships inside the already-installed package, not a new install |
+| `react-hook-form` + `zod` + `@hookform/resolvers` | 7.81.0 / 4.4.3 / 5.4.0 | Add the "motivo de conclusão remota" select + "não foi presencial" toggle to the existing conclusion form in `ConcluirItemDialog.tsx` | Exactly the pattern the project already uses for `motivos_perda` on the "perdido" flow — one more conditionally-required field on an existing `zod` schema, not a new form |
+| `@supabase/supabase-js` + RLS (Supabase, no new package) | 2.110.5 | 6th editable list ("Motivos de conclusão remota"): new table, RLS, CRUD tab | Follows `supabase-conventions` skill and the exact shape of the 5 existing editable lists — see Architecture note below |
 
 ### Development Tools
 
-No new dev tools. Reuse what's already required by `CLAUDE.md` ("toda funcionalidade nova precisa de pelo menos um teste"):
-
-| Tool | New role this milestone |
-|------|--------------------------|
-| Vitest 4.1.10 | Unit-test the pure `nextVisitDate(lastDate, frequencia)` function and the agenda date-bucketing logic — same category of pure-function date-math test already written for "card atrasado" in v1.0 |
-| Playwright 1.61.1 | E2E: complete a task/visit from the agenda, confirm the summary is required, confirm the suggested next date appears and can be adjusted, confirm vendedor-vs-supervisor visibility on the agenda (RLS) |
+No additions. `Vitest` covers the pure date-grouping functions this view needs (e.g. "group `AgendaItem[]` by calendar day for a given month", mirroring `lib/agenda/itens.ts`'s existing `agruparAgenda`); `Playwright` covers the view-switcher + month/week/day navigation + day-click-opens-list interactions, same pattern already used for kanban drag-and-drop and RLS-driven visibility checks.
 
 ## Installation
 
 ```bash
-# No new npm installs required for this milestone.
+# Nothing to install for the calendar view — date-fns, shadcn/ui primitives,
+# and react-day-picker are already in package.json.
 
-# Optional, zero-cost (copy-paste shadcn primitive, not an npm dependency) —
-# only if the agenda's day-grouping benefits from a collapsible section:
-npx shadcn@latest add accordion
+# If date-fns/locale/pt-BR labels are needed anywhere else in the app later,
+# no install is needed either — it's a subpath import of the existing package:
+#   import { ptBR } from "date-fns/locale"
 ```
 
 ## Alternatives Considered
 
-| Recommended | Alternative | Why not |
-|-------------|-------------|---------|
-| `date-fns` (`addWeeks`/`addMonths`) for recurrence math | `rrule.js` (iCalendar RFC 5545 recurrence engine) | rrule.js is built for complex recurrence (specific weekdays, exceptions, natural-language parsing, "every 2nd Tuesday"). This feature only ever needs 3 fixed named intervals (semanal/quinzenal/mensal) plus "nenhuma" — a full RFC 5545 engine is unjustified weight and complexity for that. Web sources confirm rrule.js is the specialized tool for genuinely complex recurrence, and date-fns is the right-sized tool for simple fixed-interval math (LOW confidence, web synthesis, but consistent with both libraries' stated purpose) |
-| React 19 `useOptimistic` + Server Actions for "mark complete" instant feedback | `@tanstack/react-query` (mutations + optimistic updates) | TanStack Query is **not actually installed** in this repo despite being listed as "already installed" in this milestone's brief (see Gaps below) — introducing it now just for one view would add a client-cache-manager dependency the rest of the app doesn't use. React 19's built-in `useOptimistic` + `useTransition` is the current idiomatic Next.js 16 pattern for exactly this "toggle/complete with instant UI, auto-revert on error" case, at zero new dependency cost |
-| A simple grouped/sorted list (Hoje / Próximos dias / Atrasado) using existing shadcn `Tabs`/`Card`/`Badge` | A calendar-grid library (`FullCalendar`, `react-big-calendar`, etc.) | The requirement is explicitly "o que ele precisa fazer, hoje e nos próximos dias" — a chronological to-do list, not a month/week calendar grid. Calendar-grid libraries are heavier, and FullCalendar in particular gates several plugins behind a paid license — directly at odds with the zero-infra-cost constraint even though the core library is free. Not needed for the stated requirement |
-| `zod` `.regex()` format check for CNPJ (if any client-side validation is wanted at all) | A dedicated CNPJ-checksum-validation npm package (e.g. `cnpj`) | `PROJECT.md` explicitly defers CNPJ checksum validation ("Validação de CNPJ na importação — adiado para uma v2"); this milestone only adds CNPJ as a stored field on "ativo" clients, not a validated one. Adding a validation package for a field whose validation is explicitly out of scope would be premature |
+| Recommended | Alternative | When to use alternative instead |
+|-------------|-------------|--------------------------|
+| Hand-rolled month/week/day grid (`date-fns` + CSS Grid) | Extend `react-day-picker@10` (already installed) for the month view specifically | If the month view only ever needed to show a **single** dot/indicator per day (not distinguishable chips) and never needed click-through to a specific item — `react-day-picker`'s `Day`/`DayButton` customization can render a plain indicator dot cheaply. That is not this milestone's requirement (up to 3 distinguishable colored chips + "+N", click opens the day's item list), so the extra friction of fighting a single-date-picker's `<table role="grid">`/`<button>` semantics for multi-item content isn't worth it. See Pitfall below |
+| Hand-rolled calendar (no dependency) | A dedicated React calendar/events library (e.g. `react-big-calendar`, `@fullcalendar/react`, `dayjs`-based scheduler libraries) | If the roadmap eventually needs an **hour-of-day grid** (time slots, overlapping-in-time events, drag-to-reschedule) — none of which apply here: PROJECT.md's Out of Scope already excludes "Calendário completo (arrastar entre dias, visão de mês, recorrência customizável)" as a *full* calendar, and this milestone's items carry no time-of-day at all. Pulling in a scheduling library to render date-only chips in a grid would be materially more dependency weight and API surface than the feature needs |
+| `date-fns` pure functions | A date-utility swap to `dayjs` | Not relevant here — the project already standardized on `date-fns` (`CLAUDE.md`/`STACK.md` precedent, "don't mix date libraries"); no reason to introduce a second one for one feature |
 
 ## What NOT to Use
 
-| Avoid | Why | Use Instead |
+| Avoid | Why | Use instead |
 |-------|-----|--------------|
-| `rrule.js` or any iCalendar-recurrence library | Solves a much bigger problem (RFC 5545 recurrence rules) than this feature has (3 fixed intervals); adds a dependency and mental overhead for no benefit here | `date-fns` `addWeeks`/`addMonths` on a plain `frequencia_visita` enum column |
-| `FullCalendar`, `react-big-calendar`, or any month/week calendar-grid library | The spec calls for a "what's due" chronological list, not a calendar grid; these libraries are heavier and some (FullCalendar) paywall useful plugins, conflicting with the zero-cost constraint | A sorted/grouped list built from existing shadcn `Card`/`Tabs`/`Badge` + `date-fns` bucketing |
-| `@tanstack/react-query` (still not an installed dependency in this repo) | Would introduce a new client-cache-manager just for one view; nothing else in the app currently depends on it | React 19's built-in `useOptimistic` + `useTransition` with Server Actions |
-| A cron/scheduled job (Supabase Edge Function on a schedule, `pg_cron`) to auto-generate the next visit | The spec is explicit: the system *suggests* a date and the vendedor *confirms/adjusts* — this is a synchronous computation that runs when a visit is completed, not a background process. A scheduler here is unnecessary infra complexity the free-tier constraint doesn't need | Compute `nextVisitDate()` synchronously inside the same Server Action/RPC that records the visit completion |
-| A CNPJ-checksum-validation npm package | Checksum validation of CNPJ is explicitly out of scope for this project right now (`PROJECT.md` Out of Scope) | If any format check is wanted, a simple `zod` `.regex()` on digit count/mask is enough |
+| Extending `react-day-picker@10` into a multi-event month calendar | It is a **date picker** (single/range date *input* control), not an events calendar. Its month grid is a `<table role="grid">` with single-selection semantics, and its `DayButton` renders a native `<button>` — stuffing 3 independently-clickable item chips into one button is both an accessibility problem (interactive content nested inside an already-interactive element, ambiguous "what did the user select") and a layout problem (the library's row height/grid is sized for a picker, not for variable-height chip stacks). It also has **no week or day view mode at all** — you'd still hand-build those two, so "reuse" only saves the month grid and costs you two rendering systems to keep visually consistent instead of one | Hand-rolled grid for all three views (month/week/day), sharing one date-grouping helper and one chip component across all three — one system, not two |
+| A general-purpose React calendar/scheduler library (`react-big-calendar`, `@fullcalendar/react`, etc.) | Solves a much bigger problem than this milestone has (hour-of-day time grids, drag-to-reschedule, recurring events, timezone-aware event ranges) — none of which apply since Agenda items are date-only with no time-of-day, and dragging/rescheduling is explicitly out of scope (PROJECT.md: "só visualização, sem arrastar"). Adds real bundle weight and a new API surface to learn for capability that's mostly unused | Plain `date-fns` + CSS Grid, matching the "zero new dependency unless justified" convention in `CLAUDE.md` |
+| A second date-formatting/locale library just for `pt-BR` labels | `date-fns/locale` already ships inside the installed `date-fns` package | `import { ptBR } from "date-fns/locale"` |
+| Client-side re-fetching per calendar month/week (a new paginated RPC) | `agenda_do_vendedor()` already returns the vendor's (or, for Supervisor, the team's) full set of *pending* items in one unbounded read — `AgendaList.tsx` already fetches this once via `getAgendaAction()`. The calendar view is a different **presentation** of the same array the list view already holds, not a different **query** | Reuse the same `AgendaItem[]` the list view fetches; group it client-side by day/week/month with pure functions (mirroring `agruparAgenda` in `lib/agenda/itens.ts`) — no new RPC parameter, no new network round-trip per navigation |
+
+## Integration with Existing Agenda Data Layer
+
+- `agenda_do_vendedor()` (migration `0014_agenda_do_vendedor.sql`) already returns every pending item — no date-range filter, `SECURITY INVOKER`, RLS-scoped — as a flat list with a plain `date` column (`YYYY-MM-DD`, no time-of-day) and `origem` (`prospeccao` | `visita`). This is exactly the shape a month/week/day grid needs: **no RPC changes required for the calendar view itself.**
+- `AgendaList.tsx` is currently the single owner of the one `getAgendaAction()` read and of `vendedorFiltroId` (Supervisor's vendor filter). The Lista↔Calendário toggle should live as a **sibling presentation mode inside/near `AgendaList.tsx`**, both fed by the same already-fetched `itens` — not a second fetch, not a second route. Concretely: extract the day-grouping into a new pure function in `lib/agenda/itens.ts` (e.g. `agruparPorDia(itens, mes)`), mirroring the existing `agruparAgenda`/`filtrarPorVendedor`/`vendedoresDaAgenda` pattern (single-authority pure functions, no business logic duplicated in components) — this is the same architectural seam the file's own header comment already documents.
+- Each month-grid cell's "up to 3 chips + `+N`" reuses the existing `Badge` variants from `AgendaItemRow.tsx` (`outline` for Prospecção/gray, `secondary` for Visita/blue) — same visual language, no new color system.
+- Clicking a day in month view "abre a lista completa daquele dia" (PROJECT.md) — reuse `AgendaItemRow` inside a `Dialog`/`Popover` filtered to that day's items, not a new row component.
+- Day view "reaproveita o card da lista atual" (PROJECT.md, explicit) — confirms no new item-card component is needed anywhere in this milestone.
+- **Overdue highlighting**: the list view already computes `atrasado` per-item via `bucketDoItem`/`differenceInCalendarDays` (`lib/agenda/itens.ts`). The calendar's day cells for past dates with pending items are inherently "atrasado" by the same definition — reuse `bucketDoItem`, don't reintroduce a second staleness rule (the project has hit this exact pitfall before with kanban staleness logic per PROJECT.md's Key Decisions).
+
+## Conclusão Remota — same pattern, no new tech
+
+The "conclusão remota" flow and its 6th editable list ("Motivos de conclusão remota") require zero new libraries; they're additive to code that already exists:
+
+- **New table + RLS + CRUD tab**: identical shape to the existing 5 editable lists (`categoria`, `produtos_consumidos`, `tipos_tarefa`, `motivos_perda`, `frequencias_pedido`) — table with `id`/`nome`, RLS restricting write to `is_supervisor()`, read open to authenticated, and a CRUD tab in whatever screen already hosts the other 5. Follow the `supabase-conventions` skill, same as every prior list.
+- **Form change**: `ConcluirItemDialog.tsx` already collects a required `resumo` (10-500 chars) via `react-hook-form` + `zod`. Add a "não foi presencial" checkbox/toggle that conditionally requires a `motivo_conclusao_remota_id` select — a `zod` `.refine()` or discriminated shape on the existing schema, not a new form library.
+- **RPC change**: `concluir_tarefa_prospeccao`/`concluir_visita` (migration `0015`) gain an optional parameter for the remote-completion motivo, following the same "atomic RPC, `SECURITY INVOKER`" precedent already set for those two functions and for `mover_card_funil`'s CNPJ guard extension in v1.4 — no new RPC pattern, just one more nullable parameter threaded into the existing `historico` write.
+
+This section is included because the milestone bundles both changes, but it confirms the **stack** answer is identical for both halves of v1.5: no new dependency, reuse of an already-proven pattern.
 
 ## Stack Patterns by Variant
 
-**If the agenda groups items visually by day (Hoje / Amanhã / Esta semana / Atrasado):**
-- Use `date-fns` `isToday`/`isTomorrow`/`isThisWeek`/`isPast` to bucket one sorted array of `{tipo: 'tarefa'|'visita', data, ...}` items client- or server-side.
-- This is the same "date math drives visual highlighting" pattern already proven for kanban's "cards parados/atrasados" — reuse the approach, don't invent a new one.
+**If the month grid needs per-day event counts beyond "+N" (e.g. a hover tooltip listing all items) later:**
+- Reuse the same `Tooltip` component `AgendaItemRow.tsx` already uses for the overdue-triangle hint — don't add a new tooltip/popover library.
 
-**If "mark complete" needs instant feedback without a full page reload:**
-- Wrap the Server Action call in React 19's `useOptimistic` + `useTransition` (or a form `action`). No query-library needed; this is the idiomatic Next.js 16/React 19 pattern and costs zero new dependencies.
-
-**If the next-visit-date computation needs to be consistent between a client-side preview and the authoritative server write:**
-- Put the pure function (`nextVisitDate(lastDate, frequencia)`) in one shared `lib/` module using `date-fns`, called by both the client (to preview the suggestion before the vendedor confirms) and the Server Action/RPC (to compute the authoritative value on save) — avoids client/server logic drift.
-- Whether the *authoritative* copy of that computation ultimately lives in TypeScript (Server Action) or in a Postgres RPC (`+ interval '7 days'`, matching the existing `mover_card_funil`-style RPC convention) is a backend architecture decision for `/gsd-discuss-phase` + the `supabase-conventions` skill, not a stack decision — flagging it here so it isn't missed.
+**If a future milestone adds real time-of-day scheduling (calendar entries with hours, not just dates):**
+- That is the point at which a dedicated scheduling library becomes worth evaluating — re-research then. It is explicitly out of scope for v1.5 (items have no time-of-day field at all).
 
 ## Version Compatibility
 
-No new compatibility surface introduced. Everything recommended here is already pinned in `package.json` and proven working with Next.js 16.2.10 / React 19.2.4 in this repo:
-
-| Package | Version in repo | Notes |
-|---------|------------------|-------|
-| `date-fns` | 4.4.0 | Confirmed current on npm registry (2026-08-07) — no bump needed |
-| `react-day-picker` | 10.0.1 | Confirmed current on npm registry (2026-08-07) — no bump needed; already wired into `components/ui/calendar.tsx` |
-| `react` | 19.2.4 | `useOptimistic` ships in `react` itself — no additional package required |
-
-## Gap Flagged for the Roadmap
-
-This milestone's brief states `@tanstack/react-query` and `@tanstack/react-table` are "installed but lightly used" / "installed for tables." **Direct inspection of `package.json`, the lockfile, and a codebase-wide grep for `useQuery`/`useMutation`/`@tanstack` shows neither package is actually a dependency, and neither hook is used anywhere in `app/`, `components/`, or `lib/`.** The only real `@tanstack` reference in the codebase is a *negative* comment in `components/importacao/ImportPreviewTable.tsx` explicitly noting a plain-React-state approach was chosen **instead of** `@tanstack/react-table`. Treat that milestone-context line as stale/aspirational — the recommendation in this document (no new dependency, use `useOptimistic`) already accounts for the corrected, verified state of the repo.
+| Package A | Compatible With | Notes |
+|-----------|-----------------|-------|
+| `date-fns@4.4.0` | `date-fns/locale` (`ptBR`) | Same package, subpath import, no version concern — already resolved by the existing `package.json` pin |
+| `react-day-picker@10.0.1` | Next.js 16 / React 19 | Confirmed current (npm registry, 2026-08-17) — stays exactly as-is for its existing single-date-picker input use case; this research does not change or extend its usage |
+| Existing `Badge`/`Card`/`Dialog` shadcn/ui components | Tailwind v4 (already in repo) | No change — the calendar view's chips/cells are built from the same primitives already styled for the list view |
 
 ## Sources
 
-- Direct codebase inspection: `package.json` (read 2026-08-07) — confirms `date-fns`, `react-day-picker`, `zod`, `react-hook-form`, `@hookform/resolvers` already installed at the versions cited above; confirms `@tanstack/react-query`/`@tanstack/react-table` are **not** dependencies. Confidence: HIGH (ground truth)
-- Direct codebase inspection: `components/ui/` directory listing (read 2026-08-07) — confirms `calendar.tsx`, `select.tsx`, `popover.tsx`, `textarea.tsx`, `badge.tsx`, `tabs.tsx`, `table.tsx`, `card.tsx`, `dialog.tsx`, `sheet.tsx` already exist. Confidence: HIGH (ground truth)
-- Direct codebase inspection: grep for `@tanstack`/`useQuery`/`useMutation` across `app/`, `components/`, `lib/` (2026-08-07) — zero real usages found; only a comment explicitly rejecting `@tanstack/react-table` in `components/importacao/ImportPreviewTable.tsx`. Confidence: HIGH (ground truth)
-- npm registry (`npm view date-fns version`, `npm view react-day-picker version`, 2026-08-07) — confirms both packages already pinned at current versions. Confidence: HIGH
-- WebSearch: "React 19 useOptimistic with Next.js Server Actions mark item complete pattern" — confirms `useOptimistic` + `useTransition`/form action is the current idiomatic pattern for instant-feedback "mark complete" mutations, auto-reverting on Server Action error. Confidence: LOW (web synthesis, cross-referenced against multiple 2026 Next.js/React pattern articles agreeing on the same shape)
-- WebSearch: "rrule.js vs date-fns simple recurring reminder weekly biweekly monthly" — confirms rrule.js targets full iCalendar RFC 5545 recurrence (weekday patterns, exceptions, NL parsing) while date-fns is a general date-manipulation toolkit; multiple sources note projects commonly use date-fns alone when recurrence needs are simple, reaching for rrule.js only when recurrence rules get complex. Confidence: LOW (web synthesis)
+- Codebase (primary source for this research): `components/agenda/AgendaList.tsx`, `components/agenda/AgendaItemRow.tsx`, `lib/agenda/itens.ts`, `supabase/migrations/0014_agenda_do_vendedor.sql` — read directly, confidence HIGH (these are the actual files this milestone extends)
+- `.planning/PROJECT.md` — v1.5 milestone scope, Out of Scope history (v1.3's "Calendário completo... fica pra depois" entry, now being partially picked back up for view-only/no-drag), Key Decisions on date handling (Postgres-computed dates, `parseISO` not `new Date(string)`)
+- `.planning/sketches/MANIFEST.md` — sketch 003 (agenda-calendario), confirms Variante A (toolbar, no mini-calendar sidebar), matches PROJECT.md's target features
+- npm registry (`npm view react-day-picker version`, 2026-08-17) — confirms `10.0.1` is current and matches what's already installed. Confidence: HIGH for the version number itself, though the project's classify-confidence seam tags raw npm/websearch lookups LOW by default absent a separate legitimacy check
+- WebFetch: `https://daypicker.dev/guides/custom-components` and `https://daypicker.dev/upgrading` (official react-day-picker v10 docs, fetched directly) — confirms v10's `Day`/`DayButton` customization API, confirms `useDayRender` (the v8 hook) is gone, confirms `month_grid` classname / table-based grid structure. Confidence: MEDIUM (primary docs, but synthesized via a single fetch pass, not cross-verified against a second source)
+- WebSearch: "react-day-picker v10 components prop custom Day cell rendering for multi-event month calendar" — confirms the `components`/`Day`/`DayButton` customization pattern exists but is designed for picker use cases, not multi-event content. Confidence: LOW (web synthesis)
+- WebSearch: "build custom month calendar grid React date-fns CSS grid multiple events per day chips overflow plus N" — confirms the hand-rolled CSS Grid + date-fns + "+N" pattern is the standard, low-dependency approach for this exact shape of problem. Confidence: LOW (web synthesis, but consistent across multiple independent sources in the result set)
+- WebSearch: "react-day-picker DayButton customization event dots multiple events per day github discussion" — no dedicated precedent found for multi-chip content inside DayButton; reinforces that react-day-picker's design center is single-date selection, not an events calendar. Confidence: LOW
 
 ---
-*Stack research for: v1.3 Agenda do Vendedor (delta on top of validated v1.0-v1.2 stack)*
-*Researched: 2026-08-07*
+*Stack research for: calendar/agenda view + conclusão remota, CRM Raiar v1.5*
+*Researched: 2026-08-17*
