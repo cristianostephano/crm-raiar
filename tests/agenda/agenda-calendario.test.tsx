@@ -3,6 +3,13 @@ import { fireEvent, render, screen, within } from "@testing-library/react"
 import type { ComponentProps } from "react"
 import { describe, expect, it, vi } from "vitest"
 
+// AGD-13 (Fase 21): o contêiner passou a importar app/actions/agenda para a
+// leitura de histórico — sem este dublê, o teste tentaria carregar código
+// de servidor (next/headers) dentro do ambiente de navegador simulado.
+vi.mock("@/app/actions/agenda", () => ({
+  getAgendaConcluidosAction: vi.fn().mockResolvedValue({ data: [] }),
+}))
+
 import { AgendaCalendario } from "@/components/agenda/AgendaCalendario"
 import type { AgendaItem } from "@/lib/agenda/itens"
 
