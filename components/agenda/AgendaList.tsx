@@ -8,6 +8,7 @@ import {
   concluirVisita,
   getAgendaAction,
 } from "@/app/actions/agenda"
+import { AgendaCalendario } from "@/components/agenda/AgendaCalendario"
 import { AgendaItemRow } from "@/components/agenda/AgendaItemRow"
 import { ConcluirItemDialog } from "@/components/agenda/ConcluirItemDialog"
 import { ClienteDetailSheet } from "@/components/clientes/ClienteDetailSheet"
@@ -27,6 +28,7 @@ import {
   vendedoresDaAgenda,
   type AgendaBucket,
   type AgendaItem,
+  type AgendaVisao,
 } from "@/lib/agenda/itens"
 
 /** Sentinel Select value para "sem filtro" — mesma convenção que
@@ -70,6 +72,15 @@ type FetchState =
  * `origem` do item selecionado, e o sucesso bumpa o mesmo `reloadKey` que
  * a ficha do cliente já usa — é essa recarga que faz o item concluído
  * sumir e a próxima visita (quando houver) aparecer na seção certa.
+ *
+ * A partir da Fase 20 (AGD-07/AGD-14) este componente também é o dono da
+ * VISÃO ATIVA (`visao`, Lista por padrão — D-01) e compõe `AgendaCalendario`
+ * como irmão da Lista, passando `itensFiltrados` — o MESMO resultado de
+ * `filtrarPorVendedor` que a Lista já consome — para que o filtro de
+ * vendedor do Supervisor mande nas duas visões sempre em concordância
+ * (Pitfall 10). O calendário não busca dado nem duplica o filtro; recebe
+ * tudo pronto e devolve os mesmos dois pedidos de ação que a Lista já
+ * trata (`handleOpenCliente`/`handleOpenConcluir`).
  */
 export function AgendaList({
   isSupervisor,
@@ -86,6 +97,10 @@ export function AgendaList({
   // Bumped por "Tentar novamente" e por onSaved/onDeleted da ficha do
   // cliente aberta a partir de uma linha.
   const [reloadKey, setReloadKey] = useState(0)
+  // Visão ativa da tela (AGD-07). Padrão SEMPRE Lista — D-01 trata o
+  // Calendário como alternativa, não substituição, e a equipe precisa
+  // continuar chegando na tela do jeito que já conhece.
+  const [visao, setVisao] = useState<AgendaVisao>("lista")
   const [vendedorFiltroId, setVendedorFiltroId] = useState<string | null>(
     null
   )
@@ -317,50 +332,70 @@ export function AgendaList({
             Tentar novamente
           </Button>
         </div>
-      ) : totalItens === 0 ? (
-        vendedorFiltroId !== null ? (
-          <div className="flex flex-col items-center gap-1 py-16 text-center">
-            <p className="text-base font-semibold">
-              {`Nenhum item pendente para ${nomeVendedorSelecionado ?? ""}.`}
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-1 py-16 text-center">
-            <p className="text-base font-semibold">
-              Sua agenda está em dia
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Nenhuma tarefa de prospecção ou visita pendente no momento.
-            </p>
-          </div>
-        )
       ) : (
-        <div className="flex flex-col gap-6">
-          {SECAO_ORDEM.map((bucket) => {
-            const itensDaSecao = secoes[bucket]
-            if (itensDaSecao.length === 0) return null
-
-            return (
-              <div key={bucket} className="flex flex-col gap-2">
-                <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  {tituloSecao(bucket, itensDaSecao.length)}
-                </h2>
-                <div className="flex flex-col gap-2">
-                  {itensDaSecao.map((item) => (
-                    <AgendaItemRow
-                      key={item.itemId}
-                      item={item}
-                      atrasado={bucket === "atrasado"}
-                      showResponsavel={showResponsavel}
-                      onOpen={() => handleOpenCliente(item.clienteId)}
-                      onConcluir={() => handleOpenConcluir(item)}
-                    />
-                  ))}
+        <>
+          {/* AGD-07/AGD-14 — irmão da Lista, nunca substituto: recebe
+              `itensFiltrados`, o MESMO resultado de `filtrarPorVendedor` que
+              o agrupamento em seções logo abaixo já consome, para que a
+              grade nunca discorde da Lista quando o Supervisor troca o
+              filtro (Pitfall 10). Nenhum segundo filtro, nenhuma segunda
+              busca. */}
+          <AgendaCalendario
+            visao={visao}
+            onVisaoChange={setVisao}
+            itens={itensFiltrados}
+            showResponsavel={showResponsavel}
+            onOpenCliente={handleOpenCliente}
+            onConcluirItem={handleOpenConcluir}
+          />
+          {visao === "lista" ? (
+            totalItens === 0 ? (
+              vendedorFiltroId !== null ? (
+                <div className="flex flex-col items-center gap-1 py-16 text-center">
+                  <p className="text-base font-semibold">
+                    {`Nenhum item pendente para ${nomeVendedorSelecionado ?? ""}.`}
+                  </p>
                 </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1 py-16 text-center">
+                  <p className="text-base font-semibold">
+                    Sua agenda está em dia
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma tarefa de prospecção ou visita pendente no momento.
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col gap-6">
+                {SECAO_ORDEM.map((bucket) => {
+                  const itensDaSecao = secoes[bucket]
+                  if (itensDaSecao.length === 0) return null
+
+                  return (
+                    <div key={bucket} className="flex flex-col gap-2">
+                      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        {tituloSecao(bucket, itensDaSecao.length)}
+                      </h2>
+                      <div className="flex flex-col gap-2">
+                        {itensDaSecao.map((item) => (
+                          <AgendaItemRow
+                            key={item.itemId}
+                            item={item}
+                            atrasado={bucket === "atrasado"}
+                            showResponsavel={showResponsavel}
+                            onOpen={() => handleOpenCliente(item.clienteId)}
+                            onConcluir={() => handleOpenConcluir(item)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )
-          })}
-        </div>
+          ) : null}
+        </>
       )}
 
       <ClienteDetailSheet
