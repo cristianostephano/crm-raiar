@@ -122,6 +122,38 @@ describe("AgendaCalendarioDia", () => {
     expect(container.querySelectorAll('[role="button"]')).toHaveLength(0)
   })
 
+  it("concluído: item com data passada não recebe a borda de atraso e não mostra o botão Concluir", () => {
+    const { container } = renderDia({
+      itens: [
+        buildItem({ itemId: "feito", data: "2026-01-05", concluido: true }),
+      ],
+    })
+
+    const card = container.querySelector('[role="button"]') as HTMLElement
+    expect(card).not.toHaveClass("border-l-red-500")
+    expect(
+      screen.queryByRole("button", { name: "Concluir" })
+    ).not.toBeInTheDocument()
+  })
+
+  it("um pendente e um concluído no mesmo dia: cada um recebe seu próprio tratamento", () => {
+    const { container } = renderDia({
+      itens: [
+        buildItem({ itemId: "pendente", data: "2026-01-15" }),
+        buildItem({ itemId: "feito", data: "2026-01-15", concluido: true }),
+      ],
+    })
+
+    const cards = container.querySelectorAll('[role="button"]')
+    expect(cards).toHaveLength(2)
+    expect(cards[0]).toHaveClass("border-l-red-500")
+    expect(cards[1]).not.toHaveClass("border-l-red-500")
+    expect(screen.getAllByRole("button", { name: "Concluir" })).toHaveLength(
+      1
+    )
+    expect(screen.getByText("Concluído")).toBeInTheDocument()
+  })
+
   it("showResponsavel é repassado sem alteração ao cartão", () => {
     const item = buildItem({ responsavelNome: "Ciclana" })
     const { rerender } = renderDia({ itens: [item], showResponsavel: false })

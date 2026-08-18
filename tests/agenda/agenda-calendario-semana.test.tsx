@@ -151,6 +151,23 @@ describe("AgendaCalendarioSemana", () => {
     expect(card.querySelector("svg")).not.toBeNull()
   })
 
+  it("concluído: cartão pequeno mostra a marca de concluído e o ícone de origem, sem acento de atraso", () => {
+    const concluido = buildItem({
+      itemId: "feito",
+      origem: "visita",
+      data: "2026-01-19", // dentro da semana, no passado
+      concluido: true,
+    })
+    const { container } = renderSemana({
+      porData: buildPorData([concluido]),
+    })
+
+    const card = container.querySelector('[role="button"]') as HTMLElement
+    expect(card).not.toHaveClass("border-l-destructive")
+    expect(card).toHaveClass("border-l-emerald-600")
+    expect(card.querySelectorAll("svg").length).toBeGreaterThanOrEqual(2)
+  })
+
   it("a coluna de hoje é destacada", () => {
     const { container } = renderSemana()
 
