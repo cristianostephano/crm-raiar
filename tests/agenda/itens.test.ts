@@ -18,6 +18,7 @@ import {
   dividirCelula,
   estaAtrasado,
   mesclarAgenda,
+  intervaloDeHistorico,
   type AgendaItem,
 } from "../../lib/agenda/itens"
 
@@ -539,5 +540,79 @@ describe("mesclarAgenda", () => {
 
   it("as duas listas vazias devolvem lista vazia", () => {
     expect(mesclarAgenda([], [])).toEqual([])
+  })
+})
+
+/**
+ * Intervalo de histórico a buscar (AGD-13, 21-02 Task 2): sempre limitado
+ * ao que está visível na tela, sempre reusando as funções de grade
+ * existentes, e nunca alcançando hoje nem o futuro (D-01). `NOW` (2026-08-08)
+ * é a mesma data fixa usada no resto do arquivo.
+ */
+
+describe("intervaloDeHistorico", () => {
+  it("modo mes: mes em curso devolve intervalo terminando ONTEM, nunca hoje", () => {
+    const grade = diasDaGradeDoMes(new Date(2026, 7, 15))
+    const resultado = intervaloDeHistorico(new Date(2026, 7, 15), "mes", NOW)
+
+    expect(resultado).toEqual({
+      inicio: chaveDoDia(grade[0]),
+      fim: "2026-08-07",
+    })
+  })
+
+  it("modo mes: mes inteiramente no passado devolve a grade inteira daquele mes, sem aparo", () => {
+    const referencia = new Date(2026, 5, 15) // junho de 2026, totalmente passado
+    const grade = diasDaGradeDoMes(referencia)
+    const resultado = intervaloDeHistorico(referencia, "mes", NOW)
+
+    expect(resultado).toEqual({
+      inicio: chaveDoDia(grade[0]),
+      fim: chaveDoDia(grade[grade.length - 1]),
+    })
+  })
+
+  it("modo semana: cobre os 7 dias da semana de referencia, quando a semana inteira ja passou", () => {
+    const referencia = new Date(2026, 6, 6) // semana totalmente no passado
+    const dias = diasDaSemana(referencia)
+    const resultado = intervaloDeHistorico(referencia, "semana", NOW)
+
+    expect(resultado).toEqual({
+      inicio: chaveDoDia(dias[0]),
+      fim: chaveDoDia(dias[6]),
+    })
+  })
+
+  it("modo dia: cobre o unico dia de referencia, quando estritamente passado", () => {
+    const resultado = intervaloDeHistorico(new Date(2026, 7, 5), "dia", NOW)
+
+    expect(resultado).toEqual({ inicio: "2026-08-05", fim: "2026-08-05" })
+  })
+
+  it("dia de hoje: nada estritamente passado visivel, devolve nada", () => {
+    expect(intervaloDeHistorico(new Date(2026, 7, 8), "dia", NOW)).toBeNull()
+  })
+
+  it("dia de amanha: devolve nada", () => {
+    expect(intervaloDeHistorico(new Date(2026, 7, 9), "dia", NOW)).toBeNull()
+  })
+
+  it("semana futura: devolve nada", () => {
+    expect(
+      intervaloDeHistorico(new Date(2026, 7, 20), "semana", NOW)
+    ).toBeNull()
+  })
+
+  it("mes futuro: devolve nada", () => {
+    expect(intervaloDeHistorico(new Date(2026, 8, 15), "mes", NOW)).toBeNull()
+  })
+
+  it("o intervalo devolvido nunca tem inicio depois do fim", () => {
+    const resultado = intervaloDeHistorico(new Date(2026, 7, 15), "mes", NOW)
+
+    expect(resultado).not.toBeNull()
+    if (resultado) {
+      expect(resultado.inicio <= resultado.fim).toBe(true)
+    }
   })
 })

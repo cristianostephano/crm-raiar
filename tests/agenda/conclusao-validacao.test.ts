@@ -8,6 +8,10 @@ import {
   RESUMO_MSG_LONGO,
   RESUMO_MSG_VAZIO,
   validarResumo,
+  INTERVALO_HISTORICO_MAX_DIAS,
+  INTERVALO_MSG_INVALIDO,
+  INTERVALO_MSG_LONGO,
+  validarIntervaloHistorico,
 } from "../../lib/validations/agenda"
 
 /**
@@ -85,5 +89,80 @@ describe("geraProximaVisita: decisao de cadencia (VIS-03)", () => {
   it("cadencia: devolve falso para ausencia de frequencia (null/undefined)", () => {
     expect(geraProximaVisita(null)).toBe(false)
     expect(geraProximaVisita(undefined)).toBe(false)
+  })
+})
+
+/**
+ * validarIntervaloHistorico (AGD-13, 21-02 Task 2) — guarda de RECURSO
+ * (nao de autorizacao) para o intervalo de histórico que a ação de servidor
+ * (Fase 21-04) vai consumir. INTERVALO_HISTORICO_MAX_DIAS e a fonte unica
+ * do teto: a maior grade de mes possivel tem 42 dias, entao o teto (45)
+ * precisa ser confortavelmente maior que isso.
+ */
+
+describe("validarIntervaloHistorico: teto de dias", () => {
+  it("teto: constante exportada vale 45", () => {
+    expect(INTERVALO_HISTORICO_MAX_DIAS).toBe(45)
+  })
+
+  it("aceita exatamente no teto (distancia de 45 dias de calendario)", () => {
+    const resultado = validarIntervaloHistorico("2026-01-01", "2026-02-15")
+    expect(resultado).toEqual({
+      valido: true,
+      inicio: "2026-01-01",
+      fim: "2026-02-15",
+    })
+  })
+
+  it("recusa um dia acima do teto (distancia de 46 dias) com a mensagem de intervalo longo demais", () => {
+    const resultado = validarIntervaloHistorico("2026-01-01", "2026-02-16")
+    expect(resultado).toEqual({
+      valido: false,
+      message: INTERVALO_MSG_LONGO,
+    })
+  })
+})
+
+describe("validarIntervaloHistorico: formato e ordem", () => {
+  it("aceita um intervalo curto bem formado", () => {
+    const resultado = validarIntervaloHistorico("2026-08-01", "2026-08-05")
+    expect(resultado).toEqual({
+      valido: true,
+      inicio: "2026-08-01",
+      fim: "2026-08-05",
+    })
+  })
+
+  it("recusa texto que nao esteja no formato de data ano-mes-dia", () => {
+    const resultado = validarIntervaloHistorico("01/08/2026", "2026-08-05")
+    expect(resultado).toEqual({
+      valido: false,
+      message: INTERVALO_MSG_INVALIDO,
+    })
+  })
+
+  it("recusa fim em formato invalido mesmo com inicio bem formado", () => {
+    const resultado = validarIntervaloHistorico("2026-08-01", "05-08-2026")
+    expect(resultado).toEqual({
+      valido: false,
+      message: INTERVALO_MSG_INVALIDO,
+    })
+  })
+
+  it("recusa inicio posterior ao fim", () => {
+    const resultado = validarIntervaloHistorico("2026-08-10", "2026-08-01")
+    expect(resultado).toEqual({
+      valido: false,
+      message: INTERVALO_MSG_INVALIDO,
+    })
+  })
+
+  it("aceita inicio igual ao fim (um unico dia)", () => {
+    const resultado = validarIntervaloHistorico("2026-08-05", "2026-08-05")
+    expect(resultado).toEqual({
+      valido: true,
+      inicio: "2026-08-05",
+      fim: "2026-08-05",
+    })
   })
 })
