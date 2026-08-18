@@ -5,15 +5,15 @@ milestone_name: Calendário na Agenda e Conclusão Remota
 current_phase: 21
 current_phase_name: Calendário — O Que Já Foi Feito em Datas Passadas
 status: executing
-stopped_at: Fase 21 Plano 02 concluido (camada pura de historico do calendario)
-last_updated: "2026-08-18T17:38:43.205Z"
+stopped_at: Fase 21 Plano 01 concluido (leitura de itens concluidos por periodo, migration 0021 aplicada em producao)
+last_updated: "2026-08-18T22:06:45.599Z"
 last_activity: 2026-08-18
 last_activity_desc: Phase 21 execution started
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 33
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 21 (Calendário — O Que Já Foi Feito em Datas Passadas) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-18 — Phase 21 execution started
 
@@ -103,6 +103,7 @@ Last activity: 2026-08-18 — Phase 21 execution started
 | Phase 20-calend-rio-da-agenda-m-s-semana-e-dia P04 | 30min | 2 tasks | 4 files |
 | Phase 20 P05 | 55min | 2 tasks | 2 files |
 | Phase 21 P02 | ~15min | 2 tasks | 4 files |
+| Phase 21 P01 | ~40min | - tasks | - files |
 
 ## Accumulated Context
 
@@ -265,6 +266,7 @@ Recent decisions affecting current work:
 - [Phase 21-02]: estaAtrasado envolve bucketDoItem e devolve falso incondicionalmente quando item.concluido e verdadeiro; a Lista continua intocada (nao consome esta funcao)
 - [Phase 21-02]: intervaloDeHistorico compara textos YYYY-MM-DD (nunca objeto Date) para achar o intervalo visivel/passado, mesma postura de fuso ja documentada por bucketDoItem/agruparPorData
 - [Phase 21-02]: validarIntervaloHistorico mede a distancia em dias de calendario (differenceInCalendarDays), nao contagem inclusiva; teto INTERVALO_HISTORICO_MAX_DIAS=45 aceita exatamente no teto e recusa um dia acima
+- [Phase ?]: Fase 21 Plano 01: agenda_concluidos_do_vendedor(p_inicio, p_fim) criada em producao - leitura nova, complementar e disjunta de agenda_do_vendedor(), sem security definer, data devolvida e sempre o carimbo REAL de conclusao (concluida_em/data_realizada) no fuso de Sao Paulo, nunca a data prevista; corte por periodo comparando limites convertidos em instante (usa indice), nao linha a linha
 
 ### Pending Todos
 
@@ -324,10 +326,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-18T17:38:43.181Z
-Stopped at: Fase 21 Plano 02 concluido (camada pura de historico do calendario)
+Last session: 2026-08-18T22:06:45.589Z
+Stopped at: Fase 21 Plano 01 concluido (leitura de itens concluidos por periodo, migration 0021 aplicada em producao)
 Resume file: 
 
-- Revisar `.planning/ROADMAP.md` (Fases 20-22) e aprovar ou pedir ajuste
 - Depois de aprovado: `/gsd-plan-phase 20` para planejar o calendário da Agenda
 - A Fase 20 tem contrato visual pronto (`.planning/sketches/003-agenda-calendario/index.html`, Variante A) — considerar `/gsd-ui-phase 20` antes do planejamento
