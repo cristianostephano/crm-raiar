@@ -131,7 +131,14 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
   4. O vendedor vê só o próprio histórico e o Supervisor vê o de todo o time, com o mesmo filtro por vendedor do calendário — a mesma regra de visibilidade que já vale na Lista.
   5. Navegar entre meses continua imediato, sem baixar o histórico inteiro do vendedor de uma vez.
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 21-01-PLAN.md — Leitura nova no banco (`agenda_concluidos_do_vendedor`, limitada por período, sem elevação de privilégio) + testes de integração/RLS + push aprovado pelo dono
+- [ ] 21-02-PLAN.md — Camada pura: item concluído no tipo, autoridade única de atraso, mescla das duas fontes, cálculo do intervalo visível e teto do intervalo
+- [ ] 21-03-PLAN.md — Tratamento visual do item concluído no cartão, nas três visões do calendário e na legenda (sem botão de concluir, nunca sinalizado como atrasado)
+- [ ] 21-04-PLAN.md — Leitor tipado + ação de servidor, busca por intervalo no contêiner, fiação na tela e verificação humana no navegador
+
 **UI hint**: yes
 
 **Notas para o planejamento** (não são requisitos, são travas já decididas):
