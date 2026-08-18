@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Calendário na Agenda e Conclusão Remota
-current_phase: 20
-current_phase_name: Calendário da Agenda — Mês, Semana e Dia
-status: verifying
-stopped_at: Fase 20 concluída (20-05-PLAN.md), verificação humana aprovada
-last_updated: "2026-08-18T15:49:02.046Z"
-last_activity: 2026-08-17
-last_activity_desc: Phase 20 execution started
+current_phase: 21
+current_phase_name: Calendário — O Que Já Foi Feito em Datas Passadas
+status: executing
+stopped_at: Fase 21 Plano 02 concluido (camada pura de historico do calendario)
+last_updated: "2026-08-18T17:38:43.205Z"
+last_activity: 2026-08-18
+last_activity_desc: Phase 21 execution started
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 6
   percent: 33
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 20 — Calendário da Agenda — Mês, Semana e Dia
+**Current focus:** Phase 21 — Calendário — O Que Já Foi Feito em Datas Passadas
 
 ## Current Position
 
-Phase: 20 (Calendário da Agenda — Mês, Semana e Dia) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-08-17 — Phase 20 execution started
+Phase: 21 (Calendário — O Que Já Foi Feito em Datas Passadas) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-08-18 — Phase 21 execution started
 
 **Progresso do marco v1.5:** 0/3 fases
 
@@ -102,6 +102,7 @@ Last activity: 2026-08-17 — Phase 20 execution started
 | Phase 20 P03 | 35min | 2 tasks | 2 files |
 | Phase 20-calend-rio-da-agenda-m-s-semana-e-dia P04 | 30min | 2 tasks | 4 files |
 | Phase 20 P05 | 55min | 2 tasks | 2 files |
+| Phase 21 P02 | ~15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -261,6 +262,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 20-05] AgendaList.tsx compõe AgendaCalendario como irmão da Lista, alimentado por itensFiltrados (mesmo filtro que a Lista consome, aplicado uma única vez); Lista provadamente intacta (agenda-list.test.tsx sem edição)
 - [Phase ?]: [Fase 20-05] Descoberto (não corrigido, fora de escopo): Select do filtro de vendedor perde a seleção em qualquer recarga da Agenda — registrado em deferred-items.md para quick task futura
 - [Phase ?]: [Fase 20-05] Testes de Select (base-ui) em jsdom exigem fireEvent.pointerDown(option) antes de fireEvent.click(option) para selecionar qualquer item que não seja o primeiro da lista
+- [Phase 21-02]: estaAtrasado envolve bucketDoItem e devolve falso incondicionalmente quando item.concluido e verdadeiro; a Lista continua intocada (nao consome esta funcao)
+- [Phase 21-02]: intervaloDeHistorico compara textos YYYY-MM-DD (nunca objeto Date) para achar o intervalo visivel/passado, mesma postura de fuso ja documentada por bucketDoItem/agruparPorData
+- [Phase 21-02]: validarIntervaloHistorico mede a distancia em dias de calendario (differenceInCalendarDays), nao contagem inclusiva; teto INTERVALO_HISTORICO_MAX_DIAS=45 aceita exatamente no teto e recusa um dia acima
 
 ### Pending Todos
 
@@ -320,11 +324,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-18T15:49:02.036Z
-Stopped at: Fase 20 concluída (20-05-PLAN.md), verificação humana aprovada
+Last session: 2026-08-18T17:38:43.181Z
+Stopped at: Fase 21 Plano 02 concluido (camada pura de historico do calendario)
 Resume file: 
-
-None
 
 - Revisar `.planning/ROADMAP.md` (Fases 20-22) e aprovar ou pedir ajuste
 - Depois de aprovado: `/gsd-plan-phase 20` para planejar o calendário da Agenda
