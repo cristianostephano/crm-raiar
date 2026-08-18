@@ -12,6 +12,7 @@ vi.mock("@/app/actions/agenda", () => ({
   getAgendaAction: vi.fn(),
   concluirTarefaProspeccao: vi.fn(),
   concluirVisita: vi.fn(),
+  getAgendaConcluidosAction: vi.fn().mockResolvedValue({ data: [] }),
 }))
 
 // Molde de tests/clientes/filters-popover.test.tsx: a ficha do cliente

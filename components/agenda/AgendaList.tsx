@@ -339,12 +339,18 @@ export function AgendaList({
               o agrupamento em seções logo abaixo já consome, para que a
               grade nunca discorde da Lista quando o Supervisor troca o
               filtro (Pitfall 10). Nenhum segundo filtro, nenhuma segunda
-              busca. */}
+              busca.
+              `vendedorFiltroId` (AGD-13, Fase 21) além disso: a segunda
+              fonte de dados do calendário (o histórico) é buscada lá
+              dentro, não aqui, e precisa passar pelo mesmo estreitamento —
+              sem repassar este identificador, a grade mostraria o
+              histórico do time inteiro sob um filtro de um vendedor só. */}
           <AgendaCalendario
             visao={visao}
             onVisaoChange={setVisao}
             itens={itensFiltrados}
             showResponsavel={showResponsavel}
+            vendedorFiltroId={vendedorFiltroId}
             onOpenCliente={handleOpenCliente}
             onConcluirItem={handleOpenConcluir}
           />
