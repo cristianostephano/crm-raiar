@@ -1,7 +1,7 @@
 "use client"
 
 import { AgendaItemRow } from "@/components/agenda/AgendaItemRow"
-import { bucketDoItem, type AgendaItem } from "@/lib/agenda/itens"
+import { estaAtrasado, type AgendaItem } from "@/lib/agenda/itens"
 
 /**
  * Visão de dia do calendário da Agenda (AGD-11). Lista os itens de UM dia,
@@ -11,11 +11,14 @@ import { bucketDoItem, type AgendaItem } from "@/lib/agenda/itens"
  * por isso NÃO renderiza o título do dia; quem compõe (plano 20-04) fornece
  * o título nos dois lugares.
  *
- * NÃO calcula atraso: chama a autoridade única de classificação
- * (`bucketDoItem`, de `lib/agenda/itens.ts`) com o `now` recebido e repassa
- * o resultado como o indicador booleano que `AgendaItemRow` já espera —
- * exatamente como `AgendaList` faz hoje ao derivar o indicador da seção em
- * que a linha está.
+ * NÃO calcula atraso: chama a autoridade única de atraso do CALENDÁRIO
+ * (`estaAtrasado`, de `lib/agenda/itens.ts`, Fase 21/AGD-13) com o `now`
+ * recebido e repassa o resultado como o indicador booleano que
+ * `AgendaItemRow` já espera. A partir da Fase 21 esta é a função certa —
+ * não mais `bucketDoItem` direto — porque um item concluído carrega a data
+ * em que foi concluído, sempre no passado, e perguntar direto à
+ * classificação de seção pintaria de vermelho todo registro histórico;
+ * `estaAtrasado` já embute essa exceção.
  *
  * Puramente apresentacional: nenhuma leitura de dado, nenhuma ação de
  * servidor, mesma postura do cartão que compõe.
@@ -47,7 +50,7 @@ export function AgendaCalendarioDia({
         <AgendaItemRow
           key={item.itemId}
           item={item}
-          atrasado={bucketDoItem(item.data, now) === "atrasado"}
+          atrasado={estaAtrasado(item, now)}
           showResponsavel={showResponsavel}
           onOpen={() => onOpen(item)}
           onConcluir={() => onConcluir(item)}
