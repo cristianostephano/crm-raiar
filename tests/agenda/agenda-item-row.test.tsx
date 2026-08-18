@@ -127,4 +127,45 @@ describe("AgendaItemRow", () => {
     expect(onConcluir).toHaveBeenCalledTimes(1)
     expect(onOpen).not.toHaveBeenCalled()
   })
+
+  it("concluído: o botão de concluir NÃO está no documento (ausência, não desabilitação)", () => {
+    renderRow({ item: buildItem({ concluido: true }) })
+
+    expect(
+      screen.queryByRole("button", { name: "Concluir" })
+    ).not.toBeInTheDocument()
+  })
+
+  it("concluído: mostra a marca de concluído E continua mostrando o selo de origem correto", () => {
+    renderRow({
+      item: buildItem({ origem: "visita", concluido: true }),
+    })
+
+    expect(screen.getByText("Concluído")).toBeInTheDocument()
+    expect(screen.getByText("Visita")).toBeInTheDocument()
+  })
+
+  it("concluído: não exibe o aviso de atraso mesmo com atrasado=true", () => {
+    const { container } = renderRow({
+      atrasado: true,
+      item: buildItem({ concluido: true, data: "2026-01-15" }),
+    })
+
+    const card = container.querySelector('[role="button"]')
+    expect(card).not.toHaveClass("border-l-red-500")
+    expect(screen.queryByLabelText(/^Atrasado desde/)).not.toBeInTheDocument()
+  })
+
+  it("concluído: clicar no cartão continua chamando onOpen", () => {
+    const onOpen = vi.fn()
+    const { container } = renderRow({
+      onOpen,
+      item: buildItem({ concluido: true }),
+    })
+
+    const card = container.querySelector('[role="button"]') as HTMLElement
+    fireEvent.click(card)
+
+    expect(onOpen).toHaveBeenCalledTimes(1)
+  })
 })
