@@ -16,6 +16,8 @@ import {
   agruparPorData,
   itensDoDia,
   dividirCelula,
+  estaAtrasado,
+  mesclarAgenda,
   type AgendaItem,
 } from "../../lib/agenda/itens"
 
@@ -440,5 +442,102 @@ describe("dividirCelula", () => {
 
     expect(resultado.visiveis.map((i) => i.itemId)).toEqual(["0", "1"])
     expect(resultado.excedente).toBe(3)
+  })
+})
+
+/**
+ * Camada historica do calendario (AGD-13, 21-02 Task 1): vocabulario de
+ * item concluido, sinalizacao de atraso que nunca pinta trabalho ja feito
+ * de vermelho, e mescla das duas fontes (pendentes + concluidos) sem
+ * duplicar identificador.
+ */
+
+describe("estaAtrasado", () => {
+  it("item pendente com data anterior a hoje e sinalizado como atrasado", () => {
+    const pendente = item({ itemId: "1", data: "2026-08-07" })
+    expect(estaAtrasado(pendente, NOW)).toBe(true)
+  })
+
+  it("item pendente de hoje nao e sinalizado como atrasado", () => {
+    const deHoje = item({ itemId: "1", data: "2026-08-08" })
+    expect(estaAtrasado(deHoje, NOW)).toBe(false)
+  })
+
+  it("item pendente do futuro nao e sinalizado como atrasado", () => {
+    const futuro = item({ itemId: "1", data: "2026-08-09" })
+    expect(estaAtrasado(futuro, NOW)).toBe(false)
+  })
+
+  it("item CONCLUIDO com a MESMA data passada de um pendente atrasado NAO e sinalizado como atrasado (caso central)", () => {
+    const concluido = item({ itemId: "1", data: "2026-08-07", concluido: true })
+    const pendenteEquivalente = item({ itemId: "2", data: "2026-08-07" })
+
+    expect(estaAtrasado(concluido, NOW)).toBe(false)
+    expect(estaAtrasado(pendenteEquivalente, NOW)).toBe(true)
+  })
+
+  it("item concluido muitos dias no passado continua nao sinalizado como atrasado", () => {
+    const concluidoAntigo = item({
+      itemId: "1",
+      data: "2026-01-05",
+      concluido: true,
+    })
+
+    expect(estaAtrasado(concluidoAntigo, NOW)).toBe(false)
+  })
+
+  it("item com concluido: false se comporta como pendente comum", () => {
+    const explicitoFalso = item({
+      itemId: "1",
+      data: "2026-08-07",
+      concluido: false,
+    })
+
+    expect(estaAtrasado(explicitoFalso, NOW)).toBe(true)
+  })
+})
+
+describe("mesclarAgenda", () => {
+  it("devolve todos os pendentes primeiro, na ordem recebida, seguidos dos concluidos, na ordem recebida", () => {
+    const pendentes: AgendaItem[] = [
+      item({ itemId: "p2" }),
+      item({ itemId: "p1" }),
+    ]
+    const concluidos: AgendaItem[] = [
+      item({ itemId: "c2", concluido: true }),
+      item({ itemId: "c1", concluido: true }),
+    ]
+
+    const mesclado = mesclarAgenda(pendentes, concluidos)
+
+    expect(mesclado.map((i) => i.itemId)).toEqual(["p2", "p1", "c2", "c1"])
+  })
+
+  it("descarta concluido cujo identificador ja aparece entre os pendentes (janela de discordancia entre as duas leituras)", () => {
+    const pendentes: AgendaItem[] = [item({ itemId: "item-x" })]
+    const concluidos: AgendaItem[] = [
+      item({ itemId: "item-x", concluido: true }),
+      item({ itemId: "item-y", concluido: true }),
+    ]
+
+    const mesclado = mesclarAgenda(pendentes, concluidos)
+
+    expect(mesclado.map((i) => i.itemId)).toEqual(["item-x", "item-y"])
+  })
+
+  it("pendentes vazio devolve os concluidos inalterados", () => {
+    const concluidos: AgendaItem[] = [item({ itemId: "c1", concluido: true })]
+
+    expect(mesclarAgenda([], concluidos)).toEqual(concluidos)
+  })
+
+  it("concluidos vazio devolve os pendentes inalterados", () => {
+    const pendentes: AgendaItem[] = [item({ itemId: "p1" })]
+
+    expect(mesclarAgenda(pendentes, [])).toEqual(pendentes)
+  })
+
+  it("as duas listas vazias devolvem lista vazia", () => {
+    expect(mesclarAgenda([], [])).toEqual([])
   })
 })
