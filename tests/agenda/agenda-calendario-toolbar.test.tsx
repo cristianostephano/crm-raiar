@@ -124,4 +124,16 @@ describe("AgendaCalendarioToolbar", () => {
     expect(screen.getByText("Visita")).toBeInTheDocument()
     expect(screen.getByText("Atrasado")).toBeInTheDocument()
   })
+
+  it("a legenda ganha a quarta marca — concluído — nas visões de calendário", () => {
+    renderToolbar()
+
+    expect(screen.getByText("Concluído")).toBeInTheDocument()
+  })
+
+  it("com rótulo nulo (visão de Lista), a marca de concluído também não aparece", () => {
+    renderToolbar({ rotulo: null, visao: "lista" })
+
+    expect(screen.queryByText("Concluído")).not.toBeInTheDocument()
+  })
 })

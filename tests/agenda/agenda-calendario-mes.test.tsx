@@ -257,6 +257,69 @@ describe("AgendaCalendarioMes", () => {
     expect(chip).not.toBeNull()
   })
 
+  it("chip de item concluído mostra a marca de concluído e o ícone de origem, sem o acento de atraso", () => {
+    const concluido = buildItem({
+      itemId: "feito",
+      origem: "visita",
+      razaoSocial: "Cliente Concluído",
+      data: "2026-08-10", // no passado
+      concluido: true,
+    })
+    renderMes({ porData: buildPorData([concluido]) })
+
+    const chip = screen.getByText("Cliente Concluído").closest("div")
+    expect(chip).toHaveClass("border-l-emerald-600")
+    expect(chip).not.toHaveClass("border-l-destructive")
+    expect(chip?.querySelectorAll("svg").length).toBeGreaterThanOrEqual(2)
+  })
+
+  it("Pitfall 9 (concluído): item concluído numa célula de mês vizinho não recebe acento de atraso", () => {
+    const concluido = buildItem({
+      itemId: "borda-feito",
+      origem: "visita",
+      razaoSocial: "Cliente Borda Concluído",
+      data: "2026-07-27", // primeira célula da grade de agosto/2026, fora do mês
+      concluido: true,
+    })
+    const { container } = renderMes({ porData: buildPorData([concluido]) })
+
+    const celulas = container.querySelectorAll('[role="button"]')
+    const celulaBorda = celulas[0]
+    expect(celulaBorda).toHaveClass("bg-muted/30")
+
+    const chip = celulaBorda.querySelector(".border-l-emerald-600")
+    expect(chip).not.toBeNull()
+    expect(celulaBorda.querySelector(".border-l-destructive")).toBeNull()
+  })
+
+  it("a contagem da célula soma pendentes e concluídos: 2 pendentes + 3 concluídos mostra 3 chips e +2 mais", () => {
+    const pendentes = [1, 2].map((n) =>
+      buildItem({
+        itemId: `p${n}`,
+        razaoSocial: `Pendente ${n}`,
+        data: "2026-08-14",
+      })
+    )
+    const concluidos = [1, 2, 3].map((n) =>
+      buildItem({
+        itemId: `c${n}`,
+        razaoSocial: `Concluído ${n}`,
+        data: "2026-08-14",
+        concluido: true,
+      })
+    )
+    const { container } = renderMes({
+      porData: buildPorData([...pendentes, ...concluidos]),
+    })
+
+    const celulas = container.querySelectorAll('[role="button"]')
+    const celulaHoje = Array.from(celulas).find((c) =>
+      c.getAttribute("aria-label")?.includes("14 de agosto")
+    )
+    expect(celulaHoje?.getAttribute("aria-label")).toMatch(/5 itens/)
+    expect(screen.getByText("+2 mais")).toBeInTheDocument()
+  })
+
   it("Pitfall 10: estreitar o agrupamento (simulando o filtro de vendedor) muda chips e excedente de forma coerente", () => {
     const itensAmplo = Array.from({ length: 7 }, (_, i) =>
       buildItem({
