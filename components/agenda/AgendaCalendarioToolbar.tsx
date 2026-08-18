@@ -116,6 +116,10 @@ export function AgendaCalendarioToolbar({
             <span className="size-2 rounded-full bg-destructive" />
             Atrasado
           </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-emerald-600" />
+            Concluído
+          </span>
         </div>
       ) : null}
     </div>

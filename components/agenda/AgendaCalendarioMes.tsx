@@ -2,15 +2,15 @@
 
 import { format, isSameDay, isSameMonth } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { ClipboardCheck, Repeat } from "lucide-react"
+import { CheckCircle2, ClipboardCheck, Repeat } from "lucide-react"
 import type { KeyboardEvent } from "react"
 
 import {
   MAX_ITENS_NA_CELULA,
-  bucketDoItem,
   chaveDoDia,
   diasDaGradeDoMes,
   dividirCelula,
+  estaAtrasado,
   itensDoDia,
   rotulosDosDiasDaSemana,
   type AgendaItem,
@@ -30,15 +30,19 @@ import { cn } from "@/lib/utils"
  * (b) O componente é apresentacional: recebe o agrupamento (`porData`) já
  * calculado sobre o conjunto filtrado, não busca dado, não filtra e não
  * reagrupa.
- * (c) PITFALL 9, explícito desde já: "pertencer ao mês visível" e "estar
- * atrasado" são duas perguntas independentes, cada uma com seu próprio
- * caminho de estilo. Um item atrasado que caia numa célula de mês vizinho (a
- * borda da grade) precisa continuar gritando (acento vermelho, na Task 2)
- * mesmo dentro de uma célula esmaecida — misturar os dois num booleano só
- * apagaria essa informação exatamente na borda da grade, onde ela mais
- * importa. Por isso os dois booleanos abaixo (`noMesVisivel`, `ehHoje`) são
- * calculados separadamente e nomeados de forma inequívoca, e cada um governa
- * APENAS o seu próprio pedaço de estilo.
+ * (c) PITFALL 9, explícito desde já: "pertencer ao mês visível", "estar
+ * atrasado" e — desde a Fase 21/AGD-13 — "estar concluído" são TRÊS
+ * perguntas independentes, cada uma com seu próprio caminho de estilo. Um
+ * item atrasado que caia numa célula de mês vizinho (a borda da grade)
+ * precisa continuar gritando (acento vermelho) mesmo dentro de uma célula
+ * esmaecida, e um item concluído nunca recebe esse acento vermelho — nem
+ * mesmo na borda da grade — porque a autoridade única de atraso do
+ * calendário (`estaAtrasado`) já embute essa exceção. Misturar as três num
+ * booleano só apagaria alguma dessas informações exatamente onde ela mais
+ * importa. Por isso os dois booleanos de célula abaixo (`noMesVisivel`,
+ * `ehHoje`) são calculados separadamente e nomeados de forma inequívoca, e
+ * cada um governa APENAS o seu próprio pedaço de estilo — o terceiro estado
+ * (concluído) mora no próprio item e é lido no chip, não na célula.
  */
 export function AgendaCalendarioMes({
   referencia,
@@ -160,7 +164,7 @@ function MonthDayCell({
             <MonthItemChip
               key={item.itemId}
               item={item}
-              atrasado={bucketDoItem(item.data, now) === "atrasado"}
+              atrasado={estaAtrasado(item, now)}
             />
           ))}
           {excedente > 0 ? (
@@ -181,14 +185,17 @@ function MonthDayCell({
  * da Lista (`AgendaItemRow`, AGD-12): ícone de prancheta + tratamento cinza
  * para prospecção, ícone de repetição + tratamento azul para visita.
  *
- * A cor é decidida em DUAS etapas, na mesma ordem do cartão pequeno do
- * plano 20-02 (`WeekItemChip`): primeiro o par fundo/texto/borda-lateral da
- * origem, depois — só depois, via `cn`, que resolve utilitários conflitantes
- * mantendo o último — o acento de erro sobrescrevendo apenas a cor da borda
- * lateral quando atrasado. O acento SE SOMA à origem, não a substitui (D-10):
- * um item de visita atrasado continua mostrando o ícone de repetição, e um
- * item atrasado numa célula de mês vizinho esmaecida continua com a borda
- * vermelha legível (Pitfall 9).
+ * A cor é decidida em ETAPAS, na mesma ordem do cartão pequeno da visão de
+ * semana (`WeekItemChip`, plano 21-03): primeiro o par fundo/texto/borda-
+ * lateral da origem, depois — só depois, via `cn`, que resolve utilitários
+ * conflitantes mantendo o último — o acento de erro sobrescrevendo apenas a
+ * cor da borda lateral quando atrasado, OU o acento verde-esmeralda quando
+ * concluído (nunca os dois juntos, já que `estaAtrasado` garante que item
+ * concluído nunca é atrasado). O acento SE SOMA à origem, não a substitui
+ * (D-10/AGD-12): um item de visita atrasado continua mostrando o ícone de
+ * repetição, um item concluído continua mostrando o ícone de origem SOMADO
+ * ao ícone de conferido, e um item atrasado numa célula de mês vizinho
+ * esmaecida continua com a borda vermelha legível (Pitfall 9).
  */
 function MonthItemChip({
   item,
@@ -204,7 +211,9 @@ function MonthItemChip({
         item.origem === "prospeccao"
           ? "bg-muted text-muted-foreground border-l-muted-foreground"
           : "bg-primary/10 text-primary border-l-primary",
-        atrasado && "border-l-destructive"
+        atrasado && "border-l-destructive",
+        item.concluido && "border-l-emerald-600",
+        item.concluido && "opacity-60"
       )}
     >
       {item.origem === "prospeccao" ? (
@@ -212,6 +221,9 @@ function MonthItemChip({
       ) : (
         <Repeat className="size-3 shrink-0 text-primary" />
       )}
+      {item.concluido ? (
+        <CheckCircle2 className="size-3 shrink-0 text-emerald-600" />
+      ) : null}
       <span className="min-w-0 flex-1 truncate">{item.razaoSocial}</span>
     </div>
   )
