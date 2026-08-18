@@ -202,3 +202,88 @@ describe("RLS agenda_do_vendedor: usuario nao autenticado", () => {
     }
   })
 })
+
+/**
+ * Semeia, via serviceClient() (setup apenas, RLS bypassada de proposito),
+ * um cliente com uma tarefa CONCLUIDA cujo carimbo de conclusao cai
+ * dentro do intervalo pedido pelos dois casos novos abaixo (AGD-13, Fase
+ * 21 Plano 1). Mesma danca de dois UPDATEs que
+ * tests/agenda/agenda-concluidos-rpc.test.ts usa: o primeiro UPDATE
+ * dispara o gatilho de auditoria (concluida_em = now()); o segundo
+ * sobrescreve o carimbo com o instante desejado, sem o gatilho
+ * recarimbar (ele so dispara na transicao false->true, que ja
+ * aconteceu).
+ */
+async function seedClienteComConcluido(
+  responsavelId: string,
+  label: string
+): Promise<{ clienteId: string; tarefaId: string }> {
+  const admin = serviceClient()
+  const tipoTarefa = await getActiveTipoTarefa()
+  const { data: cliente, error: clienteError } = await admin
+    .from("clientes")
+    .insert(baseClienteFields(uniqueRazaoSocial(label), responsavelId))
+    .select("id")
+    .single()
+  if (clienteError || !cliente) {
+    throw new Error(`Failed to seed test cliente: ${clienteError?.message}`)
+  }
+  createdClienteIds.push(cliente.id)
+
+  const { data: tarefa, error: tarefaError } = await admin
+    .from("tarefas")
+    .insert({
+      cliente_id: cliente.id,
+      tipo_tarefa_id: tipoTarefa.id,
+      data_conclusao: "2026-07-01",
+    })
+    .select("id")
+    .single()
+  if (tarefaError || !tarefa) {
+    throw new Error(`Failed to seed test tarefa: ${tarefaError?.message}`)
+  }
+
+  await admin.from("tarefas").update({ concluida: true }).eq("id", tarefa.id)
+  await admin
+    .from("tarefas")
+    .update({ concluida_em: "2026-07-10T12:00:00-03:00" })
+    .eq("id", tarefa.id)
+
+  return { clienteId: cliente.id as string, tarefaId: tarefa.id as string }
+}
+
+describe("RLS agenda_concluidos_do_vendedor: isolamento entre vendedores (AGD-13/D-05)", () => {
+  it("historicovendedor: Vendedor B nao recebe nenhuma linha do historico semeado para Vendedor A", async () => {
+    const seedA = await seedClienteComConcluido(
+      vendedorAId,
+      "historico-vendedor-a"
+    )
+
+    const { data, error } = await vendedorB.rpc(
+      "agenda_concluidos_do_vendedor",
+      { p_inicio: "2026-07-01", p_fim: "2026-07-31" }
+    )
+    expect(error).toBeNull()
+    const clientes = ((data ?? []) as AgendaRow[]).map((r) => r.cliente_id)
+    expect(clientes).not.toContain(seedA.clienteId)
+  })
+})
+
+describe("RLS agenda_concluidos_do_vendedor: visao completa do supervisor (AGD-13/D-05)", () => {
+  it("historicosupervisor: Supervisor recebe a linha do historico de Vendedor A", async () => {
+    const seedA = await seedClienteComConcluido(
+      vendedorAId,
+      "historico-supervisor-a"
+    )
+
+    const { data, error } = await supervisor.rpc(
+      "agenda_concluidos_do_vendedor",
+      { p_inicio: "2026-07-01", p_fim: "2026-07-31" }
+    )
+    expect(error).toBeNull()
+    const rows = (data ?? []) as AgendaRow[]
+    const row = rows.find((r) => r.item_id === seedA.tarefaId)
+    expect(row).toBeDefined()
+    expect(row?.responsavel).toBe(vendedorAId)
+  })
+})
