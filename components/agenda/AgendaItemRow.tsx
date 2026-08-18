@@ -42,6 +42,26 @@ import { cn } from "@/lib/utils"
  * componente continua sem chamar Server Action, sem ler dados e sem
  * calcular atraso — só expõe o callback para quem o compõe decidir o que
  * fazer.
+ *
+ * A partir da Fase 21 (AGD-13) o cartão também sabe mostrar um item JÁ
+ * CONCLUÍDO (registro histórico). O indicador (`item.concluido`) é derivado
+ * do PRÓPRIO item, nunca de uma propriedade nova nem de `onConcluir` ter
+ * sido passado — a tela que compõe o calendário entrega o MESMO
+ * `onConcluir` para todo item que renderiza, então condicionar à presença
+ * do callback não filtraria nada; o item é a única fonte que sabe se aquilo
+ * já foi feito. Três consequências desse indicador, todas locais a este
+ * componente:
+ * (a) o botão "Concluir" deixa de ser RENDERIZADO (não só desabilitado) —
+ * é a defesa contra oferecer "concluir" em cima de trabalho já entregue
+ * (T-21-09);
+ * (b) o triângulo de atraso passa a exigir `atrasado && !item.concluido` —
+ * o cálculo de atraso continua sendo responsabilidade de quem renderiza
+ * (autoridade única em `lib/agenda/itens.ts`), esta condição extra é só
+ * coerência local: um item concluído nunca deve exibir aviso de atraso,
+ * aconteça o que acontecer do lado de fora;
+ * (c) uma marca "Concluído" (ícone de conferido, cor de acento
+ * verde-esmeralda-600) aparece ao lado do selo de origem, que continua
+ * onde está — a marca de concluído SOMA, nunca substitui (AGD-12).
  */
 export function AgendaItemRow({
   item,
@@ -64,6 +84,11 @@ export function AgendaItemRow({
     }
   }
 
+  // Fonte única deste indicador: o próprio item (ver comentário de
+  // cabeçalho). Nenhuma propriedade nova é adicionada ao componente.
+  const concluido = item.concluido === true
+  const mostraAtraso = atrasado && !concluido
+
   // A data do banco JAMAIS pode ser convertida com o construtor de data cru
   // do JavaScript a partir da string: `YYYY-MM-DD` é interpretado em fuso
   // zero e, no horário de São Paulo, mostra o dia anterior (Pitfall 1).
@@ -81,7 +106,8 @@ export function AgendaItemRow({
       className={cn(
         "gap-1.5",
         onOpen && "cursor-pointer",
-        atrasado && "border-l-4 border-l-red-500"
+        mostraAtraso && "border-l-4 border-l-red-500",
+        concluido && "opacity-60"
       )}
     >
       <CardHeader className="grid-cols-[1fr_auto] items-start gap-2 px-3">
@@ -91,23 +117,34 @@ export function AgendaItemRow({
         >
           {item.razaoSocial}
         </CardTitle>
-        {item.origem === "prospeccao" ? (
-          <Badge variant="outline" className="shrink-0">
-            <ClipboardCheck />
-            Prospecção
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="shrink-0">
-            <Repeat />
-            Visita
-          </Badge>
-        )}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {item.origem === "prospeccao" ? (
+            <Badge variant="outline" className="shrink-0">
+              <ClipboardCheck />
+              Prospecção
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="shrink-0">
+              <Repeat />
+              Visita
+            </Badge>
+          )}
+          {concluido ? (
+            <Badge
+              variant="outline"
+              className="shrink-0 border-emerald-600 text-emerald-600"
+            >
+              <CheckCircle2 />
+              Concluído
+            </Badge>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-1.5 px-3">
         <p className="text-sm text-muted-foreground">{item.titulo}</p>
         <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">{dataFormatada}</p>
-          {atrasado ? (
+          {mostraAtraso ? (
             <Tooltip>
               <TooltipTrigger
                 className="inline-flex shrink-0 items-center bg-transparent p-0"
@@ -125,20 +162,22 @@ export function AgendaItemRow({
             {item.responsavelNome}
           </p>
         ) : null}
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={(event) => {
-              event.stopPropagation()
-              onConcluir()
-            }}
-          >
-            <CheckCircle2 />
-            Concluir
-          </Button>
-        </div>
+        {concluido ? null : (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={(event) => {
+                event.stopPropagation()
+                onConcluir()
+              }}
+            >
+              <CheckCircle2 />
+              Concluir
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
