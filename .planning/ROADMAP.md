@@ -80,7 +80,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
 
 ### 🚧 v1.5 Calendário na Agenda e Conclusão Remota (Phases 20-22) — IN PROGRESS
 
-- [ ] **Phase 20: Calendário da Agenda — Mês, Semana e Dia** - A tela da Agenda ganha um segundo modo de visualização: um calendário de dia/semana/mês sobre os mesmos itens da Lista, com navegação de data, botão "Hoje" e o mesmo filtro por vendedor.
+- [x] **Phase 20: Calendário da Agenda — Mês, Semana e Dia** - A tela da Agenda ganha um segundo modo de visualização: um calendário de dia/semana/mês sobre os mesmos itens da Lista, com navegação de data, botão "Hoje" e o mesmo filtro por vendedor. (completed 2026-08-18)
 - [ ] **Phase 21: Calendário — O Que Já Foi Feito em Datas Passadas** - Navegar para uma data passada no calendário passa a mostrar também os itens já concluídos naquele dia, não só o que ficou pendente.
 - [ ] **Phase 22: Conclusão Remota com Motivo** - Concluir um item da Agenda deixa de pressupor visita presencial: o vendedor marca "não foi presencial", escolhe um motivo de uma 6ª lista editável pelo Supervisor, e a conclusão segue valendo como conclusão normal.
 
@@ -99,13 +99,13 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
   4. Todo item no calendário mantém a mesma sinalização visual da Lista — Prospecção em cinza, Ativo/Visita em azul — e um item atrasado continua legível como atrasado mesmo caindo numa célula de mês vizinho na borda da grade.
   5. O Supervisor filtra o calendário por vendedor igual já filtra a Lista, e as contagens/chips de cada dia acompanham o filtro (nunca mostram um número de "todos" enquanto a grade mostra só um vendedor).
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans complete
 
 - [x] 20-01-PLAN.md
 - [x] 20-02-PLAN.md
 - [x] 20-03-PLAN.md
 - [x] 20-04-PLAN.md
-- [ ] 20-05-PLAN.md
+- [x] 20-05-PLAN.md
 
 **UI hint**: yes
 
@@ -169,6 +169,6 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 20. Calendário da Agenda — Mês, Semana e Dia | 4/5 | In Progress|  |
+| 20. Calendário da Agenda — Mês, Semana e Dia | 5/5 | Complete   | 2026-08-18 |
 | 21. Calendário — O Que Já Foi Feito em Datas Passadas | 0/TBD | Not started | - |
 | 22. Conclusão Remota com Motivo | 0/TBD | Not started | - |

@@ -4,17 +4,17 @@ milestone: v1.5
 milestone_name: Calendário na Agenda e Conclusão Remota
 current_phase: 20
 current_phase_name: Calendário da Agenda — Mês, Semana e Dia
-status: executing
-stopped_at: Completed 20-04-PLAN.md
-last_updated: "2026-08-17T21:08:58.515Z"
+status: verifying
+stopped_at: Fase 20 concluída (20-05-PLAN.md), verificação humana aprovada
+last_updated: "2026-08-18T15:49:02.046Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 20 execution started
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 33
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 20 (Calendário da Agenda — Mês, Semana e Dia) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-17 — Phase 20 execution started
 
 **Progresso do marco v1.5:** 0/3 fases
@@ -101,6 +101,7 @@ Last activity: 2026-08-17 — Phase 20 execution started
 | Phase 20 P02 | 25min | 2 tasks | 4 files |
 | Phase 20 P03 | 35min | 2 tasks | 2 files |
 | Phase 20-calend-rio-da-agenda-m-s-semana-e-dia P04 | 30min | 2 tasks | 4 files |
+| Phase 20 P05 | 55min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -257,6 +258,9 @@ Recent decisions affecting current work:
 - [Phase 20-03]: Chip text truncation uses min-w-0 flex-1 truncate on the inner span (no fixed width) so ellipsis works inside the chip's flex row
 - [Phase ?]: visao/onVisaoChange ficam como props em AgendaCalendario (nunca estado local), para o plano 20-05 controlar o alternador Lista/Calendário sem herdar esse controle
 - [Phase ?]: O diálogo do dia da grade de mês reusa AgendaCalendarioDia verbatim (D-03/D-05) e deriva seu estado de aberto só de diaDialogo !== null, sem par de booleanos separado
+- [Phase ?]: [Fase 20-05] AgendaList.tsx compõe AgendaCalendario como irmão da Lista, alimentado por itensFiltrados (mesmo filtro que a Lista consome, aplicado uma única vez); Lista provadamente intacta (agenda-list.test.tsx sem edição)
+- [Phase ?]: [Fase 20-05] Descoberto (não corrigido, fora de escopo): Select do filtro de vendedor perde a seleção em qualquer recarga da Agenda — registrado em deferred-items.md para quick task futura
+- [Phase ?]: [Fase 20-05] Testes de Select (base-ui) em jsdom exigem fireEvent.pointerDown(option) antes de fireEvent.click(option) para selecionar qualquer item que não seja o primeiro da lista
 
 ### Pending Todos
 
@@ -316,8 +320,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T21:08:58.499Z
-Stopped at: Completed 20-04-PLAN.md
+Last session: 2026-08-18T15:49:02.036Z
+Stopped at: Fase 20 concluída (20-05-PLAN.md), verificação humana aprovada
 Resume file: 
 
 None
