@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache"
 
 import type { AgendaItem } from "@/lib/agenda/itens"
 import { geraProximaVisita, type FrequenciaVisita } from "@/lib/funil/frequencia"
-import { getAgenda } from "@/lib/supabase/queries/agenda"
+import { getAgenda, getAgendaConcluidos } from "@/lib/supabase/queries/agenda"
 import { createClient } from "@/lib/supabase/server"
-import { validarResumo } from "@/lib/validations/agenda"
+import { validarIntervaloHistorico, validarResumo } from "@/lib/validations/agenda"
 
 /**
  * Embrulho fino que o Client Component da Agenda (plano 14-03) chama:
@@ -174,4 +174,65 @@ export async function concluirVisita(
   revalidatePath("/agenda")
   revalidatePath("/clientes")
   return { data: true }
+}
+
+export type AgendaConcluidosErrorCode =
+  | "unauthenticated"
+  | "intervalo_invalido"
+  | "fetch_falhou"
+
+export type GetAgendaConcluidosResult =
+  | { data: AgendaItem[]; error?: undefined }
+  | { data?: undefined; error: { code: AgendaConcluidosErrorCode; message: string } }
+
+/**
+ * AGD-13 (Fase 21): leitura do histórico (itens já concluídos) do
+ * contêiner do calendário, limitada a um intervalo obrigatório.
+ *
+ * Ação de servidor é endpoint público, e o intervalo calculado no
+ * navegador (`intervaloDeHistorico`, lib/agenda/itens.ts) não é fronteira
+ * nenhuma — por isso a guarda de RECURSO (`validarIntervaloHistorico`) é
+ * aplicada AQUI, ANTES de qualquer ida ao banco, sem exceção: sem esta
+ * guarda alguém poderia pedir anos de histórico numa chamada só e furar a
+ * restrição de desempenho travada nesta fase. A guarda é de recurso, não
+ * de autorização — quem decide o que cada usuário enxerga continua sendo
+ * exclusivamente a RLS no banco; nenhuma linha desta ação pode virar
+ * checagem de permissão.
+ *
+ * Sem revalidação de rota: é leitura pura, chamada a partir do navegador
+ * conforme o usuário navega — revalidar rota aqui provocaria recargas em
+ * cascata.
+ */
+export async function getAgendaConcluidosAction(
+  inicio: string,
+  fim: string
+): Promise<GetAgendaConcluidosResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: "Sessão expirada." } }
+  }
+
+  const validacao = validarIntervaloHistorico(inicio, fim)
+  if (!validacao.valido) {
+    return {
+      error: { code: "intervalo_invalido", message: validacao.message },
+    }
+  }
+
+  try {
+    return {
+      data: await getAgendaConcluidos(validacao.inicio, validacao.fim),
+    }
+  } catch {
+    return {
+      error: {
+        code: "fetch_falhou",
+        message: "Não foi possível carregar o histórico. Tente novamente.",
+      },
+    }
+  }
 }

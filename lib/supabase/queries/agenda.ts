@@ -88,3 +88,42 @@ export async function getAgendaPendentesCount(): Promise<number> {
 
   return count ?? 0
 }
+
+/**
+ * AGD-13 (Fase 21): leitura dos itens JÁ CONCLUÍDOS num período obrigatório
+ * — a segunda fonte do calendário, disjunta de `getAgenda()`. Chama
+ * `agenda_concluidos_do_vendedor(p_inicio, p_fim)` (migration 0021) com os
+ * dois parâmetros de data nos nomes exatos que a migration declara.
+ *
+ * Reusa o MESMO `mapRow` que `getAgenda()` já usa: as duas leituras
+ * devolvem o mesmo conjunto de dez colunas, na mesma ordem — manter dois
+ * mapeadores seria a porta de entrada para eles divergirem. NÃO reordena,
+ * NÃO filtra e NÃO corta o resultado (sem chamar métodos de
+ * ordenação/filtro/slice de array): a ordenação é decidida no SQL, igual à
+ * leitura de pendentes.
+ *
+ * Esta função é o ÚNICO lugar do projeto que marca um item como concluído
+ * (`concluido: true`) — `getAgenda()` jamais marca, por isso o campo é
+ * opcional em `AgendaItem` (ver lib/agenda/itens.ts).
+ *
+ * NENHUM filtro manual de responsável ou checagem de papel aqui, pelo
+ * mesmo motivo já documentado no cabeçalho deste arquivo:
+ * `agenda_concluidos_do_vendedor()` é SECURITY INVOKER e a RLS de
+ * clientes/tarefas/visitas já escopou o resultado antes de ele chegar.
+ */
+export async function getAgendaConcluidos(
+  inicio: string,
+  fim: string
+): Promise<AgendaItem[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("agenda_concluidos_do_vendedor", {
+    p_inicio: inicio,
+    p_fim: fim,
+  })
+
+  if (error) {
+    throw new Error(`Falha ao carregar o histórico da agenda: ${error.message}`)
+  }
+
+  return (data ?? []).map((row: AgendaRow) => ({ ...mapRow(row), concluido: true }))
+}
