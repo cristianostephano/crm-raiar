@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, parseISO } from "date-fns"
 import { z } from "zod"
 
 /**
@@ -75,4 +76,61 @@ export function validarResumo(value: string): ValidarResumoResult {
     valido: false,
     message: result.error.issues[0]?.message ?? RESUMO_MSG_VAZIO,
   }
+}
+
+/**
+ * Teto de dias do intervalo de histórico (AGD-13) — FONTE ÚNICA deste
+ * número no código de aplicação. A maior grade de mês possível tem 42
+ * dias (`diasDaGradeDoMes`, lib/agenda/itens.ts); o teto dá folga sem
+ * deixar de ser um limite real. A ação de servidor (Fase 21-04) importa
+ * esta constante para recusar um pedido grande demais, e o teste importa
+ * a mesma constante para provar a fronteira — dois números soltos
+ * divergiriam em silêncio.
+ */
+export const INTERVALO_HISTORICO_MAX_DIAS = 45
+
+export const INTERVALO_MSG_INVALIDO = "Intervalo de histórico inválido."
+export const INTERVALO_MSG_LONGO =
+  "Intervalo de histórico maior que o permitido."
+
+const FORMATO_DATA_ISO = /^\d{4}-\d{2}-\d{2}$/
+
+export type ValidarIntervaloResult =
+  | { valido: true; inicio: string; fim: string }
+  | { valido: false; message: string }
+
+/**
+ * Guarda de RECURSO do intervalo de histórico pedido pelo navegador — NÃO
+ * é guarda de autorização. Quem decide o que cada usuário pode ver
+ * continua sendo exclusivamente a RLS no banco (mesmo padrão de
+ * `agenda_do_vendedor()`); este validador nunca pode virar um segundo
+ * lugar que decide permissão. Ele existe porque a ação de servidor que vai
+ * consumi-lo (Fase 21-04) é um endpoint público, e o cálculo de
+ * `intervaloDeHistorico` feito no navegador não é fronteira nenhuma —
+ * qualquer chamador poderia pedir um intervalo arbitrariamente grande
+ * diretamente à ação, sem passar pela tela.
+ *
+ * Confere, nesta ordem: (1) os dois textos estão no formato de data
+ * ano-mês-dia; (2) o início não é posterior ao fim; (3) a distância em
+ * dias de calendário entre os dois não passa de `INTERVALO_HISTORICO_MAX_DIAS`.
+ */
+export function validarIntervaloHistorico(
+  inicio: string,
+  fim: string
+): ValidarIntervaloResult {
+  if (!FORMATO_DATA_ISO.test(inicio) || !FORMATO_DATA_ISO.test(fim)) {
+    return { valido: false, message: INTERVALO_MSG_INVALIDO }
+  }
+
+  if (inicio > fim) {
+    return { valido: false, message: INTERVALO_MSG_INVALIDO }
+  }
+
+  const distanciaDias = differenceInCalendarDays(parseISO(fim), parseISO(inicio))
+
+  if (distanciaDias > INTERVALO_HISTORICO_MAX_DIAS) {
+    return { valido: false, message: INTERVALO_MSG_LONGO }
+  }
+
+  return { valido: true, inicio, fim }
 }

@@ -429,3 +429,53 @@ export function mesclarAgenda(
 
   return [...pendentes, ...concluidosSemDuplicata]
 }
+
+/**
+ * Qual intervalo de histórico buscar para o que está VISÍVEL na tela — a
+ * resposta única a "qual período pedir agora?" (AGD-13/D-02). Materializa
+ * duas decisões travadas com o dono:
+ *
+ * (a) A busca é sempre limitada ao que está na tela, nunca ao histórico
+ * inteiro — é esta função que impede a regressão de desempenho travada
+ * como restrição desta fase. Por isso ela SEMPRE reusa `diasDaGradeDoMes`/
+ * `diasDaSemana` (as mesmas funções que já desenham a grade) para saber
+ * quais dias estão visíveis, em vez de repetir aritmética de calendário
+ * aqui — uma segunda conta corre o risco de discordar da grade que a tela
+ * realmente desenha.
+ *
+ * (b) Hoje e o futuro ficam de fora de propósito: a decisão travada com o
+ * dono é que hoje continua mostrando só pendentes, exatamente como a Fase
+ * 20 entregou (D-01). Por isso o fim do intervalo é sempre aparado no dia
+ * ANTERIOR a hoje, e quando nada estritamente passado está visível
+ * (hoje, amanhã, uma semana futura, um mês futuro) a função devolve NADA —
+ * buscar seria uma ida ao servidor garantidamente vazia.
+ *
+ * Todas as comparações abaixo são feitas entre TEXTOS no formato
+ * `YYYY-MM-DD` (via `chaveDoDia`), nunca convertendo de volta para objeto
+ * de data: nesse formato a ordem alfabética coincide com a ordem
+ * cronológica, e comparar texto com texto é imune ao erro de fuso que
+ * `bucketDoItem` já documenta no próprio comentário.
+ */
+export function intervaloDeHistorico(
+  referencia: Date,
+  modo: CalendarioModo,
+  now: Date = new Date()
+): { inicio: string; fim: string } | null {
+  const diasVisiveis =
+    modo === "mes"
+      ? diasDaGradeDoMes(referencia)
+      : modo === "semana"
+        ? diasDaSemana(referencia)
+        : [referencia]
+
+  const inicioVisivel = chaveDoDia(diasVisiveis[0])
+  const fimVisivel = chaveDoDia(diasVisiveis[diasVisiveis.length - 1])
+  const ontem = chaveDoDia(addDays(now, -1))
+
+  if (inicioVisivel > ontem) return null
+
+  return {
+    inicio: inicioVisivel,
+    fim: fimVisivel < ontem ? fimVisivel : ontem,
+  }
+}
