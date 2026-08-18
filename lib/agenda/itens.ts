@@ -63,6 +63,15 @@ export type AgendaItem = {
    * outro) pode recalculá-la ou reconstruí-la a partir de aritmética de
    * data. A autoridade única do cálculo é a função do banco. */
   proximaDataSugerida: string | null
+  /** Indicador de item histórico (AGD-13). Ausente ou `false` = pendente —
+   * tudo o que a leitura de pendentes (`agenda_do_vendedor()`) devolve, sem
+   * exceção. `true` = registro histórico, vindo da leitura de concluídos
+   * por período (Fase 21) — e nesse caso `data` deixa de significar "data
+   * prevista" e passa a significar "data em que o trabalho foi concluído".
+   * Campo OPCIONAL de propósito (conflito 5 do 21-01-PLAN.md): torná-lo
+   * obrigatório quebraria toda construção de item já existente no projeto
+   * (Fase 20 e anteriores). Zero churn, zero risco de regressão de tipagem. */
+  concluido?: boolean
 }
 
 export type AgendaBucket = "atrasado" | "hoje" | "proximos"
@@ -359,4 +368,64 @@ export function dividirCelula(
   const visiveis = itens.slice(0, maxVisiveis)
 
   return { visiveis, excedente: itens.length - visiveis.length }
+}
+
+// ---------------------------------------------------------------------------
+// Camada histórica (AGD-13, Fase 21) — o que já foi feito em datas passadas.
+// Vive neste mesmo arquivo de propósito: este continua sendo o único lugar
+// que decide como os itens da agenda são organizados (ver comentário de
+// cabeçalho no topo do arquivo); um arquivo novo criaria uma segunda
+// autoridade sobre a mesma pergunta. Como o resto do arquivo, a camada
+// abaixo permanece pura — nenhuma importação de `next/*` nem de
+// `@/lib/supabase/*`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Autoridade única de "este item do CALENDÁRIO deve ser sinalizado como
+ * atrasado?". Envolve `bucketDoItem` em vez de cada visão de calendário
+ * continuar perguntando direto à classificação: um item concluído sempre
+ * carrega a data em que foi concluído, sempre no passado, então a
+ * classificação sozinha sempre responderia "atrasado" para ele — e as três
+ * visões (mês/semana/dia) pintariam de vermelho um trabalho que já foi
+ * feito. Esta função existe para que essa decisão seja tomada UMA vez, num
+ * lugar só, e não em três lugares que poderiam discordar entre si.
+ *
+ * Esta função é para o CALENDÁRIO. A Lista (`agruparAgenda`/`bucketDoItem`
+ * diretamente) continua derivando o atraso da seção em que a linha está, e
+ * não é tocada por esta fase — a Lista nunca recebe item concluído, porque
+ * só o calendário passa a mesclar as duas fontes (`mesclarAgenda` abaixo).
+ */
+export function estaAtrasado(item: AgendaItem, now?: Date): boolean {
+  if (item.concluido) return false
+  return bucketDoItem(item.data, now) === "atrasado"
+}
+
+/**
+ * Junta as duas fontes do calendário (pendentes + concluídos) numa lista
+ * só. A ordem é intencional — pendentes primeiro, na ordem recebida,
+ * seguidos dos concluídos, também na ordem recebida — e é preservada
+ * porque `agruparPorData`, chamada uma vez sobre o resultado desta função,
+ * já garante que a ordem de entrada nunca é reordenada dentro de cada dia
+ * (mesmo contrato que o comentário de `agruparPorData` documenta). Esta
+ * função NÃO ordena e NÃO agrupa: quem agrupa continua sendo
+ * `agruparPorData`.
+ *
+ * O descarte de um concluído cujo identificador já apareça entre os
+ * pendentes não é paranoia: existe uma janela real em que a lista de
+ * pendentes já carregada ainda contém um item que a leitura histórica já
+ * devolve como concluído (o item acabou de ser concluído entre as duas
+ * leituras). Sem este descarte, dois cartões de mesma chave (`itemId`) na
+ * mesma célula quebrariam a renderização — é a chave que React/o grid usam
+ * para identificar cada cartão.
+ */
+export function mesclarAgenda(
+  pendentes: AgendaItem[],
+  concluidos: AgendaItem[]
+): AgendaItem[] {
+  const idsPendentes = new Set(pendentes.map((item) => item.itemId))
+  const concluidosSemDuplicata = concluidos.filter(
+    (item) => !idsPendentes.has(item.itemId)
+  )
+
+  return [...pendentes, ...concluidosSemDuplicata]
 }
