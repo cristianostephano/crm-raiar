@@ -26,6 +26,11 @@ import { validarIntervaloHistorico, validarResumo } from "@/lib/validations/agen
  * `getAgendaPendentesCount()` não tem Server Action própria: o menu é
  * renderizado por Server Component (plano 14-04) e chama a query
  * diretamente.
+ *
+ * A partir da Fase 22 as duas ações de conclusão também carregam o motivo
+ * de conclusão remota (CONC-02): as DUAS precisam ser mantidas em
+ * sincronia, porque a janela que as chama (ConcluirItemDialog.tsx) é uma
+ * só — estender só uma delas quebra a outra em silêncio.
  */
 
 export type AgendaErrorCode = "unauthenticated" | "fetch_falhou"
@@ -75,10 +80,16 @@ export type ConcluirResult =
  * Conclui uma tarefa de prospecção (CONC-01), chamando exatamente a RPC
  * `concluir_tarefa_prospeccao` do Plano 15-01 — nunca uma escrita direta em
  * `tarefas`.
+ *
+ * `motivoConclusaoRemotaId` (Fase 22, CONC-02) é opcional e sempre o
+ * ÚLTIMO parâmetro: repassado sem validação adicional para a RPC, que já
+ * faz a guarda real (existe + ativo) dentro do plano 22-01 — validar de
+ * novo aqui seria uma segunda ida ao banco sem ganhar fronteira nenhuma.
  */
 export async function concluirTarefaProspeccao(
   tarefaId: string,
-  resumo: string
+  resumo: string,
+  motivoConclusaoRemotaId?: string | null
 ): Promise<ConcluirResult> {
   const supabase = await createClient()
   const {
@@ -99,9 +110,15 @@ export async function concluirTarefaProspeccao(
     }
   }
 
+  // Texto vazio ou só espaços vira vazio de verdade antes de seguir para
+  // o banco — mesma normalização que motivoConclusaoRemotaId recebe em
+  // concluirVisita, abaixo.
+  const motivoNormalizado = motivoConclusaoRemotaId?.trim() || null
+
   const { error } = await supabase.rpc("concluir_tarefa_prospeccao", {
     p_tarefa_id: tarefaId,
     p_resumo: validacao.resumo,
+    p_motivo_conclusao_remota_id: motivoNormalizado,
   })
 
   if (error) {
@@ -122,12 +139,18 @@ export async function concluirTarefaProspeccao(
  * (nunca uma segunda leitura): usada apenas para decidir, do lado de cá, se
  * a data deve ser enviada — as duas guardas reais continuam sendo as do
  * banco, que relê a frequência da própria tabela `clientes` (T-15-22).
+ *
+ * `motivoConclusaoRemotaId` (Fase 22, CONC-02) é opcional e sempre o
+ * ÚLTIMO parâmetro, depois de `proximaData` — mesma postura de
+ * `concluirTarefaProspeccao` acima: repassado sem validação adicional, e o
+ * bloco que decide se a próxima data é enviada (D-07) não muda em nada.
  */
 export async function concluirVisita(
   visitaId: string,
   resumo: string,
   frequenciaVisita: FrequenciaVisita | null,
-  proximaData: string | null
+  proximaData: string | null,
+  motivoConclusaoRemotaId?: string | null
 ): Promise<ConcluirResult> {
   const supabase = await createClient()
   const {
@@ -158,12 +181,17 @@ export async function concluirVisita(
     }
   }
 
+  // Texto vazio ou só espaços vira vazio de verdade antes de seguir para
+  // o banco — mesma normalização que concluirTarefaProspeccao aplica.
+  const motivoNormalizado = motivoConclusaoRemotaId?.trim() || null
+
   const { error } = await supabase.rpc("concluir_visita", {
     p_visita_id: visitaId,
     p_resumo: validacao.resumo,
     // Cliente sem cadência: envia vazio independentemente do que a tela
     // mandou — a guarda de verdade continua sendo a do banco.
     p_proxima_data: precisaDeData ? proximaData : null,
+    p_motivo_conclusao_remota_id: motivoNormalizado,
   })
 
   if (error) {
