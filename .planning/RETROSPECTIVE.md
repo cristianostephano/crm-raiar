@@ -174,6 +174,48 @@
 
 ---
 
+## Milestone: v1.5 — Calendário na Agenda e Conclusão Remota
+
+**Shipped:** 2026-08-19
+**Phases:** 3 | **Plans:** 12 | **Sessions:** ~1 sessão longa (uma pausa deliberada do usuário — "vamos continuar depois" — retomada sem re-trabalho; múltiplas quedas por limite de sessão, todas recuperadas)
+
+### What Was Built
+- Calendário na Agenda (Dia/Semana/Mês) como segunda visão sobre os mesmos dados da Lista, sem nenhuma dependência nova, seguindo um esboço aprovado previamente pelo dono do projeto (sketch 003, Variante A) — grid montada à mão com `date-fns` + CSS Grid (Fase 20).
+- Nova RPC complementar `agenda_concluidos_do_vendedor`, bounded por período e com timezone de São Paulo, trazendo pro calendário o que já foi concluído em datas passadas sem tocar em `agenda_do_vendedor()`/a Lista (Fase 21).
+- Conclusão remota: 6ª lista editável (`motivos_conclusao_remota`), as duas RPCs de conclusão estendidas juntas (drop-before-create), e os gatilhos de auditoria resolvendo a FK do motivo em texto legível no Diário — pela primeira vez no projeto um gatilho faz esse tipo de resolução (Fase 22).
+
+### What Worked
+- **Esboço (sketch) antes de travar o plano** foi uma etapa nova neste marco: o dono do projeto pediu pra "ver como fica" antes de aprovar, e um HTML jogável com 2 variantes resolveu isso em uma rodada — a Variante A escolhida virou o contrato visual literal que os 4 planos da Fase 20 seguiram, sem ambiguidade de design durante a execução.
+- **Perguntar antes de assumir "pesquisa já cobre isso"** revelou uma mudança de escopo real a tempo: a pesquisa inicial concluiu "zero mudança de banco" pro calendário, mas ao perguntar explicitamente se meses passados deveriam mostrar o que já foi feito, o dono disse que sim — o que criou a Fase 21 inteira (RPC nova). Descobrir isso ANTES do roadmap, não durante a execução, evitou replanejamento.
+- Grep no schema real (RPCs, gatilhos, tabelas de lista existentes) antes de escrever o brief de cada fase continuou sendo o que permitiu os planejadores acertarem de primeira em decisões técnicas finas (fuso horário na Fase 21, `drop-before-create` na Fase 22) sem precisar de rodada de correção.
+- Verificação humana ao vivo no navegador em toda fase, incluindo casos adversos semeados deliberadamente (dia lotado pra testar "+N", nome ambíguo, sessão de Vendedor pra provar RLS) — pegou zero bug real desta vez, mas confirmou positivamente cada ponto de risco identificado no planejamento.
+- RLS/RPC como única fronteira de autorização se manteve sem exceção nova em 2 migrations (0021-0022) — o projeto termina o marco com as mesmas 4 exceções `SECURITY DEFINER` documentadas desde o v1.2.
+
+### What Was Inefficient
+- **Push de migration bloqueado pelo classificador do harness**: em todas as 3 fases com migration (20 não teve, 21-01 e 22-01 tiveram), o mesmo padrão de v1.3/v1.4 se repetiu — bloqueado pro subagente, resolvido pelo orquestrador com aprovação explícita do dono. Nenhuma novidade, mas continua sendo o único passo manual obrigatório em toda fase de banco.
+- **Múltiplas quedas de sessão por limite de uso** — a mais notável interrompeu o planejamento da Fase 20 bem no fim (durante a validação final dos 5 planos), mas todos os 5 arquivos já tinham sido escritos em disco antes da queda — só faltou commitar, sem perda de trabalho.
+- **Pausa deliberada do usuário no meio da execução** ("consegue segurar um pouco, vou pra casa") no meio da Fase 20, Onda 3 — tratada como pausa legítima; a sessão commitou um pendente de higiene (arquivos de pesquisa sem commit) antes de parar, e retomou exatamente de onde ficou sem re-trabalho.
+- Um falso positivo no próprio script de verificação mecânica de um plano (Fase 22-02): o contador de `tabela:` no arquivo de configuração incluía a linha de anotação de tipo do array, não só as entradas reais — o executor identificou isso, confirmou por um caminho alternativo (contagem âncorada por aspas + teste de integração), e documentou como nota em vez de tratar como defeito real.
+
+### Patterns Established
+- Sketch antes de plano virou o padrão pra qualquer fase com UI nova e não-trivial: o dono aprova o visual primeiro (HTML jogável, sem dependência), o plano referencia o arquivo do sketch como contrato, execução não reabre discussão de design.
+- RPC complementar e bounded-por-período (nunca uma alteração na RPC principal já em produção) é o padrão pra "adicionar uma segunda fonte de dado histórico" sem arriscar a fonte de dado principal já verificada — usado pela primeira vez na Fase 21, deve se repetir sempre que uma tela precisar mostrar histórico além do que já busca hoje.
+- Gatilho de auditoria que resolve uma FK de lista editável em texto legível (Fase 22) é um padrão novo, mas replicável: sempre com fallback pro texto genérico se a resolução falhar, nunca grava o identificador cru.
+- Toda extensão de assinatura de RPC (parâmetro novo) segue `drop function if exists <assinatura antiga>` explícito, nunca `create or replace` sozinho — lição repetida da v1.4, agora testada mecanicamente em todo plano que muda assinatura (contagem de `drop function` no script de verificação).
+
+### Key Lessons
+1. Perguntar explicitamente sobre um caso de borda ("o que acontece com dados passados?") antes de travar o roadmap revelou um requisito novo genuíno (AGD-13) que a pesquisa automática não tinha capturado — confirma que perguntas diretas ao dono do projeto continuam achando mais lacunas reais do que pesquisa sozinha.
+2. Um esboço jogável (HTML sem dependência, 2 variantes) resolve ambiguidade de design mais rápido e com menos risco de retrabalho do que descrever o layout em texto — vale a pena sempre que a fase tem UI nova sem padrão visual óbvio a copiar.
+3. RPC nova e complementar, nunca alterar a que já está em produção e verificada, é a forma mais segura de adicionar uma segunda fonte de dado a uma tela que já funciona — confirmado pela segunda vez neste marco (Fase 21 não tocou `agenda_do_vendedor()`/Lista da Fase 20).
+4. Quando uma queda de sessão interrompe um agente ANTES do primeiro commit, checar `git status`/`ls` no diretório de destino antes de re-disparar é suficiente pra confirmar que não há retrabalho — vale até para escrita de múltiplos arquivos de planejamento de uma vez (5 PLAN.md da Fase 20 sobreviveram intactos à queda durante a validação final).
+
+### Cost Observations
+- Model mix: planner em opus, executor/researcher em sonnet, plan-checker/verifier em haiku/sonnet — mesmo padrão dos 3 marcos anteriores, mantido estável.
+- Múltiplas quedas por limite de sessão/uso ao longo do marco — todas recuperadas sem retrabalho de funcionalidade, só repetição do `Agent()` de planejamento ou execução.
+- Nenhum retrabalho de funcionalidade foi necessário — a única correção de escopo real (mostrar itens concluídos em datas passadas) foi decidida ANTES do roadmap, via pergunta direta, nunca descoberta tarde demais durante a execução.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -185,6 +227,7 @@
 | v1.2 | ~1 (com interrupção por limite de uso) | 5 | Fases rodando em paralelo via worktree (8/9, e depois 10/11) virou padrão — trouxe junto o risco novo de colisão de numeração de migration, agora documentado como lição |
 | v1.3 | ~1 sessão contínua longa (múltiplas interrupções por limite recuperadas) | 5 | Verificação pessoal ao vivo em TODO checkpoint (não delegada) virou disciplina consistente; primeira vez que o bloqueio de segurança do harness em `supabase db push` apareceu — resolvido com push manual do orquestrador, nunca contornado |
 | v1.4 | ~1 sessão longa (2 quedas por limite recuperadas, mais uma pausa deliberada do usuário no meio de um checkpoint) | 2 | Primeiro marco a pular discuss-phase/research deliberadamente nas duas fases (escopo já resolvido em conversa + precedente forte no código, confirmado via pergunta explícita); primeiro marco pequeno o suficiente (2 fases) pra caber inteiro numa sessão só, incluindo fechamento |
+| v1.5 | ~1 sessão longa (múltiplas quedas por limite recuperadas, mais uma pausa deliberada do usuário no meio de execução) | 3 | Primeiro marco a usar um esboço jogável (`/gsd-sketch`) antes de travar o roadmap — o dono pediu pra "ver como fica" e isso virou etapa formal; primeira vez que uma pergunta direta sobre caso de borda mudou o roadmap ANTES de ser escrito (AGD-13 virou fase própria) |
 
 ### Cumulative Quality
 
@@ -194,12 +237,15 @@
 | v1.2 | Suite completa passando (falhas remanescentes isoladas a rate-limit de Auth do free-tier, não regressão); novos arquivos de integração em `tests/equipe/*` e `tests/dashboard/*` | Não medido formalmente | Nenhuma dependência nova — v1.2 foi só RPCs/migrations + componentes reaproveitando a stack já instalada |
 | v1.3 | Centenas de casos novos across `tests/agenda/*`, `tests/clientes/*`, `tests/configuracoes/*`, `tests/importacao/*` (RLS/integração contra o banco real em todas as fases com migration) | Não medido formalmente | Nenhuma dependência nova — v1.3 reaproveitou `@e965/xlsx` (v1.1) e toda a stack já instalada |
 | v1.4 | Dezenas de casos novos em `tests/clientes/cnpj-ganho.test.ts`, `tests/importacao/rls-cnpj-lote.test.ts`, `tests/importacao/annotarLinhaCnpj.test.ts`/`confirmarCnpj.test.ts` (integração contra o banco real, incluindo caso de nome ambíguo); zero regressão nos arquivos que não deveriam ser tocados (`funil-status`, `funil-constraints`, `rls-visitas`, `rls-frequencia-lote`) | Não medido formalmente | Nenhuma dependência nova — v1.4 reaproveitou toda a stack já instalada |
+| v1.5 | Centenas de casos novos across `tests/agenda/*` (calendário, item concluído, conclusão remota) e `tests/configuracoes/*` (6ª lista); zero regressão em `agenda-list.test.tsx`, `agenda_do_vendedor()`, e nos 4 arquivos de teste de conclusão pré-existentes | Não medido formalmente | Nenhuma dependência nova — grid de calendário montada à mão com `date-fns`/CSS Grid já instalados |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Fechar cada marco formalmente antes de iniciar o próximo evita perda de registro histórico (v1.1 pagou esse custo ao fechar o v1.0 tardiamente).
-2. Testes de integração contra o banco real (não mockado) seguem sendo a forma mais confiável de pegar bugs de RLS/PL/pgSQL — confirmado de novo em v1.2, v1.3 e v1.4.
-3. Verificação humana ao vivo no navegador continua pegando bugs que nenhum teste automatizado alcança (v1.1: nenhum caso; v1.2: o bug de `avancou_pct` acima de 100%; v1.3: nenhum bug real, mas confirmou comportamentos de risco; v1.4: nenhum bug real, mas provou o caso de nome ambíguo com dados reais) — vale manter como gate obrigatório de toda fase de UI/dashboard.
-4. Ler o código-fonte real do fluxo análogo antes de planejar (não só a spec/pesquisa) revela lacunas genuínas antes que virem bugs — confirmado repetidamente em v1.3 (ambiguidade de nome, duplicata de linha, prop faltando) e de novo em v1.4 (RPC de importação não gravava as colunas novas).
-5. Um bloqueio de segurança do harness em `supabase db push` não é um bug — é a proteção funcionando; a resposta certa é sempre rodar a ação manualmente com aprovação explícita do dono, nunca contornar por outro caminho — confirmado em v1.3 e de novo em v1.4 (duas vezes na mesma sessão).
-6. Quando o escopo de uma fase pequena já foi resolvido em conversa e existe precedente forte no código, pular discuss-phase/research é uma economia real — mas só depois de o orquestrador verificar o precedente por conta própria (grep/leitura direta) antes de perguntar ao usuário se pode pular (v1.4).
+2. Testes de integração contra o banco real (não mockado) seguem sendo a forma mais confiável de pegar bugs de RLS/PL/pgSQL — confirmado de novo em v1.2, v1.3, v1.4 e v1.5.
+3. Verificação humana ao vivo no navegador continua pegando bugs que nenhum teste automatizado alcança (v1.1: nenhum caso; v1.2: o bug de `avancou_pct` acima de 100%; v1.3/v1.4/v1.5: nenhum bug real, mas confirmou repetidamente comportamentos de risco com dados semeados de propósito) — vale manter como gate obrigatório de toda fase de UI/dashboard.
+4. Ler o código-fonte real do fluxo análogo antes de planejar (não só a spec/pesquisa) revela lacunas genuínas antes que virem bugs — confirmado repetidamente em v1.3, v1.4 (RPC de importação não gravava as colunas novas) e v1.5 (fuso horário e `drop-before-create` acertados de primeira por causa do grep prévio).
+5. Um bloqueio de segurança do harness em `supabase db push` não é um bug — é a proteção funcionando; a resposta certa é sempre rodar a ação manualmente com aprovação explícita do dono, nunca contornar por outro caminho — confirmado em v1.3, v1.4 e de novo em v1.5 (2 vezes).
+6. Quando o escopo de uma fase pequena já foi resolvido em conversa e existe precedente forte no código, pular discuss-phase/research é uma economia real — mas só depois de o orquestrador verificar o precedente por conta própria (grep/leitura direta) antes de perguntar ao usuário se pode pular (v1.4, v1.5).
+7. Um esboço jogável (HTML sem dependência) resolve ambiguidade de design de UI nova mais rápido do que descrever em texto, e vira o contrato visual literal que a execução segue sem reabrir discussão — primeira vez usado formalmente em v1.5, candidato a padrão pra toda fase de UI nova sem analógico direto no código.
+8. Perguntar explicitamente sobre casos de borda ("o que acontece com X passado/histórico?") antes de escrever requisitos revela escopo real que pesquisa automática sozinha não captura — confirmado em v1.5 (AGD-13 nasceu de uma pergunta direta, não da pesquisa inicial).
