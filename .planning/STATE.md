@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 Phase: Milestone v1.5 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-08-19 — Milestone v1.5 completed and archived
+Last activity: 2026-08-19 — Quick task 260819-l6o: fix busca de cidades na importação (bug de paginação)
 
 ## Performance Metrics
 
@@ -311,6 +311,7 @@ None yet.
 | 260722-hpe | Kanban card polish: light-red Incompleto badge, wrap long column titles, 3-color task-status left border | 2026-07-22 | 0f2b7d2 | [260722-hpe-kanban-card-polish-light-red-incompleto-](./quick/260722-hpe-kanban-card-polish-light-red-incompleto-/) |
 | 260806-fln | Limpar 4 avisos pequenos de lint pré-existentes (react-hooks/incompatible-library, react-hooks/set-state-in-effect x2, unused-var) | 2026-08-06 | 2fd6840 | [260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi](./quick/260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi/) |
 | 260806-h8a | Corrigir filtro de Cidade (tela de Clientes) para mostrar só cidades com cliente cadastrado, via nova RPC `cidades_com_clientes_por_estado` (migration 0012) | 2026-08-06 | b1f9497 | [260806-h8a-corrigir-o-filtro-de-cidade-na-tela-de-c](./quick/260806-h8a-corrigir-o-filtro-de-cidade-na-tela-de-c/) |
+| 260819-l6o | Corrigir busca de cidades na importação de clientes: `validarLoteImportacao` lia a tabela `cidades` (5571 linhas IBGE) sem paginação, truncada em 1000 pelo PostgREST — cidades reais (ex: São Paulo/SP, Curitiba/PR) eram rejeitadas como "não encontrada". Novo leitor paginado `getTodasCidades()` | 2026-08-19 | 683c8cb | [260819-l6o-bug-busca-de-cidades-na-importacao-de-cl](./quick/260819-l6o-bug-busca-de-cidades-na-importacao-de-cl/) |
 
 ### Roadmap Evolution
 
