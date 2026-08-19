@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache"
 import {
   annotarLinha,
   type AnnotarLinhaLookups,
-  type CidadeLookup,
   type MappedRow,
   type ResolvedRow,
   type VendedorLookup,
@@ -18,6 +17,7 @@ import {
 import { findDuplicates } from "@/lib/importacao/dedupe"
 import { createClient } from "@/lib/supabase/server"
 import { getCategoriasAtivas, getProdutosAtivos } from "@/lib/supabase/queries/clientes"
+import { getTodasCidades } from "@/lib/supabase/queries/cidades"
 
 export type ValidarLoteErrorCode = "unauthenticated" | "forbidden" | "generic"
 
@@ -81,7 +81,7 @@ export async function validarLoteImportacao(
   // `linhas` are client-sent DATA (the parsed/mapped spreadsheet rows),
   // never an authorization input — the is_supervisor gate above is the only
   // barrier, same posture as getClientesParaExportacao's `ids` parameter.
-  const [categorias, produtos, vendedoresResult, existentesResult, cidadesResult] =
+  const [categorias, produtos, vendedoresResult, existentesResult, cidades] =
     await Promise.all([
       getCategoriasAtivas(),
       getProdutosAtivos(),
@@ -91,14 +91,19 @@ export async function validarLoteImportacao(
       // policy returns the whole base — exactly the set dedup must compare
       // against. NEVER add a manual responsavel filter here.
       supabase.from("clientes").select("razao_social"),
-      // Narrow, RLS-scoped read of the cidades reference table (09-01) — one
-      // read per batch, same convention as the other three lookups. cidades'
-      // SELECT policy is read-open to any authenticated user (public IBGE
-      // data), so no extra scoping is needed here (LOC-01/LOC-02).
-      supabase.from("cidades").select("nome, uf"),
+      // Lista completa de cidades (LOC-01/LOC-02), paginada por
+      // getTodasCidades (lib/supabase/queries/cidades.ts) — a tabela tem
+      // 5571 linhas e o PostgREST devolve no máximo 1000 por requisição sem
+      // paginação explícita, então um select direto aqui truncava a lista e
+      // fazia a validação rejeitar cidade real. A postura de RLS não muda: a
+      // policy de SELECT é aberta a qualquer usuário autenticado (dado
+      // público do IBGE), nada a escopar aqui. Uma falha de leitura vira
+      // erro do lote inteiro de propósito — validar contra uma lista
+      // parcial reprovaria cidade correta.
+      getTodasCidades(),
     ])
 
-  if (vendedoresResult.error || existentesResult.error || cidadesResult.error) {
+  if (vendedoresResult.error || existentesResult.error || cidades === null) {
     return { error: { code: "generic" } }
   }
 
@@ -107,11 +112,6 @@ export async function validarLoteImportacao(
     nome: row.nome as string,
     sobrenome: row.sobrenome as string,
     email: row.email as string,
-  }))
-
-  const cidades: CidadeLookup[] = (cidadesResult.data ?? []).map((row) => ({
-    nome: row.nome as string,
-    uf: row.uf as string,
   }))
 
   const lookups: AnnotarLinhaLookups = { vendedores, categorias, produtos, cidades }
