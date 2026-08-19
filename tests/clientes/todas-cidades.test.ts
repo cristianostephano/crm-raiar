@@ -41,8 +41,12 @@ function gerarCidades(total: number): { nome: string; uf: string }[] {
 }
 
 /** Faz o espião de `range` fatiar `dataset` pela faixa recebida, igual ao
- * PostgREST real faria contra a tabela `cidades`. */
+ * PostgREST real faria contra a tabela `cidades`. Limpa o histórico de
+ * chamadas do espião antes de reconfigurar — os testes deste arquivo
+ * compartilham o mesmo `rangeSpy` içado por `vi.hoisted()`, então sem essa
+ * limpeza as chamadas de um teste vazariam para a contagem do próximo. */
 function simularPaginacao(dataset: { nome: string; uf: string }[]) {
+  rangeSpy.mockReset()
   rangeSpy.mockImplementation(async (inicio: number, fim: number) => ({
     data: dataset.slice(inicio, fim + 1),
     error: null,
@@ -99,6 +103,7 @@ describe("getTodasCidades (260819-l6o)", () => {
   it("se qualquer página devolver erro, o retorno é null — nunca uma lista parcial", async () => {
     const dataset = gerarCidades(2500)
     let chamada = 0
+    rangeSpy.mockReset()
     rangeSpy.mockImplementation(async (inicio: number, fim: number) => {
       chamada += 1
       if (chamada === 2) {
