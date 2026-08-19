@@ -20,10 +20,10 @@ Requisitos do marco v1.5 — Calendário na Agenda e Conclusão Remota.
 
 ### Conclusão Remota
 
-- [ ] **CONC-02**: Ao concluir um item da Agenda (tarefa de prospecção ou visita), vendedor pode marcar que não foi presencial e escolher um motivo de uma lista
-- [ ] **CONC-03**: Motivos de conclusão remota formam uma 6ª lista editável pelo Supervisor (mesmo padrão de categoria/produtos/motivos de perda)
-- [ ] **CONC-04**: Conclusão remota conta como conclusão normal — entra no diário do cliente, e para visita de cliente ativo, ainda sugere a próxima data pela frequência
-- [ ] **CONC-05**: O motivo escolhido aparece como texto no Diário do cliente, junto do resumo
+- [x] **CONC-02**: Ao concluir um item da Agenda (tarefa de prospecção ou visita), vendedor pode marcar que não foi presencial e escolher um motivo de uma lista
+- [x] **CONC-03**: Motivos de conclusão remota formam uma 6ª lista editável pelo Supervisor (mesmo padrão de categoria/produtos/motivos de perda)
+- [x] **CONC-04**: Conclusão remota conta como conclusão normal — entra no diário do cliente, e para visita de cliente ativo, ainda sugere a próxima data pela frequência
+- [x] **CONC-05**: O motivo escolhido aparece como texto no Diário do cliente, junto do resumo
 
 ## v2 Requirements
 
@@ -53,10 +53,10 @@ Preenchido durante a criação do roadmap (2026-08-17).
 | AGD-12 | Phase 20 | Complete |
 | AGD-13 | Phase 21 | Complete |
 | AGD-14 | Phase 20 | Complete |
-| CONC-02 | Phase 22 | Pending |
-| CONC-03 | Phase 22 | Pending |
-| CONC-04 | Phase 22 | Pending |
-| CONC-05 | Phase 22 | Pending |
+| CONC-02 | Phase 22 | Complete |
+| CONC-03 | Phase 22 | Complete |
+| CONC-04 | Phase 22 | Complete |
+| CONC-05 | Phase 22 | Complete |
 
 **Coverage:**
 
