@@ -702,6 +702,30 @@ export async function getMotivosPerdaAtivos(): Promise<LookupOption[]> {
 }
 
 /**
+ * Full active motivos_conclusao_remota catalog (6ª lista editável, Fase 22,
+ * migration 0022) — irmã literal de getMotivosPerdaAtivos acima. Alimenta o
+ * campo de escolha de motivo do diálogo de conclusão remota da Agenda
+ * (CONC-03, plano 22-03). Filtra por ativo de propósito: um motivo
+ * desativado pelo Supervisor não pode mais ser escolhido para uma nova
+ * conclusão — mas continua aparecendo no Diário das conclusões já
+ * gravadas, porque aquele texto é retrato congelado (D-04).
+ */
+export async function getMotivosConclusaoRemotaAtivos(): Promise<
+  LookupOption[]
+> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("motivos_conclusao_remota")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome", { ascending: true })
+
+  if (error || !data) return []
+  return data
+}
+
+/**
  * Full active categorias catalog, for the categoria Select in the client
  * create/edit forms and the Filtros popover (CLI-02/D-08). Bugfix: this used
  * to be derived from the already-loaded kanban card set (categoria_id/nome
