@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Calendário na Agenda e Conclusão Remota
-current_phase: 22
-current_phase_name: Conclusão Remota com Motivo
-status: verifying
+current_phase: 5
+status: Awaiting next milestone
 stopped_at: Completed 22-03-PLAN.md (Fase 22 e marco v1.5 encerrados)
-last_updated: "2026-08-19T13:59:31.339Z"
+last_updated: "2026-08-19T14:17:40.920Z"
 last_activity: 2026-08-19
-last_activity_desc: Phase 22 execution started
+last_activity_desc: Milestone v1.5 completed and archived
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 12
   completed_plans: 12
   percent: 100
+current_phase_name: Conclusão Remota com Motivo
 ---
 
 # Project State
@@ -28,16 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 ## Current Position
 
-Phase: 22 (Conclusão Remota com Motivo) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-08-19 — Phase 22 execution started
-
-**Progresso do marco v1.5:** 0/3 fases
-
-```
-[                    ] 0%
-```
+Phase: Milestone v1.5 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-19 — Milestone v1.5 completed and archived
 
 ## Performance Metrics
 
@@ -343,4 +337,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 Last session: 2026-08-19T13:59:31.330Z
 Stopped at: Completed 22-03-PLAN.md (Fase 22 e marco v1.5 encerrados)
-Resume file: 
+Resume file:
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

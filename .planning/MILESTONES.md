@@ -1,5 +1,26 @@
 # Milestones
 
+## v1.5 Calendário na Agenda e Conclusão Remota (Shipped: 2026-08-19)
+
+**Phases completed:** 3 phases, 12 plans, 29 tasks
+
+**Key accomplishments:**
+
+- `lib/agenda/itens.ts` extended with 9 pure calendar functions (Monday-start grid for month/week, pt-BR navigation labels, and timezone-safe string-key day grouping) — the single contract that plans 20-02 through 20-05 build the actual calendar UI against.
+- Two new presentational components — a day list that reuses `AgendaItemRow` verbatim (D-05) and a 7-column week grid with reduced item chips carrying the Lista's exact prospecção/visita icon-and-color language, both driven by `bucketDoItem` as the single lateness authority.
+- `AgendaCalendarioMes.tsx` — the 7-column/up-to-6-row month grid, with day cells capped at 3 item chips + a "+N mais" indicator, the prospecção/visita chip language reused from `AgendaItemRow`, and the atraso red accent proven to survive the other-month-cell fade — closing the three critical Pitfalls (8, 9, 10) this plan was isolated to test.
+- `AgendaCalendarioToolbar` (Variante A: 4-option view switch + date-nav + Hoje + legend) and `AgendaCalendario` (the composition root owning reference date, a single `agruparPorData` computation, and the month-day dialog that reuses the day view verbatim) — the calendar is now a navigable whole outside the screen, with only the Lista wiring left for plan 20-05.
+- AgendaList.tsx ganha o alternador Lista/Dia/Semana/Mês (estado `visao`, padrão Lista) compondo `AgendaCalendario` como irmão da Lista, alimentado pelo mesmo `itensFiltrados` já usado pelas seções — a Lista provadamente intacta (zero edição em `agenda-list.test.tsx`) e verificada de ponta a ponta no navegador pelo dono do projeto, fechando a Fase 20 inteira.
+- Nova função `agenda_concluidos_do_vendedor(p_inicio, p_fim)` no Postgres/Supabase — leitura complementar e disjunta de `agenda_do_vendedor()`, obrigatoriamente limitada por intervalo, devolvendo a data REAL de conclusão no fuso de São Paulo, sem nenhuma exceção de privilégio elevado nova; aplicada em produção e provada por 22+2 testes de integração contra o banco real.
+- `lib/agenda/itens.ts`/`lib/validations/agenda.ts` estendidos com o vocabulário puro de item concluído: `estaAtrasado`/`mesclarAgenda` (nunca pintam trabalho já feito de vermelho) e `intervaloDeHistorico`/`validarIntervaloHistorico` (o período de histórico a pedir, e o teto que a ação de servidor vai impor).
+- `AgendaItemRow` + `AgendaCalendarioDia`/`Semana`/`Mes`/`Toolbar` estendidos para renderizar um item já concluído sem oferecer a ação de concluir de novo: botão ausente do documento, marca verde-esmeralda-600 com ícone de conferido somada ao selo de origem, e nenhuma das três visões pinta mais um registro histórico de vermelho.
+- `AgendaCalendario.tsx` passa a buscar o histórico (itens já concluídos) do período visível via `getAgendaConcluidosAction`, filtra-o pelo mesmo vendedor que os pendentes já usam, mescla as duas fontes uma única vez e agrupa o resultado — encerrando a Fase 21 com aprovação do dono do projeto no navegador ("tudo certo").
+- Migration 0022 aplicada em produção: 6ª lista editável (motivos_conclusao_remota), duas colunas de FK opcionais em tarefas/visitas, as duas RPCs de conclusão estendidas com apagar-antes-de-criar, e os dois gatilhos de auditoria resolvendo o motivo em nome legível no Diário — provado por 24 casos de integração contra o banco real, com zero regressão nos quatro arquivos de conclusão anteriores.
+- A 6ª lista editável (`motivos_conclusao_remota`, criada no plano 22-01) agora é administrável pelo Supervisor numa nova aba de Configurações, com a Agenda passando a ser revalidada em toda escrita de lista, e a leitura de catálogo que o plano 22-03 vai consumir já provada contra o banco real com sessão de Vendedor.
+- ConcluirItemDialog.tsx ganha a caixa "Não foi presencial" + Select de motivo condicional (válida para tarefa de prospecção E visita), o valor percorre app/actions/agenda.ts até as duas RPCs do plano 22-01, e a verificação humana em duas contas (Supervisor/Vendedor) provou o fluxo de ponta a ponta — fechando a Fase 22 e o marco v1.5 inteiro.
+
+---
+
 ## v1.4 CNPJ Obrigatório no Ganho (Shipped: 2026-08-14)
 
 **Phases completed:** 2 phases, 6 plans, 17 tasks
