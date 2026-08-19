@@ -5,19 +5,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ListaTabela } from "@/app/actions/listas"
 
 /**
- * Tab shell for "Configurações" (D-01) — the 5 editable-list tabs in the
+ * Tab shell for "Configurações" (D-01) — the 6 editable-list tabs in the
  * exact domain order from the UI-SPEC's Copywriting Contract (client
  * attributes first, then funnel-related lists): Categoria (03-01/03-02),
  * then Produtos consumidos / Tipos de tarefa / Motivos de perda (03-03).
  * Each tab is pure configuration over the same generic EditableListTab —
- * no per-tab CRUD logic, since all 5 lookup tables share the identical
+ * no per-tab CRUD logic, since all 6 lookup tables share the identical
  * { id, nome, ativo } shape (ListaTabela union in app/actions/listas.ts).
  *
- * "Frequência de pedidos" (Fase 16, ATV-02) foi acrescentada por último,
- * fora da ordem "atributos do cliente primeiro, listas do funil depois":
- * ela É um atributo do cliente, mas só existe para o cliente já ganho —
- * a mais específica das cinco, por isso entra no fim, para não empurrar
- * as quatro abas que o Supervisor usa no dia a dia.
+ * "Frequência de pedidos" (Fase 16, ATV-02) foi acrescentada depois da
+ * quarta, fora da ordem "atributos do cliente primeiro, listas do funil
+ * depois": ela É um atributo do cliente, mas só existe para o cliente já
+ * ganho — a mais específica das cinco originais.
+ *
+ * "Motivos de conclusão remota" (Fase 22, CONC-03) entra por último de
+ * todas: ela não é atributo do cliente nem lista do funil, é vocabulário
+ * de COMO um item da Agenda foi concluído — a mais periférica das seis
+ * para o uso diário do Supervisor.
  */
 const TABS: {
   tabela: ListaTabela
@@ -54,6 +58,12 @@ const TABS: {
     label: "Frequência de pedidos",
     inputPlaceholder: "Nome da frequência",
     pluralAtivoLabel: "frequências ativas",
+  },
+  {
+    tabela: "motivos_conclusao_remota",
+    label: "Motivos de conclusão remota",
+    inputPlaceholder: "Nome do motivo de conclusão remota",
+    pluralAtivoLabel: "motivos de conclusão remota ativos",
   },
 ]
 

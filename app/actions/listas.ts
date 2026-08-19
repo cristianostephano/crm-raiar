@@ -10,18 +10,21 @@ import {
 } from "@/lib/validations/lista"
 import { createClient } from "@/lib/supabase/server"
 
-/** The 5 editable-list lookup tables administered by "Configurações"
- * (ADM-01..04) — all 5 share the exact same schema/RLS shape. The 5th,
+/** The 6 editable-list lookup tables administered by "Configurações"
+ * (ADM-01..04) — all 6 share the exact same schema/RLS shape. The 5th,
  * `frequencias_pedido`, chegou na Fase 16 para o campo "Frequência de
  * pedidos" da ficha do cliente ativo (ATV-02, migration
- * 0016_frequencias_pedido.sql) — entra na mesma união genérica sem
- * nenhuma mudança nas 4 funções abaixo. */
+ * 0016_frequencias_pedido.sql). A 6ª, `motivos_conclusao_remota`, chegou
+ * na Fase 22 (migration 0022_conclusao_remota_com_motivo.sql) para o
+ * motivo de uma conclusão remota (CONC-03) — as duas entram na mesma
+ * união genérica sem nenhuma mudança nas 4 funções abaixo. */
 export type ListaTabela =
   | "categorias"
   | "produtos_consumidos"
   | "tipos_tarefa"
   | "motivos_perda"
   | "frequencias_pedido"
+  | "motivos_conclusao_remota"
 
 export type ListaValor = { id: string; nome: string; ativo: boolean }
 
@@ -134,9 +137,14 @@ export async function createListaValor(
 
   // D-03/ADM-01: reflect the new value immediately where it's used —
   // "/configuracoes" for the admin list itself, "/clientes" so the
-  // cadastro dropdowns pick it up on next navigation.
+  // cadastro dropdowns pick it up on next navigation. "/agenda" joined
+  // this pair in Fase 22: since motivos_conclusao_remota (CONC-03) is a
+  // list too, a value created/renamed/deactivated here must reach the
+  // Agenda's remote-conclusion dialog without a full page reload — the
+  // same reasoning applies to all 3 write actions below, not just create.
   revalidatePath("/configuracoes")
   revalidatePath("/clientes")
+  revalidatePath("/agenda")
 
   return { data: inserted! }
 }
@@ -214,6 +222,7 @@ export async function updateListaValor(
 
   revalidatePath("/configuracoes")
   revalidatePath("/clientes")
+  revalidatePath("/agenda")
 
   return { data: updated }
 }
@@ -280,6 +289,7 @@ export async function setListaValorAtivo(
 
   revalidatePath("/configuracoes")
   revalidatePath("/clientes")
+  revalidatePath("/agenda")
 
   return { data: updated }
 }
