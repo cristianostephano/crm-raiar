@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { AgendaList } from "@/components/agenda/AgendaList"
 import {
   getCategoriasAtivas,
+  getMotivosConclusaoRemotaAtivos,
   getProdutosAtivos,
 } from "@/lib/supabase/queries/clientes"
 import { createClient } from "@/lib/supabase/server"
@@ -41,10 +42,12 @@ export default async function AgendaPage() {
 
   const isSupervisor = profile?.role === "supervisor"
 
-  const [categoriaOptions, produtoOptions] = await Promise.all([
-    getCategoriasAtivas(),
-    getProdutosAtivos(),
-  ])
+  const [categoriaOptions, produtoOptions, motivoConclusaoRemotaOptions] =
+    await Promise.all([
+      getCategoriasAtivas(),
+      getProdutosAtivos(),
+      getMotivosConclusaoRemotaAtivos(),
+    ])
 
   let vendedorOptions: { id: string; nome: string }[] = []
   if (isSupervisor) {
@@ -65,6 +68,7 @@ export default async function AgendaPage() {
         categoriaOptions={categoriaOptions}
         produtoOptions={produtoOptions}
         vendedorOptions={vendedorOptions}
+        motivoConclusaoRemotaOptions={motivoConclusaoRemotaOptions}
       />
     </div>
   )

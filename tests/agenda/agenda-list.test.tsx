@@ -68,6 +68,7 @@ function renderList(
         categoriaOptions={[]}
         produtoOptions={[]}
         vendedorOptions={[]}
+        motivoConclusaoRemotaOptions={[]}
         {...props}
       />
     </TooltipProvider>
@@ -238,5 +239,108 @@ describe("AgendaList", () => {
     await vi.waitFor(() => {
       expect(mockedAction).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it("roteia (prospecção): o identificador do motivo chega à ação de prospecção, no fim da lista de argumentos", async () => {
+    const motivoOptions = [{ id: "motivo-1", nome: "Pedido pelo WhatsApp" }]
+    const RESUMO = "Cliente confirmou pedido para a próxima semana."
+
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildItem({
+          origem: "prospeccao",
+          razaoSocial: "Padaria Central",
+          itemId: "tarefa-1",
+        }),
+      ],
+    })
+    mockedConcluirTarefa.mockResolvedValueOnce({ data: true })
+    mockedAction.mockResolvedValueOnce({ data: [] })
+
+    renderList({ motivoConclusaoRemotaOptions: motivoOptions })
+
+    await screen.findByText("Padaria Central")
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: RESUMO },
+    })
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "Não foi presencial" })
+    )
+    fireEvent.click(await screen.findByRole("combobox", { name: "Motivo" }))
+    const opcaoTarefa = await screen.findByRole("option", {
+      name: "Pedido pelo WhatsApp",
+    })
+    fireEvent.pointerDown(opcaoTarefa)
+    fireEvent.click(opcaoTarefa)
+    fireEvent.click(screen.getByRole("button", { name: "Concluir tarefa" }))
+
+    await vi.waitFor(() => {
+      expect(mockedConcluirTarefa).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedConcluirTarefa).toHaveBeenCalledWith(
+      "tarefa-1",
+      RESUMO,
+      "motivo-1"
+    )
+    // Espera a recarga disparada pelo sucesso também se completar — sem
+    // isso, a 2ª leitura enfileirada para ESTE teste ainda pode não ter
+    // sido consumida quando o teste termina, e sobra para o próximo teste
+    // do arquivo consumir no lugar errado (mockClear não limpa a fila de
+    // mockResolvedValueOnce ainda não consumida).
+    await vi.waitFor(() => {
+      expect(mockedAction).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it("roteia (visita): o identificador do motivo chega à ação de visita, no fim da lista de argumentos", async () => {
+    const motivoOptions = [{ id: "motivo-1", nome: "Pedido pelo WhatsApp" }]
+    const RESUMO = "Cliente confirmou pedido para a próxima semana."
+
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildItem({
+          origem: "visita",
+          razaoSocial: "Padaria Central",
+          itemId: "visita-1",
+        }),
+      ],
+    })
+    mockedConcluirVisita.mockResolvedValueOnce({ data: true })
+    mockedAction.mockResolvedValueOnce({ data: [] })
+
+    renderList({ motivoConclusaoRemotaOptions: motivoOptions })
+
+    await screen.findByText("Padaria Central")
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: RESUMO },
+    })
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "Não foi presencial" })
+    )
+    fireEvent.click(await screen.findByRole("combobox", { name: "Motivo" }))
+    const opcaoVisita = await screen.findByRole("option", {
+      name: "Pedido pelo WhatsApp",
+    })
+    fireEvent.pointerDown(opcaoVisita)
+    fireEvent.click(opcaoVisita)
+    fireEvent.click(screen.getByRole("button", { name: "Concluir visita" }))
+
+    await vi.waitFor(() => {
+      expect(mockedConcluirVisita).toHaveBeenCalledTimes(1)
+    })
+    // Mesma cautela do teste irmão acima (prospecção): espera a recarga
+    // terminar antes do teste encerrar.
+    await vi.waitFor(() => {
+      expect(mockedAction).toHaveBeenCalledTimes(2)
+    })
+    expect(mockedConcluirVisita).toHaveBeenCalledWith(
+      "visita-1",
+      RESUMO,
+      null,
+      null,
+      "motivo-1"
+    )
   })
 })

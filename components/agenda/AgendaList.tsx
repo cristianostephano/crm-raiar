@@ -81,17 +81,25 @@ type FetchState =
  * (Pitfall 10). O calendário não busca dado nem duplica o filtro; recebe
  * tudo pronto e devolve os mesmos dois pedidos de ação que a Lista já
  * trata (`handleOpenCliente`/`handleOpenConcluir`).
+ *
+ * A partir da Fase 22 (CONC-02), `motivoConclusaoRemotaOptions` (buscado
+ * pela página) é repassado à janela de conclusão, e o identificador do
+ * motivo devolvido por ela é roteado para as DUAS ações de servidor
+ * conforme a `origem` do item — nunca só uma (mesmo risco travado do
+ * plano: a janela é uma só, mas as ações são duas).
  */
 export function AgendaList({
   isSupervisor,
   categoriaOptions,
   produtoOptions,
   vendedorOptions,
+  motivoConclusaoRemotaOptions,
 }: {
   isSupervisor: boolean
   categoriaOptions: { id: string; nome: string }[]
   produtoOptions: { id: string; nome: string }[]
   vendedorOptions: { id: string; nome: string }[]
+  motivoConclusaoRemotaOptions: { id: string; nome: string }[]
 }) {
   const [state, setState] = useState<FetchState>({ status: "carregando" })
   // Bumped por "Tentar novamente" e por onSaved/onDeleted da ficha do
@@ -177,20 +185,30 @@ export function AgendaList({
   // Roteia a confirmação da janela única para a ação de servidor correta
   // conforme a origem do item — nenhuma escrita direta em tarefas/visitas
   // por aqui, sempre através de app/actions/agenda.ts (Plano 15-02).
+  // Fase 22 (CONC-02): o identificador do motivo de conclusão remota vai
+  // SEMPRE no fim da lista de argumentos de cada ação — nas DUAS, não só
+  // numa (este é o ponto exato em que o projeto já se avisou que é fácil
+  // errar).
   async function handleConfirmarConclusao(
     resumo: string,
-    proximaData: string | null
+    proximaData: string | null,
+    motivoConclusaoRemotaId: string | null
   ) {
     if (!concluirItem) return undefined
 
     const result =
       concluirItem.origem === "prospeccao"
-        ? await concluirTarefaProspeccao(concluirItem.itemId, resumo)
+        ? await concluirTarefaProspeccao(
+            concluirItem.itemId,
+            resumo,
+            motivoConclusaoRemotaId
+          )
         : await concluirVisita(
             concluirItem.itemId,
             resumo,
             concluirItem.frequenciaVisita,
-            proximaData
+            proximaData,
+            motivoConclusaoRemotaId
           )
 
     if (result.error) {
@@ -425,6 +443,7 @@ export function AgendaList({
           itemTitulo={concluirItem.titulo}
           frequenciaVisita={concluirItem.frequenciaVisita}
           proximaDataSugerida={concluirItem.proximaDataSugerida}
+          motivoOptions={motivoConclusaoRemotaOptions}
           onConfirm={handleConfirmarConclusao}
         />
       ) : null}

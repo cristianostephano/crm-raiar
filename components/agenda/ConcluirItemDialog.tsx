@@ -4,6 +4,7 @@ import { format, parseISO } from "date-fns"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,13 @@ import {
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { geraProximaVisita, type FrequenciaVisita } from "@/lib/funil/frequencia"
 import { RESUMO_MAX, validarResumo } from "@/lib/validations/agenda"
@@ -44,6 +52,14 @@ const AVISO_SEM_CADENCIA =
  * zero e mostra o dia anterior em São Paulo), e a data escolhida só volta
  * como data de calendário pura via `format(..., "yyyy-MM-dd")` — nunca via
  * instante com fuso.
+ *
+ * Fase 22 (CONC-02/CONC-04): a seção "Não foi presencial" acrescentada
+ * abaixo do resumo vale para as DUAS origens (D-01) - nunca condicionada
+ * por `origem`, e nunca substitui a seção de próxima visita, que continua
+ * intocada logo abaixo dela (D-07). O botão desabilitado enquanto faltar
+ * motivo é cortesia de interface, igual ao precedente de
+ * `PerdaMotivoDialog.tsx` - a fronteira real é a guarda dentro da função do
+ * banco (plano 22-01), que recusa motivo inexistente ou desativado.
  */
 export function ConcluirItemDialog({
   open,
@@ -53,6 +69,7 @@ export function ConcluirItemDialog({
   itemTitulo,
   frequenciaVisita,
   proximaDataSugerida,
+  motivoOptions,
   onConfirm,
 }: {
   open: boolean
@@ -62,13 +79,17 @@ export function ConcluirItemDialog({
   itemTitulo: string
   frequenciaVisita: FrequenciaVisita | null
   proximaDataSugerida: string | null
+  motivoOptions: { id: string; nome: string }[]
   onConfirm: (
     resumo: string,
-    proximaData: string | null
+    proximaData: string | null,
+    motivoConclusaoRemotaId: string | null
   ) => Promise<{ error?: { message: string } } | undefined>
 }) {
   const [resumo, setResumo] = useState("")
   const [proximaData, setProximaData] = useState<Date | undefined>(undefined)
+  const [naoFoiPresencial, setNaoFoiPresencial] = useState(false)
+  const [motivoId, setMotivoId] = useState("")
   const [validationError, setValidationError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -102,6 +123,8 @@ export function ConcluirItemDialog({
     if (!nextOpen) {
       setResumo("")
       setProximaData(undefined)
+      setNaoFoiPresencial(false)
+      setMotivoId("")
       setValidationError(null)
       setSubmitError(null)
     }
@@ -120,6 +143,9 @@ export function ConcluirItemDialog({
     if (temCadencia && !proximaData) {
       return
     }
+    if (naoFoiPresencial && !motivoId) {
+      return
+    }
 
     setValidationError(null)
     setSubmitError(null)
@@ -128,8 +154,16 @@ export function ConcluirItemDialog({
     try {
       const proximaDataFormatada =
         temCadencia && proximaData ? format(proximaData, "yyyy-MM-dd") : null
+      // A decisão nunca vem do estado cru (`motivoId` sozinho) — só
+      // acompanha a caixa de marcação ligada, para nunca sobrar um motivo
+      // escondido numa conclusão marcada como presencial (T-22-16).
+      const motivoConclusaoRemotaId = naoFoiPresencial ? motivoId : null
 
-      const result = await onConfirm(validacao.resumo, proximaDataFormatada)
+      const result = await onConfirm(
+        validacao.resumo,
+        proximaDataFormatada,
+        motivoConclusaoRemotaId
+      )
 
       if (result?.error) {
         setSubmitError(result.error.message)
@@ -147,7 +181,10 @@ export function ConcluirItemDialog({
 
   const trimmedLength = resumo.trim().length
   const confirmDisabled =
-    isSubmitting || trimmedLength < 10 || (temCadencia && !proximaData)
+    isSubmitting ||
+    trimmedLength < 10 ||
+    (temCadencia && !proximaData) ||
+    (naoFoiPresencial && !motivoId)
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -187,6 +224,65 @@ export function ConcluirItemDialog({
               Escreva 1-2 frases sobre o que aconteceu.
             </p>
           )}
+        </div>
+
+        {/* CONC-02/CONC-04 (D-01): vale para as DUAS origens, nunca
+            condicionada por `origem` — desmarcar limpa o motivo sempre
+            (T-22-16), e o campo de escolha só aparece quando marcada. */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="concluir-item-nao-presencial"
+              checked={naoFoiPresencial}
+              onCheckedChange={(checked) => {
+                const marcado = checked === true
+                setNaoFoiPresencial(marcado)
+                if (!marcado) {
+                  setMotivoId("")
+                }
+              }}
+            />
+            <Label
+              htmlFor="concluir-item-nao-presencial"
+              className="font-normal"
+            >
+              Não foi presencial
+            </Label>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Marcar isso não dispensa o resumo.
+          </p>
+
+          {naoFoiPresencial ? (
+            motivoOptions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Ainda não há motivos cadastrados. Peça ao supervisor para
+                cadastrá-los em Configurações.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="concluir-item-motivo-select">Motivo</Label>
+                <Select
+                  value={motivoId}
+                  onValueChange={(value) => setMotivoId(value ?? "")}
+                >
+                  <SelectTrigger
+                    id="concluir-item-motivo-select"
+                    className="w-full"
+                  >
+                    <SelectValue placeholder="Selecione o motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {motivoOptions.map((motivo) => (
+                      <SelectItem key={motivo.id} value={motivo.id}>
+                        {motivo.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )
+          ) : null}
         </div>
 
         {origem === "visita" ? (

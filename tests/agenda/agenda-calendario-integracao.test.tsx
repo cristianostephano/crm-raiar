@@ -99,6 +99,7 @@ function renderList(props: Partial<ComponentProps<typeof AgendaList>> = {}) {
         categoriaOptions={[]}
         produtoOptions={[]}
         vendedorOptions={[]}
+        motivoConclusaoRemotaOptions={[]}
         {...props}
       />
     </TooltipProvider>
