@@ -81,7 +81,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
 ### 🚧 v1.5 Calendário na Agenda e Conclusão Remota (Phases 20-22) — IN PROGRESS
 
 - [x] **Phase 20: Calendário da Agenda — Mês, Semana e Dia** - A tela da Agenda ganha um segundo modo de visualização: um calendário de dia/semana/mês sobre os mesmos itens da Lista, com navegação de data, botão "Hoje" e o mesmo filtro por vendedor. (completed 2026-08-18)
-- [ ] **Phase 21: Calendário — O Que Já Foi Feito em Datas Passadas** - Navegar para uma data passada no calendário passa a mostrar também os itens já concluídos naquele dia, não só o que ficou pendente.
+- [x] **Phase 21: Calendário — O Que Já Foi Feito em Datas Passadas** - Navegar para uma data passada no calendário passa a mostrar também os itens já concluídos naquele dia, não só o que ficou pendente. (completed 2026-08-19)
 - [ ] **Phase 22: Conclusão Remota com Motivo** - Concluir um item da Agenda deixa de pressupor visita presencial: o vendedor marca "não foi presencial", escolhe um motivo de uma 6ª lista editável pelo Supervisor, e a conclusão segue valendo como conclusão normal.
 
 ## Phase Details
@@ -131,14 +131,14 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.4-ROADMAP
   4. O vendedor vê só o próprio histórico e o Supervisor vê o de todo o time, com o mesmo filtro por vendedor do calendário — a mesma regra de visibilidade que já vale na Lista.
   5. Navegar entre meses continua imediato, sem baixar o histórico inteiro do vendedor de uma vez.
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 
 - [x] 21-01-PLAN.md — Leitura nova no banco (`agenda_concluidos_do_vendedor`, limitada por período, sem elevação de privilégio) + testes de integração/RLS + push aprovado pelo dono
 - [x] 21-02-PLAN.md — Camada pura: item concluído no tipo, autoridade única de atraso, mescla das duas fontes, cálculo do intervalo visível e teto do intervalo
 - [x] 21-03-PLAN.md — Tratamento visual do item concluído no cartão, nas três visões do calendário e na legenda (sem botão de concluir, nunca sinalizado como atrasado)
-- [ ] 21-04-PLAN.md — Leitor tipado + ação de servidor, busca por intervalo no contêiner, fiação na tela e verificação humana no navegador
+- [x] 21-04-PLAN.md — Leitor tipado + ação de servidor, busca por intervalo no contêiner, fiação na tela e verificação humana no navegador
 
 **UI hint**: yes
 
@@ -178,5 +178,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 20. Calendário da Agenda — Mês, Semana e Dia | 5/5 | Complete   | 2026-08-18 |
-| 21. Calendário — O Que Já Foi Feito em Datas Passadas | 3/4 | In Progress|  |
+| 21. Calendário — O Que Já Foi Feito em Datas Passadas | 4/4 | Complete   | 2026-08-19 |
 | 22. Conclusão Remota com Motivo | 0/TBD | Not started | - |

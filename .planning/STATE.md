@@ -4,9 +4,9 @@ milestone: v1.5
 milestone_name: Calendário na Agenda e Conclusão Remota
 current_phase: 21
 current_phase_name: Calendário — O Que Já Foi Feito em Datas Passadas
-status: executing
-stopped_at: Completed 21-03-PLAN.md
-last_updated: "2026-08-18T22:21:34.747Z"
+status: verifying
+stopped_at: Completed 21-04-PLAN.md — Phase 21 encerrada
+last_updated: "2026-08-19T00:21:12.017Z"
 last_activity: 2026-08-18
 last_activity_desc: Phase 21 execution started
 progress:
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 21 (Calendário — O Que Já Foi Feito em Datas Passadas) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-18 — Phase 21 execution started
 
 **Progresso do marco v1.5:** 0/3 fases
@@ -105,6 +105,7 @@ Last activity: 2026-08-18 — Phase 21 execution started
 | Phase 21 P02 | ~15min | 2 tasks | 4 files |
 | Phase 21 P01 | ~40min | - tasks | - files |
 | Phase 21-calend-rio-o-que-j-foi-feito-em-datas-passadas P03 | ~20min | 3 tasks | 10 files |
+| Phase 21-calend-rio-o-que-j-foi-feito-em-datas-passadas P04 | ~25min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -270,6 +271,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Fase 21 Plano 01: agenda_concluidos_do_vendedor(p_inicio, p_fim) criada em producao - leitura nova, complementar e disjunta de agenda_do_vendedor(), sem security definer, data devolvida e sempre o carimbo REAL de conclusao (concluida_em/data_realizada) no fuso de Sao Paulo, nunca a data prevista; corte por periodo comparando limites convertidos em instante (usa indice), nao linha a linha
 - [Phase ?]: [Fase 21-03] AgendaCalendarioDia/Semana/Mes trocam bucketDoItem por estaAtrasado (autoridade unica de atraso do calendario, Fase 21) — nenhuma das tres visoes decide atraso por conta propria
 - [Phase ?]: [Fase 21-03] Indicador de item concluido sempre deriva do proprio item (item.concluido), nunca de propriedade nova nem de onConcluir ter sido passado; marca de concluido soma-se ao selo de origem, nunca substitui (AGD-12)
+- [Phase 21-04]: AgendaCalendario.tsx passa a ser dona de uma segunda leitura (o historico limitado ao periodo visivel), revertendo de proposito a regra 'sem leitura de dado' que a Fase 20 escreveu — decisao travada no bloco reversao_deliberada do plano, ja que so este componente possui o estado de periodo visivel
+- [Phase 21-04]: O efeito de busca do historico depende de dois textos de intervalo (inicio/fim), nunca do objeto de intervalo nem da data de referencia — evita a enxurrada de pedidos ao servidor que qualquer um dos dois causaria a cada render
+- [Phase 21-04]: O filtro de vendedor e aplicado dentro do conteiner tambem sobre o historico buscado, com a mesma funcao filtrarPorVendedor que a tela ja aplica aos pendentes — nunca uma segunda autoridade de filtro
 
 ### Pending Todos
 
@@ -329,8 +333,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-18T22:21:34.737Z
-Stopped at: Completed 21-03-PLAN.md
+Last session: 2026-08-19T00:21:12.009Z
+Stopped at: Completed 21-04-PLAN.md — Phase 21 encerrada
 Resume file: 
 
-- A Fase 20 tem contrato visual pronto (`.planning/sketches/003-agenda-calendario/index.html`, Variante A) — considerar `/gsd-ui-phase 20` antes do planejamento
+None

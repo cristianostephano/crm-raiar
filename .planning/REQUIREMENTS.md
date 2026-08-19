@@ -15,7 +15,7 @@ Requisitos do marco v1.5 — Calendário na Agenda e Conclusão Remota.
 - [x] **AGD-10**: Visão de semana mostra 7 colunas (uma por dia) com os itens de cada dia
 - [x] **AGD-11**: Visão de dia mostra os itens daquele dia em formato de lista, igual ao card já usado hoje
 - [x] **AGD-12**: Cada item no calendário mantém a mesma sinalização visual Prospecção/Ativo já usada na lista
-- [ ] **AGD-13**: Calendário mostra também itens já concluídos ao navegar para datas passadas (a Lista continua mostrando só pendente, sem mudança)
+- [x] **AGD-13**: Calendário mostra também itens já concluídos ao navegar para datas passadas (a Lista continua mostrando só pendente, sem mudança)
 - [x] **AGD-14**: Supervisor filtra o calendário por vendedor, igual já funciona na Lista hoje
 
 ### Conclusão Remota
@@ -51,7 +51,7 @@ Preenchido durante a criação do roadmap (2026-08-17).
 | AGD-10 | Phase 20 | Complete |
 | AGD-11 | Phase 20 | Complete |
 | AGD-12 | Phase 20 | Complete |
-| AGD-13 | Phase 21 | Pending |
+| AGD-13 | Phase 21 | Complete |
 | AGD-14 | Phase 20 | Complete |
 | CONC-02 | Phase 22 | Pending |
 | CONC-03 | Phase 22 | Pending |
