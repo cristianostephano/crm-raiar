@@ -34,12 +34,12 @@ export type RpcClienteRow = {
   razao_social: string
   cnpj: string | null
   nome_fantasia: string | null
-  cep: string
-  rua: string
-  numero: string
+  cep: string | null
+  rua: string | null
+  numero: string | null
   complemento: string | null
-  cidade: string
-  estado: string
+  cidade: string | null
+  estado: string | null
   responsavel: string | null
   categoria_id: string | null
   contato: string | null

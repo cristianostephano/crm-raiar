@@ -81,9 +81,57 @@ describe("annotarLinha", () => {
     expect(result.resolved.responsavelId).toBe("vendedor-1")
   })
 
-  it("flags a row missing razão social, endereço, and responsável as erro", () => {
+  it("returns status ok with an empty reasons list when only razão social and responsável are filled and the 5 endereço cells are blank (D-01/D-02, quick task 260819-m8q)", () => {
     const result = annotarLinha(
       {
+        razaoSocial: "Distribuidora ABC Ltda",
+        responsavel: "vendedora@raiar.local",
+      },
+      lookups
+    )
+
+    expect(result.status).toBe("ok")
+    expect(result.reasons).toEqual([])
+  })
+
+  it("resolves the 5 endereço fields to NULL (never empty string) when their cells are blank (D-04, quick task 260819-m8q)", () => {
+    const result = annotarLinha(
+      {
+        razaoSocial: "Distribuidora ABC Ltda",
+        responsavel: "vendedora@raiar.local",
+      },
+      lookups
+    )
+
+    expect(result.resolved.cep).toBeNull()
+    expect(result.resolved.rua).toBeNull()
+    expect(result.resolved.numero).toBeNull()
+    expect(result.resolved.cidade).toBeNull()
+    expect(result.resolved.estado).toBeNull()
+  })
+
+  it("still flags a row missing razão social as erro, with the same reason as before (endereço blank adds no reason)", () => {
+    const result = annotarLinha(
+      {
+        cep: "",
+        rua: "",
+        numero: "",
+        cidade: "",
+        estado: "",
+        responsavel: "vendedora@raiar.local",
+      },
+      lookups
+    )
+
+    expect(result.status).toBe("erro")
+    expect(result.reasons).toContain("Razão social não informada")
+    expect(result.reasons).not.toContain("Endereço não informado")
+  })
+
+  it("still flags a row missing responsável as erro, with the same reason as before (endereço blank adds no reason)", () => {
+    const result = annotarLinha(
+      {
+        razaoSocial: "Distribuidora ABC Ltda",
         cep: "",
         rua: "",
         numero: "",
@@ -94,13 +142,15 @@ describe("annotarLinha", () => {
     )
 
     expect(result.status).toBe("erro")
-    expect(result.reasons).toContain("Razão social não informada")
-    expect(result.reasons).toContain("Endereço não informado")
     expect(result.reasons).toContain("Responsável não informado")
-    // Endereço reason must appear only once even though 5 fields are missing.
-    expect(
-      result.reasons.filter((r) => r === "Endereço não informado")
-    ).toHaveLength(1)
+    expect(result.reasons).not.toContain("Endereço não informado")
+  })
+
+  it("resolves a whitespace-only cep cell to null, not an empty string (D-04, quick task 260819-m8q)", () => {
+    const result = annotarLinha({ ...baseRow(), cep: "   " }, lookups)
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.cep).toBeNull()
   })
 
   it("flags a nonexistent categoria as erro, never resolving blank or auto-creating (D-02)", () => {

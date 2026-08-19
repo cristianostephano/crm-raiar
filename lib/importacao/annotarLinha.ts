@@ -3,7 +3,7 @@ import { sanitizeCell } from "@/lib/clientes/exportacao"
 import { UFS, type Uf } from "@/lib/clientes/ufs"
 import { normalizeRazaoSocial } from "@/lib/importacao/dedupe"
 import type { LookupOption } from "@/lib/supabase/queries/clientes"
-import { ENDERECO_FIELDS, createImportRowSchema } from "@/lib/validations/importacao"
+import { createImportRowSchema } from "@/lib/validations/importacao"
 import type { SystemField } from "@/lib/importacao/types"
 
 /**
@@ -49,12 +49,12 @@ export type ResolvedRow = {
   razaoSocial: string
   cnpj: string | null
   nomeFantasia: string | null
-  cep: string
-  rua: string
-  numero: string
+  cep: string | null
+  rua: string | null
+  numero: string | null
   complemento: string | null
-  cidade: string
-  estado: string
+  cidade: string | null
+  estado: string | null
   categoriaId: string | null
   contato: string | null
   telefone: string | null
@@ -70,7 +70,6 @@ export type AnnotatedRow = {
   resolved: ResolvedRow
 }
 
-const ENDERECO_REASON = "Endereço não informado"
 const RESPONSAVEL_REASON = "Responsável não informado"
 const RAZAO_SOCIAL_REASON = "Razão social não informada"
 
@@ -191,8 +190,10 @@ export function annotarLinha(
     reasons.push(`Cidade "${cidadeValor}" não encontrada para o estado ${estadoValor}`)
   }
 
-  // 5. Required fields (razaoSocial, endereço x5, responsavel) — same
-  // minimum rules as createClienteSchema (IMP-05).
+  // 5. Required fields (razaoSocial, responsavel) — quick task 260819-m8q
+  // (D-01): os 5 campos de endereço deixaram de ser obrigatórios aqui, ao
+  // contrário de createClienteSchema (cadastro manual, que continua exigindo
+  // os 5). O branch abaixo só existe para razaoSocial/responsavel agora.
   const parsed = createImportRowSchema.safeParse({
     razaoSocial: sanitized.razaoSocial ?? "",
     cep: sanitized.cep ?? "",
@@ -213,8 +214,6 @@ export function annotarLinha(
       const field = issue.path[0]
       if (field === "razaoSocial") {
         reasons.push(RAZAO_SOCIAL_REASON)
-      } else if ((ENDERECO_FIELDS as readonly string[]).includes(String(field))) {
-        reasons.push(ENDERECO_REASON)
       } else if (field === "responsavel") {
         reasons.push(RESPONSAVEL_REASON)
       }
@@ -230,25 +229,35 @@ export function annotarLinha(
   const cnpjValor = sanitized.cnpj?.trim()
   const nomeFantasiaValor = sanitized.nomeFantasia?.trim()
 
+  // Quick task 260819-m8q (D-01/D-04): os 5 campos de endereço aparam
+  // espaços e viram valor NULO quando ficam vazios — nunca texto vazio.
+  // Texto vazio em `estado` viola `chk_estado_valido` (migration 0007) e
+  // derrubaria a linha inteira no insert; nulo já é aceito pela constraint
+  // sem alteração nela. Mesma forma já usada acima para cnpj/nomeFantasia.
+  const cepValor = sanitized.cep?.trim()
+  const ruaValor = sanitized.rua?.trim()
+  const numeroValor = sanitized.numero?.trim()
+
   const resolved: ResolvedRow = {
     razaoSocial: sanitized.razaoSocial ?? "",
     cnpj: cnpjValor ? cnpjValor : null,
     nomeFantasia: nomeFantasiaValor ? nomeFantasiaValor : null,
-    cep: sanitized.cep ?? "",
-    rua: sanitized.rua ?? "",
-    numero: sanitized.numero ?? "",
+    cep: cepValor ? cepValor : null,
+    rua: ruaValor ? ruaValor : null,
+    numero: numeroValor ? numeroValor : null,
     complemento: sanitized.complemento ?? null,
     // LOC-01/LOC-02: normaliza estado para a UF em maiúscula (senão a
     // constraint chk_estado_valido da Fase 7 barra o insert) e cidade para o
-    // nome canônico do IBGE quando casa; senão preserva o valor sanitizado
-    // original (a linha já está marcada "erro" pelas reasons acima).
+    // nome canônico do IBGE quando casa; senão cai para o valor saneado
+    // aparado (a linha já está marcada "erro" pelas reasons acima), e para
+    // valor nulo quando esse valor fica vazio.
     cidade:
       cidadeCanonica(cidadeValor ?? "", estadoValor ?? "", lookups.cidades) ??
-      (sanitized.cidade ?? ""),
+      (cidadeValor ? cidadeValor : null),
     estado:
       estadoValor && UFS.includes(estadoValor as Uf)
         ? estadoValor
-        : (sanitized.estado ?? ""),
+        : (estadoValor ? estadoValor : null),
     categoriaId,
     contato: sanitized.contato ?? null,
     telefone: sanitized.telefone ?? null,

@@ -5,16 +5,20 @@
  * - `annotarLinha` (06-02) — validação de cada linha da planilha;
  * - `ColumnMappingTable`/mapeamento (06-04) — opções do Select por coluna.
  *
- * `required` segue as mesmas regras mínimas de `lib/validations/cliente.ts`
- * (`createClienteSchema`): razaoSocial, cep, rua, numero, cidade, estado,
- * responsavel. Todo cliente importado sempre nasce em "Aguardando contato",
- * então a etapa do funil NUNCA aparece neste vocabulário.
+ * Quick task 260819-m8q (D-01/D-02): desde então este vocabulário DEIXOU de
+ * espelhar `lib/validations/cliente.ts` (`createClienteSchema`) nos 5
+ * campos de endereço (`cep`, `rua`, `numero`, `cidade`, `estado`). O
+ * cadastro manual (tela "Novo cliente") continua exigindo os 5; a
+ * importação em massa passa a aceitá-los em branco, porque o time precisa
+ * importar a base existente mesmo sem endereço completo. `required: true`
+ * sobra em exatamente DOIS campos: `razaoSocial` e `responsavel`. Todo
+ * cliente importado sempre nasce em "Aguardando contato", então a etapa do
+ * funil NUNCA aparece neste vocabulário.
  *
  * 16 campos desde a Fase 19 (IMP-01/IMP-02): `cnpj` e `nomeFantasia` foram
  * acrescentados, os dois opcionais, logo depois de `razaoSocial` — mapeiam
  * colunas que já existem em `clientes` (nullable) desde a migration 0013 da
- * Fase 13. Nenhum dos dois é obrigatório: o conjunto de 7 campos mínimos
- * continua exatamente o mesmo de antes.
+ * Fase 13.
  */
 
 export type SystemField =
@@ -51,20 +55,21 @@ export interface SystemFieldDefinition<K extends string = SystemField> {
 
 /**
  * Ordem e labels seguem 06-UI-SPEC.md linha 165 (com `cnpj`/`nomeFantasia`
- * inseridos logo após `razaoSocial`, Fase 19). `required: true` apenas nos
- * 7 campos mínimos (mesma regra de createClienteSchema); `multi: true`
- * apenas em produtos (multi-valor, D-01 do domínio do CRM).
+ * inseridos logo após `razaoSocial`, Fase 19). `required: true` apenas em
+ * `razaoSocial` e `responsavel` desde a quick task 260819-m8q (D-01/D-02) —
+ * os 5 campos de endereço deixaram de ser obrigatórios na importação;
+ * `multi: true` apenas em produtos (multi-valor, D-01 do domínio do CRM).
  */
 export const SYSTEM_FIELDS: SystemFieldDefinition[] = [
   { key: "razaoSocial", label: "Razão social", required: true },
   { key: "cnpj", label: "CNPJ", required: false },
   { key: "nomeFantasia", label: "Nome Fantasia", required: false },
-  { key: "cep", label: "CEP", required: true },
-  { key: "rua", label: "Rua", required: true },
-  { key: "numero", label: "Número", required: true },
+  { key: "cep", label: "CEP", required: false },
+  { key: "rua", label: "Rua", required: false },
+  { key: "numero", label: "Número", required: false },
   { key: "complemento", label: "Complemento", required: false },
-  { key: "cidade", label: "Cidade", required: true },
-  { key: "estado", label: "Estado", required: true },
+  { key: "cidade", label: "Cidade", required: false },
+  { key: "estado", label: "Estado", required: false },
   { key: "categoria", label: "Categoria", required: false },
   { key: "contato", label: "Contato", required: false },
   { key: "telefone", label: "Telefone", required: false },

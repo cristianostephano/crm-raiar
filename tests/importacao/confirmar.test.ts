@@ -249,6 +249,30 @@ describe("planConfirmacao", () => {
     expect(result.rowsToInsert[0].cnpj).toBeNull()
     expect(result.rowsToInsert[0].nome_fantasia).toBeNull()
   })
+
+  it("includes an 'ok' row with the 5 endereço fields null, entering rowsToInsert with null values (D-01/D-02, quick task 260819-m8q)", () => {
+    const linha = makeRow({
+      row: 0,
+      status: "ok",
+      resolved: makeResolved({
+        cep: null,
+        rua: null,
+        numero: null,
+        cidade: null,
+        estado: null,
+      }),
+    })
+
+    const result = planConfirmacao([linha], {}, [])
+
+    expect(result.rowsToInsert).toHaveLength(1)
+    expect(result.rowsToInsert[0].cep).toBeNull()
+    expect(result.rowsToInsert[0].rua).toBeNull()
+    expect(result.rowsToInsert[0].numero).toBeNull()
+    expect(result.rowsToInsert[0].cidade).toBeNull()
+    expect(result.rowsToInsert[0].estado).toBeNull()
+    expect(result.puladasCount).toBe(0)
+  })
 })
 
 describe("reconcileImportados", () => {
