@@ -47,4 +47,23 @@ describe("cidades seed completeness (LOC-02)", () => {
     expect(error).toBeNull()
     expect(count ?? 0).toBeGreaterThanOrEqual(5000)
   })
+
+  // Quick task 260819-l6o: trava a premissa que justifica app/actions/
+  // clientes.ts e EstadoCidadeFields.tsx continuarem lendo cidades_por_estado
+  // sem paginar. MG (Minas Gerais) é o estado com mais municípios do Brasil
+  // (853) — ficando abaixo do teto de resposta de 1000 linhas do PostgREST,
+  // esse caminho nunca trunca. Se essa contagem algum dia bater 1000, este
+  // teste falha, sinalizando que aqueles dois caminhos também precisam
+  // passar a paginar (mesmo bug que forçou getTodasCidades a existir).
+  it("MG (mais municípios do Brasil) tem entre 800 e 999 linhas via cidades_por_estado, abaixo do teto de resposta do PostgREST", async () => {
+    const admin = serviceClient()
+    const { data, error } = await admin.rpc("cidades_por_estado", {
+      p_uf: "MG",
+    })
+
+    expect(error).toBeNull()
+    const total = (data ?? []).length
+    expect(total).toBeGreaterThan(800)
+    expect(total).toBeLessThan(1000)
+  })
 })
