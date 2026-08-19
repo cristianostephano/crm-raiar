@@ -161,10 +161,10 @@ Plans:
   3. Uma conclusão remota vale como conclusão normal: o item sai da Agenda, entra no diário do cliente, e sendo visita de cliente ativo o sistema continua sugerindo a próxima data pela frequência, exatamente como numa conclusão presencial.
   4. No Diário do cliente, a entrada de uma conclusão remota mostra o motivo em texto legível junto do resumo — nunca um código interno, nunca genérico.
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 - [x] 22-01-PLAN.md — Camada de banco: 6ª lista editável + colunas de motivo em tarefas/visitas + as 2 RPCs de conclusão estendidas juntas + os 2 gatilhos de auditoria resolvendo o motivo em texto no Diário
-- [ ] 22-02-PLAN.md — Registro da 6ª lista: união de nomes de tabela, aba de Configurações e leitura de catálogo dos motivos ativos
+- [x] 22-02-PLAN.md — Registro da 6ª lista: união de nomes de tabela, aba de Configurações e leitura de catálogo dos motivos ativos
 - [ ] 22-03-PLAN.md — Tela: marcação "não foi presencial" + campo de motivo na janela única de conclusão, fiação das 2 origens e verificação humana no navegador
 
 **UI hint**: yes
@@ -184,4 +184,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 20. Calendário da Agenda — Mês, Semana e Dia | 5/5 | Complete   | 2026-08-18 |
 | 21. Calendário — O Que Já Foi Feito em Datas Passadas | 4/4 | Complete   | 2026-08-19 |
-| 22. Conclusão Remota com Motivo | 1/3 | In Progress|  |
+| 22. Conclusão Remota com Motivo | 2/3 | In Progress|  |

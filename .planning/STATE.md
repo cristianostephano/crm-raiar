@@ -5,15 +5,15 @@ milestone_name: Calendário na Agenda e Conclusão Remota
 current_phase: 22
 current_phase_name: Conclusão Remota com Motivo
 status: executing
-stopped_at: Completed 21-04-PLAN.md — Phase 21 encerrada
-last_updated: "2026-08-19T13:22:49.970Z"
+stopped_at: Completed 22-02-PLAN.md
+last_updated: "2026-08-19T13:32:07.009Z"
 last_activity: 2026-08-19
 last_activity_desc: Phase 22 execution started
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   percent: 67
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 22 (Conclusão Remota com Motivo) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-19 — Phase 22 execution started
 
@@ -107,6 +107,7 @@ Last activity: 2026-08-19 — Phase 22 execution started
 | Phase 21-calend-rio-o-que-j-foi-feito-em-datas-passadas P03 | ~20min | 3 tasks | 10 files |
 | Phase 21-calend-rio-o-que-j-foi-feito-em-datas-passadas P04 | ~25min | 3 tasks | 8 files |
 | Phase 22 P01 | ~40min | 3 tasks | 3 files |
+| Phase 22 P02 | ~20min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -276,6 +277,8 @@ Recent decisions affecting current work:
 - [Phase 21-04]: O efeito de busca do historico depende de dois textos de intervalo (inicio/fim), nunca do objeto de intervalo nem da data de referencia — evita a enxurrada de pedidos ao servidor que qualquer um dos dois causaria a cada render
 - [Phase 21-04]: O filtro de vendedor e aplicado dentro do conteiner tambem sobre o historico buscado, com a mesma funcao filtrarPorVendedor que a tela ja aplica aos pendentes — nunca uma segunda autoridade de filtro
 - [Phase ?]: Fase 22 Plano 1: migration 0022 aplicada em producao (6a lista editavel motivos_conclusao_remota, colunas de FK opcionais em tarefas/visitas, as duas RPCs de conclusao estendidas com apagar-antes-de-criar e parametro novo default null no fim, os dois gatilhos de auditoria resolvendo o motivo em nome legivel no Diario). CONC-02/03/04/05 deixados como Pending em REQUIREMENTS.md apos este plano — nenhum requisito fecha sozinho aqui, todos dependem dos planos 22-02/22-03 (UI), mesma convencao ja travada nas Fases 9-01/19-01.
+- [Phase 22]: CONC-03 deixado como Pending em REQUIREMENTS.md apos o plano 22-02 - Supervisor ja administra a 6a lista, mas o requisito so fecha funcionalmente quando o plano 22-03 fiar o campo de escolha do Vendedor
+- [Phase 22]: revalidatePath("/agenda") acrescentado as 3 acoes de escrita de lista (app/actions/listas.ts) - Fase 22 passa a ter a Agenda consumindo uma lista editavel (motivos de conclusao remota)
 
 ### Pending Todos
 
@@ -335,8 +338,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-19T13:22:04.120Z
-Stopped at: Completed 21-04-PLAN.md — Phase 21 encerrada
+Last session: 2026-08-19T13:32:06.999Z
+Stopped at: Completed 22-02-PLAN.md
 Resume file: 
-
-None
