@@ -537,8 +537,13 @@ export function KanbanBoard({
         categoria_nome: categoriaNome,
         responsavel: values.responsavel,
         responsavel_nome: responsavelNome,
-        cidade: values.cidade,
-        estado: values.estado,
+        // Quick task 260819-m8q (D-06): a ficha de edição agora aceita
+        // cidade/estado em branco (updateClienteSchema afrouxado) e o
+        // banco grava nulo — o card local espelha exatamente isso, nunca
+        // texto vazio, senão o estado local e o banco discordariam sobre o
+        // que significa "sem cidade"/"sem estado".
+        cidade: values.cidade || null,
+        estado: values.estado || null,
         contato: values.contato || null,
         telefone: values.telefone || null,
         email: values.email || null,

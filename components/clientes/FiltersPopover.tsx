@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react"
 
 import { buscarCidadesComClientes } from "@/lib/clientes/cidadesComClientes"
+import {
+  ROTULO_SEM_CIDADE,
+  ROTULO_SEM_ESTADO,
+} from "@/lib/clientes/rotuloLocalizacao"
 import { UFS } from "@/lib/clientes/ufs"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -80,13 +84,21 @@ export function contarFiltrosAtivos(filtros: ClienteFiltros): number {
   return count
 }
 
-/** True when `cliente` satisfies every active filter dimension (AND, D-08). */
+/** True when `cliente` satisfies every active filter dimension (AND, D-08).
+ *
+ * Quick task 260819-m8q (D-01/D-02/D-03): `cidade`/`estado` são anuláveis
+ * desde a migration 0023 — um cliente sem endereço NUNCA é escondido por
+ * este predicado quando nenhum filtro está ativo (D-03). Os dois ramos de
+ * sentinela de ausência (`ESTADO_AUSENTE`/`CIDADE_AUSENTE`) casam só com
+ * cliente sem aquele campo; fora desses ramos a comparação de sempre
+ * (igualdade exata sem diferenciar maiúsculas para cidade, igualdade direta
+ * para estado) fica intacta. */
 export function clienteAtendeFiltros(
   cliente: {
     categoria_id: string | null
     produtos: { id: string; nome: string }[]
-    cidade: string
-    estado: string
+    cidade: string | null
+    estado: string | null
     responsavel: string
   },
   filtros: ClienteFiltros
@@ -100,12 +112,22 @@ export function clienteAtendeFiltros(
     if (!filtros.produtoIds.some((id) => idsDoCliente.has(id))) return false
   }
 
-  const cidadeFiltro = filtros.cidade.trim().toLowerCase()
-  if (cidadeFiltro && cliente.cidade.toLowerCase() !== cidadeFiltro) {
-    return false
+  const clienteSemCidade = !cliente.cidade || cliente.cidade.trim() === ""
+  const clienteSemEstado = !cliente.estado || cliente.estado.trim() === ""
+
+  const cidadeFiltroRaw = filtros.cidade.trim()
+  if (cidadeFiltroRaw === CIDADE_AUSENTE) {
+    if (!clienteSemCidade) return false
+  } else if (cidadeFiltroRaw) {
+    const cidadeFiltro = cidadeFiltroRaw.toLowerCase()
+    if ((cliente.cidade ?? "").toLowerCase() !== cidadeFiltro) return false
   }
 
-  if (filtros.estado && cliente.estado !== filtros.estado) return false
+  if (filtros.estado === ESTADO_AUSENTE) {
+    if (!clienteSemEstado) return false
+  } else if (filtros.estado && cliente.estado !== filtros.estado) {
+    return false
+  }
 
   if (filtros.vendedorId && cliente.responsavel !== filtros.vendedorId) {
     return false
@@ -117,6 +139,14 @@ export function clienteAtendeFiltros(
 /** Sentinel Select value meaning "no filter" for that dimension — "" can't
  * be used because base-ui's Select reserves "" for the placeholder state. */
 const SEM_FILTRO = "__todos__"
+
+/** Quick task 260819-m8q (D-03) — sentinelas de ausência, mesma convenção
+ * de nome com dois sublinhados nas pontas de SEM_FILTRO acima. Encontram
+ * cliente sem estado/sem cidade, exportadas para os testes de
+ * clienteAtendeFiltros poderem exercitar exatamente o mesmo valor que a UI
+ * envia. */
+export const ESTADO_AUSENTE = "__estado_ausente__"
+export const CIDADE_AUSENTE = "__cidade_ausente__"
 
 export function FiltersPopover({
   filtros,
@@ -152,7 +182,10 @@ export function FiltersPopover({
   const [cidadeComboboxOpen, setCidadeComboboxOpen] = useState(false)
 
   useEffect(() => {
-    if (!draft.estado) {
+    // Quick task 260819-m8q (T-M8Q-05): guarda de UF — a sentinela
+    // ESTADO_AUSENTE não é uma UF de verdade, e mandá-la para a RPC seria
+    // um pedido inútil ao servidor toda vez que o popover reabre.
+    if (!draft.estado || !(UFS as readonly string[]).includes(draft.estado)) {
       return
     }
     let cancelled = false
@@ -168,7 +201,16 @@ export function FiltersPopover({
   // guardada: zerar o estado do React dentro do corpo do efeito dispara
   // render em cascata (regra react-hooks/set-state-in-effect). Derivar
   // produz exatamente o mesmo resultado renderizado.
-  const cidadesVisiveis = draft.estado ? cidades : []
+  //
+  // Quick task 260819-m8q (D-03): a lista sempre começa com a sentinela de
+  // cidade ausente (CIDADE_AUSENTE, exibida como "Sem cidade" via
+  // itemToStringLabel abaixo). Quando o Estado escolhido é uma UF de
+  // verdade, ela é seguida pelos nomes vindos da RPC; quando é a sentinela
+  // de estado ausente, a lista tem só essa entrada — não faz sentido
+  // buscar cidades para um cliente sem estado.
+  const cidadesVisiveis = draft.estado
+    ? [CIDADE_AUSENTE, ...(draft.estado === ESTADO_AUSENTE ? [] : cidades)]
+    : []
 
   function handleOpenChange(nextOpen: boolean) {
     // Resync the draft with the currently-applied filters every time the
@@ -316,6 +358,7 @@ export function FiltersPopover({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={SEM_FILTRO}>Todos os estados</SelectItem>
+                <SelectItem value={ESTADO_AUSENTE}>{ROTULO_SEM_ESTADO}</SelectItem>
                 {UFS.map((uf) => (
                   <SelectItem key={uf} value={uf}>
                     {uf}
@@ -335,6 +378,9 @@ export function FiltersPopover({
                 setDraft((prev) => ({ ...prev, cidade: (value as string) ?? "" }))
               }
               onOpenChange={setCidadeComboboxOpen}
+              itemToStringLabel={(cidade: string) =>
+                cidade === CIDADE_AUSENTE ? ROTULO_SEM_CIDADE : cidade
+              }
             >
               <ComboboxInput
                 id="filtro-cidade"
@@ -352,7 +398,7 @@ export function FiltersPopover({
                 <ComboboxList>
                   {(cidade: string) => (
                     <ComboboxItem key={cidade} value={cidade}>
-                      {cidade}
+                      {cidade === CIDADE_AUSENTE ? ROTULO_SEM_CIDADE : cidade}
                     </ComboboxItem>
                   )}
                 </ComboboxList>

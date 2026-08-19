@@ -127,18 +127,25 @@ function toFormValues(cliente: ClienteDetalhe): UpdateClienteInput {
   return {
     id: cliente.id,
     razaoSocial: cliente.razaoSocial,
-    cep: cliente.cep,
-    rua: cliente.rua,
-    numero: cliente.numero,
+    // Quick task 260819-m8q (D-01/D-02/D-06): cep/rua/numero/cidade/estado
+    // are nullable on ClienteDetalhe since migration 0023 (a cliente
+    // imported or edited without address has them null in the database).
+    // Falls back to "" for the form field — passing null to a React form
+    // field makes it uncontrolled and triggers a console warning.
+    cep: cliente.cep ?? "",
+    rua: cliente.rua ?? "",
+    numero: cliente.numero ?? "",
     complemento: cliente.complemento ?? "",
-    cidade: cliente.cidade,
+    cidade: cliente.cidade ?? "",
     // 09-03/LOC-04/D-01/UI-SPEC §5: a legacy record's stored estado can be
     // outside the 27-UF enum after the simple case/whitespace backfill
     // (chk_estado_valido stays NOT VALID for those rows) — cast, don't
     // reject; the Select just falls back to rendering the raw value
     // silently until the user picks a valid UF and saves (no blocking UI).
     // The full Select-based EstadoCidadeFields wiring lands in 09-05.
-    estado: cliente.estado as Uf,
+    // Falls back to "" when null (D-06) before the cast, same reasoning as
+    // the other 4 endereço fields above.
+    estado: (cliente.estado ?? "") as Uf,
     responsavel: cliente.responsavel,
     categoriaId: cliente.categoriaId ?? "",
     contato: cliente.contato ?? "",

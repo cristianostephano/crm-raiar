@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip"
 import type { EtapaKey } from "@/lib/funil/etapas"
 import type { TaskStatus } from "@/lib/funil/staleness"
+import { rotuloCidadeEstado } from "@/lib/clientes/rotuloLocalizacao"
 import { cn } from "@/lib/utils"
 
 /**
@@ -25,8 +26,11 @@ export type ClienteCardData = {
   responsavelNome: string | null
   etapa: EtapaKey
   statusAcompanhamento: "em_andamento" | "perdido" | "ganho"
-  cidade: string
-  estado: string
+  /** Nullable since migration 0023 (quick task 260819-m8q, D-01/D-02) — a
+   * cliente sem endereço is rendered via rotuloLocalizacao's "Sem cidade"/
+   * "Sem estado" labels, never hidden (D-03). */
+  cidade: string | null
+  estado: string | null
   /** Feeds the quick-action row's tel:/wa.me links — null renders every
    * quick-action icon disabled/muted (not hidden, D-03) so card layout
    * never shifts between cards that do/don't have a phone number. */
@@ -230,7 +234,7 @@ export function ClienteCard({
           </p>
         ) : null}
         <p className="text-sm text-muted-foreground">
-          {cliente.cidade}/{cliente.estado}
+          {rotuloCidadeEstado(cliente.cidade, cliente.estado)}
         </p>
         <div className="-mx-1.5 -mb-1.5 flex items-center">
           <QuickActionIcon

@@ -23,8 +23,12 @@ export type ClienteListItem = {
   responsavel_nome: string | null
   etapa: EtapaKey
   status_acompanhamento: "em_andamento" | "perdido" | "ganho"
-  cidade: string
-  estado: string
+  /** Nullable since migration 0023 (quick task 260819-m8q, D-01/D-02): a
+   * cliente importado sem endereço tem cidade/estado nulos. Never coerced
+   * to "" here — lib/clientes/rotuloLocalizacao.ts is the single place that
+   * decides how to display absence ("Sem cidade"/"Sem estado", D-03). */
+  cidade: string | null
+  estado: string | null
   contato: string | null
   telefone: string | null
   email: string | null
@@ -67,12 +71,17 @@ export type StatusAcompanhamento = "em_andamento" | "perdido" | "ganho"
 export type ClienteDetalhe = {
   id: string
   razaoSocial: string
-  cep: string
-  rua: string
-  numero: string
+  /** Nullable since migration 0023 (quick task 260819-m8q, D-01/D-02/D-06):
+   * a cliente importado sem endereço, ou editado sem preenchê-lo, tem os 5
+   * campos abaixo nulos. Never coerced to "" here — the Sheet's own
+   * toFormValues() decides the "" fallback for the form field, this layer
+   * just reflects the schema. */
+  cep: string | null
+  rua: string | null
+  numero: string | null
   complemento: string | null
-  cidade: string
-  estado: string
+  cidade: string | null
+  estado: string | null
   responsavel: string
   responsavelNome: string | null
   categoriaId: string | null
@@ -105,12 +114,12 @@ export type ClienteDetalhe = {
 type ClienteDetalheRow = {
   id: string
   razao_social: string
-  cep: string
-  rua: string
-  numero: string
+  cep: string | null
+  rua: string | null
+  numero: string | null
   complemento: string | null
-  cidade: string
-  estado: string
+  cidade: string | null
+  estado: string | null
   responsavel: string
   profiles: { nome: string; sobrenome: string } | null
   categoria_id: string | null
@@ -198,8 +207,8 @@ type ClienteRow = {
   profiles: { nome: string; sobrenome: string } | null
   etapa: EtapaKey
   status_acompanhamento: "em_andamento" | "perdido" | "ganho"
-  cidade: string
-  estado: string
+  cidade: string | null
+  estado: string | null
   contato: string | null
   telefone: string | null
   email: string | null
@@ -326,12 +335,16 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
  */
 export type ClienteExportRow = {
   razaoSocial: string
-  cep: string
-  rua: string
-  numero: string
+  /** Nullable since migration 0023 (quick task 260819-m8q) — an empty cell
+   * in the exported sheet is the correct result; buildClientesWorkbook's
+   * cell() helper already converts null to "" (05-01), no logic change
+   * needed there. */
+  cep: string | null
+  rua: string | null
+  numero: string | null
   complemento: string | null
-  cidade: string
-  estado: string
+  cidade: string | null
+  estado: string | null
   categoriaNome: string | null
   contato: string | null
   telefone: string | null
@@ -347,12 +360,12 @@ export type ClienteExportRow = {
 /** Raw shape returned by getClientesParaExportacao's embedded-select query. */
 type ClienteExportQueryRow = {
   razao_social: string
-  cep: string
-  rua: string
-  numero: string
+  cep: string | null
+  rua: string | null
+  numero: string | null
   complemento: string | null
-  cidade: string
-  estado: string
+  cidade: string | null
+  estado: string | null
   categorias: { nome: string } | null
   profiles: { nome: string; sobrenome: string } | null
   contato: string | null
