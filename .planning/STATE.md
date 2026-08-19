@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 Phase: Milestone v1.5 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-08-19 — Quick task 260819-l6o: fix busca de cidades na importação (bug de paginação)
+Last activity: 2026-08-19 — Quick task 260819-m8q: endereço opcional na importação e na ficha de edição
 
 ## Performance Metrics
 
@@ -293,6 +293,13 @@ None yet.
 - **Gatilhos de histórico (Fase 22, CONC-05):** o texto do diário é escrito pelos gatilhos `tarefas_before_update_historico`/`visitas_after_update_historico`, não pelas RPCs. Sem mexer neles, o motivo é gravado na tabela mas nunca aparece no diário. E não existe precedente no projeto de gatilho resolvendo FK de lista em texto legível (o motivo de perda nunca faz isso) — é lógica nova, não cópia; gravar o NOME resolvido, nunca o identificador.
 - **RLS da 6ª lista (Fase 22):** a policy de SELECT precisa ficar aberta a qualquer usuário autenticado. Restringir ao Supervisor deixa o dropdown do Vendedor permanentemente vazio, sem erro nenhum — modo de falha silenciosa que a própria migration 0016 documenta. Verificar com conta de Vendedor, não só de Supervisor.
 
+**Ativos, novos (2026-08-19):**
+
+- **Contas seed de teste apagadas — 49 arquivos de teste agora falham com "Invalid login credentials", NÃO é o rate-limit conhecido:** `vendedor.a+test@raiar.local`/`vendedor.b+test@raiar.local` (e a conta pessoal `cristiano.stephano@gmail.com`) foram deliberadamente apagadas a pedido do dono do projeto (quick task 260819-l6o) para dar lugar aos 15 vendedores reais da equipe. `tests/helpers/supabase-test-clients.ts`/`tests/auth/rls-roles.test.ts` (SEED_ACCOUNTS) e ~49 arquivos que dependem deles agora falham porque as contas literalmente não existem mais — não é o rate-limit de `signInWithPassword` (esse continua existindo à parte, mas não é a causa aqui). O executor da quick task 260819-m8q reportou isso incorretamente como o rate-limit conhecido; a causa real são as contas apagadas. Precisa de uma decisão futura: recriar `vendedor.a+test`/`vendedor.b+test` como contas técnicas dedicadas a teste (nunca aparecem pra ninguém usar de verdade), ou reescrever os testes pra usar 2 dos 15 vendedores reais.
+- **15 vendedores reais cadastrados com senha temporária gerada, ainda não repassadas/trocadas** — ver lista completa no histórico da conversa (quick task 260819-l6o). `celular` de todos os 15 ficou com placeholder `"0000000000"` (não coletado ainda).
+- **Planilha real da equipe (`Listagem_Clientes_por_Vendedor.xlsx`) é a carteira de CLIENTES ATIVOS, não prospecção** — o assistente "Importar clientes" hoje só sabe importar pra primeira etapa do funil ("Aguardando contato"). Precisa de uma nova forma de importar direto como "ativo"/"ganho" (com CNPJ + frequência de visita, que são exigidos nesse status) — conversa de planejamento ainda não iniciada, dono pediu pra deixar pra depois (2026-08-19).
+- Sistema zerado de clientes em 2026-08-19 (0 clientes hoje) após uma importação de teste (1099 linhas) ter sido desfeita a pedido do dono, por ter sido importada como prospecção quando deveria ser como ativo.
+
 **Herdados, ainda relevantes:**
 
 - Gap de verificação humana aceito formalmente (Fase 8): o drag-and-drop com auto-scroll do kanban foi revisado por código, não exercitado por um drag real de mouse. Risco julgado baixo. Ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`.
@@ -312,6 +319,7 @@ None yet.
 | 260806-fln | Limpar 4 avisos pequenos de lint pré-existentes (react-hooks/incompatible-library, react-hooks/set-state-in-effect x2, unused-var) | 2026-08-06 | 2fd6840 | [260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi](./quick/260806-fln-limpar-4-avisos-pequenos-de-lint-pre-exi/) |
 | 260806-h8a | Corrigir filtro de Cidade (tela de Clientes) para mostrar só cidades com cliente cadastrado, via nova RPC `cidades_com_clientes_por_estado` (migration 0012) | 2026-08-06 | b1f9497 | [260806-h8a-corrigir-o-filtro-de-cidade-na-tela-de-c](./quick/260806-h8a-corrigir-o-filtro-de-cidade-na-tela-de-c/) |
 | 260819-l6o | Corrigir busca de cidades na importação de clientes: `validarLoteImportacao` lia a tabela `cidades` (5571 linhas IBGE) sem paginação, truncada em 1000 pelo PostgREST — cidades reais (ex: São Paulo/SP, Curitiba/PR) eram rejeitadas como "não encontrada". Novo leitor paginado `getTodasCidades()` | 2026-08-19 | 683c8cb | [260819-l6o-bug-busca-de-cidades-na-importacao-de-cl](./quick/260819-l6o-bug-busca-de-cidades-na-importacao-de-cl/) |
+| 260819-m8q | Tornar CEP/Rua/Número/Cidade/Estado opcionais na importação em massa e na ficha de edição (migration 0023, coluna nullable), mantendo obrigatórios só no cadastro manual novo (`createClienteSchema` intocado). Rótulo "Sem cidade"/"Sem estado" único (`rotuloLocalizacao.ts`) no card/filtro/export, filtro ganha sentinelas "Sem estado"/"Sem cidade" | 2026-08-19 | 4d248cb | [260819-m8q-tornar-cep-rua-numero-cidade-e-estado-ca](./quick/260819-m8q-tornar-cep-rua-numero-cidade-e-estado-ca/) |
 
 ### Roadmap Evolution
 
