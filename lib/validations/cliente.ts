@@ -66,9 +66,7 @@ export type CreateClienteInput = z.infer<typeof createClienteSchema>
  * used by both ClienteDetailSheet.tsx (react-hook-form + zodResolver) and
  * updateCliente's server-side re-validation in app/actions/clientes.ts.
  *
- * Same required/optional split as createClienteSchema (razão social,
- * endereço incl. D-11 cidade/estado, and responsavel are required; every
- * other field can be completed later, per CLI-02), plus the row `id` being
+ * Razão social and responsavel are required, plus the row `id` being
  * edited. `responsavel` keeps the same ""-sentinel + object-level
  * `.superRefine` trick as createClienteSchema/InviteUserForm's `role` — a
  * per-field `.refine()` would turn it into a ZodEffects type and break
@@ -78,6 +76,20 @@ export type CreateClienteInput = z.infer<typeof createClienteSchema>
  * client-sent responsavel change server-side for a non-Supervisor caller
  * (defense in depth; the real boundary is the UPDATE ... WITH CHECK RLS
  * policy from 02-01).
+ *
+ * Quick task 260819-m8q (D-06): unlike createClienteSchema above, this
+ * schema DIVERGES from it on the 5 endereço fields — since then it accepts
+ * cep/rua/numero/cidade in blank (plain optional-shaped text, same as
+ * complemento/contato) and estado in blank OR a valid UF (union with the
+ * empty-string literal, same convention `email` below already uses for
+ * "opcional, mas se vier tem que ser válido" — preserves the enum's own
+ * "Selecione um estado válido." message nested inside the union error).
+ * This divergence is intentional: opening the ficha of a cliente imported
+ * without an address (Fase 6/7) to edit anything else (e.g. só corrigir o
+ * telefone) must not be blocked by the 5 endereço fields the way the
+ * cadastro manual still is. `createClienteSchema` above is UNCHANGED and
+ * keeps requiring all 5 — the cadastro manual keeps demanding full address
+ * on purpose (D-01).
  *
  * ATV-01/ATV-02 (Fase 16): nome fantasia, CNPJ e frequência de pedidos são
  * três campos opcionais de texto a mais, ao lado de contato/telefone/email —
@@ -90,12 +102,19 @@ export const updateClienteSchema = z
   .object({
     id: z.string().min(1),
     razaoSocial: z.string().min(1, "Informe a razão social."),
-    cep: z.string().min(1, "Informe o CEP."),
-    rua: z.string().min(1, "Informe a rua."),
-    numero: z.string().min(1, "Informe o número."),
+    // D-06: texto simples aceitando vazio — NÃO `.optional()` (mantém o
+    // campo sempre presente/tipo string, nunca `string | undefined`), para
+    // não quebrar EstadoCidadeFields (genérico sobre `cidade: string`) nem
+    // tornar o campo de formulário não-controlado.
+    cep: z.string(),
+    rua: z.string(),
+    numero: z.string(),
     complemento: z.string().optional(),
-    cidade: z.string().min(1, "Selecione uma cidade válida."),
-    estado: z.enum(UFS, { message: "Selecione um estado válido." }),
+    cidade: z.string(),
+    estado: z.union([
+      z.literal(""),
+      z.enum(UFS, { message: "Selecione um estado válido." }),
+    ]),
     responsavel: z.string(),
     categoriaId: z.string().optional(),
     contato: z.string().optional(),

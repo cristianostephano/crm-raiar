@@ -51,15 +51,24 @@ type EstadoCidadeFormShape = {
 }
 
 /**
- * Estado→Cidade cascade (LOC-01/LOC-02, D-02): Estado is a required Select
- * over the fixed UFS constant; Cidade is a searchable Combobox populated
- * from the cidades_por_estado(uf) RPC, disabled until an Estado is chosen,
- * and reset every time Estado changes (never carries a stale city into a
- * newly-picked state). Renders the whole `grid grid-cols-3 gap-3` row
- * (Complemento/Cidade/Estado, in that column order) so it's a drop-in
- * replacement for the equivalent block in ClienteQuickCreateForm.tsx and
- * ClienteDetailSheet.tsx (both consumers land in plan 09-05 — untouched by
- * 09-03, per 09-03-PLAN.md's file list).
+ * Estado→Cidade cascade (LOC-01/LOC-02, D-02): Estado is a Select over the
+ * fixed UFS constant; Cidade is a searchable Combobox populated from the
+ * cidades_por_estado(uf) RPC, disabled until an Estado is chosen, and reset
+ * every time Estado changes (never carries a stale city into a newly-picked
+ * state). Renders the whole `grid grid-cols-3 gap-3` row (Complemento/
+ * Cidade/Estado, in that column order) so it's a drop-in replacement for
+ * the equivalent block in ClienteQuickCreateForm.tsx and
+ * ClienteDetailSheet.tsx (shared by both consumers since plan 09-05).
+ *
+ * Quick task 260819-m8q (D-06): this component itself has NO required/
+ * optional notion of its own — whether Cidade/Estado are mandatory is
+ * entirely a property of the zod schema each consumer's form is wired to
+ * (createClienteSchema, still required, vs updateClienteSchema, now
+ * accepts blank). There is no asterisk or "obrigatório" text in this
+ * component's UI either way — the only signal to the user is whatever
+ * FormMessage renders from that schema, which disappears on its own once a
+ * schema stops requiring the field. Cidade stays disabled until an Estado
+ * is chosen either way, unchanged by D-06.
  */
 export function EstadoCidadeFields<
   TFieldValues extends FieldValues & EstadoCidadeFormShape,

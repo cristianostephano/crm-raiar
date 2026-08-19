@@ -213,23 +213,38 @@ export async function updateCliente(
   // Supervisor may assign a different responsavel.
   const responsavel = isSupervisor ? parsed.data.responsavel : user.id
 
-  // V5/T-09-09: same re-validation as createCliente — never trust that the
-  // client-side Combobox already constrained Cidade to the chosen Estado.
-  const { data: cidadesDoEstado } = await supabase.rpc("cidades_por_estado", {
-    p_uf: parsed.data.estado,
-  })
+  // Quick task 260819-m8q (D-06/T-M8Q-07): a checagem cruzada cidade×estado
+  // (V5/T-09-09) só roda quando os DOIS vêm preenchidos. Com qualquer um em
+  // branco não há nada para cruzar — cidadeValida() devolveria falso para
+  // texto vazio e recusaria o salvamento com o mesmo código de validação,
+  // exatamente o bloqueio que D-06 manda tirar da ficha. Consistência
+  // deliberada com o lado da importação (quick task Task 1/3): os campos
+  // são independentes entre si, cidade preenchida com estado em branco não
+  // é tratado como erro aqui, e pular a checagem evita um pedido inútil ao
+  // servidor para uma UF vazia.
+  const cidadeInformada = parsed.data.cidade.trim() !== ""
+  const estadoInformado = parsed.data.estado.trim() !== ""
 
-  if (
-    !cidadeValida(
-      parsed.data.cidade,
-      parsed.data.estado,
-      (cidadesDoEstado ?? []).map((row: { nome: string }) => ({
-        nome: row.nome,
-        uf: parsed.data.estado,
-      }))
+  if (cidadeInformada && estadoInformado) {
+    // V5/T-09-09: never trust that the client-side Combobox already
+    // constrained Cidade to the chosen Estado.
+    const { data: cidadesDoEstado } = await supabase.rpc(
+      "cidades_por_estado",
+      { p_uf: parsed.data.estado }
     )
-  ) {
-    return { error: { code: "validation" } }
+
+    if (
+      !cidadeValida(
+        parsed.data.cidade,
+        parsed.data.estado,
+        (cidadesDoEstado ?? []).map((row: { nome: string }) => ({
+          nome: row.nome,
+          uf: parsed.data.estado,
+        }))
+      )
+    ) {
+      return { error: { code: "validation" } }
+    }
   }
 
   // ATV-02: re-validar frequência de pedidos contra o catálogo COMPLETO do
@@ -263,12 +278,17 @@ export async function updateCliente(
     .from("clientes")
     .update({
       razao_social: parsed.data.razaoSocial,
-      cep: parsed.data.cep,
-      rua: parsed.data.rua,
-      numero: parsed.data.numero,
+      // Quick task 260819-m8q (D-04/D-06/T-M8Q-06): grava NULO, nunca
+      // texto vazio, quando o campo vem em branco — texto vazio em
+      // `estado` viola chk_estado_valido (migration 0007) e derrubaria o
+      // salvamento com um erro genérico, sem nenhuma pista do motivo para
+      // quem está usando. Mesma forma já usada por complemento abaixo.
+      cep: parsed.data.cep || null,
+      rua: parsed.data.rua || null,
+      numero: parsed.data.numero || null,
       complemento: parsed.data.complemento || null,
-      cidade: parsed.data.cidade,
-      estado: parsed.data.estado,
+      cidade: parsed.data.cidade || null,
+      estado: parsed.data.estado || null,
       responsavel,
       categoria_id: parsed.data.categoriaId || null,
       contato: parsed.data.contato || null,

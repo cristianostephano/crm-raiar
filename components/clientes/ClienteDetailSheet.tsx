@@ -143,9 +143,11 @@ function toFormValues(cliente: ClienteDetalhe): UpdateClienteInput {
     // reject; the Select just falls back to rendering the raw value
     // silently until the user picks a valid UF and saves (no blocking UI).
     // The full Select-based EstadoCidadeFields wiring lands in 09-05.
-    // Falls back to "" when null (D-06) before the cast, same reasoning as
-    // the other 4 endereço fields above.
-    estado: (cliente.estado ?? "") as Uf,
+    // Falls back to "" when null (D-06, quick task 260819-m8q) before the
+    // cast — "" is now a legitimate member of updateClienteSchema's estado
+    // union (never a hack here); the cast still only exists to tolerate a
+    // LEGACY out-of-UFS value, same reasoning as before.
+    estado: (cliente.estado ?? "") as "" | Uf,
     responsavel: cliente.responsavel,
     categoriaId: cliente.categoriaId ?? "",
     contato: cliente.contato ?? "",
@@ -244,9 +246,12 @@ export function ClienteDetailSheet({
       complemento: "",
       cidade: "",
       // "" is overwritten by form.reset(toFormValues(...)) once the cliente
-      // loads; cast needed only because estado: z.enum(UFS) narrows the
-      // type to Uf (09-03/LOC-01) — no valid empty-string UF exists.
-      estado: "" as Uf,
+      // loads. No cast needed since quick task 260819-m8q (D-06):
+      // updateClienteSchema's estado is now a union of the empty-string
+      // literal with z.enum(UFS), so "" is directly assignable — unlike
+      // createClienteSchema's estado (still plain z.enum(UFS), still no
+      // valid empty-string UF there on purpose, D-01).
+      estado: "",
       responsavel: "",
       categoriaId: "",
       contato: "",
