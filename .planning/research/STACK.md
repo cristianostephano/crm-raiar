@@ -1,113 +1,84 @@
 # Stack Research
 
-**Domain:** Calendar/agenda view (day/week/month) for an internal sales CRM, plus a small 6th Supervisor-editable reference list
-**Researched:** 2026-08-17
-**Confidence:** MEDIUM (grounded mostly in the existing codebase + primary react-day-picker v10 docs; ecosystem framing is web-search-sourced, LOW-tier by the project's own classifier)
-
-## Bottom Line
-
-**No new npm dependency is needed for v1.5.** Build the day/week/month calendar view with plain `date-fns` date math (already installed, v4.4.0) + CSS Grid + existing shadcn/ui primitives (`Card`, `Badge`, `Dialog`/`Popover`). `react-day-picker@10.0.1` (already installed) stays exactly where it already is — a single-date picker input — and should **not** be extended into the events calendar. The "conclusão remota" flow (new reason field + 6th editable list) needs zero new libraries either: it's the same table+RLS+CRUD-tab pattern the project has repeated four times already (`categoria`, `produtos_consumidos`, `tipos_tarefa`, `motivos_perda`, `frequencias_pedido`), plus one more `react-hook-form`+`zod` field on the existing conclusion dialog.
+**Domain:** Bulk spreadsheet import variant + fixed-anchor recurring date scheduling (PL/pgSQL) for an existing Next.js 16 + Supabase CRM
+**Researched:** 2026-08-24
+**Confidence:** HIGH
 
 ## Recommended Stack
 
 ### Core Technologies
 
-No additions. Everything the calendar view needs is already in `package.json`:
+No new core technologies. Both v1.6 features are extensions of patterns already proven in this codebase across v1.1, v1.3, v1.4, and v1.7 migrations — the correct "stack decision" here is **reuse, not addition**.
 
-| Technology | Version (already installed) | Purpose here | Why it's enough |
+| Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| `date-fns` | 4.4.0 | Build the month grid (leading/trailing days), week columns, day math, "is this item on this day" comparisons | Has every function this needs out of the box: `startOfMonth`, `endOfMonth`, `startOfWeek`, `endOfWeek`, `eachDayOfInterval`, `addDays`/`addWeeks`/`addMonths`, `isSameDay`, `isSameMonth`, `isToday`, `format`. The project already committed to "compute dates with `date-fns`/Postgres, never `new Date(string)` in the browser" (see PROJECT.md Key Decisions) — the calendar view is pure client-side *display* grouping of dates already resolved server-side, so this rule is satisfied by reusing `parseISO` exactly as `lib/agenda/itens.ts` already does, not by inventing a new date layer |
-| React (CSS Grid, no library) | — | Month grid layout (7 columns × up to 6 rows), week view (7 columns), day view (reuses `AgendaItemRow` list) | `display: grid; grid-template-columns: repeat(7, 1fr)` is standard, well-documented, and needs no library — the month grid is uniform-width cells, not a component library concern |
-| shadcn/ui (`Card`, `Badge`, `Button`, `Dialog` or `Popover`, `Tabs`/segmented control) | Already installed | Chips (reuse the existing Prospecção/Visita `Badge` variants from `AgendaItemRow.tsx`), day-cell "+N" overflow trigger, view-switcher toolbar (Lista/Dia/Semana/Mês), "Hoje" button, day-detail popover/dialog when a month cell is clicked | Same design system already used across `AgendaList.tsx`/`AgendaItemRow.tsx` — a new calendar library would introduce a second visual language for exactly the parts (chips, cards, colors) this project already has |
+| Next.js (App Router, Server Actions) | 16.2.10 (already in `package.json`) | UI + write path for both features | Every import variant to date (`importacao.ts`, `importacaoCnpj.ts`, `importacaoFrequencia.ts`) is a Server Action calling an RPC; feature (a) is a 4th sibling in that same file/folder shape |
+| Supabase Postgres (PL/pgSQL functions, no ORM) | project's current Supabase project | Server-side computation for both features | Feature (b) is pure server-side date math — exactly what `proxima_data_visita()` already is (immutable SQL function, single authority, called from `mover_card_funil`/`concluir_visita`/`agenda_do_vendedor`). No query builder or migration-generation library is used anywhere in this project; hand-written `.sql` files in `supabase/migrations/` is the established convention (see `supabase-conventions` skill) |
 
 ### Supporting Libraries
 
-None new. Reused as-is:
+None to add. The two libraries this milestone touches are **already installed** and already do the job:
 
-| Library | Version | Purpose here | When to use |
+| Library | Version (already installed) | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| `date-fns/locale` (bundled with `date-fns`, not a separate package) | 4.4.0 | `pt-BR` weekday/month labels (e.g. "seg", "ter"; "agosto de 2026") for the calendar header/grid | Import `{ ptBR }` from `date-fns/locale` and pass as the `locale` option to `format`/`startOfWeek` — first use of this in the codebase (grep found none yet), but it ships inside the already-installed package, not a new install |
-| `react-hook-form` + `zod` + `@hookform/resolvers` | 7.81.0 / 4.4.3 / 5.4.0 | Add the "motivo de conclusão remota" select + "não foi presencial" toggle to the existing conclusion form in `ConcluirItemDialog.tsx` | Exactly the pattern the project already uses for `motivos_perda` on the "perdido" flow — one more conditionally-required field on an existing `zod` schema, not a new form |
-| `@supabase/supabase-js` + RLS (Supabase, no new package) | 2.110.5 | 6th editable list ("Motivos de conclusão remota"): new table, RLS, CRUD tab | Follows `supabase-conventions` skill and the exact shape of the 5 existing editable lists — see Architecture note below |
+| `@e965/xlsx` | ^0.20.3 | Parses `.xlsx` uploads in `lib/importacao/parseArquivo.ts` | Reuse as-is for "Importar Clientes Ativos" — `parseArquivo.ts` is already generic (consumed by 3 existing import variants: clientes, CNPJ em massa, frequências em massa), not tied to a specific column set |
+| `papaparse` | ^5.5.4 | Parses `.csv` uploads, same file | Same reuse — no variant-specific parsing code exists today; column mapping happens downstream in `mapping.ts`/`annotarLinha*.ts`, which is where the 4th variant's own file goes |
+| `date-fns` | ^4.4.0 | Client-side date formatting/display only | Already used for the Agenda calendar (`startOfWeek`/`endOfWeek`). **Not** the tool for feature (b)'s actual computation — that must happen in Postgres per the project's own established rule (Key Decision, v1.3: "Cálculo de data feito no Postgres... nunca `new Date(string)` no navegador"). `date-fns` may still be used client-side to *render* a human label like "toda 1ª quinta-feira do mês" from the stored day-of-week/week-of-month integers, which is a display concern, not a computation concern |
 
 ### Development Tools
 
-No additions. `Vitest` covers the pure date-grouping functions this view needs (e.g. "group `AgendaItem[]` by calendar day for a given month", mirroring `lib/agenda/itens.ts`'s existing `agruparAgenda`); `Playwright` covers the view-switcher + month/week/day navigation + day-click-opens-list interactions, same pattern already used for kanban drag-and-drop and RLS-driven visibility checks.
+No change. `Vitest` (unit tests for the new PL/pgSQL date function's pure-SQL twin/logic and for the new import row-validation module) and `Playwright` (E2E for the new import wizard flow and the new Agenda "sem frequência" section) are already configured and are the same tools every prior phase in this project used.
 
 ## Installation
 
 ```bash
-# Nothing to install for the calendar view — date-fns, shadcn/ui primitives,
-# and react-day-picker are already in package.json.
-
-# If date-fns/locale/pt-BR labels are needed anywhere else in the app later,
-# no install is needed either — it's a subpath import of the existing package:
-#   import { ptBR } from "date-fns/locale"
+# Nothing to install. Zero new npm packages for v1.6.
 ```
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to use alternative instead |
+| Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|--------------------------|
-| Hand-rolled month/week/day grid (`date-fns` + CSS Grid) | Extend `react-day-picker@10` (already installed) for the month view specifically | If the month view only ever needed to show a **single** dot/indicator per day (not distinguishable chips) and never needed click-through to a specific item — `react-day-picker`'s `Day`/`DayButton` customization can render a plain indicator dot cheaply. That is not this milestone's requirement (up to 3 distinguishable colored chips + "+N", click opens the day's item list), so the extra friction of fighting a single-date-picker's `<table role="grid">`/`<button>` semantics for multi-item content isn't worth it. See Pitfall below |
-| Hand-rolled calendar (no dependency) | A dedicated React calendar/events library (e.g. `react-big-calendar`, `@fullcalendar/react`, `dayjs`-based scheduler libraries) | If the roadmap eventually needs an **hour-of-day grid** (time slots, overlapping-in-time events, drag-to-reschedule) — none of which apply here: PROJECT.md's Out of Scope already excludes "Calendário completo (arrastar entre dias, visão de mês, recorrência customizável)" as a *full* calendar, and this milestone's items carry no time-of-day at all. Pulling in a scheduling library to render date-only chips in a grid would be materially more dependency weight and API surface than the feature needs |
-| `date-fns` pure functions | A date-utility swap to `dayjs` | Not relevant here — the project already standardized on `date-fns` (`CLAUDE.md`/`STACK.md` precedent, "don't mix date libraries"); no reason to introduce a second one for one feature |
+| Hand-written PL/pgSQL function extending `proxima_data_visita()` (or a sibling `proxima_data_visita_fixa()`) for "next Nth weekday of month" | A cron-scheduling/RRULE library (e.g. `rrule.js`, or a Postgres extension like `pg_cron` combined with iCal RRULE parsing) | Only if the product ever needs arbitrary recurrence rules (every 3rd Tuesday, every other Friday except holidays, etc.) computed and *stored as a schedule object*. This milestone's rule set is exactly two shapes — "weekday X, every N weeks" and "the Nth weekday-X of the month" — small and fixed enough that a ~15-line SQL function is simpler, has zero new dependency/cost surface, and matches the project's zero-infra-cost constraint. Introducing an RRULE engine would be solving a more general problem than the one asked for |
+| Extending `parseArquivo.ts` + a new `annotarLinhaAtivo.ts`/`confirmarAtivo.ts` pair, mirroring `importacaoCnpj.ts`/`importacaoFrequencia.ts` | A generic/config-driven "import wizard" abstraction that takes a field-schema and produces all 4 variants from one component | Only if a 5th or 6th import variant is requested later and the duplication across `annotarLinha*.ts` files becomes a real maintenance cost. Right now there are 3 variants with independent, deliberately-duplicated validation (per the project's existing pattern — each file is small and independently readable by future non-technical-adjacent maintainers). Premature abstraction here would trade simplicity for flexibility nobody asked for yet |
+| Postgres `EXTRACT(dow FROM date)` + `date_trunc('month', ...)` arithmetic for "Nth weekday of month" | `to_char(date, 'W')` + `rank()` window function approach (also found in community solutions) | The `EXTRACT(dow ...)` + `date_trunc` approach is simpler to read and test as a single deterministic expression (no window function, no ranking over a generated series); prefer it unless a future requirement needs "the Nth occurrence counting from the end of the month" (e.g. "last Friday"), which the modulo-based version handles more directly than the `rank()` version |
 
 ## What NOT to Use
 
-| Avoid | Why | Use instead |
+| Avoid | Why | Use Instead |
 |-------|-----|--------------|
-| Extending `react-day-picker@10` into a multi-event month calendar | It is a **date picker** (single/range date *input* control), not an events calendar. Its month grid is a `<table role="grid">` with single-selection semantics, and its `DayButton` renders a native `<button>` — stuffing 3 independently-clickable item chips into one button is both an accessibility problem (interactive content nested inside an already-interactive element, ambiguous "what did the user select") and a layout problem (the library's row height/grid is sized for a picker, not for variable-height chip stacks). It also has **no week or day view mode at all** — you'd still hand-build those two, so "reuse" only saves the month grid and costs you two rendering systems to keep visually consistent instead of one | Hand-rolled grid for all three views (month/week/day), sharing one date-grouping helper and one chip component across all three — one system, not two |
-| A general-purpose React calendar/scheduler library (`react-big-calendar`, `@fullcalendar/react`, etc.) | Solves a much bigger problem than this milestone has (hour-of-day time grids, drag-to-reschedule, recurring events, timezone-aware event ranges) — none of which apply since Agenda items are date-only with no time-of-day, and dragging/rescheduling is explicitly out of scope (PROJECT.md: "só visualização, sem arrastar"). Adds real bundle weight and a new API surface to learn for capability that's mostly unused | Plain `date-fns` + CSS Grid, matching the "zero new dependency unless justified" convention in `CLAUDE.md` |
-| A second date-formatting/locale library just for `pt-BR` labels | `date-fns/locale` already ships inside the installed `date-fns` package | `import { ptBR } from "date-fns/locale"` |
-| Client-side re-fetching per calendar month/week (a new paginated RPC) | `agenda_do_vendedor()` already returns the vendor's (or, for Supervisor, the team's) full set of *pending* items in one unbounded read — `AgendaList.tsx` already fetches this once via `getAgendaAction()`. The calendar view is a different **presentation** of the same array the list view already holds, not a different **query** | Reuse the same `AgendaItem[]` the list view fetches; group it client-side by day/week/month with pure functions (mirroring `agruparAgenda` in `lib/agenda/itens.ts`) — no new RPC parameter, no new network round-trip per navigation |
-
-## Integration with Existing Agenda Data Layer
-
-- `agenda_do_vendedor()` (migration `0014_agenda_do_vendedor.sql`) already returns every pending item — no date-range filter, `SECURITY INVOKER`, RLS-scoped — as a flat list with a plain `date` column (`YYYY-MM-DD`, no time-of-day) and `origem` (`prospeccao` | `visita`). This is exactly the shape a month/week/day grid needs: **no RPC changes required for the calendar view itself.**
-- `AgendaList.tsx` is currently the single owner of the one `getAgendaAction()` read and of `vendedorFiltroId` (Supervisor's vendor filter). The Lista↔Calendário toggle should live as a **sibling presentation mode inside/near `AgendaList.tsx`**, both fed by the same already-fetched `itens` — not a second fetch, not a second route. Concretely: extract the day-grouping into a new pure function in `lib/agenda/itens.ts` (e.g. `agruparPorDia(itens, mes)`), mirroring the existing `agruparAgenda`/`filtrarPorVendedor`/`vendedoresDaAgenda` pattern (single-authority pure functions, no business logic duplicated in components) — this is the same architectural seam the file's own header comment already documents.
-- Each month-grid cell's "up to 3 chips + `+N`" reuses the existing `Badge` variants from `AgendaItemRow.tsx` (`outline` for Prospecção/gray, `secondary` for Visita/blue) — same visual language, no new color system.
-- Clicking a day in month view "abre a lista completa daquele dia" (PROJECT.md) — reuse `AgendaItemRow` inside a `Dialog`/`Popover` filtered to that day's items, not a new row component.
-- Day view "reaproveita o card da lista atual" (PROJECT.md, explicit) — confirms no new item-card component is needed anywhere in this milestone.
-- **Overdue highlighting**: the list view already computes `atrasado` per-item via `bucketDoItem`/`differenceInCalendarDays` (`lib/agenda/itens.ts`). The calendar's day cells for past dates with pending items are inherently "atrasado" by the same definition — reuse `bucketDoItem`, don't reintroduce a second staleness rule (the project has hit this exact pitfall before with kanban staleness logic per PROJECT.md's Key Decisions).
-
-## Conclusão Remota — same pattern, no new tech
-
-The "conclusão remota" flow and its 6th editable list ("Motivos de conclusão remota") require zero new libraries; they're additive to code that already exists:
-
-- **New table + RLS + CRUD tab**: identical shape to the existing 5 editable lists (`categoria`, `produtos_consumidos`, `tipos_tarefa`, `motivos_perda`, `frequencias_pedido`) — table with `id`/`nome`, RLS restricting write to `is_supervisor()`, read open to authenticated, and a CRUD tab in whatever screen already hosts the other 5. Follow the `supabase-conventions` skill, same as every prior list.
-- **Form change**: `ConcluirItemDialog.tsx` already collects a required `resumo` (10-500 chars) via `react-hook-form` + `zod`. Add a "não foi presencial" checkbox/toggle that conditionally requires a `motivo_conclusao_remota_id` select — a `zod` `.refine()` or discriminated shape on the existing schema, not a new form library.
-- **RPC change**: `concluir_tarefa_prospeccao`/`concluir_visita` (migration `0015`) gain an optional parameter for the remote-completion motivo, following the same "atomic RPC, `SECURITY INVOKER`" precedent already set for those two functions and for `mover_card_funil`'s CNPJ guard extension in v1.4 — no new RPC pattern, just one more nullable parameter threaded into the existing `historico` write.
-
-This section is included because the milestone bundles both changes, but it confirms the **stack** answer is identical for both halves of v1.5: no new dependency, reuse of an already-proven pattern.
+| Any new npm package for spreadsheet parsing (e.g. `xlsx` from SheetJS's own CDN channel, `exceljs`, `read-excel-file`) | `@e965/xlsx` + `papaparse` already parse every column shape this project has needed across 3 import variants; a 4th variant is a new column *mapping*, not a new file format | Reuse `lib/importacao/parseArquivo.ts` unchanged |
+| Any recurrence/scheduling library (`rrule`, `node-cron`, `later.js`) or a Postgres cron extension (`pg_cron`) | This is a **computed suggestion**, not a **background schedule** — same reasoning the project already applied to v1.3 visit frequency ("Sem cron/worker de fundo — a próxima data de visita é calculada no momento da escrita... com confirmação síncrona do vendedor"). Feature (b) computes one candidate date synchronously inside `agenda_do_vendedor()`/`concluir_visita()`, exactly like today; nothing needs to "fire" on a schedule | Extend the existing pure SQL function pattern (`proxima_data_visita`) |
+| `moment.js` / any new date library, client or server | Already excluded project-wide (`CLAUDE.md` "What NOT to Use"); doubly irrelevant here since the actual date math must live in Postgres, not JS, per the v1.3 Key Decision | `date-fns` for display only; PL/pgSQL for computation |
+| Storing the recurring-day rule as free text (e.g. `"toda quinta-feira"` or `"1ª quinta"`) | Would reintroduce exactly the problem this project has repeatedly avoided with enums (`frequencia_pedidos`' cautionary tale is the opposite direction, but the same lesson applies): a rule needs to be *computed over*, and free text can't be `EXTRACT(dow FROM ...)`-compared. It would also block the "next Nth weekday" SQL function from having typed inputs | Small integer/enum columns (day-of-week 0–6, and for monthly, an ordinal 1–4/"last") that the SQL function consumes directly — this is a schema decision for the planning phase, not a library choice, but it directly determines whether the "no new library" recommendation above holds |
+| A generic "recurrence builder" UI abstraction pulled from a component library (e.g. an RRULE picker component) | No such component is in the shadcn/ui ecosystem, and the actual UI need here is narrow: a weekday selector for weekly/biweekly, and a "week-of-month + weekday" selector for monthly — both are small, composed directly from existing shadcn/ui primitives (`Select`, `ToggleGroup`) already used for `frequencia_visita`'s 4-option UI | Compose from existing shadcn/ui primitives already installed, same as every prior enum-picker in this project |
 
 ## Stack Patterns by Variant
 
-**If the month grid needs per-day event counts beyond "+N" (e.g. a hover tooltip listing all items) later:**
-- Reuse the same `Tooltip` component `AgendaItemRow.tsx` already uses for the overdue-triangle hint — don't add a new tooltip/popover library.
+**For the second import spreadsheet ("Importar Clientes Ativos"):**
+- Reuse `lib/importacao/parseArquivo.ts` unchanged (file-format parsing is already generic across `.xlsx`/`.csv`)
+- Add a sibling module set mirroring `importacaoCnpj.ts`/`importacaoFrequencia.ts`: a new `annotarLinhaAtivo.ts` (row-level validation — this variant's twist is *more* required fields, not fewer, since it must satisfy the same completeness bar the "ganho" guard will require), a new `confirmarAtivo.ts` (Server Action), and a new RPC (e.g. `importar_clientes_ativos_lote`) that mirrors `importar_clientes_lote`'s set-based `INSERT ... ON CONFLICT DO NOTHING` shape but writes `status_acompanhamento = 'ganho'`/`etapa = 'primeira_venda'` directly and requires the same fields the "ganho" transition guard in `mover_card_funil` requires (per the v1.6 goal: razão social + endereço completo + CNPJ), leaving only frequência out
+- Because this RPC creates rows that start life already "ganho," it should decide up front whether it also needs to seed a first `visitas` row the way `mover_card_funil` does on transition — likely **not**, since frequência is explicitly excluded from this import (VIS-01's "frequência obrigatória ao ganho" guard cannot fire without a frequência value); confirm this as a planning-phase question, not a stack question
+- No new library for the "which column maps to which field" UI step — `lib/importacao/mapping.ts` already generalizes this
 
-**If a future milestone adds real time-of-day scheduling (calendar entries with hours, not just dates):**
-- That is the point at which a dedicated scheduling library becomes worth evaluating — re-research then. It is explicitly out of scope for v1.5 (items have no time-of-day field at all).
+**For fixed-anchor recurring visit scheduling:**
+- Extend, don't replace, `proxima_data_visita()` — either add parameters (day-of-week / week-of-month) to the existing function or add a sibling function it delegates to for the two "fixed anchor" frequencies, keeping it the single authority for all next-visit-date math (the project's own Pitfall 1 lesson from v1.3: "escolher uma autoridade e nunca duplicar a matemática no cliente")
+- Compute "next occurrence of weekday X on/after date D" with `D + ((X - EXTRACT(dow FROM D)::int + 7) % 7)` — the standard PL/pgSQL idiom for this (no Postgres built-in equivalent to Oracle's `NEXT_DAY` exists), confirmed as the community-standard approach across multiple independent postgresql.org mailing-list threads and reference implementations
+- Compute "Nth weekday of month" with `date_trunc('month', D) + (((X - EXTRACT(dow FROM date_trunc('month', D))::int + 7) % 7) + (N-1)*7) * interval '1 day'` — same idiom, offset by week-count; this needs a unit test (Vitest, calling the function through a local Supabase instance per the project's existing testing convention) for edge cases: month whose 1st Nth-weekday would fall in a 5-week span, and months where the target weekday's Nth occurrence doesn't exist (e.g. "5th Thursday of February") — decide and document the fallback (clamp to last occurrence, vs. no suggestion) as a planning-phase product decision, not a stack question
+- Keep the same fuso-horário discipline already established: base date is always `(now() at time zone 'America/Sao_Paulo')::date`, never raw `now()` — this is the project's Pitfall 1 from v1.3 and applies identically here
+- Keep the same "suggest, never auto-write" discipline: the fixed-anchor function feeds `agenda_do_vendedor()`'s `proxima_data_sugerida` column and/or a new "Agenda: clientes ativos sem frequência" query — `concluir_visita()` still takes the confirmed date as a parameter and never recomputes over the vendor's choice (v1.3 Key Decision, unchanged in v1.6)
 
 ## Version Compatibility
 
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| `date-fns@4.4.0` | `date-fns/locale` (`ptBR`) | Same package, subpath import, no version concern — already resolved by the existing `package.json` pin |
-| `react-day-picker@10.0.1` | Next.js 16 / React 19 | Confirmed current (npm registry, 2026-08-17) — stays exactly as-is for its existing single-date-picker input use case; this research does not change or extend its usage |
-| Existing `Badge`/`Card`/`Dialog` shadcn/ui components | Tailwind v4 (already in repo) | No change — the calendar view's chips/cells are built from the same primitives already styled for the list view |
+No new compatibility surface introduced. All packages involved (`@e965/xlsx@^0.20.3`, `papaparse@^5.5.4`, `date-fns@^4.4.0`, `next@16.2.10`, `@supabase/supabase-js@^2.110.5`) are already pinned and working together in this codebase across 5 prior milestones; this milestone adds Postgres functions and Server Actions/components following the same shapes, not new package versions to reconcile.
 
 ## Sources
 
-- Codebase (primary source for this research): `components/agenda/AgendaList.tsx`, `components/agenda/AgendaItemRow.tsx`, `lib/agenda/itens.ts`, `supabase/migrations/0014_agenda_do_vendedor.sql` — read directly, confidence HIGH (these are the actual files this milestone extends)
-- `.planning/PROJECT.md` — v1.5 milestone scope, Out of Scope history (v1.3's "Calendário completo... fica pra depois" entry, now being partially picked back up for view-only/no-drag), Key Decisions on date handling (Postgres-computed dates, `parseISO` not `new Date(string)`)
-- `.planning/sketches/MANIFEST.md` — sketch 003 (agenda-calendario), confirms Variante A (toolbar, no mini-calendar sidebar), matches PROJECT.md's target features
-- npm registry (`npm view react-day-picker version`, 2026-08-17) — confirms `10.0.1` is current and matches what's already installed. Confidence: HIGH for the version number itself, though the project's classify-confidence seam tags raw npm/websearch lookups LOW by default absent a separate legitimacy check
-- WebFetch: `https://daypicker.dev/guides/custom-components` and `https://daypicker.dev/upgrading` (official react-day-picker v10 docs, fetched directly) — confirms v10's `Day`/`DayButton` customization API, confirms `useDayRender` (the v8 hook) is gone, confirms `month_grid` classname / table-based grid structure. Confidence: MEDIUM (primary docs, but synthesized via a single fetch pass, not cross-verified against a second source)
-- WebSearch: "react-day-picker v10 components prop custom Day cell rendering for multi-event month calendar" — confirms the `components`/`Day`/`DayButton` customization pattern exists but is designed for picker use cases, not multi-event content. Confidence: LOW (web synthesis)
-- WebSearch: "build custom month calendar grid React date-fns CSS grid multiple events per day chips overflow plus N" — confirms the hand-rolled CSS Grid + date-fns + "+N" pattern is the standard, low-dependency approach for this exact shape of problem. Confidence: LOW (web synthesis, but consistent across multiple independent sources in the result set)
-- WebSearch: "react-day-picker DayButton customization event dots multiple events per day github discussion" — no dedicated precedent found for multi-chip content inside DayButton; reinforces that react-day-picker's design center is single-date selection, not an events calendar. Confidence: LOW
+- Direct codebase inspection (HIGH confidence — primary source): `supabase/migrations/0013_cliente_ativo_e_frequencia_visita.sql` (`proxima_data_visita()`, `mover_card_funil` guard pattern), `0015_conclusao_com_resumo.sql` (`concluir_visita()`, "suggest never auto-write" discipline, fuso horário discipline), `0019_importar_clientes_lote_cnpj_nome_fantasia.sql` (set-based import RPC shape), `package.json` (confirms `@e965/xlsx` + `papaparse` already installed), `lib/importacao/` and `app/actions/importacao*.ts` (confirms the 3-variant sibling-file pattern to mirror for a 4th)
+- `.planning/PROJECT.md` Key Decisions table (HIGH confidence — primary source): confirms "sem cron/worker," "cálculo no Postgres nunca no navegador," "concluir é RPC atômica," and "planilha em massa nunca cria cliente novo fora do padrão UPDATE-only" precedents that bound this milestone's design space
+- WebSearch: "PostgreSQL PL/pgSQL calculate next occurrence Nth weekday of month recurrence date_trunc" — multiple independent postgresql.org mailing-list threads and community reference implementations (`nth_dow_of_month`/`first_dow_of_month` pattern, `to_char(...,'W')` + `rank()` alternative) converging on the same `date_trunc` + modulo-arithmetic idiom, with no Postgres built-in equivalent to Oracle's `NEXT_DAY`. Confidence: LOW per the project's raw-websearch classification tier, though cross-checked across independent sources converging on the same idiom — treat the exact SQL expression as a starting point to test, not copy verbatim
+- npm registry (implicit, via already-committed `package.json`) — version numbers for reused packages. Confidence: HIGH (already running in production across 5 milestones)
 
 ---
-*Stack research for: calendar/agenda view + conclusão remota, CRM Raiar v1.5*
-*Researched: 2026-08-17*
+*Stack research for: bulk-import variant + fixed-anchor recurring scheduling (CRM Raiar v1.6)*
+*Researched: 2026-08-24*
