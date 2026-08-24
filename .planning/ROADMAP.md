@@ -112,7 +112,11 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.5-ROADMAP
   2. Clientes que já eram "ganho" antes deste marco, mesmo sem razão social ou endereço completos, continuam acessíveis e funcionando normalmente (ficha, Agenda, diário), sem qualquer bloqueio retroativo.
   3. A caixinha usada para marcar "ganho" continua pedindo só CNPJ e frequência de visita — nenhum campo novo é adicionado a ela.
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 23-01-PLAN.md — Banco: `razao_social` anulável (migration 0024) e `mover_card_funil` com os dois guards novos de transição (migration 0025), provados por teste de integração próprio
+- [ ] 23-02-PLAN.md — Tela: pré-checagem em `marcarStatus` devolvendo mensagem que nomeia os campos faltando, com a caixinha de ganho intocada
 
 ### Phase 24: Dia Fixo na Recorrência de Visita
 
