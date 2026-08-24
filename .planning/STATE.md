@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Calendário na Agenda e Conclusão Remota
-current_phase: 5
-status: Awaiting next milestone
-stopped_at: Completed 22-03-PLAN.md (Fase 22 e marco v1.5 encerrados)
-last_updated: "2026-08-19T14:17:40.920Z"
-last_activity: 2026-08-19
-last_activity_desc: Milestone v1.5 completed and archived
+milestone: v1.6
+milestone_name: Importação de Clientes Ativos e Prospecção Separadas
+status: planning
+last_updated: "2026-08-24T14:48:32.153Z"
+last_activity: 2026-08-24
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
-current_phase_name: Conclusão Remota com Motivo
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 ## Current Position
 
-Phase: Milestone v1.5 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-19 — Quick task 260819-m8q: endereço opcional na importação e na ficha de edição
+Status: Defining requirements
+Last activity: 2026-08-24 — Milestone v1.6 started
 
 ## Performance Metrics
 

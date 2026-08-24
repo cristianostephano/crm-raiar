@@ -21,9 +21,16 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, o sistema cobre o pós-venda (cliente "ganho" define uma frequência de visita, uma Agenda única junta o que precisa ser feito, concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado), CNPJ é exigido no banco no momento do "ganho" — com clientes antigos preservados e duas planilhas para lidar com o campo em escala — e agora a Agenda tem uma segunda visualização (calendário de dia/semana/mês, incluindo o que já foi feito em datas passadas) além da lista, e concluir um item aceita ser marcado como não-presencial com um motivo categorizado.
 
-## Next Milestone Goals
+## Current Milestone: v1.6 Importação de Clientes Ativos e Prospecção Separadas
 
-Nada capturado ainda. Rode `/gsd-new-milestone` para começar o próximo marco.
+**Goal:** Dar duas portas claras de importação em massa (cliente ativo x prospecção), tirar do menu as duas planilhas avulsas que ficaram redundantes, e fazer a Agenda lembrar o vendedor de definir a frequência (com dia fixo) de clientes ativos que ainda não têm uma.
+
+**Target features:**
+- Nova planilha "Importar Clientes Ativos": cria cliente já em status ativo/ganho, exige todos os dados (razão social, CNPJ, endereço completo, responsável, etc.), só a frequência de visita fica de fora
+- "Importar clientes" renomeada para "Importar Clientes em Prospecção": obrigatório passa a ser só Nome Fantasia + Responsável; razão social e o resto ficam opcionais, preenchidos aos poucos
+- Trava de "ganho" ampliada: hoje só exige CNPJ + frequência; passa a exigir também razão social + endereço completo antes de deixar marcar como ganho
+- Menu: "Importar CNPJ" e "Importar frequências" saem (redundantes com a nova importação de ativos)
+- Agenda: nova seção mostrando clientes ativos sem frequência definida; definir a frequência inclui escolher um dia fixo (dia da semana pra semanal/quinzenal, semana do mês pra mensal); sugestão de próxima visita ao concluir passa a mirar esse dia fixo, não mais contar dias corridos a partir da conclusão
 
 ## Requirements
 
