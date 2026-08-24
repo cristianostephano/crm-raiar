@@ -59,33 +59,31 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 
 ## Traceability
 
-Preenchido durante a criação do roadmap.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ATIVO-01 | TBD | Pending |
-| ATIVO-02 | TBD | Pending |
-| ATIVO-03 | TBD | Pending |
-| ATIVO-04 | TBD | Pending |
-| PROSP-01 | TBD | Pending |
-| PROSP-02 | TBD | Pending |
-| PROSP-03 | TBD | Pending |
-| GANHO-01 | TBD | Pending |
-| GANHO-02 | TBD | Pending |
-| GANHO-03 | TBD | Pending |
-| ANCORA-01 | TBD | Pending |
-| ANCORA-02 | TBD | Pending |
-| ANCORA-03 | TBD | Pending |
-| ANCORA-04 | TBD | Pending |
-| AGENDA-01 | TBD | Pending |
-| MENU-01 | TBD | Pending |
-| MENU-02 | TBD | Pending |
+| ATIVO-01 | Phase 25 | Pending |
+| ATIVO-02 | Phase 25 | Pending |
+| ATIVO-03 | Phase 25 | Pending |
+| ATIVO-04 | Phase 25 | Pending |
+| PROSP-01 | Phase 26 | Pending |
+| PROSP-02 | Phase 26 | Pending |
+| PROSP-03 | Phase 26 | Pending |
+| GANHO-01 | Phase 23 | Pending |
+| GANHO-02 | Phase 23 | Pending |
+| GANHO-03 | Phase 23 | Pending |
+| ANCORA-01 | Phase 24 | Pending |
+| ANCORA-02 | Phase 24 | Pending |
+| ANCORA-03 | Phase 24 | Pending |
+| ANCORA-04 | Phase 24 | Pending |
+| AGENDA-01 | Phase 24 | Pending |
+| MENU-01 | Phase 26 | Pending |
+| MENU-02 | Phase 26 | Pending |
 
 **Coverage:**
 - v1 requirements: 17 total
-- Mapped to phases: 0 (aguardando roadmap)
-- Unmapped: 17 ⚠️ (esperado até o roadmap ser criado)
+- Mapped to phases: 17 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-08-24*
-*Last updated: 2026-08-24 after initial definition*
+*Last updated: 2026-08-24 after roadmap creation (Phases 23-26)*

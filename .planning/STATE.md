@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 status: planning
-last_updated: "2026-08-24T14:48:32.153Z"
+last_updated: "2026-08-24T16:00:00.000Z"
 last_activity: 2026-08-24
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-14)
+See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 22 — Conclusão Remota com Motivo
+**Current focus:** Phase 23 — Razão Social Opcional e Trava do Ganho Ampliada
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-08-24 — Milestone v1.6 started
+Phase: 23 of 26 (Razão Social Opcional e Trava do Ganho Ampliada) — primeira fase do marco v1.6 (4 fases: 23-26)
+Plan: — (ainda não planejada)
+Status: Ready to plan
+Last activity: 2026-08-24 — Roadmap v1.6 criado (4 fases derivadas dos 17 requisitos do marco, 100% de cobertura)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -107,6 +109,9 @@ Last activity: 2026-08-24 — Milestone v1.6 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- **Roadmap v1.6 (2026-08-24):** 4 fases (23 Razão Social Opcional e Trava do Ganho Ampliada / 24 Dia Fixo na Recorrência de Visita / 25 Importação de Clientes Ativos / 26 Importação de Clientes em Prospecção e Limpeza de Menu) derivadas dos 17 requisitos do marco, numeração continuando da v1.5 (última = Fase 22). 17/17 requisitos mapeados, sem órfãos nem duplicados. Fase 23 absorve a nulabilidade de `razao_social` (schema novo desta fase, nunca foi opcional antes) porque o guard de GANHO-01 só faz sentido com a coluna já nullable — mesmo raciocínio que já tornou `endereco` opcional numa quick task fora do marco (`quick-m8q`, 2026-08-19, já em produção antes deste roadmap). Fase 25 depende da Fase 23 (a nova RPC `importar_clientes_ativos_lote` duplica verbatim o guard de ganho ampliado — achado da pesquisa: Pitfall 1, guard drift). Fase 26 depende da Fase 23 (razão social nullable, usada pela planilha de prospecção) e da Fase 25 (as duas planilhas antigas só saem do menu depois que a nova planilha de Ativos prova substituir o caso de uso). Fase 24 é tecnicamente independente das outras três (arquivos praticamente disjuntos: enum/colunas de âncora + `proxima_data_visita` + Select de frequência + nova seção da Agenda), ordenada em segundo por convenção do marco. Diferente da pesquisa (`research/SUMMARY.md`), que propôs uma fase horizontal "Schema & RPC Foundation" separada de uma fase de UI, o roadmap final usa fatias verticais (schema+UI por fase) — o padrão que este projeto já usa desde a v1.3 (Fases 13/15/21/22 sempre bundlam migration + UI wiring na mesma fase, entregando uma capacidade observável pelo usuário por fase).
+- **Roadmap v1.6 — gap a confirmar no Discuss da Fase 24:** o fluxo de ganho (`GanhoFrequenciaDialog`) continua coletando frequência de visita SEM o dia fixo (GANHO-03 trava isso deliberadamente — a caixinha não cresce). Isso significa que `proxima_data_visita`, reescrita na Fase 24 para mirar o dia fixo, precisa de um comportamento definido para o estado "frequência definida, âncora ainda nula" — exatamente o que AGENDA-01 lista como pendência a resolver. Não presumir durante o planejamento; confirmar no Discuss da Fase 24 se o seed da primeira visita no momento do ganho fica adiado até o dia fixo existir, ou se cai num fallback baseado no intervalo antigo.
+- **Roadmap v1.6 — GANHO-01 só é alcançável hoje por causa de uma quick task anterior:** a branch de "endereço incompleto" do guard ampliado só existe porque `endereco` (CEP/rua/número/cidade/estado) já é opcional desde a quick task `260819-m8q` (2026-08-19, fora deste marco, migration 0023). Sem essa mudança prévia a branch nunca dispararia. `razao_social` opcional é schema genuinamente novo desta fase.
 - **Roadmap v1.5 (2026-08-17):** 3 fases (20 Calendário da Agenda — Mês, Semana e Dia / 21 Calendário — O Que Já Foi Feito em Datas Passadas / 22 Conclusão Remota com Motivo) derivadas dos 12 requisitos do marco, numeração continuando da v1.4 (última = Fase 19). Diferente de todos os marcos anteriores, este tem **duas frentes praticamente disjuntas em arquivos** (calendário: `lib/agenda/itens.ts` + componentes novos + refactor de `AgendaList.tsx`; conclusão remota: migrations novas + `ConcluirItemDialog.tsx` + `listas.ts`/`ConfiguracoesTabs.tsx`) — não há corrente linear de dependência de schema como nas v1.3/v1.4. A Fase 22 é ordenada por último apenas por conveniência de fiação (o refactor de `AgendaList.tsx` da Fase 20 muda onde o diálogo de conclusão vive; fazer o calendário antes evita mexer nessa fiação duas vezes), não por dependência técnica.
 - **Roadmap v1.5 — AGD-13 isolado na Fase 21 de propósito:** o requisito de mostrar itens JÁ CONCLUÍDOS em datas passadas surgiu numa rodada de Discuss posterior à pesquisa paralela. `STACK.md` e `ARCHITECTURE.md` foram escritos antes disso e ambos concluem "o calendário não precisa de mudança nenhuma no banco" — **essa conclusão está errada para o AGD-13** e não deve ser repetida no planejamento. `agenda_do_vendedor()` filtra `t.concluida = false` / `v.data_realizada is null`. A Fase 21 tem migration/RPC própria, limitada por período (nunca o histórico multi-ano inteiro de uma vez), preferencialmente como leitura NOVA e complementar somada no navegador ao conjunto de pendentes — deixando `agenda_do_vendedor()` e a Lista intocados.
 - **Roadmap v1.5 — Fase 20 antes de tudo:** a Fase 20 reorganiza quem é o dono da busca/filtro/diálogo dentro de `AgendaList.tsx` (hoje o mesmo componente busca, filtra e renderiza). Esse ponto único de busca é o que permite a Fase 21 acrescentar a segunda fonte de dados sem reescrever a navegação, e a Fase 22 encaixar a conclusão remota já na estrutura nova.
@@ -128,7 +133,7 @@ Recent decisions affecting current work:
 - Roadmap v1.2: decisão de produto travada — Cidade (LOC-02) vem da lista oficial IBGE (tabela `cidades` + RPC), NÃO de um SELECT DISTINCT sobre clientes existentes.
 - Roadmap v1.1: fases derivadas dos 13 requisitos IMP/EXP, ordenadas por risco crescente — Export (5) → Import preview (6) → Import commit (7). Só a Fase 7 grava no banco.
 
-**Convenções de código/arquitetura acumuladas (v1.0–v1.4), as mais relevantes para o v1.5:**
+**Convenções de código/arquitetura acumuladas (v1.0–v1.5), as mais relevantes para o v1.6:**
 
 - Um `clientes` É o card do funil (modelo 1:1) — `etapa`/`status_acompanhamento`/`motivo_perda_id`/`observacao`/`posicao` vivem direto em `clientes`, não há tabela `cards` separada.
 - `mover_card_funil` NÃO é security definer — roda como o chamador, então o RLS ainda se aplica ao UPDATE. Todo RPC novo deve seguir isso.
@@ -136,7 +141,7 @@ Recent decisions affecting current work:
 - Toda função `dashboard_*` é SECURITY INVOKER por omissão (mirror de `mover_card_funil`); RLS em `clientes`/`historico`/`cliente_produtos` é a única fronteira de autorização.
 - Mudança de contagem de parâmetros de RPC exige `drop function if exists <assinatura antiga>` ANTES do `create function`, no mesmo arquivo — `create or replace` com assinatura diferente cria sobrecarga ambígua e derruba toda chamada existente pelo PostgREST (documentado na migration 0018). Parâmetro novo sempre no fim, sempre `default null`.
 - `cidades` espelha a postura read-only do `historico` (RLS ligada, SELECT-only, zero policy de escrita) — padrão para datasets de referência.
-- Listas editáveis (5 hoje) usam sempre a mesma forma de RLS de 4 policies: SELECT aberto a `authenticated`, INSERT/UPDATE/DELETE atrás de `is_supervisor()`. Restringir o SELECT ao Supervisor por engano deixa o dropdown do Vendedor permanentemente vazio SEM erro nenhum — modo de falha silenciosa já documentado na própria migration 0016.
+- Listas editáveis (6 hoje) usam sempre a mesma forma de RLS de 4 policies: SELECT aberto a `authenticated`, INSERT/UPDATE/DELETE atrás de `is_supervisor()`. Restringir o SELECT ao Supervisor por engano deixa o dropdown do Vendedor permanentemente vazio SEM erro nenhum — modo de falha silenciosa já documentado na própria migration 0016.
 - Registrar uma lista editável nova exige 3 lugares: migration, união `ListaTabela` em `app/actions/listas.ts`, e uma aba em `ConfiguracoesTabs.tsx`. O TypeScript só pega o segundo sozinho.
 - `chk_estado_valido` mostrou que o passo final `VALIDATE CONSTRAINT` de uma constraint `NOT VALID` precisa vir dentro de `DO $$ ... EXCEPTION WHEN check_violation ... $$`, senão aborta o `supabase db push` inteiro se alguma linha legada violar.
 - `importar_clientes_lote` precisou do pragma `#variable_conflict use_column` (colisão entre coluna e OUT var) e teve que separar os inserts de `clientes` e `cliente_produtos` em dois statements sequenciais — encadear como duas CTEs de escrita quebra o RLS parent-EXISTS do filho.
@@ -144,6 +149,7 @@ Recent decisions affecting current work:
 - `keepMounted` é obrigatório nos `TabsContent` (Base UI desmonta o painel ao trocar de aba e re-dispara o fetch).
 - Data que afeta correção de dado é calculada no Postgres; no navegador é sempre `parseISO`, nunca `new Date(string)` — `bucketDoItem` (`lib/agenda/itens.ts`) é a autoridade única de decisão atrasado/hoje/próximos e documenta o bug de fuso que o projeto já levou uma vez.
 - `atualizar_frequencia_visita_lote` (Fase 17) é o modelo direto para escrita em massa: UPDATE set-based único, não-security-definer, guard `is_supervisor()`, nome ambíguo tratado como erro de linha na camada de anotação pura.
+- `endereco` (CEP/rua/número/cidade/estado) é opcional em `clientes` desde a migration 0023 (quick task `260819-m8q`) — obrigatório só continua no cadastro manual novo (`createClienteSchema`), não na importação nem na edição. Rótulo "Sem cidade"/"Sem estado" único em `rotuloLocalizacao.ts`.
 
 <details>
 <summary><strong>Histórico completo de decisões por plano (Fases 01-09)</strong> — preservado aqui porque os diretórios de fase e os SUMMARY.md correspondentes foram limpos do disco; só existem no histórico do git</summary>
@@ -279,27 +285,35 @@ None yet.
 
 ### Blockers/Concerns
 
-**Ativos para o v1.5:**
+**Ativos para o v1.6:**
 
-- **Pesquisa desatualizada sobre o calendário (Fases 20/21):** `STACK.md` e `ARCHITECTURE.md` afirmam que o calendário não precisa de mudança nenhuma no banco. Isso valia antes do AGD-13 ser travado no Discuss e **não vale mais**. `agenda_do_vendedor()` só devolve pendentes (`t.concluida = false` / `v.data_realizada is null`); mostrar o que já foi feito em datas passadas exige leitura nova no banco (Fase 21). Não repetir a conclusão antiga durante o planejamento.
-- **Volume do histórico (Fase 21):** a leitura de itens concluídos precisa ser limitada ao período visível. Baixar o histórico multi-ano inteiro de um vendedor de uma vez é o risco de performance/egress desta fase (free tier).
-- **Autoridade única de data no calendário (Fase 20):** `startOfWeek`/`endOfWeek` do date-fns NÃO derivam o primeiro dia da semana do locale, mesmo recebendo `{ locale: ptBR }`. Segunda-feira precisa virar uma constante única compartilhada pelas visões de mês/semana/dia, senão as duas discordam sobre em qual coluna cai cada data. E colocar item na célula é sempre `parseISO`, nunca `new Date(string)` — mesmo bug de fuso que `bucketDoItem` já documenta.
-- **Contagem "+N" x filtro de vendedor (Fase 20):** os chips e o contador de cada dia precisam ser calculados sobre o MESMO conjunto já filtrado que a Lista usa (`filtrarPorVendedor`), nunca sobre o conjunto bruto — senão o Supervisor troca o filtro e os números da grade não acompanham.
-- **RPCs gêmeas (Fase 22):** `concluir_tarefa_prospeccao` e `concluir_visita` são duas funções separadas chamadas por dois wrappers separados, mas usam UM diálogo só. Estender só uma delas quebra silenciosamente metade da funcionalidade. Alterar as duas na mesma migration, com parâmetro novo `default null` no fim, e provar os dois caminhos (prospecção E visita) na mesma verificação. Os testes antigos de `tests/agenda/*.test.ts` devem passar SEM edição.
-- **Gatilhos de histórico (Fase 22, CONC-05):** o texto do diário é escrito pelos gatilhos `tarefas_before_update_historico`/`visitas_after_update_historico`, não pelas RPCs. Sem mexer neles, o motivo é gravado na tabela mas nunca aparece no diário. E não existe precedente no projeto de gatilho resolvendo FK de lista em texto legível (o motivo de perda nunca faz isso) — é lógica nova, não cópia; gravar o NOME resolvido, nunca o identificador.
-- **RLS da 6ª lista (Fase 22):** a policy de SELECT precisa ficar aberta a qualquer usuário autenticado. Restringir ao Supervisor deixa o dropdown do Vendedor permanentemente vazio, sem erro nenhum — modo de falha silenciosa que a própria migration 0016 documenta. Verificar com conta de Vendedor, não só de Supervisor.
+- **Fallback de `proxima_data_visita` para "frequência sem âncora" (Fase 24):** o fluxo de ganho (`GanhoFrequenciaDialog`) continua definindo frequência de visita SEM dia fixo (GANHO-03 trava isso de propósito — a caixinha não cresce). `proxima_data_visita`, reescrita nesta fase para mirar o dia fixo, precisa de um comportamento definido para esse estado intermediário (frequência definida, âncora nula) — exatamente o que AGENDA-01 lista como pendência a resolver. Confirmar no Discuss da Fase 24, não presumir no planejamento.
+- **`razao_social` nullable depende de `endereco` já ter sido tornado opcional fora do marco (Fase 23):** a branch de "endereço incompleto" do guard de GANHO-01 só é alcançável hoje porque `endereco` já é opcional desde a quick task `260819-m8q` (migration 0023, em produção). `razao_social` nullable é schema genuinamente novo desta fase — nunca foi opcional antes, inclusive no cadastro manual.
+- **Guard duplicado verbatim (Fase 25, achado da pesquisa):** a nova RPC `importar_clientes_ativos_lote` faz um INSERT direto, sem passar por `mover_card_funil` — todo guard de "ganho" (presente e futuro) precisa ser copiado manualmente para ela, com comentário cruzado explícito, ou vira uma porta dos fundos silenciosa para clientes "ganho" incompletos.
+- **Vocabulário de obrigatoriedade compartilhado entre os dois assistentes de importação (Fases 25/26):** `SYSTEM_FIELDS[].required` (UI) e `createImportRowSchema` (Zod, grava de fato) hoje são duas fontes mantidas à mão que só concordam por convenção. Ativos (tudo obrigatório menos frequência) e Prospecção (só Nome Fantasia + Responsável) precisam de um mecanismo por perfil, não duas cópias divergentes.
+- **Menu só é limpo depois do substituto provado (Fase 26):** remover "Importar CNPJ"/"Importar frequências" antes da Fase 25 estar em produção deixaria o Supervisor sem caminho nenhum para regularizar clientes "ganho" incompletos. `AppSidebar.test.tsx` e os specs Playwright que navegam direto pelas rotas antigas precisam ser atualizados juntos, não só o link do menu.
+
+**Resolvidos na v1.5 (histórico):**
+
+- Pesquisa desatualizada sobre o calendário (Fases 20/21) — corrigida durante o planejamento da Fase 21 (leitura nova `agenda_concluidos_do_vendedor`, limitada por período).
+- Volume do histórico (Fase 21) — resolvido com leitura limitada ao período visível.
+- Autoridade única de data no calendário (Fase 20) — resolvido com constante compartilhada de início de semana + `parseISO` em toda leitura.
+- Contagem "+N" x filtro de vendedor (Fase 20) — resolvido, chips/contadores calculados sobre o conjunto já filtrado.
+- RPCs gêmeas (Fase 22) — `concluir_tarefa_prospeccao`/`concluir_visita` estendidas juntas na migration 0022, testes antigos passaram sem edição.
+- Gatilhos de histórico (Fase 22, CONC-05) — resolvido, os dois gatilhos de auditoria resolvem o motivo em texto legível no Diário.
+- RLS da 6ª lista (Fase 22) — SELECT aberto a qualquer autenticado, verificado com conta de Vendedor.
 
 **Ativos, novos (2026-08-19):**
 
 - **Contas seed de teste apagadas — 49 arquivos de teste agora falham com "Invalid login credentials", NÃO é o rate-limit conhecido:** `vendedor.a+test@raiar.local`/`vendedor.b+test@raiar.local` (e a conta pessoal `cristiano.stephano@gmail.com`) foram deliberadamente apagadas a pedido do dono do projeto (quick task 260819-l6o) para dar lugar aos 15 vendedores reais da equipe. `tests/helpers/supabase-test-clients.ts`/`tests/auth/rls-roles.test.ts` (SEED_ACCOUNTS) e ~49 arquivos que dependem deles agora falham porque as contas literalmente não existem mais — não é o rate-limit de `signInWithPassword` (esse continua existindo à parte, mas não é a causa aqui). O executor da quick task 260819-m8q reportou isso incorretamente como o rate-limit conhecido; a causa real são as contas apagadas. Precisa de uma decisão futura: recriar `vendedor.a+test`/`vendedor.b+test` como contas técnicas dedicadas a teste (nunca aparecem pra ninguém usar de verdade), ou reescrever os testes pra usar 2 dos 15 vendedores reais.
 - **15 vendedores reais cadastrados com senha temporária gerada, ainda não repassadas/trocadas** — ver lista completa no histórico da conversa (quick task 260819-l6o). `celular` de todos os 15 ficou com placeholder `"0000000000"` (não coletado ainda).
-- **Planilha real da equipe (`Listagem_Clientes_por_Vendedor.xlsx`) é a carteira de CLIENTES ATIVOS, não prospecção** — o assistente "Importar clientes" hoje só sabe importar pra primeira etapa do funil ("Aguardando contato"). Precisa de uma nova forma de importar direto como "ativo"/"ganho" (com CNPJ + frequência de visita, que são exigidos nesse status) — conversa de planejamento ainda não iniciada, dono pediu pra deixar pra depois (2026-08-19).
+- **Planilha real da equipe (`Listagem_Clientes_por_Vendedor.xlsx`) é a carteira de CLIENTES ATIVOS, não prospecção** — origem direta do escopo do marco v1.6 (Fase 25).
 - Sistema zerado de clientes em 2026-08-19 (0 clientes hoje) após uma importação de teste (1099 linhas) ter sido desfeita a pedido do dono, por ter sido importada como prospecção quando deveria ser como ativo.
 
 **Herdados, ainda relevantes:**
 
 - Gap de verificação humana aceito formalmente (Fase 8): o drag-and-drop com auto-scroll do kanban foi revisado por código, não exercitado por um drag real de mouse. Risco julgado baixo. Ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`.
-- `eslint-disable` documentado em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — a Fase 22 pode voltar a mexer perto do Diário neste arquivo; não piorar a supressão.
+- `eslint-disable` documentado em `ClienteDetailSheet.tsx` (~linha 227) cobrindo um efeito de reset com ~13 setState — as Fases 23-26 podem voltar a mexer neste arquivo (campos de razão social/endereço/frequência); não piorar a supressão.
 - Rate limit conhecido de `signInWithPassword` do Supabase Auth impede rodar `npm test` inteiro limpo numa tacada; convenção do projeto (Fases 13/18/19) é provar isoladamente os arquivos de maior risco de regressão.
 - CLI do Supabase pinado em `2.111.0` para `db push` (2.112.0+ tem bug conhecido de validação de schema).
 - A tabela `clientes` ao vivo tem uma linha de teste com `estado='ZZ'`; `chk_estado_valido` está enforced-but-NOT-VALID nela (bloqueia escritas futuras, só não foi validada retroativamente). Sem ação necessária a menos que o dono queira re-rodar `VALIDATE CONSTRAINT` depois de apagar os dados de teste.
@@ -319,6 +333,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- **Marco v1.6 roteirizado (2026-08-24):** 4 fases novas (23 Razão Social Opcional e Trava do Ganho Ampliada / 24 Dia Fixo na Recorrência de Visita / 25 Importação de Clientes Ativos / 26 Importação de Clientes em Prospecção e Limpeza de Menu) derivadas dos 17 requisitos do marco (ATIVO/PROSP/GANHO/ANCORA/AGENDA/MENU), numeração continuando da v1.5 (última = Fase 22). 17/17 requisitos mapeados, sem órfãos nem duplicados. Ordem: 23 primeiro (fundação de schema, sem dependência); 24 segundo (independente, mas maior novidade técnica — Nth-weekday-of-month é matemática de calendário nova no projeto); 25 depende de 23 (guard duplicado verbatim); 26 depende de 23 e 25 (razão social nullable + substituto provado antes da limpeza de menu). Fases 23-26 marcadas "Not started".
 - **Marco v1.5 roteirizado (2026-08-17):** 3 fases novas (20 Calendário da Agenda — Mês, Semana e Dia / 21 Calendário — O Que Já Foi Feito em Datas Passadas / 22 Conclusão Remota com Motivo) derivadas dos 12 requisitos do marco (AGD-07..AGD-14, CONC-02..CONC-05), numeração continuando da v1.4 (última = Fase 19). 12/12 requisitos mapeados, sem órfãos nem duplicados. Primeiro marco do projeto com duas frentes de arquivos disjuntos — as Fases 20/21 (calendário) e a Fase 22 (conclusão remota) não têm dependência técnica entre si; a ordem escolhida só evita mexer duas vezes na fiação do diálogo de conclusão dentro de `AgendaList.tsx`. AGD-13 (mostrar concluídos em datas passadas) foi isolado numa fase própria por ser o único requisito do calendário que exige trabalho novo de banco, e por ter chegado depois da pesquisa paralela — a Fase 20 é construída para que a Fase 21 acrescente a segunda fonte de dados num ponto só. Fases 20-22 marcadas "Not started".
 - **Marco v1.4 roteirizado (2026-08-10):** 2 fases novas (18 CNPJ Obrigatório no Ganho / 19 Planilhas de CNPJ e Nome Fantasia) derivadas dos 5 requisitos do marco (CNPJ/IMP), numeração continuando da v1.3 (última = Fase 17). 5/5 requisitos mapeados, sem órfãos nem duplicados. Granularidade deliberadamente baixa dado o tamanho e o precedente forte do marco (2 fases, não 4-6). Fases 18-19 marcadas "Not started".
 - **Marco v1.3 roteirizado (2026-08-07):** 5 fases novas (13 Cliente Ativo e Frequência de Visita / 14 Agenda Unificada / 15 Conclusão com Resumo e Próxima Visita / 16 Ficha do Cliente Ativo — Campos e Diário / 17 Planilhas — Frequência em Massa e Exportação do Diário) derivadas dos 17 requisitos do marco (AGD/VIS/CONC/DIAR/ATV/IMP), numeração continuando da v1.2 (última = Fase 12). 17/17 requisitos mapeados, sem órfãos nem duplicados. Fases 13-17 marcadas "Not started".
@@ -335,8 +350,10 @@ Items acknowledged and carried forward from previous milestone close:
 | Manual verification | 01-05 Task 4 — real password-reset + invite-accept email round-trips | Resolved 2026-07-20 (caminho de código verificado via links gerados pelo admin) | 2026-07-16 |
 | Manual verification | Fase 8 — drag real de mouse com auto-scroll do kanban não exercitado (revisão de código apenas) | Aberto — risco aceito, baixo | 2026-07-26 |
 | Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` no efeito de reset com ~13 setters, suprimido com `eslint-disable-next-line` em vez de refatorado (o fix correto muda o timing do reset e não há cobertura de teste nesse componente). Recomendada uma quick task dedicada — as Fases 16/18/19 já mexeram neste arquivo. | Aberto — suprimido, não corrigido | 2026-08-06, quick task 260806-fln |
+| Test infra | Contas seed de teste (`vendedor.a+test`/`vendedor.b+test`) apagadas a pedido do dono (quick task 260819-l6o) — ~49 arquivos de teste falham até uma decisão (recriar como contas técnicas ou migrar testes para 2 dos 15 vendedores reais) | Aberto — decisão pendente | 2026-08-19 |
+| Filter UX | Select do filtro de vendedor na Agenda perde a seleção em qualquer recarga da tela (achado na Fase 20-05, fora de escopo) | Aberto — quick task futura | 2026-08-18 |
 
-**SECURITY DEFINER exceptions (4 no codebase):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) e `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a). O v1.5 **não deve adicionar uma quinta** — as duas RPCs de conclusão continuam `SECURITY INVOKER` com RLS como única fronteira, a leitura nova do calendário histórico deve seguir o mesmo padrão de `agenda_do_vendedor()`, e a 6ª lista editável é protegida por RLS comum com `is_supervisor()` só na escrita. Os 2 gatilhos de auditoria `SECURITY DEFINER` (`tarefas_before_update_historico`/`visitas_after_update_historico`) são um balde separado e já existente — estender o corpo deles (necessário para CONC-05) não cria exceção nova.
+**SECURITY DEFINER exceptions (4 no codebase):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) e `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a). O v1.6 **não deve adicionar uma quinta** — a nova RPC `importar_clientes_ativos_lote` (Fase 25) segue o padrão de `importar_clientes_lote`/`mover_card_funil` (não-security-definer, guard explícito de `is_supervisor()`), e nenhuma fase do marco precisa de Auth Admin API. Os 2 gatilhos de auditoria `SECURITY DEFINER` (`tarefas_before_update_historico`/`visitas_after_update_historico`) são um balde separado e já existente.
 
 ## Session Continuity
 
@@ -346,4 +363,4 @@ Resume file:
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Roadmap v1.6 criado (Fases 23-26). Próximo passo: `/gsd-plan-phase 23`.
