@@ -1,0 +1,35 @@
+-- Fase 23 Plano 1: primeira migration do marco v1.6 (Importação de Clientes
+-- Ativos e Prospecção Separadas) — clientes.razao_social deixa de exigir
+-- valor obrigatório (D-05).
+--
+-- Três fatos registrados aqui para quem vier depois:
+--
+-- 1. `clientes.razao_social` nasceu `text not null unique` na migration
+--    0002 e nunca foi afrouxada. A quick task 260819-m8q (migration 0023)
+--    afrouxou só as 5 colunas de endereço (cep, rua, numero, cidade,
+--    estado) e escreveu explicitamente que razão social ficava de fora.
+--    Esta é a primeira vez que a coluna deixa de exigir valor.
+--
+-- 2. A unicidade CONTINUA valendo — só a exigência de valor obrigatório
+--    sai. No Postgres, dois valores nulos nunca conflitam entre si numa
+--    constraint de unicidade, então várias linhas podem ficar sem razão
+--    social ao mesmo tempo sem violar `clientes_razao_social_key`.
+--
+-- 3. Por causa do item 2, `importar_clientes_lote` (migrations 0004/0005/
+--    0006/0019) NÃO precisa ser recriada: seu `on conflict (razao_social)
+--    do nothing` continua correto, porque linhas sem razão social
+--    simplesmente não disputam o conflito. Registrado aqui para quem vier
+--    depois não recriar a função à toa — é exatamente o mesmo raciocínio
+--    que a 0023 registrou sobre `jsonb_to_recordset`.
+--
+-- Esta migration NÃO altera nenhuma constraint (a unicidade permanece) e
+-- NÃO recria nenhuma função nem policy — só a exigência de valor.
+--
+-- NEW file — nunca editar 0001-0023, que já estão aplicadas em produção
+-- (regra do CLAUDE.md / Pitfall 11 do projeto).
+--
+-- Source: .planning/phases/23-raz-o-social-opcional-e-trava-do-ganho-ampliada/23-01-PLAN.md
+--         supabase/migrations/0023_endereco_opcional_na_importacao.sql (molde)
+
+alter table clientes
+  alter column razao_social drop not null;
