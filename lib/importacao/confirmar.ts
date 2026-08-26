@@ -22,10 +22,14 @@ import type { ResolvedRow } from "@/lib/importacao/annotarLinha"
 
 /** Reason vocabulary for duplicate-related skips — 07-UI-SPEC.md's exact
  * Copywriting Contract strings, distinct from the review-time duplicate
- * reason (`Possível duplicado de "X"`, produced by validarLoteImportacao). */
-const DUPLICADO_PULADO_NA_REVISAO_REASON =
+ * reason (`Possível duplicado de "X"`, produced by validarLoteImportacao).
+ * Exportadas desde a Fase 25 Plano 2 (mudança mínima, sem efeito de
+ * comportamento) para que lib/importacao/confirmarAtivo.ts reuse o MESMO
+ * vocabulário de motivo em vez de manter uma segunda cópia que só
+ * concordaria por convenção. */
+export const DUPLICADO_PULADO_NA_REVISAO_REASON =
   "Possível duplicado (pulado na revisão)"
-const DUPLICADO_ENCONTRADO_AO_CONFIRMAR_REASON =
+export const DUPLICADO_ENCONTRADO_AO_CONFIRMAR_REASON =
   "Duplicado encontrado ao confirmar — não existia no momento da revisão"
 
 /** Exact snake_case keys the importar_clientes_lote RPC's
@@ -59,8 +63,11 @@ export type PlanConfirmacaoResult = {
 
 /** Maps a resolved/sanitized review row (Fase 6) to the RPC's snake_case
  * insert shape. numeroDeLojas is a string on ResolvedRow (raw sanitized
- * cell) — parsed to a number here, null when empty/non-numeric. */
-function toRpcClienteRow(resolved: ResolvedRow): RpcClienteRow {
+ * cell) — parsed to a number here, null when empty/non-numeric. Exportada
+ * desde a Fase 25 Plano 2 (mudança mínima de visibilidade, sem efeito de
+ * comportamento) para que o fluxo de ativos reuse a MESMA conversão em vez
+ * de duplicá-la. */
+export function toRpcClienteRow(resolved: ResolvedRow): RpcClienteRow {
   const parsed = resolved.numeroDeLojas
     ? Number(resolved.numeroDeLojas)
     : NaN
