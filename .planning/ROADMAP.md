@@ -152,10 +152,12 @@ Plans:
   2. Uma linha com dado obrigatório faltando vira erro só daquela linha, na mesma tela de revisão já usada nas outras importações — nunca trava o lote inteiro.
   3. Um possível duplicado é sinalizado na revisão antes de gravar, com a mesma lógica já usada nas outras importações.
 
-**Plans**: 3 plans
-- [ ] 25-01-PLAN.md — Migration 0027: RPC `importar_clientes_ativos_lote` (cria clientes já em "ganho"/etapa final) + função auxiliar de completude duplicando os guards das migrations 0018/0025 + teste de integração
+**Plans**: 1/3 plans executed
+
+- [x] 25-01-PLAN.md — Migration 0027: RPC `importar_clientes_ativos_lote` (cria clientes já em "ganho"/etapa final) + função auxiliar de completude duplicando os guards das migrations 0018/0025 + teste de integração
 - [ ] 25-02-PLAN.md — Vocabulário de campos da planilha de ativos, gerador do modelo, anotação linha a linha, reconciliação da confirmação e as duas ações de servidor (validar/confirmar)
 - [ ] 25-03-PLAN.md — Assistente de 3 passos "Importar Clientes Ativos", tabela de revisão e tela de conclusão próprias, rota protegida e entrada nova no menu
+
 **UI hint**: yes
 
 ### Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu
@@ -178,5 +180,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 23. Razão Social Opcional e Trava do Ganho Ampliada | 2/2 | Complete   | 2026-08-26 |
 | 24. Dia Fixo na Recorrência de Visita | 3/3 | Complete   | 2026-08-26 |
-| 25. Importação de Clientes Ativos | 0/TBD | Not started | - |
+| 25. Importação de Clientes Ativos | 1/3 | In Progress|  |
 | 26. Importação de Clientes em Prospecção e Limpeza de Menu | 0/TBD | Not started | - |

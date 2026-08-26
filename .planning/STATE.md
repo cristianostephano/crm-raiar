@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
-current_phase: 24
-current_phase_name: Dia Fixo na Recorrência de Visita
-status: verifying
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-08-26T18:51:05.135Z"
+current_phase: 25
+current_phase_name: Importação de Clientes Ativos
+status: executing
+stopped_at: Completed 25-01-PLAN.md
+last_updated: "2026-08-26T19:40:41.072Z"
 last_activity: 2026-08-26
-last_activity_desc: Phase 24 execution started
+last_activity_desc: Phase 25 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 8
+  completed_plans: 6
   percent: 50
 ---
 
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 24 — Dia Fixo na Recorrência de Visita
+**Current focus:** Phase 25 — Importação de Clientes Ativos
 
 ## Current Position
 
-Phase: 24 (Dia Fixo na Recorrência de Visita) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-08-26 — Phase 24 execution started
+Phase: 25 (Importação de Clientes Ativos) — EXECUTING
+Plan: 1 of 3
+Status: Ready to execute
+Last activity: 2026-08-26 — Phase 25 execution started
 
-Progress: [██████████] 100%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -109,6 +109,7 @@ Progress: [██████████] 100%
 | Phase 24 P01 | ~15min (+ pausa de checkpoint) | 3 tasks | 2 files |
 | Phase 24 P02 | ~10min | 3 tasks | 5 files |
 | Phase 24 P03 | ~16min (Tasks 1-2) + checkpoint | 3 tasks | 9 files |
+| Phase 25 P01 | ~15min + pausa | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -291,6 +292,8 @@ Recent decisions affecting current work:
 - [Phase 24]: [Fase 24-01] Migration 0026 aplicada em producao: dia_semana_enum/semana_do_mes_enum, colunas dia_semana_visita/semana_do_mes_visita em clientes, proxima_data_visita reescrita (2->4 params, plpgsql) com caminho antigo (D-01) preservado literal e caminho novo de busca de dia fixo; agenda_do_vendedor e mover_card_funil recriados passando a ancora. 'Ultima' ocorrencia do mes implementada como contagem independente para tras (nunca sinonimo condicional de '4a') - outubro/2026 prova a divergencia (22 vs 29). mover_card_funil passa a LER as duas colunas de ancora para cobrir o caso de re-ganho apos voltar de ganho para em_andamento.
 - [Phase 24]: Fase 24 Plano 02: lib/funil/diaFixo.ts reusa geraProximaVisita (frequencia.ts) em vez de redeclarar a mesma pergunta; atualizarFrequenciaVisita nunca toca em visitas, entregando D-04 por construcao; os dois Selects de dia fixo vivem dentro do mesmo bloco condicionado a cliente ganho (GanhoFrequenciaDialog.tsx intocado, GANHO-03).
 - [Phase 24]: Fase 24 concluida (Plano 24-03): secao Sem dia fixo definido na Lista da Agenda lembra o vendedor de clientes ativos sem ancora, via SELECT plano (getClientesSemDiaFixo) que exclui frequencia nenhuma de proposito e trata ancora mensal pela metade como sem dia fixo; filtrarPorVendedor generalizada em vez de uma segunda funcao de filtro. AGENDA-01 completo; Fase 24 (ANCORA-01..04 + AGENDA-01) fechada.
+- [Phase 25]: Fase 25 Plano 1: cliente_ativo_pronto_para_ganho cobre 9 campos (7 dos guards 0018/0025 + responsavel/0002 + contato/ATIVO-01); filtro pendurado na mesma clausula de selecao que alimenta o INSERT fecha o risco de not null derrubar o lote inteiro (T-25-07)
+- [Phase 25]: ATIVO-01/02/03 deixados como Pending em REQUIREMENTS.md apos o plano 25-01 (nao marcados Complete) - o proprio source_audit do plano mostra que cada requisito so fica funcionalmente coberto depois dos planos 25-02/25-03 (anotacao/tela); mesma convencao ja travada nas Fases 9-01/19-01/20-01 para requisitos multi-plano
 
 ### Pending Todos
 
@@ -370,8 +373,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-26T18:49:37.999Z
-Stopped at: Completed 24-01-PLAN.md
+Last session: 2026-08-26T19:39:49.382Z
+Stopped at: Completed 25-01-PLAN.md
 Resume file:
 
 None
