@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
-current_phase: 23
-current_phase_name: Razão Social Opcional e Trava do Ganho Ampliada
-status: planning
-stopped_at: Phase 24 context gathered
-last_updated: "2026-08-26T16:36:08.765Z"
+current_phase: 24
+current_phase_name: Dia Fixo na Recorrência de Visita
+status: executing
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-08-26T17:56:13.102Z"
 last_activity: 2026-08-26
-last_activity_desc: Plano 23-02 concluído (mensagem na tela para ficha incompleta ao marcar ganho; GANHO-01/GANHO-03 fechados)
+last_activity_desc: Phase 24 execution started
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
   percent: 25
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 23 — Razão Social Opcional e Trava do Ganho Ampliada
+**Current focus:** Phase 24 — Dia Fixo na Recorrência de Visita
 
 ## Current Position
 
-Phase: 23 of 26 (Razão Social Opcional e Trava do Ganho Ampliada) — primeira fase do marco v1.6 (4 fases: 23-26)
-Plan: 2 of 2
-Status: Phase complete
-Last activity: 2026-08-26 — Plano 23-02 concluído (mensagem na tela para ficha incompleta ao marcar ganho; GANHO-01/GANHO-03 fechados)
+Phase: 24 (Dia Fixo na Recorrência de Visita) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-08-26 — Phase 24 execution started
 
 Progress: [██████████] 100%
 
@@ -106,6 +106,7 @@ Progress: [██████████] 100%
 | Phase 22 P02 | ~20min | 2 tasks | 5 files |
 | Phase 22 P03 | 40min | 3 tasks | 7 files |
 | Phase 23 P02 | ~20min | 3 tasks | 4 files |
+| Phase 24 P01 | ~15min (+ pausa de checkpoint) | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -285,6 +286,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 22-03] Descoberto: mockClear() (vitest) nao limpa mockResolvedValueOnce ainda nao consumidos entre testes — um it() que dispara uma acao assincrona sem esperar por ela pode vazar o valor enfileirado para o proximo teste do arquivo. Caso de roteamento dividido em dois it() independentes, cada um esperando explicitamente pela segunda chamada antes de terminar.
 - [Phase 23-02]: GanhoFrequenciaDialog.tsx não foi tocado (D-03) — já exibia result.error.message como alerta e mantinha a caixinha aberta; a mensagem de ficha incompleta reaproveita esse comportamento sem edição de componente
 - [Phase 23-02]: lib/funil/fichaParaGanho.ts é a autoridade única do lado TypeScript de 'quais campos faltam para o ganho', espelhando campo por campo o guard PL/pgSQL da migration 0025 (mesma regra de vazio: nulo ou só espaço; complemento fora nos dois lados, D-04)
+- [Phase 24]: [Fase 24-01] Migration 0026 aplicada em producao: dia_semana_enum/semana_do_mes_enum, colunas dia_semana_visita/semana_do_mes_visita em clientes, proxima_data_visita reescrita (2->4 params, plpgsql) com caminho antigo (D-01) preservado literal e caminho novo de busca de dia fixo; agenda_do_vendedor e mover_card_funil recriados passando a ancora. 'Ultima' ocorrencia do mes implementada como contagem independente para tras (nunca sinonimo condicional de '4a') - outubro/2026 prova a divergencia (22 vs 29). mover_card_funil passa a LER as duas colunas de ancora para cobrir o caso de re-ganho apos voltar de ganho para em_andamento.
 
 ### Pending Todos
 
@@ -364,10 +366,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-26T16:36:08.719Z
-Stopped at: Phase 24 context gathered
+Last session: 2026-08-26T17:56:13.049Z
+Stopped at: Completed 24-01-PLAN.md
 Resume file:
 
-.planning/phases/24-dia-fixo-na-recorr-ncia-de-visita/24-CONTEXT.md
+None
 
 - Roadmap v1.6 criado (Fases 23-26). Próximo passo: `/gsd-plan-phase 23`.

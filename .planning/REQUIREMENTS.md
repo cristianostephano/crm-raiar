@@ -28,10 +28,10 @@ Requisitos do marco v1.6. Cada um mapeia para uma fase do roadmap.
 
 ### Dia Fixo (Recorrência de Visita)
 
-- [ ] **ANCORA-01**: Ao definir frequência de visita semanal ou quinzenal de um cliente ativo, o vendedor também escolhe um dia fixo da semana
-- [ ] **ANCORA-02**: Ao definir frequência mensal, o vendedor escolhe a semana do mês (1ª/2ª/3ª/4ª/Última) + o dia da semana
-- [ ] **ANCORA-03**: Ao concluir uma visita, a sugestão de próxima data mira sempre o dia fixo definido — nunca conta dias corridos a partir da data de conclusão
-- [ ] **ANCORA-04**: O sistema nunca sugere uma data de visita no passado
+- [x] **ANCORA-01**: Ao definir frequência de visita semanal ou quinzenal de um cliente ativo, o vendedor também escolhe um dia fixo da semana
+- [x] **ANCORA-02**: Ao definir frequência mensal, o vendedor escolhe a semana do mês (1ª/2ª/3ª/4ª/Última) + o dia da semana
+- [x] **ANCORA-03**: Ao concluir uma visita, a sugestão de próxima data mira sempre o dia fixo definido — nunca conta dias corridos a partir da data de conclusão
+- [x] **ANCORA-04**: O sistema nunca sugere uma data de visita no passado
 
 ### Agenda
 
@@ -71,10 +71,10 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 | GANHO-01 | Phase 23 | Complete |
 | GANHO-02 | Phase 23 | Complete |
 | GANHO-03 | Phase 23 | Complete |
-| ANCORA-01 | Phase 24 | Pending |
-| ANCORA-02 | Phase 24 | Pending |
-| ANCORA-03 | Phase 24 | Pending |
-| ANCORA-04 | Phase 24 | Pending |
+| ANCORA-01 | Phase 24 | Complete |
+| ANCORA-02 | Phase 24 | Complete |
+| ANCORA-03 | Phase 24 | Complete |
+| ANCORA-04 | Phase 24 | Complete |
 | AGENDA-01 | Phase 24 | Pending |
 | MENU-01 | Phase 26 | Pending |
 | MENU-02 | Phase 26 | Pending |
