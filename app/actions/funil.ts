@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { ETAPA_FINAL, type EtapaKey } from "@/lib/funil/etapas"
 import {
+  camposFaltandoParaGanho,
+  mensagemFichaIncompleta,
+} from "@/lib/funil/fichaParaGanho"
+import {
   isFrequenciaVisita,
   type FrequenciaVisita,
 } from "@/lib/funil/frequencia"
@@ -102,6 +106,7 @@ export type MarcarStatusErrorCode =
   | "motivo_obrigatorio"
   | "frequencia_obrigatoria"
   | "cnpj_obrigatorio"
+  | "ficha_incompleta"
   | "mover_falhou"
 
 export type MarcarStatusResult =
@@ -126,6 +131,15 @@ export type MarcarStatusResult =
  * TRANSIÇÃO para ganho (cliente ainda não é ganho) ou uma reafirmação num
  * cliente que já é ganho — é a mesma condição do guard do RPC (18-01), para
  * a tela nunca cobrar CNPJ de quem já é ganho (grandfathering).
+ *
+ * GANHO-01/GANHO-02 (23-02): mesma relação cortesia/backstop do CNPJ acima,
+ * agora para razão social e endereço completo. O guard REAL é o de
+ * `mover_card_funil` (migration 0025, plano 23-01) — sem esta pré-checagem
+ * a exceção do Postgres cairia crua no "Não foi possível salvar as
+ * alterações. Tente novamente." abaixo, e o vendedor não descobriria qual
+ * campo falta. `lib/funil/fichaParaGanho.ts` é a autoridade única dessa
+ * regra do lado TypeScript e precisa concordar campo por campo com o guard
+ * do banco — ver o cabeçalho daquele módulo.
  */
 export async function marcarStatus(
   clienteId: string,
@@ -138,7 +152,9 @@ export async function marcarStatus(
 
   const { data: cliente, error: fetchError } = await supabase
     .from("clientes")
-    .select("etapa, status_acompanhamento, cnpj")
+    .select(
+      "etapa, status_acompanhamento, cnpj, razao_social, cep, rua, numero, cidade, estado"
+    )
     .eq("id", clienteId)
     .single()
 
@@ -204,6 +220,24 @@ export async function marcarStatus(
         code: "cnpj_obrigatorio",
         message: "Informe o CNPJ antes de confirmar.",
       },
+    }
+  }
+
+  // Mesma relação cortesia/backstop das pré-checagens acima (GANHO-01/
+  // GANHO-02, 23-02): o guard REAL é o de `mover_card_funil` (migration
+  // 0025). Só reprova aqui na TRANSIÇÃO para ganho (status atual diferente
+  // de "ganho" — grandfathering, mesma condição do guard do banco), e só
+  // quando a ficha realmente está incompleta.
+  if (novoStatus === "ganho" && cliente.status_acompanhamento !== "ganho") {
+    const camposFaltando = camposFaltandoParaGanho(cliente)
+
+    if (camposFaltando.length > 0) {
+      return {
+        error: {
+          code: "ficha_incompleta",
+          message: mensagemFichaIncompleta(camposFaltando),
+        },
+      }
     }
   }
 

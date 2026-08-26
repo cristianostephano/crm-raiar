@@ -150,4 +150,55 @@ describe("GanhoFrequenciaDialog (VIS-01, 260807-13-02)", () => {
 
     expect(onConfirm).toHaveBeenCalledWith("semanal", "123")
   })
+
+  it("fichaincompleta (GANHO-01, 23-02): confirmação devolvendo erro de ficha incompleta mostra a mensagem como alerta e a caixinha não fecha", async () => {
+    const mensagem =
+      "Complete a ficha do cliente antes de marcar como ganho: cidade."
+    const onConfirm = vi
+      .fn()
+      .mockResolvedValue({ error: { message: mensagem } })
+    const onOpenChange = vi.fn()
+
+    render(
+      <GanhoFrequenciaDialog
+        open
+        onOpenChange={onOpenChange}
+        razaoSocial="Padaria Central"
+        cnpjAtual=""
+        exigirCnpj
+        onConfirm={onConfirm}
+      />
+    )
+
+    const select = screen.getByRole("combobox", { name: "Frequência de visita" })
+    fireEvent.click(select)
+    fireEvent.click(await screen.findByRole("option", { name: "Semanal" }))
+
+    const cnpjInput = screen.getByLabelText("CNPJ")
+    fireEvent.change(cnpjInput, { target: { value: "12.345.678/0001-90" } })
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar ganho" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(mensagem)
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it("formadacaixinha (GANHO-03, 23-02): a caixinha tem exatamente um campo de texto e os dois rótulos de sempre — nenhum campo de razão social/CEP/rua/número/cidade/estado", () => {
+    renderDialog()
+
+    expect(screen.getAllByRole("textbox")).toHaveLength(1)
+    expect(screen.getByLabelText("Frequência de visita")).toBeInTheDocument()
+    expect(screen.getByLabelText("CNPJ")).toBeInTheDocument()
+
+    for (const rotuloAusente of [
+      "Razão social",
+      "CEP",
+      "Rua",
+      "Número",
+      "Cidade",
+      "Estado",
+    ]) {
+      expect(screen.queryByLabelText(rotuloAusente)).not.toBeInTheDocument()
+    }
+  })
 })
