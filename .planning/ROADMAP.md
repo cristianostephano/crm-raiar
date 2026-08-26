@@ -131,7 +131,14 @@ Plans:
   3. Ao concluir uma visita, a data sugerida para a próxima sempre cai no dia fixo definido e nunca é uma data no passado.
   4. Na Agenda, o vendedor vê uma seção própria com os clientes ativos que ainda não têm dia fixo definido — sejam os que nunca tiveram frequência, sejam os que já têm frequência mas ainda não têm o dia fixo.
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+
+- [ ] 24-01-PLAN.md — Banco: migration 0026 (enums e colunas de âncora, auxiliares de calendário, `proxima_data_visita` com os dois caminhos) e os dois chamadores passando a âncora, provados por teste de integração próprio
+- [ ] 24-02-PLAN.md — Ficha do cliente: vocabulário puro de dia fixo, ação de frequência gravando a âncora, e os dois Selects ao lado do Select de frequência que já existe
+- [ ] 24-03-PLAN.md — Agenda: seção nova na Lista com os clientes ativos sem dia fixo, cada item levando à ficha
+
 **UI hint**: yes
 
 ### Phase 25: Importação de Clientes Ativos
