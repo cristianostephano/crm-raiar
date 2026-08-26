@@ -127,11 +127,18 @@ export function agruparAgenda(
  * inalterada, na mesma ordem. Este é um ESTREITAMENTO LOCAL sobre uma lista
  * que a RLS já escopou — não é, e não pode virar, uma checagem de
  * permissão.
+ *
+ * Generalizada (Fase 24, AGENDA-01) para operar sobre QUALQUER forma de dado
+ * que tenha um campo `responsavel` — hoje `AgendaItem`, e a partir desta
+ * fase também `ClienteSemDiaFixo`. Continua existindo UMA função de
+ * estreitamento por vendedor no projeto: uma segunda função com a mesma
+ * regra é o modo de falha que este comentário existe para evitar. Nenhuma
+ * chamada existente muda: `T` é inferido automaticamente do array recebido.
  */
-export function filtrarPorVendedor(
-  itens: AgendaItem[],
+export function filtrarPorVendedor<T extends { responsavel: string | null }>(
+  itens: T[],
   vendedorId: string | null
-): AgendaItem[] {
+): T[] {
   if (vendedorId === null) return itens
   return itens.filter((item) => item.responsavel === vendedorId)
 }
@@ -478,4 +485,59 @@ export function intervaloDeHistorico(
     inicio: inicioVisivel,
     fim: fimVisivel < ontem ? fimVisivel : ontem,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Aviso de dia fixo (AGENDA-01, Fase 24) — clientes ativos que ainda não têm
+// dia fixo definido, mostrados numa seção própria da Lista. Vive neste mesmo
+// arquivo de propósito, mesmo raciocínio do cabeçalho e das duas camadas
+// acima: este continua sendo o único lugar que decide como os itens/dados da
+// Agenda são organizados. Como o resto do arquivo, a camada abaixo permanece
+// pura — nenhuma importação de `next/*` nem de `@/lib/supabase/*`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Uma linha da leitura nova de clientes ativos sem dia fixo
+ * (`lib/supabase/queries/agenda.ts#getClientesSemDiaFixo`). NÃO é um item de
+ * agenda — não tem data, não entra em `agruparAgenda`/`bucketDoItem`, não
+ * entra em nenhuma das três seções de trabalho — por isso é um tipo próprio,
+ * e não um campo novo em `AgendaItem`.
+ */
+export type ClienteSemDiaFixo = {
+  clienteId: string
+  razaoSocial: string
+  responsavel: string | null
+  responsavelNome: string | null
+  /** Frequência de visita do cliente, `null` quando ainda não foi definida
+   * nenhuma vez. Nunca vale `"nenhuma"` aqui: a consulta exclui de propósito
+   * quem desligou a recorrência (RES-11 da pesquisa da Fase 24) — quem
+   * decide QUEM entra nesta lista é sempre a consulta, nunca esta camada. */
+  frequenciaVisita: FrequenciaVisita | null
+}
+
+/** Os dois motivos possíveis de um cliente estar sem dia fixo. */
+export type MotivoSemDiaFixo = "sem_frequencia" | "sem_dia_fixo"
+
+/**
+ * Texto de tela para cada um dos dois motivos, o único lugar do projeto que
+ * escreve essas frases — a linha da seção nunca escreve o texto por conta
+ * própria, sempre lê deste mapa.
+ */
+export const MOTIVO_SEM_DIA_FIXO_LABELS: Record<MotivoSemDiaFixo, string> = {
+  sem_frequencia: "Ainda não tem frequência de visita definida.",
+  sem_dia_fixo: "Falta escolher o dia fixo da recorrência.",
+}
+
+/**
+ * Classifica POR QUE um cliente já presente na lista está sem dia fixo. Esta
+ * função NÃO decide quem entra na lista — quem decide é a consulta
+ * (`getClientesSemDiaFixo`). Ela só explica, por linha, qual dos dois casos
+ * é. Repetir a decisão de quem entra aqui criaria duas autoridades sobre a
+ * mesma pergunta, que é exatamente o modo de falha já documentado neste
+ * projeto para a data da próxima visita (ver cabeçalho do arquivo).
+ */
+export function motivoSemDiaFixo(
+  cliente: ClienteSemDiaFixo
+): MotivoSemDiaFixo {
+  return cliente.frequenciaVisita ? "sem_dia_fixo" : "sem_frequencia"
 }
