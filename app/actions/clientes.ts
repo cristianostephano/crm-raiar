@@ -20,6 +20,13 @@ import {
   type ClienteDetalhe,
   type LookupOption,
 } from "@/lib/supabase/queries/clientes"
+import {
+  isDiaSemanaVisita,
+  isSemanaDoMesVisita,
+  normalizarAncora,
+  type DiaSemanaVisita,
+  type SemanaDoMesVisita,
+} from "@/lib/funil/diaFixo"
 import { isFrequenciaVisita, type FrequenciaVisita } from "@/lib/funil/frequencia"
 
 export type CreateClienteErrorCode =
@@ -453,10 +460,20 @@ export type AtualizarFrequenciaVisitaResult =
  * the cadence does not cancel or close the visita already agendada, it only
  * stops the next one from being generated once the current one is
  * concluded (Fase 15).
+ *
+ * Fase 24 (ANCORA-01/ANCORA-02, D-04): estendida para gravar também o dia
+ * fixo da recorrência (dia da semana e/ou semana do mês, migration 0026),
+ * SEMPRE no fim da lista de parâmetros e com padrão vazio, para nenhuma
+ * chamada existente quebrar. Continua um UPDATE comum, nunca uma chamada à
+ * RPC de mover card — e continua sem tocar em `visitas`: gravar o dia fixo
+ * agora não muda uma próxima visita já marcada (D-04), ela só passa a mirar
+ * o dia fixo na visita SEGUINTE.
  */
 export async function atualizarFrequenciaVisita(
   clienteId: string,
-  frequencia: FrequenciaVisita
+  frequencia: FrequenciaVisita,
+  diaSemana: DiaSemanaVisita | null = null,
+  semanaDoMes: SemanaDoMesVisita | null = null
 ): Promise<AtualizarFrequenciaVisitaResult> {
   const supabase = await createClient()
 
@@ -473,9 +490,29 @@ export async function atualizarFrequenciaVisita(
     return { error: { code: "invalid" } }
   }
 
+  // Fase 24 (T-24-07): mesma postura acima, agora para os dois campos de
+  // âncora — um valor vazio (null) é sempre aceito (significa "não
+  // definido"), só um valor PREENCHIDO fora do vocabulário é recusado.
+  if (diaSemana !== null && !isDiaSemanaVisita(diaSemana)) {
+    return { error: { code: "invalid" } }
+  }
+
+  if (semanaDoMes !== null && !isSemanaDoMesVisita(semanaDoMes)) {
+    return { error: { code: "invalid" } }
+  }
+
+  // T-24-09: a normalização por frequência é a única autoridade sobre quais
+  // campos sobrevivem a esta gravação — nunca decidida aqui por comparação
+  // de texto.
+  const ancora = normalizarAncora(frequencia, diaSemana, semanaDoMes)
+
   const { data: updated, error } = await supabase
     .from("clientes")
-    .update({ frequencia_visita: frequencia })
+    .update({
+      frequencia_visita: frequencia,
+      dia_semana_visita: ancora.diaSemana,
+      semana_do_mes_visita: ancora.semanaDoMes,
+    })
     .eq("id", clienteId)
     .select("id")
     .maybeSingle()
@@ -493,7 +530,12 @@ export async function atualizarFrequenciaVisita(
     return { error: { code: "generic" } }
   }
 
+  // Fase 24: a Agenda (plano 24-03) passa a listar quem está sem dia fixo —
+  // gravar a âncora aqui muda aquela lista. Mesmo precedente da Fase 22
+  // (revalidação acrescentada quando a Agenda passou a consumir uma lista
+  // editável).
   revalidatePath("/clientes")
+  revalidatePath("/agenda")
   return { data: { id: updated.id } }
 }
 

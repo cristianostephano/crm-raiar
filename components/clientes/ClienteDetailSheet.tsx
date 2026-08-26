@@ -70,8 +70,21 @@ import { PerdaMotivoDialog } from "@/components/clientes/PerdaMotivoDialog"
 import { GanhoFrequenciaDialog } from "@/components/clientes/GanhoFrequenciaDialog"
 import { HistoricoTimeline } from "@/components/clientes/HistoricoTimeline"
 import { DiarioTimeline } from "@/components/clientes/DiarioTimeline"
+import {
+  ancoraCompleta,
+  DIA_SEMANA_ITEMS,
+  exigeSemanaDoMes,
+  normalizarAncora,
+  SEMANA_DO_MES_ITEMS,
+  type DiaSemanaVisita,
+  type SemanaDoMesVisita,
+} from "@/lib/funil/diaFixo"
 import { ETAPA_FINAL } from "@/lib/funil/etapas"
-import { FREQUENCIA_VISITA_ITEMS, type FrequenciaVisita } from "@/lib/funil/frequencia"
+import {
+  FREQUENCIA_VISITA_ITEMS,
+  geraProximaVisita,
+  type FrequenciaVisita,
+} from "@/lib/funil/frequencia"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
 import { UFS, type Uf } from "@/lib/clientes/ufs"
@@ -458,22 +471,39 @@ export function ClienteDetailSheet({
     void handleStatusChange(novoStatus)
   }
 
-  // Standing frequência de visita control (VIS-02/VIS-04) — deliberately a
-  // separate handler from handleStatusChange/handleStatusSelect: this is an
-  // ordinary clientes field edit, never a funil stage/status transition, so
-  // it must never call marcarStatus or reach mover_card_funil
-  // (13-UI-SPEC.md Interaction Contract point 4). Saves immediately on
-  // change, no confirmation step, outside the "Dados do cliente"
-  // react-hook-form/"Salvar alterações" flow (VIS-02 minimum friction).
-  async function handleFrequenciaChange(value: string | null) {
-    if (!value || !cliente) return
-    const frequencia = value as FrequenciaVisita
+  // Standing frequência de visita + dia fixo control (VIS-02/VIS-04,
+  // ANCORA-01/ANCORA-02) — deliberately a separate handler from
+  // handleStatusChange/handleStatusSelect: this is an ordinary clientes
+  // field edit, never a funil stage/status transition, so it must never
+  // call marcarStatus or reach mover_card_funil (13-UI-SPEC.md Interaction
+  // Contract point 4). Saves immediately on change, no confirmation step,
+  // outside the "Dados do cliente" react-hook-form/"Salvar alterações" flow
+  // (VIS-02 minimum friction).
+  //
+  // Fase 24 (D-02): única função de salvamento para os três campos
+  // (frequência, dia da semana, semana do mês) — os três handlers de tela
+  // abaixo chamam esta função em vez de falar com a ação de servidor
+  // diretamente. A normalização (o que sobrevive a uma troca de frequência)
+  // vem sempre de `normalizarAncora` (lib/funil/diaFixo.ts, T-24-09), nunca
+  // decidida aqui.
+  async function salvarAncora(
+    frequencia: FrequenciaVisita,
+    diaSemana: DiaSemanaVisita | null,
+    semanaDoMes: SemanaDoMesVisita | null
+  ) {
+    if (!cliente) return
+    const ancora = normalizarAncora(frequencia, diaSemana, semanaDoMes)
 
     setFrequenciaError(null)
     setIsSavingFrequencia(true)
 
     try {
-      const result = await atualizarFrequenciaVisita(cliente.id, frequencia)
+      const result = await atualizarFrequenciaVisita(
+        cliente.id,
+        frequencia,
+        ancora.diaSemana,
+        ancora.semanaDoMes
+      )
 
       if (result.error) {
         setFrequenciaError(GENERIC_ERROR)
@@ -481,13 +511,47 @@ export function ClienteDetailSheet({
       }
 
       setCliente((prev) =>
-        prev ? { ...prev, frequenciaVisita: frequencia } : prev
+        prev
+          ? {
+              ...prev,
+              frequenciaVisita: frequencia,
+              diaSemanaVisita: ancora.diaSemana,
+              semanaDoMesVisita: ancora.semanaDoMes,
+            }
+          : prev
       )
     } catch {
       setFrequenciaError(GENERIC_ERROR)
     } finally {
       setIsSavingFrequencia(false)
     }
+  }
+
+  function handleFrequenciaChange(value: string | null) {
+    if (!value || !cliente) return
+    void salvarAncora(
+      value as FrequenciaVisita,
+      cliente.diaSemanaVisita,
+      cliente.semanaDoMesVisita
+    )
+  }
+
+  function handleDiaSemanaChange(value: string | null) {
+    if (!value || !cliente || !cliente.frequenciaVisita) return
+    void salvarAncora(
+      cliente.frequenciaVisita,
+      value as DiaSemanaVisita,
+      cliente.semanaDoMesVisita
+    )
+  }
+
+  function handleSemanaDoMesChange(value: string | null) {
+    if (!value || !cliente || !cliente.frequenciaVisita) return
+    void salvarAncora(
+      cliente.frequenciaVisita,
+      cliente.diaSemanaVisita,
+      value as SemanaDoMesVisita
+    )
   }
 
   async function handleToggleTarefa(tarefaId: string, concluida: boolean) {
@@ -1122,6 +1186,88 @@ export function ClienteDetailSheet({
                           <p className="text-sm text-muted-foreground">
                             Frequência ainda não definida.
                           </p>
+                        ) : null}
+
+                        {/* Fase 24 (D-02): os dois campos de dia fixo ficam
+                            ABAIXO do Select de frequência, dentro do MESMO
+                            bloco condicionado a "ganho" — nunca um formulário
+                            paralelo. Só aparecem quando a frequência atual
+                            gera próxima visita (geraProximaVisita,
+                            lib/funil/frequencia.ts — nunca comparação de
+                            texto solta). */}
+                        {geraProximaVisita(cliente.frequenciaVisita) ? (
+                          <>
+                            {/* Semana do mês vem ACIMA do dia da semana: na
+                                frase que o vendedor pensa a ordem é "última
+                                semana, na quinta", não o contrário. */}
+                            {exigeSemanaDoMes(cliente.frequenciaVisita) ? (
+                              <div className="flex flex-col gap-1.5">
+                                <Label htmlFor="cliente-semana-do-mes-visita-select">
+                                  Semana do mês
+                                </Label>
+                                <Select
+                                  value={cliente.semanaDoMesVisita ?? ""}
+                                  onValueChange={handleSemanaDoMesChange}
+                                  items={SEMANA_DO_MES_ITEMS}
+                                >
+                                  <SelectTrigger
+                                    id="cliente-semana-do-mes-visita-select"
+                                    className="w-full"
+                                    disabled={isSavingFrequencia}
+                                  >
+                                    <SelectValue placeholder="Selecione a semana do mês" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {SEMANA_DO_MES_ITEMS.map((item) => (
+                                      <SelectItem key={item.value} value={item.value}>
+                                        {item.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ) : null}
+
+                            <div className="flex flex-col gap-1.5">
+                              <Label htmlFor="cliente-dia-semana-visita-select">
+                                Dia da semana
+                              </Label>
+                              <Select
+                                value={cliente.diaSemanaVisita ?? ""}
+                                onValueChange={handleDiaSemanaChange}
+                                items={DIA_SEMANA_ITEMS}
+                              >
+                                <SelectTrigger
+                                  id="cliente-dia-semana-visita-select"
+                                  className="w-full"
+                                  disabled={isSavingFrequencia}
+                                >
+                                  <SelectValue placeholder="Selecione o dia da semana" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {DIA_SEMANA_ITEMS.map((item) => (
+                                    <SelectItem key={item.value} value={item.value}>
+                                      {item.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {!ancoraCompleta(
+                              cliente.frequenciaVisita,
+                              cliente.diaSemanaVisita,
+                              cliente.semanaDoMesVisita
+                            ) ? (
+                              <p className="text-sm text-muted-foreground">
+                                Sem o dia fixo, a próxima visita continua
+                                sendo sugerida contando os dias a partir da
+                                conclusão da visita anterior. Definindo o dia
+                                fixo, as próximas visitas passam a cair
+                                sempre nele.
+                              </p>
+                            ) : null}
+                          </>
                         ) : null}
                       </div>
                     ) : null}

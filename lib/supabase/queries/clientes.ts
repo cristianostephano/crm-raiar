@@ -2,6 +2,7 @@ import {
   isClienteIncompleto,
   type ClienteCompletudeInput,
 } from "@/lib/clientes/completude"
+import type { DiaSemanaVisita, SemanaDoMesVisita } from "@/lib/funil/diaFixo"
 import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 import { staleReason, type TarefaAberta } from "@/lib/funil/staleness"
@@ -100,6 +101,13 @@ export type ClienteDetalhe = {
   /** Cadência de pós-venda (VIS-01/VIS-02/ATV-03) — vale para qualquer
    * status, mas só é editável na ficha quando o cliente está ganho. */
   frequenciaVisita: FrequenciaVisita | null
+  /** Dia fixo da recorrência de visita (Fase 24, ANCORA-01/ANCORA-02) —
+   * colunas novas da migration 0026. Opcionais em TODO cliente hoje (nenhum
+   * ainda tem dia fixo gravado); `semanaDoMesVisita` só se aplica quando
+   * `frequenciaVisita` é "mensal" (lib/funil/diaFixo.ts é a autoridade de
+   * quando cada campo se aplica). */
+  diaSemanaVisita: DiaSemanaVisita | null
+  semanaDoMesVisita: SemanaDoMesVisita | null
   /** Campos do cliente ativo (ATV-01/ATV-02) — só fazem sentido depois do
    * ganho, mas continuam nulos num cliente ganho antigo como dado histórico
    * esperado, nunca erro (a tela do plano 16-04 não trata isso como estado
@@ -136,6 +144,8 @@ type ClienteDetalheRow = {
   nome_fantasia: string | null
   cnpj: string | null
   frequencia_pedidos: string | null
+  dia_semana_visita: DiaSemanaVisita | null
+  semana_do_mes_visita: SemanaDoMesVisita | null
 }
 
 /**
@@ -154,7 +164,7 @@ export async function getClienteById(
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao, frequencia_visita, nome_fantasia, cnpj, frequencia_pedidos"
+      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao, frequencia_visita, nome_fantasia, cnpj, frequencia_pedidos, dia_semana_visita, semana_do_mes_visita"
     )
     .eq("id", id)
     .maybeSingle()
@@ -190,6 +200,8 @@ export async function getClienteById(
     nomeFantasia: row.nome_fantasia,
     cnpj: row.cnpj,
     frequenciaPedidos: row.frequencia_pedidos,
+    diaSemanaVisita: row.dia_semana_visita,
+    semanaDoMesVisita: row.semana_do_mes_visita,
   }
 }
 
