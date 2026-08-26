@@ -5,8 +5,8 @@ milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 23
 current_phase_name: Razão Social Opcional e Trava do Ganho Ampliada
 status: planning
-stopped_at: Completed 22-03-PLAN.md (Fase 22 e marco v1.5 encerrados)
-last_updated: "2026-08-26T14:12:06.674Z"
+stopped_at: Phase 24 context gathered
+last_updated: "2026-08-26T16:36:08.765Z"
 last_activity: 2026-08-26
 last_activity_desc: Plano 23-02 concluído (mensagem na tela para ficha incompleta ao marcar ganho; GANHO-01/GANHO-03 fechados)
 progress:
@@ -364,10 +364,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-26T14:11:07.035Z
-Stopped at: Completed 22-03-PLAN.md (Fase 22 e marco v1.5 encerrados)
+Last session: 2026-08-26T16:36:08.719Z
+Stopped at: Phase 24 context gathered
 Resume file:
 
-None
+.planning/phases/24-dia-fixo-na-recorr-ncia-de-visita/24-CONTEXT.md
 
 - Roadmap v1.6 criado (Fases 23-26). Próximo passo: `/gsd-plan-phase 23`.
