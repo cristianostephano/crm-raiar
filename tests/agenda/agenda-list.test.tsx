@@ -13,6 +13,7 @@ vi.mock("@/app/actions/agenda", () => ({
   concluirTarefaProspeccao: vi.fn(),
   concluirVisita: vi.fn(),
   getAgendaConcluidosAction: vi.fn().mockResolvedValue({ data: [] }),
+  getClientesSemDiaFixoAction: vi.fn().mockResolvedValue({ data: [] }),
 }))
 
 // Molde de tests/clientes/filters-popover.test.tsx: a ficha do cliente
@@ -27,12 +28,14 @@ import {
   concluirTarefaProspeccao,
   concluirVisita,
   getAgendaAction,
+  getClientesSemDiaFixoAction,
 } from "@/app/actions/agenda"
 import type { GetAgendaResult } from "@/app/actions/agenda"
 
 const mockedAction = vi.mocked(getAgendaAction)
 const mockedConcluirTarefa = vi.mocked(concluirTarefaProspeccao)
 const mockedConcluirVisita = vi.mocked(concluirVisita)
+const mockedSemDiaFixo = vi.mocked(getClientesSemDiaFixoAction)
 
 /** Datas montadas a partir do relógio real do teste (nunca literais fixas),
  * para que "hoje"/"atrasado"/"próximos" nunca apodreçam com o tempo. */
@@ -88,6 +91,8 @@ describe("AgendaList", () => {
     mockedAction.mockClear()
     mockedConcluirTarefa.mockClear()
     mockedConcluirVisita.mockClear()
+    mockedSemDiaFixo.mockClear()
+    mockedSemDiaFixo.mockResolvedValue({ data: [] })
   })
 
   it("carregando: no primeiro render, nem a copy de erro nem a de vazio aparecem", () => {
@@ -342,5 +347,36 @@ describe("AgendaList", () => {
       null,
       "motivo-1"
     )
+  })
+
+  it("aviso de dia fixo (AGENDA-01): a seção aparece na Lista quando a ação devolve clientes, e não aparece na visão de Calendário", async () => {
+    mockedAction.mockResolvedValueOnce({ data: [] })
+    mockedSemDiaFixo.mockResolvedValueOnce({
+      data: [
+        {
+          clienteId: "cliente-sem-frequencia",
+          razaoSocial: "Padaria Sem Frequência",
+          responsavel: "vendedor-1",
+          responsavelNome: "Vendedor Um",
+          frequenciaVisita: null,
+        },
+      ],
+    })
+
+    renderList()
+
+    expect(
+      await screen.findByText("Sem dia fixo definido (1)")
+    ).toBeInTheDocument()
+    expect(screen.getByText("Padaria Sem Frequência")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Mês" }))
+
+    expect(
+      screen.queryByText("Sem dia fixo definido (1)")
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("Padaria Sem Frequência")
+    ).not.toBeInTheDocument()
   })
 })

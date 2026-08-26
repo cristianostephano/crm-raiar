@@ -7,9 +7,11 @@ import {
   concluirTarefaProspeccao,
   concluirVisita,
   getAgendaAction,
+  getClientesSemDiaFixoAction,
 } from "@/app/actions/agenda"
 import { AgendaCalendario } from "@/components/agenda/AgendaCalendario"
 import { AgendaItemRow } from "@/components/agenda/AgendaItemRow"
+import { AgendaSemDiaFixo } from "@/components/agenda/AgendaSemDiaFixo"
 import { ConcluirItemDialog } from "@/components/agenda/ConcluirItemDialog"
 import { ClienteDetailSheet } from "@/components/clientes/ClienteDetailSheet"
 import { Button } from "@/components/ui/button"
@@ -29,6 +31,7 @@ import {
   type AgendaBucket,
   type AgendaItem,
   type AgendaVisao,
+  type ClienteSemDiaFixo,
 } from "@/lib/agenda/itens"
 
 /** Sentinel Select value para "sem filtro" — mesma convenção que
@@ -87,6 +90,17 @@ type FetchState =
  * motivo devolvido por ela é roteado para as DUAS ações de servidor
  * conforme a `origem` do item — nunca só uma (mesmo risco travado do
  * plano: a janela é uma só, mas as ações são duas).
+ *
+ * A partir da Fase 24 (AGENDA-01), este componente também é dono de uma
+ * SEGUNDA leitura (`clientesSemDiaFixo`, via `getClientesSemDiaFixoAction`),
+ * disjunta da leitura de itens de agenda — clientes ativos que ainda não têm
+ * dia fixo de visita definido. O efeito que a busca depende do MESMO
+ * `reloadKey` do efeito original, para reagir à mesma recarga (salvar pela
+ * ficha, "Tentar novamente"). Falha em silêncio (lista vazia): este aviso é
+ * auxiliar e nunca pode impedir a Agenda de carregar. Estreitada pelo MESMO
+ * `filtrarPorVendedor` que a Lista já usa — nunca um segundo filtro — e
+ * renderizada só na visão de Lista (`AgendaSemDiaFixo.tsx`), ANTES do corte
+ * de "agenda vazia", para aparecer mesmo num dia sem pendências.
  */
 export function AgendaList({
   isSupervisor,
@@ -120,6 +134,10 @@ export function AgendaList({
   const [concluirDialogOpen, setConcluirDialogOpen] = useState(false)
   const [isExportingDiario, setIsExportingDiario] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+  // AGENDA-01 (Fase 24): clientes ativos sem dia fixo, começando vazio.
+  const [clientesSemDiaFixo, setClientesSemDiaFixo] = useState<
+    ClienteSemDiaFixo[]
+  >([])
 
   useEffect(() => {
     let cancelled = false
@@ -145,10 +163,43 @@ export function AgendaList({
     }
   }, [reloadKey])
 
+  // AGENDA-01 (Fase 24): segunda leitura, disjunta da agenda de itens
+  // pendentes, dependente do MESMO `reloadKey` — é isso que faz a seção
+  // reagir à mesma recarga que a Lista já reage (salvar pela ficha aberta a
+  // partir da própria Agenda, ou clicar em "Tentar novamente"). Sem
+  // `setState` síncrono no corpo deste efeito (a seção não tem esqueleto de
+  // carregamento próprio, ela simplesmente aparece quando os dados chegam) —
+  // por isso nenhuma supressão de lint nova é necessária aqui. Erro é
+  // silencioso: este aviso é auxiliar e nunca pode impedir a Agenda de
+  // carregar.
+  useEffect(() => {
+    let cancelled = false
+
+    getClientesSemDiaFixoAction().then((result) => {
+      if (cancelled) return
+      if (result.error) {
+        setClientesSemDiaFixo([])
+        return
+      }
+      setClientesSemDiaFixo(result.data)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [reloadKey])
+
   const itens = state.status === "pronto" ? state.itens : []
   const vendedorOpcoesDoFiltro = vendedoresDaAgenda(itens)
   const itensFiltrados = filtrarPorVendedor(itens, vendedorFiltroId)
   const secoes = agruparAgenda(itensFiltrados)
+  // AGENDA-01 (Fase 24): MESMO estreitamento por vendedor que a Lista já
+  // aplica acima, generalizado em lib/agenda/itens.ts — nunca um segundo
+  // filtro escrito aqui.
+  const clientesSemDiaFixoFiltrados = filtrarPorVendedor(
+    clientesSemDiaFixo,
+    vendedorFiltroId
+  )
   // O nome do vendedor só aparece na linha para o Supervisor vendo todos —
   // escolhido um vendedor específico, repetir o nome em toda linha é ruído.
   const showResponsavel = isSupervisor && vendedorFiltroId === null
@@ -373,51 +424,63 @@ export function AgendaList({
             onConcluirItem={handleOpenConcluir}
           />
           {visao === "lista" ? (
-            totalItens === 0 ? (
-              vendedorFiltroId !== null ? (
-                <div className="flex flex-col items-center gap-1 py-16 text-center">
-                  <p className="text-base font-semibold">
-                    {`Nenhum item pendente para ${nomeVendedorSelecionado ?? ""}.`}
-                  </p>
-                </div>
+            <>
+              {/* AGENDA-01 (Fase 24) — sempre acima das três seções de
+                  trabalho, e sempre visível mesmo com a agenda vazia: é um
+                  lembrete de configuração, não um item de trabalho com data.
+                  O próprio componente devolve nada quando a lista está
+                  vazia. */}
+              <AgendaSemDiaFixo
+                clientes={clientesSemDiaFixoFiltrados}
+                showResponsavel={showResponsavel}
+                onOpenCliente={handleOpenCliente}
+              />
+              {totalItens === 0 ? (
+                vendedorFiltroId !== null ? (
+                  <div className="flex flex-col items-center gap-1 py-16 text-center">
+                    <p className="text-base font-semibold">
+                      {`Nenhum item pendente para ${nomeVendedorSelecionado ?? ""}.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 py-16 text-center">
+                    <p className="text-base font-semibold">
+                      Sua agenda está em dia
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma tarefa de prospecção ou visita pendente no momento.
+                    </p>
+                  </div>
+                )
               ) : (
-                <div className="flex flex-col items-center gap-1 py-16 text-center">
-                  <p className="text-base font-semibold">
-                    Sua agenda está em dia
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma tarefa de prospecção ou visita pendente no momento.
-                  </p>
-                </div>
-              )
-            ) : (
-              <div className="flex flex-col gap-6">
-                {SECAO_ORDEM.map((bucket) => {
-                  const itensDaSecao = secoes[bucket]
-                  if (itensDaSecao.length === 0) return null
+                <div className="flex flex-col gap-6">
+                  {SECAO_ORDEM.map((bucket) => {
+                    const itensDaSecao = secoes[bucket]
+                    if (itensDaSecao.length === 0) return null
 
-                  return (
-                    <div key={bucket} className="flex flex-col gap-2">
-                      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                        {tituloSecao(bucket, itensDaSecao.length)}
-                      </h2>
-                      <div className="flex flex-col gap-2">
-                        {itensDaSecao.map((item) => (
-                          <AgendaItemRow
-                            key={item.itemId}
-                            item={item}
-                            atrasado={bucket === "atrasado"}
-                            showResponsavel={showResponsavel}
-                            onOpen={() => handleOpenCliente(item.clienteId)}
-                            onConcluir={() => handleOpenConcluir(item)}
-                          />
-                        ))}
+                    return (
+                      <div key={bucket} className="flex flex-col gap-2">
+                        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                          {tituloSecao(bucket, itensDaSecao.length)}
+                        </h2>
+                        <div className="flex flex-col gap-2">
+                          {itensDaSecao.map((item) => (
+                            <AgendaItemRow
+                              key={item.itemId}
+                              item={item}
+                              atrasado={bucket === "atrasado"}
+                              showResponsavel={showResponsavel}
+                              onOpen={() => handleOpenCliente(item.clienteId)}
+                              onConcluir={() => handleOpenConcluir(item)}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )
+                    )
+                  })}
+                </div>
+              )}
+            </>
           ) : null}
         </>
       )}

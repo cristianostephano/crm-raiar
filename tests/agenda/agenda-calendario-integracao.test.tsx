@@ -15,6 +15,7 @@ vi.mock("@/app/actions/agenda", () => ({
   concluirTarefaProspeccao: vi.fn(),
   concluirVisita: vi.fn(),
   getAgendaConcluidosAction: vi.fn().mockResolvedValue({ data: [] }),
+  getClientesSemDiaFixoAction: vi.fn().mockResolvedValue({ data: [] }),
 }))
 
 // Defensivo, mesma convenção de agenda-list.test.tsx: componentes internos
