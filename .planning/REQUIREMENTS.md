@@ -23,7 +23,7 @@ Requisitos do marco v1.6. Cada um mapeia para uma fase do roadmap.
 ### Trava do "Ganho"
 
 - [x] **GANHO-01**: Ao tentar marcar um cliente como "ganho" faltando razão social ou endereço completo, o sistema bloqueia e orienta o vendedor a completar a ficha do cliente antes
-- [ ] **GANHO-02**: A trava de razão social/endereço no "ganho" é só de TRANSIÇÃO, nunca retroativa — clientes já "ganho" antes deste marco, mesmo sem esses dados completos, continuam funcionando normalmente (mesmo padrão de grandfathering do CNPJ-02, v1.4)
+- [x] **GANHO-02**: A trava de razão social/endereço no "ganho" é só de TRANSIÇÃO, nunca retroativa — clientes já "ganho" antes deste marco, mesmo sem esses dados completos, continuam funcionando normalmente (mesmo padrão de grandfathering do CNPJ-02, v1.4)
 - [x] **GANHO-03**: A caixinha de marcar "ganho" continua pedindo só CNPJ + frequência — não cresce para um formulário maior
 
 ### Dia Fixo (Recorrência de Visita)
@@ -69,7 +69,7 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 | PROSP-02 | Phase 26 | Pending |
 | PROSP-03 | Phase 26 | Pending |
 | GANHO-01 | Phase 23 | Complete |
-| GANHO-02 | Phase 23 | Pending |
+| GANHO-02 | Phase 23 | Complete |
 | GANHO-03 | Phase 23 | Complete |
 | ANCORA-01 | Phase 24 | Pending |
 | ANCORA-02 | Phase 24 | Pending |

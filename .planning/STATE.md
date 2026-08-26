@@ -326,7 +326,6 @@ None yet.
 - A tabela `clientes` ao vivo tem uma linha de teste com `estado='ZZ'`; `chk_estado_valido` está enforced-but-NOT-VALID nela (bloqueia escritas futuras, só não foi validada retroativamente). Sem ação necessária a menos que o dono queira re-rodar `VALIDATE CONSTRAINT` depois de apagar os dados de teste.
 - `gsd-tools.cjs` não existe dentro de worktrees git criados a partir deste repo (está em `.claude/gsd-core/bin/` mas é untracked). Em execução paralela por worktree, as atualizações de STATE/ROADMAP precisam de edição manual.
 - **RESOLVIDO 2026-07-20 — 01-05 Task 4 (verificação de email real):** o limite de 2 envios/hora do free tier foi contornado dividindo a checagem em (a) caminho de token/sessão/UI, verificado via `supabase.auth.admin.generateLink()` — reset de senha e aceite de convite confirmados de ponta a ponta contra o projeto hospedado real — e (b) entregabilidade bruta na caixa de entrada, não re-observada, mas indiretamente confirmada. AUTH-01/AUTH-02 aprovados pelo dono do projeto.
-- Cliente de teste b52a41f0-9d73-4378-a05e-cc10c82f4c16 ('Teste Verificacao 23-02 LTDA'), criado via service-role script para o checkpoint humano do plano 23-02, pode ainda existir no banco de producao — apagar manualmente
 
 ### Quick Tasks Completed
 
