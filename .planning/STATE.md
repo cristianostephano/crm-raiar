@@ -6,14 +6,14 @@ current_phase: 24
 current_phase_name: Dia Fixo na Recorrência de Visita
 status: executing
 stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-08-26T17:56:13.102Z"
+last_updated: "2026-08-26T18:25:07.295Z"
 last_activity: 2026-08-26
 last_activity_desc: Phase 24 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 25
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 24 (Dia Fixo na Recorrência de Visita) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-26 — Phase 24 execution started
 
@@ -107,6 +107,7 @@ Progress: [██████████] 100%
 | Phase 22 P03 | 40min | 3 tasks | 7 files |
 | Phase 23 P02 | ~20min | 3 tasks | 4 files |
 | Phase 24 P01 | ~15min (+ pausa de checkpoint) | 3 tasks | 2 files |
+| Phase 24 P02 | ~10min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -287,6 +288,7 @@ Recent decisions affecting current work:
 - [Phase 23-02]: GanhoFrequenciaDialog.tsx não foi tocado (D-03) — já exibia result.error.message como alerta e mantinha a caixinha aberta; a mensagem de ficha incompleta reaproveita esse comportamento sem edição de componente
 - [Phase 23-02]: lib/funil/fichaParaGanho.ts é a autoridade única do lado TypeScript de 'quais campos faltam para o ganho', espelhando campo por campo o guard PL/pgSQL da migration 0025 (mesma regra de vazio: nulo ou só espaço; complemento fora nos dois lados, D-04)
 - [Phase 24]: [Fase 24-01] Migration 0026 aplicada em producao: dia_semana_enum/semana_do_mes_enum, colunas dia_semana_visita/semana_do_mes_visita em clientes, proxima_data_visita reescrita (2->4 params, plpgsql) com caminho antigo (D-01) preservado literal e caminho novo de busca de dia fixo; agenda_do_vendedor e mover_card_funil recriados passando a ancora. 'Ultima' ocorrencia do mes implementada como contagem independente para tras (nunca sinonimo condicional de '4a') - outubro/2026 prova a divergencia (22 vs 29). mover_card_funil passa a LER as duas colunas de ancora para cobrir o caso de re-ganho apos voltar de ganho para em_andamento.
+- [Phase 24]: Fase 24 Plano 02: lib/funil/diaFixo.ts reusa geraProximaVisita (frequencia.ts) em vez de redeclarar a mesma pergunta; atualizarFrequenciaVisita nunca toca em visitas, entregando D-04 por construcao; os dois Selects de dia fixo vivem dentro do mesmo bloco condicionado a cliente ganho (GanhoFrequenciaDialog.tsx intocado, GANHO-03).
 
 ### Pending Todos
 
@@ -366,7 +368,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-26T17:56:13.049Z
+Last session: 2026-08-26T18:23:46.171Z
 Stopped at: Completed 24-01-PLAN.md
 Resume file:
 
