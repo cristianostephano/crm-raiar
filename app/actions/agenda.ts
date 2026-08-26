@@ -2,9 +2,13 @@
 
 import { revalidatePath } from "next/cache"
 
-import type { AgendaItem } from "@/lib/agenda/itens"
+import type { AgendaItem, ClienteSemDiaFixo } from "@/lib/agenda/itens"
 import { geraProximaVisita, type FrequenciaVisita } from "@/lib/funil/frequencia"
-import { getAgenda, getAgendaConcluidos } from "@/lib/supabase/queries/agenda"
+import {
+  getAgenda,
+  getAgendaConcluidos,
+  getClientesSemDiaFixo,
+} from "@/lib/supabase/queries/agenda"
 import { createClient } from "@/lib/supabase/server"
 import { validarIntervaloHistorico, validarResumo } from "@/lib/validations/agenda"
 
@@ -260,6 +264,48 @@ export async function getAgendaConcluidosAction(
       error: {
         code: "fetch_falhou",
         message: "Não foi possível carregar o histórico. Tente novamente.",
+      },
+    }
+  }
+}
+
+export type ClientesSemDiaFixoErrorCode = "unauthenticated" | "fetch_falhou"
+
+export type GetClientesSemDiaFixoResult =
+  | { data: ClienteSemDiaFixo[]; error?: undefined }
+  | {
+      data?: undefined
+      error: { code: ClientesSemDiaFixoErrorCode; message: string }
+    }
+
+/**
+ * AGENDA-01 (Fase 24): embrulho fino da leitura nova de clientes ativos sem
+ * dia fixo, mesmo molde de `getAgendaAction()` — checa sessão, chama a
+ * leitura, devolve o mesmo par de resultado em união discriminada.
+ *
+ * Sem revalidação de rota própria: `atualizarFrequenciaVisita`
+ * (app/actions/clientes.ts, Plano 24-02) já revalida `/agenda` ao gravar a
+ * âncora — esta ação é chamada a partir do navegador conforme o `reloadKey`
+ * da Agenda avança, igual a `getAgendaAction()`.
+ */
+export async function getClientesSemDiaFixoAction(): Promise<GetClientesSemDiaFixoResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: "Sessão expirada." } }
+  }
+
+  try {
+    return { data: await getClientesSemDiaFixo() }
+  } catch {
+    return {
+      error: {
+        code: "fetch_falhou",
+        message:
+          "Não foi possível carregar a lista de clientes sem dia fixo. Tente novamente.",
       },
     }
   }

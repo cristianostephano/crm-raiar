@@ -1,4 +1,4 @@
-import type { AgendaItem } from "@/lib/agenda/itens"
+import type { AgendaItem, ClienteSemDiaFixo } from "@/lib/agenda/itens"
 import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 import { createClient } from "@/lib/supabase/server"
 
@@ -19,7 +19,7 @@ import { createClient } from "@/lib/supabase/server"
  * 14-03 precisa importá-lo sem passar por este arquivo (que puxa
  * `next/headers` via lib/supabase/server.ts).
  */
-export type { AgendaItem }
+export type { AgendaItem, ClienteSemDiaFixo }
 
 type AgendaRow = {
   origem: "prospeccao" | "visita"
@@ -126,4 +126,79 @@ export async function getAgendaConcluidos(
   }
 
   return (data ?? []).map((row: AgendaRow) => ({ ...mapRow(row), concluido: true }))
+}
+
+type ClienteSemDiaFixoRow = {
+  id: string
+  razao_social: string
+  responsavel: string
+  profiles: { nome: string; sobrenome: string } | null
+  frequencia_visita: FrequenciaVisita | null
+}
+
+function mapClienteSemDiaFixoRow(row: ClienteSemDiaFixoRow): ClienteSemDiaFixo {
+  return {
+    clienteId: row.id,
+    razaoSocial: row.razao_social,
+    responsavel: row.responsavel,
+    responsavelNome: row.profiles
+      ? `${row.profiles.nome} ${row.profiles.sobrenome}`
+      : null,
+    frequenciaVisita: row.frequencia_visita,
+  }
+}
+
+/**
+ * AGENDA-01 (Fase 24): leitura dos clientes ativos (`status_acompanhamento
+ * = 'ganho'`) que ainda não têm dia fixo de visita definido — a segunda
+ * fonte da Lista, disjunta de `getAgenda()`. Um SELECT plano sobre
+ * `clientes`, sem RPC nova: este projeto reserva RPC para escrita que
+ * precisa de atomicidade/guard ou leitura que precisa unir tabelas, e isto
+ * não é nem um nem outro.
+ *
+ * Filtro, três casos somados por "ou", todos sobre `status_acompanhamento =
+ * 'ganho'`:
+ * 1. `frequencia_visita` vazia (nunca teve frequência definida);
+ * 2. `frequencia_visita` preenchida, DIFERENTE de `nenhuma`, e
+ *    `dia_semana_visita` vazio;
+ * 3. `frequencia_visita` igual a `mensal` e `semana_do_mes_visita` vazia.
+ * O caso 3 existe porque uma âncora mensal pela metade (dia da semana
+ * escolhido, semana do mês ainda não) não é uma âncora — mesmo raciocínio
+ * que a migration 0026 usa para cair no cálculo antigo (D-01). O valor
+ * `nenhuma` fica de fora DE PROPÓSITO (RES-11 da pesquisa da Fase 24): quem
+ * desligou a recorrência não é cobrado por um dia fixo que, para ele, não
+ * existe.
+ *
+ * Ordenação por razão social, decidida aqui e em nenhum outro lugar — a
+ * tela nunca reordena, mesma disciplina que o cabeçalho deste arquivo já
+ * documenta para `getAgenda()`/`getAgendaConcluidos()`.
+ *
+ * NENHUM filtro de responsável e NENHUMA checagem de papel: a RLS de
+ * `clientes` (migration 0002) já escopou o resultado antes de ele chegar —
+ * mesmo princípio que o cabeçalho deste arquivo já documenta para as outras
+ * duas leituras.
+ */
+export async function getClientesSemDiaFixo(): Promise<ClienteSemDiaFixo[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .select(
+      "id, razao_social, responsavel, profiles(nome, sobrenome), frequencia_visita, dia_semana_visita, semana_do_mes_visita"
+    )
+    .eq("status_acompanhamento", "ganho")
+    .or(
+      "frequencia_visita.is.null,and(frequencia_visita.neq.nenhuma,dia_semana_visita.is.null),and(frequencia_visita.eq.mensal,semana_do_mes_visita.is.null)"
+    )
+    .order("razao_social", { ascending: true })
+
+  if (error) {
+    throw new Error(
+      `Falha ao carregar clientes sem dia fixo: ${error.message}`
+    )
+  }
+
+  return (data ?? []).map((row) =>
+    mapClienteSemDiaFixoRow(row as unknown as ClienteSemDiaFixoRow)
+  )
 }
