@@ -95,7 +95,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.5-ROADMAP
 ### 🚧 v1.6 Importação de Clientes Ativos e Prospecção Separadas (Phases 23-26) — IN PROGRESS
 
 - [x] **Phase 23: Razão Social Opcional e Trava do Ganho Ampliada** - `razao_social` vira opcional no banco e a trava de "ganho" cresce para também exigir razão social + endereço completo, com grandfathering dos clientes antigos. (completed 2026-08-26)
-- [ ] **Phase 24: Dia Fixo na Recorrência de Visita** - Definir frequência semanal/quinzenal/mensal de um cliente ativo passa a incluir um dia fixo, a próxima visita sugerida mira esse dia, e a Agenda lembra o vendedor de quem ainda não o definiu.
+- [x] **Phase 24: Dia Fixo na Recorrência de Visita** - Definir frequência semanal/quinzenal/mensal de um cliente ativo passa a incluir um dia fixo, a próxima visita sugerida mira esse dia, e a Agenda lembra o vendedor de quem ainda não o definiu. (completed 2026-08-26)
 - [ ] **Phase 25: Importação de Clientes Ativos** - Nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho", exigindo todos os dados (menos frequência de visita), com revisão linha a linha e detecção de duplicado.
 - [ ] **Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu** - "Importar clientes" é renomeada e relaxada para "Importar Clientes em Prospecção" (só Nome Fantasia + Responsável obrigatórios), e as planilhas avulsas "Importar CNPJ"/"Importar frequências" saem do menu.
 
@@ -131,13 +131,13 @@ Plans:
   3. Ao concluir uma visita, a data sugerida para a próxima sempre cai no dia fixo definido e nunca é uma data no passado.
   4. Na Agenda, o vendedor vê uma seção própria com os clientes ativos que ainda não têm dia fixo definido — sejam os que nunca tiveram frequência, sejam os que já têm frequência mas ainda não têm o dia fixo.
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 Plans:
 
 - [x] 24-01-PLAN.md — Banco: migration 0026 (enums e colunas de âncora, auxiliares de calendário, `proxima_data_visita` com os dois caminhos) e os dois chamadores passando a âncora, provados por teste de integração próprio
 - [x] 24-02-PLAN.md — Ficha do cliente: vocabulário puro de dia fixo, ação de frequência gravando a âncora, e os dois Selects ao lado do Select de frequência que já existe
-- [ ] 24-03-PLAN.md — Agenda: seção nova na Lista com os clientes ativos sem dia fixo, cada item levando à ficha
+- [x] 24-03-PLAN.md — Agenda: seção nova na Lista com os clientes ativos sem dia fixo, cada item levando à ficha
 
 **UI hint**: yes
 
@@ -174,6 +174,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 23. Razão Social Opcional e Trava do Ganho Ampliada | 2/2 | Complete   | 2026-08-26 |
-| 24. Dia Fixo na Recorrência de Visita | 2/3 | In Progress|  |
+| 24. Dia Fixo na Recorrência de Visita | 3/3 | Complete   | 2026-08-26 |
 | 25. Importação de Clientes Ativos | 0/TBD | Not started | - |
 | 26. Importação de Clientes em Prospecção e Limpeza de Menu | 0/TBD | Not started | - |

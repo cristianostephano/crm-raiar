@@ -35,7 +35,7 @@ Requisitos do marco v1.6. Cada um mapeia para uma fase do roadmap.
 
 ### Agenda
 
-- [ ] **AGENDA-01**: Vendedor vê na Agenda quais dos seus clientes ativos ainda não têm dia fixo definido — inclui quem nunca teve frequência definida E quem já tinha frequência mas ainda não tem o dia fixo (conceito novo deste marco)
+- [x] **AGENDA-01**: Vendedor vê na Agenda quais dos seus clientes ativos ainda não têm dia fixo definido — inclui quem nunca teve frequência definida E quem já tinha frequência mas ainda não tem o dia fixo (conceito novo deste marco)
 
 ### Menu
 
@@ -75,7 +75,7 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 | ANCORA-02 | Phase 24 | Complete |
 | ANCORA-03 | Phase 24 | Complete |
 | ANCORA-04 | Phase 24 | Complete |
-| AGENDA-01 | Phase 24 | Pending |
+| AGENDA-01 | Phase 24 | Complete |
 | MENU-01 | Phase 26 | Pending |
 | MENU-02 | Phase 26 | Pending |
 
