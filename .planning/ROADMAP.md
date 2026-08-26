@@ -94,7 +94,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.5-ROADMAP
 
 ### 🚧 v1.6 Importação de Clientes Ativos e Prospecção Separadas (Phases 23-26) — IN PROGRESS
 
-- [ ] **Phase 23: Razão Social Opcional e Trava do Ganho Ampliada** - `razao_social` vira opcional no banco e a trava de "ganho" cresce para também exigir razão social + endereço completo, com grandfathering dos clientes antigos.
+- [x] **Phase 23: Razão Social Opcional e Trava do Ganho Ampliada** - `razao_social` vira opcional no banco e a trava de "ganho" cresce para também exigir razão social + endereço completo, com grandfathering dos clientes antigos. (completed 2026-08-26)
 - [ ] **Phase 24: Dia Fixo na Recorrência de Visita** - Definir frequência semanal/quinzenal/mensal de um cliente ativo passa a incluir um dia fixo, a próxima visita sugerida mira esse dia, e a Agenda lembra o vendedor de quem ainda não o definiu.
 - [ ] **Phase 25: Importação de Clientes Ativos** - Nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho", exigindo todos os dados (menos frequência de visita), com revisão linha a linha e detecção de duplicado.
 - [ ] **Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu** - "Importar clientes" é renomeada e relaxada para "Importar Clientes em Prospecção" (só Nome Fantasia + Responsável obrigatórios), e as planilhas avulsas "Importar CNPJ"/"Importar frequências" saem do menu.
@@ -112,11 +112,12 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.5-ROADMAP
   2. Clientes que já eram "ganho" antes deste marco, mesmo sem razão social ou endereço completos, continuam acessíveis e funcionando normalmente (ficha, Agenda, diário), sem qualquer bloqueio retroativo.
   3. A caixinha usada para marcar "ganho" continua pedindo só CNPJ e frequência de visita — nenhum campo novo é adicionado a ela.
 
-**Plans**: 2 plans
+**Plans**: 2/2 plans complete
 
 Plans:
-- [ ] 23-01-PLAN.md — Banco: `razao_social` anulável (migration 0024) e `mover_card_funil` com os dois guards novos de transição (migration 0025), provados por teste de integração próprio
-- [ ] 23-02-PLAN.md — Tela: pré-checagem em `marcarStatus` devolvendo mensagem que nomeia os campos faltando, com a caixinha de ganho intocada
+
+- [x] 23-01-PLAN.md — Banco: `razao_social` anulável (migration 0024) e `mover_card_funil` com os dois guards novos de transição (migration 0025), provados por teste de integração próprio
+- [x] 23-02-PLAN.md — Tela: pré-checagem em `marcarStatus` devolvendo mensagem que nomeia os campos faltando, com a caixinha de ganho intocada
 
 ### Phase 24: Dia Fixo na Recorrência de Visita
 
@@ -165,7 +166,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 23. Razão Social Opcional e Trava do Ganho Ampliada | 0/TBD | Not started | - |
+| 23. Razão Social Opcional e Trava do Ganho Ampliada | 2/2 | Complete   | 2026-08-26 |
 | 24. Dia Fixo na Recorrência de Visita | 0/TBD | Not started | - |
 | 25. Importação de Clientes Ativos | 0/TBD | Not started | - |
 | 26. Importação de Clientes em Prospecção e Limpeza de Menu | 0/TBD | Not started | - |

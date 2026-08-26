@@ -2,15 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
+current_phase: 23
+current_phase_name: Razão Social Opcional e Trava do Ganho Ampliada
 status: planning
-last_updated: "2026-08-24T16:00:00.000Z"
-last_activity: 2026-08-24
+stopped_at: Completed 22-03-PLAN.md (Fase 22 e marco v1.5 encerrados)
+last_updated: "2026-08-26T14:12:06.674Z"
+last_activity: 2026-08-26
+last_activity_desc: Plano 23-02 concluído (mensagem na tela para ficha incompleta ao marcar ganho; GANHO-01/GANHO-03 fechados)
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 25
 ---
 
 # Project State
@@ -25,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 23 of 26 (Razão Social Opcional e Trava do Ganho Ampliada) — primeira fase do marco v1.6 (4 fases: 23-26)
-Plan: — (ainda não planejada)
-Status: Ready to plan
-Last activity: 2026-08-24 — Roadmap v1.6 criado (4 fases derivadas dos 17 requisitos do marco, 100% de cobertura)
+Plan: 2 of 2
+Status: Phase complete
+Last activity: 2026-08-26 — Plano 23-02 concluído (mensagem na tela para ficha incompleta ao marcar ganho; GANHO-01/GANHO-03 fechados)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -101,6 +105,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 22 P01 | ~40min | 3 tasks | 3 files |
 | Phase 22 P02 | ~20min | 2 tasks | 5 files |
 | Phase 22 P03 | 40min | 3 tasks | 7 files |
+| Phase 23 P02 | ~20min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -278,6 +283,8 @@ Recent decisions affecting current work:
 - [Phase 22]: revalidatePath("/agenda") acrescentado as 3 acoes de escrita de lista (app/actions/listas.ts) - Fase 22 passa a ter a Agenda consumindo uma lista editavel (motivos de conclusao remota)
 - [Phase ?]: [Fase 22-03] (2026-08-19) ConcluirItemDialog.tsx ganhou a caixa 'Nao foi presencial' + Select de motivo condicional, valida para tarefa de prospeccao E visita; app/actions/agenda.ts repassa motivoConclusaoRemotaId opcional sempre no fim das duas acoes; AgendaList roteia o identificador para as duas. Checkpoint humano aprovado nas duas contas (Supervisor/Vendedor) - CONC-02/03/04/05 marcados Complete, fechando a Fase 22 e o marco v1.5 inteiro.
 - [Phase ?]: [Fase 22-03] Descoberto: mockClear() (vitest) nao limpa mockResolvedValueOnce ainda nao consumidos entre testes — um it() que dispara uma acao assincrona sem esperar por ela pode vazar o valor enfileirado para o proximo teste do arquivo. Caso de roteamento dividido em dois it() independentes, cada um esperando explicitamente pela segunda chamada antes de terminar.
+- [Phase 23-02]: GanhoFrequenciaDialog.tsx não foi tocado (D-03) — já exibia result.error.message como alerta e mantinha a caixinha aberta; a mensagem de ficha incompleta reaproveita esse comportamento sem edição de componente
+- [Phase 23-02]: lib/funil/fichaParaGanho.ts é a autoridade única do lado TypeScript de 'quais campos faltam para o ganho', espelhando campo por campo o guard PL/pgSQL da migration 0025 (mesma regra de vazio: nulo ou só espaço; complemento fora nos dois lados, D-04)
 
 ### Pending Todos
 
@@ -319,6 +326,7 @@ None yet.
 - A tabela `clientes` ao vivo tem uma linha de teste com `estado='ZZ'`; `chk_estado_valido` está enforced-but-NOT-VALID nela (bloqueia escritas futuras, só não foi validada retroativamente). Sem ação necessária a menos que o dono queira re-rodar `VALIDATE CONSTRAINT` depois de apagar os dados de teste.
 - `gsd-tools.cjs` não existe dentro de worktrees git criados a partir deste repo (está em `.claude/gsd-core/bin/` mas é untracked). Em execução paralela por worktree, as atualizações de STATE/ROADMAP precisam de edição manual.
 - **RESOLVIDO 2026-07-20 — 01-05 Task 4 (verificação de email real):** o limite de 2 envios/hora do free tier foi contornado dividindo a checagem em (a) caminho de token/sessão/UI, verificado via `supabase.auth.admin.generateLink()` — reset de senha e aceite de convite confirmados de ponta a ponta contra o projeto hospedado real — e (b) entregabilidade bruta na caixa de entrada, não re-observada, mas indiretamente confirmada. AUTH-01/AUTH-02 aprovados pelo dono do projeto.
+- Cliente de teste b52a41f0-9d73-4378-a05e-cc10c82f4c16 ('Teste Verificacao 23-02 LTDA'), criado via service-role script para o checkpoint humano do plano 23-02, pode ainda existir no banco de producao — apagar manualmente
 
 ### Quick Tasks Completed
 
@@ -357,10 +365,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-19T13:59:31.330Z
+Last session: 2026-08-26T14:11:07.035Z
 Stopped at: Completed 22-03-PLAN.md (Fase 22 e marco v1.5 encerrados)
 Resume file:
 
-## Operator Next Steps
+None
 
 - Roadmap v1.6 criado (Fases 23-26). Próximo passo: `/gsd-plan-phase 23`.
