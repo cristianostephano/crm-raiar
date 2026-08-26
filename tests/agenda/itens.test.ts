@@ -19,7 +19,10 @@ import {
   estaAtrasado,
   mesclarAgenda,
   intervaloDeHistorico,
+  motivoSemDiaFixo,
+  MOTIVO_SEM_DIA_FIXO_LABELS,
   type AgendaItem,
+  type ClienteSemDiaFixo,
 } from "../../lib/agenda/itens"
 
 /**
@@ -614,5 +617,89 @@ describe("intervaloDeHistorico", () => {
     if (resultado) {
       expect(resultado.inicio <= resultado.fim).toBe(true)
     }
+  })
+})
+
+/**
+ * Aviso de dia fixo na Agenda (AGENDA-01, Fase 24, Plano 24-03): vocabulário
+ * puro do motivo por linha e o estreitamento por vendedor generalizado para
+ * aceitar a nova forma de dado. A consulta (lib/supabase/queries/agenda.ts)
+ * continua sendo a única autoridade de QUEM entra na lista — estes testes
+ * cobrem só a classificação do motivo, nunca uma segunda decisão de quem
+ * aparece.
+ */
+
+function clienteSemDiaFixo(
+  overrides: Partial<ClienteSemDiaFixo> = {}
+): ClienteSemDiaFixo {
+  return {
+    clienteId: "cliente-1",
+    razaoSocial: "Cliente 1",
+    responsavel: "vendedor-a",
+    responsavelNome: "Ana Vendedora",
+    frequenciaVisita: null,
+    ...overrides,
+  }
+}
+
+describe("motivoSemDiaFixo", () => {
+  it("cliente sem frequencia definida (frequenciaVisita null) e classificado como sem_frequencia", () => {
+    const cliente = clienteSemDiaFixo({ frequenciaVisita: null })
+    expect(motivoSemDiaFixo(cliente)).toBe("sem_frequencia")
+  })
+
+  it("cliente com frequencia definida (falta so o dia fixo) e classificado como sem_dia_fixo", () => {
+    const cliente = clienteSemDiaFixo({ frequenciaVisita: "semanal" })
+    expect(motivoSemDiaFixo(cliente)).toBe("sem_dia_fixo")
+  })
+
+  it("cliente com frequencia mensal (falta a ancora) tambem e classificado como sem_dia_fixo", () => {
+    const cliente = clienteSemDiaFixo({ frequenciaVisita: "mensal" })
+    expect(motivoSemDiaFixo(cliente)).toBe("sem_dia_fixo")
+  })
+})
+
+describe("MOTIVO_SEM_DIA_FIXO_LABELS", () => {
+  it("tem um texto de tela proprio, diferente, para cada um dos dois motivos", () => {
+    expect(MOTIVO_SEM_DIA_FIXO_LABELS.sem_frequencia).toBeTruthy()
+    expect(MOTIVO_SEM_DIA_FIXO_LABELS.sem_dia_fixo).toBeTruthy()
+    expect(MOTIVO_SEM_DIA_FIXO_LABELS.sem_frequencia).not.toBe(
+      MOTIVO_SEM_DIA_FIXO_LABELS.sem_dia_fixo
+    )
+  })
+})
+
+describe("filtrarPorVendedor (generalizado para o aviso de dia fixo)", () => {
+  it("continua funcionando sobre a forma antiga de item de agenda (AgendaItem), sem alteracao de comportamento", () => {
+    const itens: AgendaItem[] = [
+      item({ itemId: "1", responsavel: "vendedor-a" }),
+      item({ itemId: "2", responsavel: "vendedor-b" }),
+    ]
+
+    expect(filtrarPorVendedor(itens, null)).toEqual(itens)
+    expect(filtrarPorVendedor(itens, "vendedor-a").map((i) => i.itemId)).toEqual([
+      "1",
+    ])
+  })
+
+  it("sem filtro (null), devolve a lista de clientes sem dia fixo inalterada e na mesma ordem", () => {
+    const clientes: ClienteSemDiaFixo[] = [
+      clienteSemDiaFixo({ clienteId: "1", responsavel: "vendedor-a" }),
+      clienteSemDiaFixo({ clienteId: "2", responsavel: "vendedor-b" }),
+    ]
+
+    expect(filtrarPorVendedor(clientes, null)).toEqual(clientes)
+  })
+
+  it("com um vendedorId valido, devolve so os clientes sem dia fixo daquele responsavel", () => {
+    const clientes: ClienteSemDiaFixo[] = [
+      clienteSemDiaFixo({ clienteId: "1", responsavel: "vendedor-a" }),
+      clienteSemDiaFixo({ clienteId: "2", responsavel: "vendedor-b" }),
+      clienteSemDiaFixo({ clienteId: "3", responsavel: "vendedor-a" }),
+    ]
+
+    expect(
+      filtrarPorVendedor(clientes, "vendedor-a").map((c) => c.clienteId)
+    ).toEqual(["1", "3"])
   })
 })
