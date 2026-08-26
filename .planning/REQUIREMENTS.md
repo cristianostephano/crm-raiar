@@ -9,10 +9,10 @@ Requisitos do marco v1.6. Cada um mapeia para uma fase do roadmap.
 
 ### Importar Clientes Ativos
 
-- [ ] **ATIVO-01**: Supervisor importa clientes ativos em massa via nova planilha "Importar Clientes Ativos", que exige todos os dados do cliente (razão social, CNPJ, endereço completo, responsável, contato, etc.) — só a frequência de visita fica de fora
+- [x] **ATIVO-01**: Supervisor importa clientes ativos em massa via nova planilha "Importar Clientes Ativos", que exige todos os dados do cliente (razão social, CNPJ, endereço completo, responsável, contato, etc.) — só a frequência de visita fica de fora
 - [ ] **ATIVO-02**: Cliente importado por essa planilha entra direto no status "ganho" (ativo), sem passar pelas 7 etapas do funil
-- [ ] **ATIVO-03**: Linha com dado obrigatório faltando vira erro daquela linha (mesmo padrão de revisão antes de gravar já usado nas outras importações) — nunca trava o lote inteiro
-- [ ] **ATIVO-04**: Duplicado é detectado na importação de ativos com a mesma lógica já usada nas outras importações
+- [x] **ATIVO-03**: Linha com dado obrigatório faltando vira erro daquela linha (mesmo padrão de revisão antes de gravar já usado nas outras importações) — nunca trava o lote inteiro
+- [x] **ATIVO-04**: Duplicado é detectado na importação de ativos com a mesma lógica já usada nas outras importações
 
 ### Importar Clientes em Prospecção
 
@@ -61,10 +61,10 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ATIVO-01 | Phase 25 | Pending |
+| ATIVO-01 | Phase 25 | Complete |
 | ATIVO-02 | Phase 25 | Pending |
-| ATIVO-03 | Phase 25 | Pending |
-| ATIVO-04 | Phase 25 | Pending |
+| ATIVO-03 | Phase 25 | Complete |
+| ATIVO-04 | Phase 25 | Complete |
 | PROSP-01 | Phase 26 | Pending |
 | PROSP-02 | Phase 26 | Pending |
 | PROSP-03 | Phase 26 | Pending |

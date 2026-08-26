@@ -6,14 +6,14 @@ current_phase: 25
 current_phase_name: Importação de Clientes Ativos
 status: executing
 stopped_at: Completed 25-01-PLAN.md
-last_updated: "2026-08-26T19:40:41.072Z"
+last_updated: "2026-08-26T19:52:19.148Z"
 last_activity: 2026-08-26
 last_activity_desc: Phase 25 execution started
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 25 (Importação de Clientes Ativos) — EXECUTING
-Plan: 1 of 3
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-08-26 — Phase 25 execution started
 
@@ -110,6 +110,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 24 P02 | ~10min | 3 tasks | 5 files |
 | Phase 24 P03 | ~16min (Tasks 1-2) + checkpoint | 3 tasks | 9 files |
 | Phase 25 P01 | ~15min + pausa | 3 tasks | 2 files |
+| Phase 25 P02 | ~25min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -294,6 +295,9 @@ Recent decisions affecting current work:
 - [Phase 24]: Fase 24 concluida (Plano 24-03): secao Sem dia fixo definido na Lista da Agenda lembra o vendedor de clientes ativos sem ancora, via SELECT plano (getClientesSemDiaFixo) que exclui frequencia nenhuma de proposito e trata ancora mensal pela metade como sem dia fixo; filtrarPorVendedor generalizada em vez de uma segunda funcao de filtro. AGENDA-01 completo; Fase 24 (ANCORA-01..04 + AGENDA-01) fechada.
 - [Phase 25]: Fase 25 Plano 1: cliente_ativo_pronto_para_ganho cobre 9 campos (7 dos guards 0018/0025 + responsavel/0002 + contato/ATIVO-01); filtro pendurado na mesma clausula de selecao que alimenta o INSERT fecha o risco de not null derrubar o lote inteiro (T-25-07)
 - [Phase 25]: ATIVO-01/02/03 deixados como Pending em REQUIREMENTS.md apos o plano 25-01 (nao marcados Complete) - o proprio source_audit do plano mostra que cada requisito so fica funcionalmente coberto depois dos planos 25-02/25-03 (anotacao/tela); mesma convencao ja travada nas Fases 9-01/19-01/20-01 para requisitos multi-plano
+- [Phase ?]: [Fase 25-02] SYSTEM_FIELDS_ATIVO estende SystemFieldDefinition<SystemField> em vez de criar tipo paralelo — preserva compatibilidade com toda a camada de mapeamento parametrizada desde a Fase 17
+- [Phase ?]: [Fase 25-02] Responsavel preenchido-mas-nao-encontrado tem motivo distinto de responsavel-em-branco na planilha de ativos, melhoria deliberada sobre a importacao antiga
+- [Phase ?]: [Fase 25-02] toRpcClienteRow e as duas constantes de motivo de duplicado exportadas de confirmar.ts (visibilidade apenas) para o fluxo de ativos reusar em vez de duplicar
 
 ### Pending Todos
 
@@ -373,7 +377,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-26T19:39:49.382Z
+Last session: 2026-08-26T19:51:39.602Z
 Stopped at: Completed 25-01-PLAN.md
 Resume file:
 
