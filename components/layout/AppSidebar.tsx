@@ -7,12 +7,10 @@ import {
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
-  FileDigit,
   FileUp,
   LayoutDashboard,
   ListChecks,
   LogOut,
-  RefreshCw,
   Settings,
   Users,
   UsersRound,
@@ -95,27 +93,9 @@ const ADMIN_SECTION: NavSection = {
       label: "Importar Clientes em Prospecção",
       icon: FileUp,
     },
-    // RefreshCw é deliberadamente diferente do ícone Repeat já usado no selo
-    // de "Visita" em outro lugar do app — são conceitos diferentes, e usar o
-    // mesmo símbolo sugeriria que são a mesma coisa.
-    {
-      href: "/clientes/importar-frequencias",
-      label: "Importar frequências",
-      icon: RefreshCw,
-    },
-    // FileDigit (documento com números) é deliberadamente diferente de
-    // FileUp (usado em "Importar Clientes em Prospecção") e de RefreshCw
-    // (usado em "Importar frequências") — as três telas fazem coisas
-    // distintas, e repetir símbolo sugeriria que são a mesma coisa.
-    {
-      href: "/clientes/importar-cnpj",
-      label: "Importar CNPJ",
-      icon: FileDigit,
-    },
     // BadgeCheck (selo com marca de conferido) é deliberadamente diferente de
-    // FileUp (Importar Clientes em Prospecção), RefreshCw (Importar
-    // frequências) e FileDigit (Importar CNPJ) — carrega a ideia de cliente
-    // já fechado (ganho), e as quatro telas fazem coisas distintas, então
+    // FileUp (Importar Clientes em Prospecção) — carrega a ideia de cliente
+    // já fechado (ganho), e as duas telas fazem coisas distintas, então
     // repetir símbolo sugeriria que são a mesma coisa.
     {
       href: "/clientes/importar-ativos",

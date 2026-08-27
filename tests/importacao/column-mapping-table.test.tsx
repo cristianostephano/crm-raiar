@@ -3,8 +3,20 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 import { ColumnMappingTable } from "@/components/importacao/ColumnMappingTable"
-import { SYSTEM_FIELDS } from "@/lib/importacao/types"
-import { SYSTEM_FIELDS_FREQUENCIA } from "@/lib/importacao/typesFrequencia"
+import { SYSTEM_FIELDS, type SystemFieldDefinition } from "@/lib/importacao/types"
+
+/**
+ * Fase 26 Plano 4 (MENU-02): esta lista NÃO testa nenhum recurso de
+ * "frequências" — é infraestrutura genérica de `ColumnMappingTable` provando
+ * que o Select respeita a propriedade `fields` recebida em vez da lista
+ * padrão. Declarada localmente porque só precisa ser MENOR e DIFERENTE da
+ * lista de prospecção — "Frequência de visita" não existe em SYSTEM_FIELDS.
+ */
+type SystemFieldTeste = "razaoSocial" | "frequenciaVisita"
+const CAMPOS_TESTE: SystemFieldDefinition<SystemFieldTeste>[] = [
+  { key: "razaoSocial", label: "Razão social", required: true },
+  { key: "frequenciaVisita", label: "Frequência de visita", required: true },
+]
 
 describe("ColumnMappingTable", () => {
   it("padrao: sem a propriedade fields, o Select oferece os 16 rótulos da lista de clientes mais o item de não importar", () => {
@@ -36,7 +48,7 @@ describe("ColumnMappingTable", () => {
         previews={[["Empresa Exemplo"]]}
         mapping={{}}
         onMappingChange={vi.fn()}
-        fields={SYSTEM_FIELDS_FREQUENCIA}
+        fields={CAMPOS_TESTE}
       />
     )
 
@@ -44,7 +56,7 @@ describe("ColumnMappingTable", () => {
       screen.getByLabelText("Campo do sistema para a coluna Razão social")
     )
 
-    for (const field of SYSTEM_FIELDS_FREQUENCIA) {
+    for (const field of CAMPOS_TESTE) {
       expect(screen.getByRole("option", { name: field.label })).toBeInTheDocument()
     }
     expect(
@@ -52,7 +64,7 @@ describe("ColumnMappingTable", () => {
     ).toBeInTheDocument()
 
     const rotulosDaListaDeDezesseis = SYSTEM_FIELDS.filter(
-      (field) => !SYSTEM_FIELDS_FREQUENCIA.some((f) => f.label === field.label)
+      (field) => !CAMPOS_TESTE.some((f) => f.label === field.label)
     )
     for (const field of rotulosDaListaDeDezesseis) {
       expect(screen.queryByRole("option", { name: field.label })).not.toBeInTheDocument()
@@ -79,7 +91,7 @@ describe("ColumnMappingTable", () => {
         previews={[["valor"]]}
         mapping={{}}
         onMappingChange={vi.fn()}
-        fields={SYSTEM_FIELDS_FREQUENCIA}
+        fields={CAMPOS_TESTE}
       />
     )
     fireEvent.click(screen.getByLabelText("Campo do sistema para a coluna Coluna A"))
@@ -96,7 +108,7 @@ describe("ColumnMappingTable", () => {
         previews={[["Empresa Exemplo"]]}
         mapping={{}}
         onMappingChange={onMappingChange}
-        fields={SYSTEM_FIELDS_FREQUENCIA}
+        fields={CAMPOS_TESTE}
       />
     )
 

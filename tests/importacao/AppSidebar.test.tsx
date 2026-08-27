@@ -6,10 +6,11 @@ import { AppSidebar } from "@/components/layout/AppSidebar"
 
 /**
  * Proves the "escondido do menu" half of IMP-10 (T-06-01): the "Importar
- * clientes" link only exists in the DOM when `role === "supervisor"`,
- * since it lives in ADMIN_SECTION, which AppSidebar only mounts for that
- * role. The redirect half (server-side, non-supervisor -> "/") is proven
- * separately by tests/e2e/importar-guard.spec.ts.
+ * Clientes em Prospecção" link only exists in the DOM when
+ * `role === "supervisor"`, since it lives in ADMIN_SECTION, which
+ * AppSidebar only mounts for that role. The redirect half (server-side,
+ * non-supervisor -> "/") is proven separately by
+ * tests/e2e/importar-guard.spec.ts.
  *
  * AppSidebar starts collapsed ("compact") by default — the full label text
  * only renders once expanded (hover or pinned), same as every other nav
@@ -65,7 +66,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("shows Importar frequências for a supervisor (frequenciassupervisor)", () => {
+  it("shows no link with the removed labels for a supervisor (menu01menu02)", () => {
     const { container } = render(
       <AppSidebar
         fullName="Ana Souza"
@@ -77,108 +78,11 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     )
     expandSidebar(container)
 
-    const link = screen.getByText("Importar frequências").closest("a")
-    expect(link).toBeInTheDocument()
-    expect(link).toHaveAttribute("href", "/clientes/importar-frequencias")
-  })
-
-  it("hides Importar frequências for a vendedor (frequenciasvendedor)", () => {
-    const { container } = render(
-      <AppSidebar
-        fullName="João Silva"
-        roleLabel="Vendedor"
-        role="vendedor"
-        initials="JS"
-        agendaCount={0}
-      />
-    )
-    expandSidebar(container)
-
+    // MENU-01/MENU-02: as duas planilhas avulsas saíram do sistema inteiro —
+    // nenhum link com esses rótulos pode continuar sendo renderizado, nem
+    // para o Supervisor.
     expect(screen.queryByText("Importar frequências")).not.toBeInTheDocument()
-    // Nenhuma entrada da seção de administração deve aparecer para o
-    // Vendedor — a condição de papel gate a seção inteira, não item a item.
-    expect(screen.queryByText("Gerenciar equipe")).not.toBeInTheDocument()
-    expect(screen.queryByText("Configurações")).not.toBeInTheDocument()
-  })
-
-  it("renders Importar frequências after Importar clientes in DOM order (frequenciasordem)", () => {
-    const { container } = render(
-      <AppSidebar
-        fullName="Ana Souza"
-        roleLabel="Supervisor"
-        role="supervisor"
-        initials="AS"
-        agendaCount={0}
-      />
-    )
-    expandSidebar(container)
-
-    const links = Array.from(container.querySelectorAll("a")).map((a) =>
-      a.getAttribute("href")
-    )
-    const importarProspeccaoIndex = links.indexOf("/clientes/importar")
-    const importarFrequenciasIndex = links.indexOf(
-      "/clientes/importar-frequencias"
-    )
-
-    expect(importarProspeccaoIndex).toBeGreaterThanOrEqual(0)
-    expect(importarFrequenciasIndex).toBeGreaterThan(importarProspeccaoIndex)
-  })
-
-  it("shows Importar CNPJ for a supervisor with the correct route (cnpjsupervisor)", () => {
-    const { container } = render(
-      <AppSidebar
-        fullName="Ana Souza"
-        roleLabel="Supervisor"
-        role="supervisor"
-        initials="AS"
-        agendaCount={0}
-      />
-    )
-    expandSidebar(container)
-
-    const link = screen.getByText("Importar CNPJ").closest("a")
-    expect(link).toBeInTheDocument()
-    expect(link).toHaveAttribute("href", "/clientes/importar-cnpj")
-  })
-
-  it("hides Importar CNPJ for a vendedor (cnpjvendedor)", () => {
-    const { container } = render(
-      <AppSidebar
-        fullName="João Silva"
-        roleLabel="Vendedor"
-        role="vendedor"
-        initials="JS"
-        agendaCount={0}
-      />
-    )
-    expandSidebar(container)
-
     expect(screen.queryByText("Importar CNPJ")).not.toBeInTheDocument()
-  })
-
-  it("renders Importar CNPJ after Importar frequências in DOM order (cnpjordem)", () => {
-    const { container } = render(
-      <AppSidebar
-        fullName="Ana Souza"
-        roleLabel="Supervisor"
-        role="supervisor"
-        initials="AS"
-        agendaCount={0}
-      />
-    )
-    expandSidebar(container)
-
-    const links = Array.from(container.querySelectorAll("a")).map((a) =>
-      a.getAttribute("href")
-    )
-    const importarFrequenciasIndex = links.indexOf(
-      "/clientes/importar-frequencias"
-    )
-    const importarCnpjIndex = links.indexOf("/clientes/importar-cnpj")
-
-    expect(importarFrequenciasIndex).toBeGreaterThanOrEqual(0)
-    expect(importarCnpjIndex).toBeGreaterThan(importarFrequenciasIndex)
   })
 
   it("shows Importar Clientes Ativos for a supervisor with the correct route (ativossupervisor)", () => {
@@ -213,9 +117,15 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     expect(
       screen.queryByText("Importar Clientes Ativos")
     ).not.toBeInTheDocument()
+    // Nenhuma entrada da seção de administração deve aparecer para o
+    // Vendedor — a condição de papel gate a seção inteira, não item a item.
+    // (Cobertura herdada do caso removido de "Importar frequências" na
+    // limpeza de menu MENU-01/MENU-02.)
+    expect(screen.queryByText("Gerenciar equipe")).not.toBeInTheDocument()
+    expect(screen.queryByText("Configurações")).not.toBeInTheDocument()
   })
 
-  it("renders Importar Clientes Ativos after Importar CNPJ in DOM order (ativosordem)", () => {
+  it("renders Importar Clientes Ativos after Importar Clientes em Prospecção in DOM order (ativosordem)", () => {
     const { container } = render(
       <AppSidebar
         fullName="Ana Souza"
@@ -230,10 +140,10 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     const links = Array.from(container.querySelectorAll("a")).map((a) =>
       a.getAttribute("href")
     )
-    const importarCnpjIndex = links.indexOf("/clientes/importar-cnpj")
+    const importarProspeccaoIndex = links.indexOf("/clientes/importar")
     const importarAtivosIndex = links.indexOf("/clientes/importar-ativos")
 
-    expect(importarCnpjIndex).toBeGreaterThanOrEqual(0)
-    expect(importarAtivosIndex).toBeGreaterThan(importarCnpjIndex)
+    expect(importarProspeccaoIndex).toBeGreaterThanOrEqual(0)
+    expect(importarAtivosIndex).toBeGreaterThan(importarProspeccaoIndex)
   })
 })

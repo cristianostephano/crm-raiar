@@ -6,7 +6,22 @@ import {
   requiredFieldsFaltando,
   suggestMapping,
 } from "@/lib/importacao/mapping"
-import { SYSTEM_FIELDS_FREQUENCIA } from "@/lib/importacao/typesFrequencia"
+import type { SystemFieldDefinition } from "@/lib/importacao/types"
+
+/**
+ * Fase 26 Plano 4 (MENU-02): esta lista NÃO testa nenhum recurso de
+ * "frequências" — é infraestrutura genérica de mapeamento provando que
+ * `suggestMapping` respeita a lista de campos RECEBIDA, e não uma lista fixa
+ * embutida. Declarada localmente (em vez de importar o vocabulário real de
+ * "Importar frequências", removido nesta fase) porque só precisa ser MENOR e
+ * DIFERENTE da lista de prospecção — "Frequência de visita" não existe em
+ * SYSTEM_FIELDS, o que prova a asserção de isolamento abaixo.
+ */
+type SystemFieldTeste = "razaoSocial" | "frequenciaVisita"
+const CAMPOS_TESTE: SystemFieldDefinition<SystemFieldTeste>[] = [
+  { key: "razaoSocial", label: "Razão social", required: true },
+  { key: "frequenciaVisita", label: "Frequência de visita", required: true },
+]
 
 describe("suggestMapping", () => {
   it("suggests razaoSocial for 'razao_social' and 'Razão Social'", () => {
@@ -46,11 +61,9 @@ describe("suggestMapping", () => {
     expect(suggestMapping("fantasia")).toBe("nomeFantasia")
   })
 
-  it("does not leak the new cnpj/nomeFantasia aliases into the frequência vocabulary (Fase 17, D4)", () => {
-    expect(suggestMapping("CNPJ", SYSTEM_FIELDS_FREQUENCIA)).toBe(NAO_IMPORTAR)
-    expect(suggestMapping("Nome Fantasia", SYSTEM_FIELDS_FREQUENCIA)).toBe(
-      NAO_IMPORTAR
-    )
+  it("does not leak the new cnpj/nomeFantasia aliases into a smaller field list (Fase 17, D4)", () => {
+    expect(suggestMapping("CNPJ", CAMPOS_TESTE)).toBe(NAO_IMPORTAR)
+    expect(suggestMapping("Nome Fantasia", CAMPOS_TESTE)).toBe(NAO_IMPORTAR)
   })
 })
 

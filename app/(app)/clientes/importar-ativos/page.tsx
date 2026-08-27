@@ -6,12 +6,12 @@ import { createClient } from "@/lib/supabase/server"
 /**
  * Tela exclusiva do Supervisor da planilha "Importar clientes ativos" (Fase
  * 25, ATIVO-01..04). Cópia estrutural de
- * app/(app)/clientes/importar-cnpj/page.tsx: mesmo duplo redirecionamento
- * (para "/login" sem sessão, para "/" quando o papel não for Supervisor) —
- * este redirecionamento é conforto de interface; a trava real é a trava de
- * papel dentro da RPC `importar_clientes_ativos_lote` (Fase 25 Plano 1)
- * somada à checagem de papel das duas ações de servidor deste fluxo (Fase 25
- * Plano 2).
+ * app/(app)/clientes/importar/page.tsx: mesmo duplo redirecionamento (para
+ * "/login" sem sessão, para "/" quando o papel não for Supervisor) — este
+ * redirecionamento é conforto de interface; a trava real é a trava de papel
+ * dentro da RPC `importar_clientes_ativos_lote` (Fase 25 Plano 1) somada à
+ * checagem de papel das duas ações de servidor deste fluxo (Fase 25 Plano
+ * 2).
  */
 export default async function ImportarAtivosPage() {
   const supabase = await createClient()
