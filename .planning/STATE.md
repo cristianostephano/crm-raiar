@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
-current_phase: 25
-current_phase_name: Importação de Clientes Ativos
+current_phase: 26
+current_phase_name: Importação de Clientes em Prospecção e Limpeza de Menu
 status: executing
 stopped_at: Completed 25-03-PLAN.md (checkpoint parcial, blocos 3-7 pendentes de teste manual)
-last_updated: "2026-08-27T00:47:38.487Z"
-last_activity: 2026-08-26
-last_activity_desc: Phase 25 execution started
+last_updated: "2026-08-27T01:54:08.415Z"
+last_activity: 2026-08-27
+last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 12
+  completed_plans: 9
   percent: 75
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 25 — Importação de Clientes Ativos
+**Current focus:** Phase 26 — Importação de Clientes em Prospecção e Limpeza de Menu
 
 ## Current Position
 
-Phase: 25 (Importação de Clientes Ativos) — EXECUTING
-Plan: 3 of 3
+Phase: 26 (Importação de Clientes em Prospecção e Limpeza de Menu) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-08-26 — Phase 25 execution started
+Last activity: 2026-08-27 — Phase 26 execution started
 
 Progress: [███░░░░░░░] 33%
 
@@ -112,6 +112,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 25 P01 | ~15min + pausa | 3 tasks | 2 files |
 | Phase 25 P02 | ~25min | 3 tasks | 9 files |
 | Phase 25 P03 | ~45min | 2 tasks | 8 files |
+| Phase 26 P01 | ~10min + pausa de checkpoint | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -301,6 +302,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 25-02] toRpcClienteRow e as duas constantes de motivo de duplicado exportadas de confirmar.ts (visibilidade apenas) para o fluxo de ativos reusar em vez de duplicar
 - [Phase 25-03]: Fase 25 fechada com checkpoint parcial: blocos 1-2 confirmados no navegador (menu/acesso, 9 colunas obrigatorias batem com a planilha real da equipe); blocos 3-7 (upload real, cliente como ganho, elo com Agenda, bloqueio de rota do Vendedor, telas antigas intactas) documentados como human_judgment pendente no SUMMARY, mesmo padrao da Fase 8
 - [Phase 25-03]: Icone BadgeCheck escolhido para a entrada nova de menu Importar Clientes Ativos, distinto de FileUp/RefreshCw/FileDigit ja usados
+- [Phase 26]: [Fase 26-01] Migration 0028 aplicada em producao: atualizar_cnpj_lote e atualizar_frequencia_visita_lote removidas do banco por assinatura completa (p_atualizacoes jsonb); importar_clientes_lote e importar_clientes_ativos_lote confirmadas intactas via chamada RPC direta pelo dono do projeto
 
 ### Pending Todos
 
@@ -380,7 +382,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-27T00:47:38.460Z
+Last session: 2026-08-27T01:53:55.792Z
 Stopped at: Completed 25-03-PLAN.md (checkpoint parcial, blocos 3-7 pendentes de teste manual)
 Resume file:
 

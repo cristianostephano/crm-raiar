@@ -76,8 +76,8 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 | ANCORA-03 | Phase 24 | Complete |
 | ANCORA-04 | Phase 24 | Complete |
 | AGENDA-01 | Phase 24 | Complete |
-| MENU-01 | Phase 26 | Pending |
-| MENU-02 | Phase 26 | Pending |
+| MENU-01 | Phase 26 | Pending (banco: Plan 26-01 concluído — RPC removida; código/rota/testes: Plan 26-04) |
+| MENU-02 | Phase 26 | Pending (banco: Plan 26-01 concluído — RPC removida; código/rota/testes: Plan 26-04) |
 
 **Coverage:**
 

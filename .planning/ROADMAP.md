@@ -171,10 +171,11 @@ Plans:
   2. Cliente importado por essa planilha continua entrando na etapa "Aguardando contato", como já acontece hoje.
   3. "Importar CNPJ" e "Importar frequências" não aparecem mais em lugar nenhum do menu, e as rotas antigas deixam de existir.
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 
 Plans:
-- [ ] 26-01-PLAN.md — Migration 0028: remover do banco as duas funções de gravação em massa órfãs (CNPJ e frequência de visita) + apagar seus testes de integração + checkpoint de push
+
+- [x] 26-01-PLAN.md — Migration 0028: remover do banco as duas funções de gravação em massa órfãs (CNPJ e frequência de visita) + apagar seus testes de integração + checkpoint de push
 - [ ] 26-02-PLAN.md — Vocabulário e anotação de linha da planilha de prospecção: Nome Fantasia obrigatório, razão social opcional, razão social em branco vira valor nulo, comparação de duplicados tolerante a nulo com chave de reserva
 - [ ] 26-03-PLAN.md — Ações de servidor: leitura de clientes existentes tolerante a nulo nos 4 pontos, Nome Fantasia na comparação de duplicados, e produtos consumidos das linhas sem razão social gravados em vez de perdidos
 - [ ] 26-04-PLAN.md — Menu: renomear para "Importar Clientes em Prospecção", remover por completo "Importar CNPJ" e "Importar frequências" (29 arquivos), e nome exibido de cliente sem razão social
@@ -188,4 +189,4 @@ Plans:
 | 23. Razão Social Opcional e Trava do Ganho Ampliada | 2/2 | Complete   | 2026-08-26 |
 | 24. Dia Fixo na Recorrência de Visita | 3/3 | Complete   | 2026-08-26 |
 | 25. Importação de Clientes Ativos | 3/3 | Complete   | 2026-08-27 |
-| 26. Importação de Clientes em Prospecção e Limpeza de Menu | 0/TBD | Not started | - |
+| 26. Importação de Clientes em Prospecção e Limpeza de Menu | 1/4 | In Progress|  |
