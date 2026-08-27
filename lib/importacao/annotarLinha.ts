@@ -44,9 +44,14 @@ export type AnnotarLinhaLookups = {
 }
 
 /** Resolved + sanitized row shape, ready for Fase 7 to insert — never
- * written to the database by this phase (read-only preview). */
+ * written to the database by this phase (read-only preview).
+ *
+ * `razaoSocial` é nulável desde a Fase 26 Plano 2 (Bug A da pesquisa): valor
+ * nulo e texto vazio são a MESMA coisa para quem preenche a planilha, mas
+ * coisas DIFERENTES para o Postgres — dois nulos nunca conflitam numa
+ * restrição de unicidade, dois textos vazios sempre conflitam. */
 export type ResolvedRow = {
-  razaoSocial: string
+  razaoSocial: string | null
   cnpj: string | null
   nomeFantasia: string | null
   cep: string | null
@@ -231,6 +236,16 @@ export function annotarLinha(
   const cnpjValor = sanitized.cnpj?.trim()
   const nomeFantasiaValor = sanitized.nomeFantasia?.trim()
 
+  // Bug A da pesquisa da Fase 26 (Fase 26 Plano 2): razão social ausente ou
+  // só com espaços vira valor NULO, seguindo o MESMO padrão "aparado ou
+  // nulo" que cnpj/nomeFantasia já usam acima — nunca texto vazio. Dois
+  // valores nulos nunca conflitam na restrição de unicidade do Postgres, mas
+  // dois textos vazios sempre conflitam: sem este alinhamento, a partir da
+  // segunda empresa sem razão social do sistema, toda empresa nova sem razão
+  // social seria gravada como texto vazio e classificada como duplicada por
+  // engano. NÃO "simplificar" isto de volta para `sanitized.razaoSocial ?? ""`.
+  const razaoSocialValor = sanitized.razaoSocial?.trim()
+
   // Quick task 260819-m8q (D-01/D-04): os 5 campos de endereço aparam
   // espaços e viram valor NULO quando ficam vazios — nunca texto vazio.
   // Texto vazio em `estado` viola `chk_estado_valido` (migration 0007) e
@@ -241,7 +256,7 @@ export function annotarLinha(
   const numeroValor = sanitized.numero?.trim()
 
   const resolved: ResolvedRow = {
-    razaoSocial: sanitized.razaoSocial ?? "",
+    razaoSocial: razaoSocialValor ? razaoSocialValor : null,
     cnpj: cnpjValor ? cnpjValor : null,
     nomeFantasia: nomeFantasiaValor ? nomeFantasiaValor : null,
     cep: cepValor ? cepValor : null,

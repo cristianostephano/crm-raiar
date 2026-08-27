@@ -169,7 +169,10 @@ export type ConfirmarLoteErrorCode = "unauthenticated" | "forbidden" | "generic"
 export type ConfirmarLoteResult =
   | {
       data: {
-        importados: { razaoSocial: string }[]
+        // Fase 26 Plano 2 (Bug A): razaoSocial acompanha a nulabilidade de
+        // ResolvedRow/RpcClienteRow — uma linha importada sem razão social
+        // (prospecção) chega aqui com valor nulo, nunca texto vazio.
+        importados: { razaoSocial: string | null }[]
         puladas: PuladaGroup[]
       }
       error?: undefined
@@ -256,7 +259,7 @@ export async function confirmarLoteImportacao(
   }
 
   const returnedRazoes = (returnedRows ?? []).map(
-    (row: { razao_social: string }) => row.razao_social
+    (row: { razao_social: string | null }) => row.razao_social
   )
 
   const { importados, puladasExtra } = reconcileImportados(

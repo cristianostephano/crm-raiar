@@ -337,4 +337,30 @@ describe("annotarLinha", () => {
 
     expect(result.resolved.cnpj).toBe("'=cmd|' /C calc'!A1")
   })
+
+  it("resolves razão social to NULL (never empty string) when the cell is absent (Bug A da pesquisa da Fase 26)", () => {
+    const rest: Record<string, unknown> = { ...baseRow() }
+    delete rest.razaoSocial
+    const result = annotarLinha(rest, lookups)
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.razaoSocial).toBeNull()
+  })
+
+  it("resolves a whitespace-only razão social cell to NULL, not an empty string (Bug A da pesquisa da Fase 26)", () => {
+    const result = annotarLinha({ ...baseRow(), razaoSocial: "   " }, lookups)
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.razaoSocial).toBeNull()
+  })
+
+  it("keeps a filled razão social trimmed and unchanged, exactly like before (Bug A da pesquisa da Fase 26)", () => {
+    const result = annotarLinha(
+      { ...baseRow(), razaoSocial: "  Distribuidora ABC Ltda  " },
+      lookups
+    )
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.razaoSocial).toBe("Distribuidora ABC Ltda")
+  })
 })

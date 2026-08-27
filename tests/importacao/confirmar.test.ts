@@ -250,6 +250,26 @@ describe("planConfirmacao", () => {
     expect(result.rowsToInsert[0].nome_fantasia).toBeNull()
   })
 
+  it("includes two 'ok' rows with null razão social and different Nome Fantasia, each entering rowsToInsert with razao_social null (Bug A da pesquisa da Fase 26)", () => {
+    const linhaA = makeRow({
+      row: 0,
+      status: "ok",
+      resolved: makeResolved({ razaoSocial: null, nomeFantasia: "Distribuidora A" }),
+    })
+    const linhaB = makeRow({
+      row: 1,
+      status: "ok",
+      resolved: makeResolved({ razaoSocial: null, nomeFantasia: "Distribuidora B" }),
+    })
+
+    const result = planConfirmacao([linhaA, linhaB], {}, [])
+
+    expect(result.rowsToInsert).toHaveLength(2)
+    expect(result.rowsToInsert[0].razao_social).toBeNull()
+    expect(result.rowsToInsert[1].razao_social).toBeNull()
+    expect(result.puladasCount).toBe(0)
+  })
+
   it("includes an 'ok' row with the 5 endereço fields null, entering rowsToInsert with null values (D-01/D-02, quick task 260819-m8q)", () => {
     const linha = makeRow({
       row: 0,
@@ -290,6 +310,21 @@ describe("reconcileImportados", () => {
     expect(result.importados).toEqual([
       { razaoSocial: "Empresa A" },
       { razaoSocial: "Empresa B" },
+    ])
+    expect(result.puladasExtra).toEqual([])
+  })
+
+  it("counts 2 importados and 0 pulados when reconciling a batch of two null-razão-social rows against a return with two null values (Bug A da pesquisa da Fase 26)", () => {
+    const rowsToInsert: RpcClienteRow[] = [
+      { ...emptyRpcRow(), razao_social: null },
+      { ...emptyRpcRow(), razao_social: null },
+    ]
+
+    const result = reconcileImportados(rowsToInsert, [null, null])
+
+    expect(result.importados).toEqual([
+      { razaoSocial: null },
+      { razaoSocial: null },
     ])
     expect(result.puladasExtra).toEqual([])
   })

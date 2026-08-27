@@ -82,7 +82,10 @@ export function reconciliarAtivos(
     const retorno = retornados[indexRetorno]
 
     if (retorno.status === "inserido") {
-      importados.push({ razaoSocial: item.razao_social })
+      // Ajuste mínimo de compilação (Fase 26 Plano 2): RpcClienteRow.razao_social
+      // ficou nulável para o fluxo de prospecção, mas SYSTEM_FIELDS_ATIVO exige
+      // razão social — este caminho nunca recebe nulo na prática.
+      importados.push({ razaoSocial: item.razao_social ?? "" })
     } else if (retorno.status === "duplicado") {
       addSkip(DUPLICADO_ENCONTRADO_AO_CONFIRMAR_REASON)
     } else {

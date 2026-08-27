@@ -33,9 +33,13 @@ export const DUPLICADO_ENCONTRADO_AO_CONFIRMAR_REASON =
   "Duplicado encontrado ao confirmar — não existia no momento da revisão"
 
 /** Exact snake_case keys the importar_clientes_lote RPC's
- * jsonb_to_recordset expects (supabase/migrations/0006_...sql). */
+ * jsonb_to_recordset expects (supabase/migrations/0006_...sql).
+ *
+ * `razao_social` é nulável desde a Fase 26 Plano 2 (Bug A da pesquisa) —
+ * acompanhando ResolvedRow.razaoSocial, alinhada a todos os outros campos
+ * opcionais desta forma. */
 export type RpcClienteRow = {
-  razao_social: string
+  razao_social: string | null
   cnpj: string | null
   nome_fantasia: string | null
   cep: string | null
@@ -149,9 +153,13 @@ export function planConfirmacao(
   }
 
   const okCandidates = candidates.filter((c) => !overrideRows.has(c.row))
+  // Fase 26 Plano 2: leva também o Nome Fantasia de cada candidato (a chave
+  // de reserva de findDuplicates) — sem isso, duas linhas sem razão social
+  // nunca seriam comparadas entre si nesta revalidação D-02.
   const batchForDedupe = okCandidates.map((c) => ({
     row: c.row,
     razaoSocial: c.resolved.razaoSocial,
+    nomeFantasia: c.resolved.nomeFantasia,
   }))
   const newDuplicates = findDuplicates(batchForDedupe, existentesRazaoSocial)
 
@@ -172,7 +180,7 @@ export function planConfirmacao(
 }
 
 export type ReconcileImportadosResult = {
-  importados: { razaoSocial: string }[]
+  importados: { razaoSocial: string | null }[]
   puladasExtra: PuladaGroup[]
 }
 
@@ -184,13 +192,23 @@ export type ReconcileImportadosResult = {
  * Reported under the same confirm-time duplicate reason as D-02 itself,
  * since from the Supervisor's perspective it is the same story: "this row
  * didn't exist during review, but does now."
+ *
+ * Fase 26 Plano 2 (Bug A): `returnedRazoes` e `row.razao_social` toleram
+ * valor nulo. Como valores nulos NUNCA conflitam na restrição de unicidade
+ * do Postgres, toda linha com razão social nula enviada é sempre gravada —
+ * então casar por presença do valor (nulo incluso) no conjunto devolvido
+ * conta certo mesmo com várias linhas nulas no mesmo lote: contar por
+ * PRESENÇA (não por índice/consumo) nunca super-conta aqui, porque a
+ * garantia de gravação incondicional de linhas nulas significa que
+ * `returnedRazoes` sempre contém pelo menos um nulo quando `rowsToInsert`
+ * contém algum, e nenhuma linha nula pode legitimamente faltar por corrida.
  */
 export function reconcileImportados(
   rowsToInsert: RpcClienteRow[],
-  returnedRazoes: string[]
+  returnedRazoes: (string | null)[]
 ): ReconcileImportadosResult {
   const returnedSet = new Set(returnedRazoes)
-  const importados: { razaoSocial: string }[] = []
+  const importados: { razaoSocial: string | null }[] = []
   let raceSkippedCount = 0
 
   for (const row of rowsToInsert) {
