@@ -68,9 +68,14 @@ describe("SYSTEM_FIELDS_ATIVO", () => {
   })
 
   it("naoregride: SYSTEM_FIELDS (lista antiga) continua com apenas 2 obrigatorias, intocada por este plano", () => {
+    // Fase 26 Plano 2 (PROSP-02) trocou QUAIS 2 campos de SYSTEM_FIELDS são
+    // obrigatórios (nomeFantasia + responsavel, no lugar de razaoSocial +
+    // responsavel) — a invariante que este teste protege (SYSTEM_FIELDS_ATIVO
+    // não regride a cardinalidade de obrigatórios de SYSTEM_FIELDS) continua
+    // válida; só a lista esperada muda para acompanhar a mudança intencional.
     const required = SYSTEM_FIELDS.filter((f) => f.required)
     expect(required.map((f) => f.key).sort()).toEqual(
-      ["razaoSocial", "responsavel"].sort()
+      ["nomeFantasia", "responsavel"].sort()
     )
   })
 
