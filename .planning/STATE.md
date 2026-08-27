@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
-current_phase: 26
-current_phase_name: Importação de Clientes em Prospecção e Limpeza de Menu
-status: verifying
+current_phase: 6
+status: Awaiting next milestone
 stopped_at: Completed 26-02-PLAN.md
-last_updated: "2026-08-27T12:46:49.523Z"
+last_updated: "2026-08-27T13:49:50.681Z"
 last_activity: 2026-08-27
-last_activity_desc: Phase 26 execution started
+last_activity_desc: Milestone v1.6 completed and archived
 progress:
   total_phases: 4
   completed_phases: 4
   total_plans: 12
   completed_plans: 12
   percent: 100
+current_phase_name: Importação de Clientes em Prospecção e Limpeza de Menu
 ---
 
 # Project State
@@ -28,12 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 ## Current Position
 
-Phase: 26 (Importação de Clientes em Prospecção e Limpeza de Menu) — COMPLETE
-Plan: 4 of 4
-Status: Phase complete — ready for verification (última fase do marco v1.6)
-Last activity: 2026-08-27 — Completed 26-04-PLAN.md, fase 26 e marco v1.6 concluídos
-
-Progress: [██████████] 100%
+Phase: Milestone v1.6 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-27 — Milestone v1.6 completed and archived
 
 ## Performance Metrics
 
@@ -396,3 +394,7 @@ Resume file:
 None
 
 - Roadmap v1.6 criado (Fases 23-26). Próximo passo: `/gsd-plan-phase 23`.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

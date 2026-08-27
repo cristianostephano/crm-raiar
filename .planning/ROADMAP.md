@@ -6,7 +6,7 @@ O CRM Raiar nasce de dentro para fora: primeiro a fundação de login e permiss�
 
 O marco v1.5 deu à Agenda uma segunda forma de visualização — um calendário de dia/semana/mês, navegável, mostrando também o que já foi concluído em datas passadas — ao lado da lista original, e passou a aceitar que a conclusão de um item não pressuponha visita presencial, com um motivo categorizado numa 6ª lista editável pelo Supervisor.
 
-O marco atual, v1.6, separa as duas portas de importação em massa que hoje convivem numa só: uma nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho" exigindo todos os dados (menos a frequência de visita), enquanto "Importar clientes" é renomeada para "Importar Clientes em Prospecção" e passa a exigir só Nome Fantasia + Responsável. A trava de "ganho" cresce para também exigir razão social e endereço completo (grandfathering dos clientes antigos, mesmo padrão do CNPJ na v1.4), as duas planilhas avulsas "Importar CNPJ" e "Importar frequências" saem do menu por ficarem redundantes, e a recorrência de visita ganha um dia fixo (dia da semana para semanal/quinzenal, semana do mês para mensal) — com a Agenda lembrando o vendedor de definir esse dia fixo para quem ainda não tem.
+O marco v1.6 separou as duas portas de importação em massa que conviviam numa só: uma nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho" exigindo todos os dados (menos a frequência de visita), enquanto "Importar clientes" foi renomeada para "Importar Clientes em Prospecção" e passou a exigir só Nome Fantasia + Responsável. A trava de "ganho" cresceu para também exigir razão social e endereço completo (grandfathering dos clientes antigos, mesmo padrão do CNPJ na v1.4), as duas planilhas avulsas "Importar CNPJ" e "Importar frequências" saíram do menu por terem ficado redundantes, e a recorrência de visita ganhou um dia fixo (dia da semana para semanal/quinzenal, semana do mês para mensal) — com a Agenda lembrando o vendedor de definir esse dia fixo para quem ainda não tem.
 
 Detalhes completos de cada marco arquivado estão em `.planning/milestones/`.
 
@@ -18,7 +18,7 @@ Detalhes completos de cada marco arquivado estão em `.planning/milestones/`.
 - ✅ **v1.3 Agenda do Vendedor** — Phases 13-17 (shipped 2026-08-10) — see `.planning/milestones/v1.3-ROADMAP.md`
 - ✅ **v1.4 CNPJ Obrigatório no Ganho** — Phases 18-19 (shipped 2026-08-14) — see `.planning/milestones/v1.4-ROADMAP.md`
 - ✅ **v1.5 Calendário na Agenda e Conclusão Remota** — Phases 20-22 (shipped 2026-08-19) — see `.planning/milestones/v1.5-ROADMAP.md`
-- 🚧 **v1.6 Importação de Clientes Ativos e Prospecção Separadas** — Phases 23-26 (planning started 2026-08-24)
+- ✅ **v1.6 Importação de Clientes Ativos e Prospecção Separadas** — Phases 23-26 (shipped 2026-08-27) — see `.planning/milestones/v1.6-ROADMAP.md`
 
 ## Phases
 
@@ -92,101 +92,18 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.5-ROADMAP
 
 </details>
 
-### 🚧 v1.6 Importação de Clientes Ativos e Prospecção Separadas (Phases 23-26) — IN PROGRESS
+<details>
+<summary>✅ v1.6 Importação de Clientes Ativos e Prospecção Separadas (Phases 23-26) — SHIPPED 2026-08-27</summary>
 
-- [x] **Phase 23: Razão Social Opcional e Trava do Ganho Ampliada** - `razao_social` vira opcional no banco e a trava de "ganho" cresce para também exigir razão social + endereço completo, com grandfathering dos clientes antigos. (completed 2026-08-26)
-- [x] **Phase 24: Dia Fixo na Recorrência de Visita** - Definir frequência semanal/quinzenal/mensal de um cliente ativo passa a incluir um dia fixo, a próxima visita sugerida mira esse dia, e a Agenda lembra o vendedor de quem ainda não o definiu. (completed 2026-08-26)
-- [x] **Phase 25: Importação de Clientes Ativos** - Nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho", exigindo todos os dados (menos frequência de visita), com revisão linha a linha e detecção de duplicado. (completed 2026-08-27)
-- [x] **Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu** - "Importar clientes" é renomeada e relaxada para "Importar Clientes em Prospecção" (só Nome Fantasia + Responsável obrigatórios), e as planilhas avulsas "Importar CNPJ"/"Importar frequências" saem do menu. (completed 2026-08-27)
+- [x] Phase 23: Razão Social Opcional e Trava do Ganho Ampliada — `razao_social` vira opcional no banco e a trava de "ganho" cresce para também exigir razão social + endereço completo, com grandfathering dos clientes antigos. (completed 2026-08-26)
+- [x] Phase 24: Dia Fixo na Recorrência de Visita — Definir frequência semanal/quinzenal/mensal de um cliente ativo passa a incluir um dia fixo, a próxima visita sugerida mira esse dia, e a Agenda lembra o vendedor de quem ainda não o definiu. (completed 2026-08-26)
+- [x] Phase 25: Importação de Clientes Ativos — Nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho", exigindo todos os dados (menos frequência de visita), com revisão linha a linha e detecção de duplicado. (completed 2026-08-27)
+- [x] Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu — "Importar clientes" é renomeada e relaxada para "Importar Clientes em Prospecção" (só Nome Fantasia + Responsável obrigatórios), e as planilhas avulsas "Importar CNPJ"/"Importar frequências" saem do menu. (completed 2026-08-27)
 
-## Phase Details
+Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP.md`
 
-### Phase 23: Razão Social Opcional e Trava do Ganho Ampliada
+</details>
 
-**Goal**: Um cliente só vira "ganho" com razão social e endereço completos preenchidos — travado no banco, não só na tela — sem afetar quem já é "ganho" hoje sem esses dados.
-**Depends on**: Nada dentro do marco (primeira fase da v1.6). Constrói em cima da coluna `endereco` já opcional (quick task `260819-m8q`, em produção desde 2026-08-19) — esta fase torna `razao_social` opcional pela primeira vez, condição necessária para o guard fazer sentido e para a Fase 26 poder importar prospecção sem razão social.
-**Requirements**: GANHO-01, GANHO-02, GANHO-03
-**Success Criteria** (what must be TRUE):
+## Next Milestone
 
-  1. Vendedor que tenta marcar como "ganho" um cliente sem razão social ou sem endereço completo é bloqueado com uma mensagem orientando a completar a ficha antes.
-  2. Clientes que já eram "ganho" antes deste marco, mesmo sem razão social ou endereço completos, continuam acessíveis e funcionando normalmente (ficha, Agenda, diário), sem qualquer bloqueio retroativo.
-  3. A caixinha usada para marcar "ganho" continua pedindo só CNPJ e frequência de visita — nenhum campo novo é adicionado a ela.
-
-**Plans**: 2/2 plans complete
-
-Plans:
-
-- [x] 23-01-PLAN.md — Banco: `razao_social` anulável (migration 0024) e `mover_card_funil` com os dois guards novos de transição (migration 0025), provados por teste de integração próprio
-- [x] 23-02-PLAN.md — Tela: pré-checagem em `marcarStatus` devolvendo mensagem que nomeia os campos faltando, com a caixinha de ganho intocada
-
-### Phase 24: Dia Fixo na Recorrência de Visita
-
-**Goal**: A recorrência de visita de um cliente ativo passa a ter um dia fixo (dia da semana ou semana do mês), a sugestão de próxima visita mira esse dia em vez de contar dias corridos, e a Agenda ajuda o vendedor a achar quem ainda não o definiu.
-**Depends on**: Nada tecnicamente (arquivos praticamente disjuntos da Fase 23: enum/colunas de âncora em `clientes`, `proxima_data_visita`, o Select de frequência já existente desde a Fase 13, e uma seção nova da Agenda). Ordenada em segundo por convenção do marco.
-**Requirements**: ANCORA-01, ANCORA-02, ANCORA-03, ANCORA-04, AGENDA-01
-**Success Criteria** (what must be TRUE):
-
-  1. Ao definir frequência de visita semanal ou quinzenal para um cliente ativo (pela ficha ou pela Agenda), o vendedor também escolhe um dia fixo da semana.
-  2. Ao definir frequência mensal, o vendedor escolhe a semana do mês (1ª/2ª/3ª/4ª/Última) junto com o dia da semana.
-  3. Ao concluir uma visita, a data sugerida para a próxima sempre cai no dia fixo definido e nunca é uma data no passado.
-  4. Na Agenda, o vendedor vê uma seção própria com os clientes ativos que ainda não têm dia fixo definido — sejam os que nunca tiveram frequência, sejam os que já têm frequência mas ainda não têm o dia fixo.
-
-**Plans**: 3/3 plans complete
-
-Plans:
-
-- [x] 24-01-PLAN.md — Banco: migration 0026 (enums e colunas de âncora, auxiliares de calendário, `proxima_data_visita` com os dois caminhos) e os dois chamadores passando a âncora, provados por teste de integração próprio
-- [x] 24-02-PLAN.md — Ficha do cliente: vocabulário puro de dia fixo, ação de frequência gravando a âncora, e os dois Selects ao lado do Select de frequência que já existe
-- [x] 24-03-PLAN.md — Agenda: seção nova na Lista com os clientes ativos sem dia fixo, cada item levando à ficha
-
-**UI hint**: yes
-
-### Phase 25: Importação de Clientes Ativos
-
-**Goal**: Supervisor consegue trazer para o sistema, de uma vez, a carteira de clientes que já são ativos hoje (fora do CRM) — cada linha entra direto em "ganho", com todos os dados exigidos, exceto frequência de visita.
-**Depends on**: Fase 23 (a nova RPC de importação duplica, verbatim, o guard de "ganho" ampliado da Fase 23 — precisa da forma final dele para não reabrir uma porta que a Fase 23 acabou de fechar).
-**Requirements**: ATIVO-01, ATIVO-02, ATIVO-03, ATIVO-04
-**Success Criteria** (what must be TRUE):
-
-  1. Supervisor importa uma planilha "Importar Clientes Ativos" preenchendo todos os dados obrigatórios (exceto frequência de visita) e os clientes válidos entram direto no status "ganho", sem passar pelas etapas do funil.
-  2. Uma linha com dado obrigatório faltando vira erro só daquela linha, na mesma tela de revisão já usada nas outras importações — nunca trava o lote inteiro.
-  3. Um possível duplicado é sinalizado na revisão antes de gravar, com a mesma lógica já usada nas outras importações.
-
-**Plans**: 3/3 plans complete
-
-- [x] 25-01-PLAN.md — Migration 0027: RPC `importar_clientes_ativos_lote` (cria clientes já em "ganho"/etapa final) + função auxiliar de completude duplicando os guards das migrations 0018/0025 + teste de integração
-- [x] 25-02-PLAN.md — Vocabulário de campos da planilha de ativos, gerador do modelo, anotação linha a linha, reconciliação da confirmação e as duas ações de servidor (validar/confirmar)
-- [x] 25-03-PLAN.md — Assistente de 3 passos "Importar Clientes Ativos", tabela de revisão e tela de conclusão próprias, rota protegida e entrada nova no menu
-
-**UI hint**: yes
-
-### Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu
-
-**Goal**: A importação de prospecção fica minimalista (só Nome Fantasia + Responsável obrigatórios) e o menu para de oferecer as duas planilhas avulsas que a Fase 25 tornou redundantes.
-**Depends on**: Fase 23 (razão social opcional, usada pela planilha de prospecção) e Fase 25 (as duas planilhas antigas só saem do menu depois que a nova planilha de Ativos prova substituir o caso de uso delas).
-**Requirements**: PROSP-01, PROSP-02, PROSP-03, MENU-01, MENU-02
-**Success Criteria** (what must be TRUE):
-
-  1. No menu, "Importar clientes" passa a se chamar "Importar Clientes em Prospecção", e o Supervisor consegue importar uma planilha preenchendo só Nome Fantasia e Responsável — os demais campos, incluindo razão social, ficam opcionais.
-  2. Cliente importado por essa planilha continua entrando na etapa "Aguardando contato", como já acontece hoje.
-  3. "Importar CNPJ" e "Importar frequências" não aparecem mais em lugar nenhum do menu, e as rotas antigas deixam de existir.
-
-**Plans**: 4/4 plans complete
-
-Plans:
-
-- [x] 26-01-PLAN.md — Migration 0028: remover do banco as duas funções de gravação em massa órfãs (CNPJ e frequência de visita) + apagar seus testes de integração + checkpoint de push
-- [x] 26-02-PLAN.md — Vocabulário e anotação de linha da planilha de prospecção: Nome Fantasia obrigatório, razão social opcional, razão social em branco vira valor nulo, comparação de duplicados tolerante a nulo com chave de reserva
-- [x] 26-03-PLAN.md — Ações de servidor: leitura de clientes existentes tolerante a nulo nos 4 pontos, Nome Fantasia na comparação de duplicados, e produtos consumidos das linhas sem razão social gravados em vez de perdidos
-- [x] 26-04-PLAN.md — Menu: renomear para "Importar Clientes em Prospecção", remover por completo "Importar CNPJ" e "Importar frequências" (29 arquivos), e nome exibido de cliente sem razão social
-
-**UI hint**: yes
-
-## Progress
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 23. Razão Social Opcional e Trava do Ganho Ampliada | 2/2 | Complete   | 2026-08-26 |
-| 24. Dia Fixo na Recorrência de Visita | 3/3 | Complete   | 2026-08-26 |
-| 25. Importação de Clientes Ativos | 3/3 | Complete   | 2026-08-27 |
-| 26. Importação de Clientes em Prospecção e Limpeza de Menu | 4/4 | Complete   | 2026-08-27 |
+Planejamento ainda não iniciado — rode `/gsd-new-milestone` para começar.

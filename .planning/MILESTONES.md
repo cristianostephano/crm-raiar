@@ -1,5 +1,26 @@
 # Milestones
 
+## v1.6 Importação de Clientes Ativos e Prospecção Separadas (Shipped: 2026-08-27)
+
+**Phases completed:** 4 phases, 12 plans, 36 tasks
+
+**Key accomplishments:**
+
+- `clientes.razao_social` vira nullable e `mover_card_funil` ganha dois guards novos de transição (razão social + os 5 campos de endereço) exigidos só no momento do ganho, com grandfathering total para quem já era ganho antes desta versão
+- `marcarStatus` bloqueia a transição para ganho com uma mensagem que nomeia os campos faltando na ficha (razão social e/ou endereço), sem acrescentar nenhum campo à caixinha de marcar ganho
+- `proxima_data_visita` reescrita de cálculo de offset fixo (2 parâmetros) para busca de dia fixo (4 parâmetros: dia da semana e/ou semana do mês), com os dois chamadores existentes (`agenda_do_vendedor`, `mover_card_funil`) passando a âncora adiante, e o cálculo antigo preservado byte a byte como fallback para quem ainda não definiu dia fixo.
+- Dois Selects novos (dia da semana, semana do mês) abaixo da frequência de visita na ficha do cliente ganho, salvando na hora nas duas colunas que a migration 0026 criou, com um módulo puro (`lib/funil/diaFixo.ts`) como autoridade única do vocabulário e da regra de quais campos sobrevivem a uma troca de frequência.
+- Nova seção "Sem dia fixo definido (N)" no topo da Lista da Agenda, listando clientes ativos sem âncora de recorrência (com o motivo certo por linha), lida por um SELECT plano novo que exclui de propósito quem desligou a recorrência (`frequencia_visita = 'nenhuma'`).
+- Nova RPC `importar_clientes_ativos_lote`, com função auxiliar `cliente_ativo_pronto_para_ganho` de nove campos, que cria clientes já em "ganho"/"1ª venda concluída" numa gravação em massa baseada em conjunto, sem nunca passar por `mover_card_funil`.
+- Quarto vocabulário de campos (`SYSTEM_FIELDS_ATIVO`, 9 obrigatórios com frase própria), anotação pura por linha e as duas Server Actions (`validarLoteAtivos`/`confirmarLoteAtivos`) que fecham ATIVO-03 (erro nunca trava o lote) e ATIVO-04 (duplicado reusando `findDuplicates`).
+- Assistente de 3 passos "Importar Clientes Ativos" (upload, mapeamento com SYSTEM_FIELDS_ATIVO, revisão com coluna de CNPJ e decisão por linha em duplicado, conclusão com aviso fixo de frequência), rota protegida e entrada nova no menu — fechando ATIVO-01..04 na interface, com verificação de checkpoint parcial (blocos 1-2 confirmados, blocos 3-7 pendentes de teste manual).
+- Migration 0028 removeu do banco de produção `atualizar_cnpj_lote` e `atualizar_frequencia_visita_lote` — as duas RPCs de gravação em massa que a planilha "Importar Clientes Ativos" da Fase 25 tornou redundantes — junto com os dois únicos testes de integração que as exercitavam.
+- A planilha de prospecção agora só exige Nome Fantasia e Responsável — razão social virou opcional e, quando ausente, resolve para valor NULO (nunca texto vazio) em toda a cadeia até a gravação, fechando os dois defeitos reais que uma implementação ingênua de PROSP-02 dispararia: falso positivo de duplicado (Bug A) e estouro da validação do lote inteiro assim que qualquer cliente do banco tiver razão social nula (Bug B).
+- As quatro leituras de "clientes já cadastrados" da importação passam a tolerar razão social nula (Bug B fechado), e os produtos consumidos de uma linha gravada sem razão social passam a ser completados pela própria ação de servidor em vez de sumirem em silêncio (Bug C, achado durante o planejamento desta fase).
+- Menu Administração renomeado e reduzido a 4 entradas (PROSP-01/MENU-01/MENU-02: "Importar CNPJ" e "Importar frequências" removidas por completo, 29 arquivos), e `nomeExibicaoCliente()` fecha a regressão visível de título em branco para clientes de prospecção sem razão social (PROSP-02), com fallback para Nome Fantasia no cartão do funil e na ficha.
+
+---
+
 ## v1.5 Calendário na Agenda e Conclusão Remota (Shipped: 2026-08-19)
 
 **Phases completed:** 3 phases, 12 plans, 29 tasks
