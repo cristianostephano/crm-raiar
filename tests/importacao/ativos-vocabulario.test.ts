@@ -98,10 +98,12 @@ describe("SYSTEM_FIELDS_ATIVO", () => {
     expect(requiredFieldsFaltando(mapping, SYSTEM_FIELDS_ATIVO)).toEqual([])
   })
 
-  it("modelo: buildModeloAtivos gera 16 colunas com os rotulos do vocabulario, na ordem, mais uma linha de exemplo com 16 celulas", () => {
+  it("modelo: buildModeloAtivos gera 16 colunas com os rotulos do vocabulario (sufixados ' *' quando required), na ordem, mais uma linha de exemplo com 16 celulas", () => {
     const rows = readRows(buildModeloAtivos())
 
-    expect(rows[0]).toEqual(SYSTEM_FIELDS_ATIVO.map((f) => f.label))
+    expect(rows[0]).toEqual(
+      SYSTEM_FIELDS_ATIVO.map((f) => (f.required ? `${f.label} *` : f.label))
+    )
     expect(rows).toHaveLength(2)
 
     const exampleRow = rows[1] as string[]
@@ -109,5 +111,23 @@ describe("SYSTEM_FIELDS_ATIVO", () => {
     for (const cell of exampleRow) {
       expect(cell.length).toBeGreaterThan(0)
     }
+  })
+
+  it("modelo: cabecalho de CNPJ (campo required) sai sufixado como 'CNPJ *'", () => {
+    const rows = readRows(buildModeloAtivos())
+    const headerRow = rows[0] as string[]
+    const cnpjIndex = SYSTEM_FIELDS_ATIVO.findIndex((f) => f.key === "cnpj")
+
+    expect(cnpjIndex).toBeGreaterThanOrEqual(0)
+    expect(headerRow[cnpjIndex]).toBe("CNPJ *")
+  })
+
+  it("modelo: round-trips every generated header back to its SYSTEM_FIELDS_ATIVO key via suggestMapping", () => {
+    const headerRow = readRows(buildModeloAtivos())[0] as string[]
+    headerRow.forEach((header, index) => {
+      expect(suggestMapping(header, SYSTEM_FIELDS_ATIVO)).toBe(
+        SYSTEM_FIELDS_ATIVO[index].key
+      )
+    })
   })
 })
