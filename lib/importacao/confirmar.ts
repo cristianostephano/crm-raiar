@@ -116,7 +116,8 @@ export function toRpcClienteRow(resolved: ResolvedRow): RpcClienteRow {
 export function planConfirmacao(
   linhas: ValidatedRow[],
   decisions: Record<number, "importar" | "pular">,
-  existentesRazaoSocial: string[]
+  existentesRazaoSocial: string[],
+  existentesNomesFantasia: string[] = []
 ): PlanConfirmacaoResult {
   const skippedRows = new Set<number>()
   const reasonCounts = new Map<string, number>()
@@ -161,7 +162,16 @@ export function planConfirmacao(
     razaoSocial: c.resolved.razaoSocial,
     nomeFantasia: c.resolved.nomeFantasia,
   }))
-  const newDuplicates = findDuplicates(batchForDedupe, existentesRazaoSocial)
+  // Fase 26 Plano 3: `existentesNomesFantasia` é OPCIONAL (lista vazia por
+  // padrão) para que a chamada existente de confirmarLoteAtivos continue
+  // compilando sem alteração — o fluxo de clientes ativos não ganha
+  // comparação por Nome Fantasia de propósito (exige razão social em toda
+  // linha, então a chave de reserva não tem uso ali).
+  const newDuplicates = findDuplicates(
+    batchForDedupe,
+    existentesRazaoSocial,
+    existentesNomesFantasia
+  )
 
   const rowsToInsert: RpcClienteRow[] = []
   for (const candidate of candidates) {

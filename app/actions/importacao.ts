@@ -15,6 +15,7 @@ import {
   type PuladaGroup,
 } from "@/lib/importacao/confirmar"
 import { findDuplicates } from "@/lib/importacao/dedupe"
+import { nomesExistentesParaDedupe } from "@/lib/importacao/existentes"
 import { createClient } from "@/lib/supabase/server"
 import { getCategoriasAtivas, getProdutosAtivos } from "@/lib/supabase/queries/clientes"
 import { getTodasCidades } from "@/lib/supabase/queries/cidades"
@@ -89,8 +90,11 @@ export async function validarLoteImportacao(
       // Narrow, RLS-scoped duplicate-check read (reuses the pattern of
       // getClientesParaExportacao): for a Supervisor, clientes' RLS SELECT
       // policy returns the whole base — exactly the set dedup must compare
-      // against. NEVER add a manual responsavel filter here.
-      supabase.from("clientes").select("razao_social"),
+      // against. NEVER add a manual responsavel filter here. Traz também
+      // nome_fantasia (Fase 26 Plano 3, PROSP-02): a chave de reserva do
+      // fluxo de prospecção precisa comparar Nome Fantasia contra Nome
+      // Fantasia já cadastrado, não só razão social contra razão social.
+      supabase.from("clientes").select("razao_social, nome_fantasia"),
       // Lista completa de cidades (LOC-01/LOC-02), paginada por
       // getTodasCidades (lib/supabase/queries/cidades.ts) — a tabela tem
       // 5571 linhas e o PostgREST devolve no máximo 1000 por requisição sem
@@ -116,18 +120,25 @@ export async function validarLoteImportacao(
 
   const lookups: AnnotarLinhaLookups = { vendedores, categorias, produtos, cidades }
 
-  const existentes = (existentesResult.data ?? []).map(
-    (row) => row.razao_social as string
-  )
+  // Fase 26 Plano 3 (T-26-08): substitui a conversão de tipo não checada
+  // sobre razão social pelo módulo tolerante a nulo — um cliente do banco
+  // com razão social nula não pode mais derrubar a validação do lote
+  // inteiro.
+  const { razoesSociais: existentes, nomesFantasia: existentesNomesFantasia } =
+    nomesExistentesParaDedupe(existentesResult.data ?? [])
 
   const annotated = linhas.map((linha) => annotarLinha(linha, lookups))
 
+  // Fase 26 Plano 3 (PROSP-02): leva também o Nome Fantasia de cada linha
+  // anotada, ao lado da razão social — sem isso, duas linhas sem razão
+  // social nunca seriam comparadas contra os Nomes Fantasia já cadastrados.
   const batchForDedupe = annotated.map((annotatedRow, index) => ({
     row: index,
     razaoSocial: annotatedRow.resolved.razaoSocial,
+    nomeFantasia: annotatedRow.resolved.nomeFantasia,
   }))
 
-  const duplicates = findDuplicates(batchForDedupe, existentes)
+  const duplicates = findDuplicates(batchForDedupe, existentes, existentesNomesFantasia)
 
   // Precedence: erro > duplicado > ok — a row that already failed
   // required-field/lookup validation is never promoted to "duplicado", even
@@ -228,21 +239,28 @@ export async function confirmarLoteImportacao(
   // D-02 revalidation read — the exact narrow, RLS-scoped select
   // validarLoteImportacao uses. For a Supervisor, clientes' RLS SELECT
   // policy returns the whole base, so NEVER add a manual responsavel
-  // filter here.
-  const existentesResult = await supabase.from("clientes").select("razao_social")
+  // filter here. Traz também nome_fantasia (Fase 26 Plano 3), mesma razão
+  // da leitura de validarLoteImportacao acima.
+  const existentesResult = await supabase
+    .from("clientes")
+    .select("razao_social, nome_fantasia")
 
   if (existentesResult.error) {
     return { error: { code: "generic" } }
   }
 
-  const existentesRazaoSocial = (existentesResult.data ?? []).map(
-    (row) => row.razao_social as string
-  )
+  // Fase 26 Plano 3 (T-26-08): mesma substituição da conversão de tipo não
+  // checada usada em validarLoteImportacao.
+  const {
+    razoesSociais: existentesRazaoSocial,
+    nomesFantasia: existentesNomesFantasia,
+  } = nomesExistentesParaDedupe(existentesResult.data ?? [])
 
   const { rowsToInsert, puladas } = planConfirmacao(
     linhas,
     decisions,
-    existentesRazaoSocial
+    existentesRazaoSocial,
+    existentesNomesFantasia
   )
 
   if (rowsToInsert.length === 0) {

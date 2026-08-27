@@ -21,6 +21,7 @@ import {
   type RpcRetornoAtivo,
 } from "@/lib/importacao/confirmarAtivo"
 import { findDuplicates } from "@/lib/importacao/dedupe"
+import { nomesExistentesParaDedupe } from "@/lib/importacao/existentes"
 import { createClient } from "@/lib/supabase/server"
 import { getCategoriasAtivas, getProdutosAtivos } from "@/lib/supabase/queries/clientes"
 import { getTodasCidades } from "@/lib/supabase/queries/cidades"
@@ -108,8 +109,13 @@ export async function validarLoteAtivos(
 
   const lookups: AnnotarLinhaLookups = { vendedores, categorias, produtos, cidades }
 
-  const existentes = (existentesResult.data ?? []).map(
-    (row) => row.razao_social as string
+  // Fase 26 Plano 3 (T-26-08): substitui a conversão de tipo não checada
+  // pelo módulo tolerante a nulo, mesmo conserto de validarLoteImportacao.
+  // Diferença deliberada dos dois fluxos: o de clientes ativos NÃO ganha
+  // comparação por Nome Fantasia — o vocabulário de clientes ativos exige
+  // razão social em toda linha, então a chave de reserva não tem uso aqui.
+  const { razoesSociais: existentes } = nomesExistentesParaDedupe(
+    existentesResult.data ?? []
   )
 
   const annotated = annotarLoteAtivos(linhas, lookups)
@@ -208,8 +214,11 @@ export async function confirmarLoteAtivos(
     return { error: { code: "generic" } }
   }
 
-  const existentesRazaoSocial = (existentesResult.data ?? []).map(
-    (row) => row.razao_social as string
+  // Fase 26 Plano 3 (T-26-08): mesma substituição da conversão de tipo não
+  // checada; a consulta acima continua trazendo só razão social, de
+  // propósito (ver comentário em validarLoteAtivos).
+  const { razoesSociais: existentesRazaoSocial } = nomesExistentesParaDedupe(
+    existentesResult.data ?? []
   )
 
   const { rowsToInsert, puladas } = planConfirmacao(
