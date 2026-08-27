@@ -17,8 +17,8 @@ Requisitos do marco v1.6. Cada um mapeia para uma fase do roadmap.
 ### Importar Clientes em Prospecção
 
 - [ ] **PROSP-01**: "Importar clientes" é renomeada para "Importar Clientes em Prospecção" no menu
-- [ ] **PROSP-02**: Planilha de prospecção exige só Nome Fantasia + Responsável; razão social e os demais campos (endereço, CNPJ, etc.) ficam opcionais, preenchidos aos poucos
-- [ ] **PROSP-03**: Cliente importado por essa planilha entra na primeira etapa do funil ("Aguardando contato"), como já acontece hoje
+- [x] **PROSP-02**: Planilha de prospecção exige só Nome Fantasia + Responsável; razão social e os demais campos (endereço, CNPJ, etc.) ficam opcionais, preenchidos aos poucos
+- [x] **PROSP-03**: Cliente importado por essa planilha entra na primeira etapa do funil ("Aguardando contato"), como já acontece hoje
 
 ### Trava do "Ganho"
 
@@ -66,8 +66,8 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 | ATIVO-03 | Phase 25 | Complete |
 | ATIVO-04 | Phase 25 | Complete |
 | PROSP-01 | Phase 26 | Pending |
-| PROSP-02 | Phase 26 | Pending |
-| PROSP-03 | Phase 26 | Pending |
+| PROSP-02 | Phase 26 | Complete |
+| PROSP-03 | Phase 26 | Complete |
 | GANHO-01 | Phase 23 | Complete |
 | GANHO-02 | Phase 23 | Complete |
 | GANHO-03 | Phase 23 | Complete |

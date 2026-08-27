@@ -5,15 +5,15 @@ milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 26
 current_phase_name: Importação de Clientes em Prospecção e Limpeza de Menu
 status: executing
-stopped_at: Completed 25-03-PLAN.md (checkpoint parcial, blocos 3-7 pendentes de teste manual)
-last_updated: "2026-08-27T01:54:08.415Z"
+stopped_at: Completed 26-02-PLAN.md
+last_updated: "2026-08-27T02:17:07.019Z"
 last_activity: 2026-08-27
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 26 (Importação de Clientes em Prospecção e Limpeza de Menu) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-27 — Phase 26 execution started
 
@@ -113,6 +113,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 25 P02 | ~25min | 3 tasks | 9 files |
 | Phase 25 P03 | ~45min | 2 tasks | 8 files |
 | Phase 26 P01 | ~10min + pausa de checkpoint | 3 tasks | 3 files |
+| Phase 26 P02 | ~30min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -303,6 +304,9 @@ Recent decisions affecting current work:
 - [Phase 25-03]: Fase 25 fechada com checkpoint parcial: blocos 1-2 confirmados no navegador (menu/acesso, 9 colunas obrigatorias batem com a planilha real da equipe); blocos 3-7 (upload real, cliente como ganho, elo com Agenda, bloqueio de rota do Vendedor, telas antigas intactas) documentados como human_judgment pendente no SUMMARY, mesmo padrao da Fase 8
 - [Phase 25-03]: Icone BadgeCheck escolhido para a entrada nova de menu Importar Clientes Ativos, distinto de FileUp/RefreshCw/FileDigit ja usados
 - [Phase 26]: [Fase 26-01] Migration 0028 aplicada em producao: atualizar_cnpj_lote e atualizar_frequencia_visita_lote removidas do banco por assinatura completa (p_atualizacoes jsonb); importar_clientes_lote e importar_clientes_ativos_lote confirmadas intactas via chamada RPC direta pelo dono do projeto
+- [Phase ?]: [Fase 26-02] As tres superficies de obrigatoriedade da planilha de prospeccao (SYSTEM_FIELDS, createImportRowSchema, ramo literal de annotarLinha) trocadas no mesmo commit: nomeFantasia+responsavel passam a ser os unicos obrigatorios, razaoSocial vira opcional (PROSP-02)
+- [Phase ?]: [Fase 26-02] razaoSocial em ResolvedRow/RpcClienteRow segue o padrao 'aparado ou nulo' (nunca texto vazio) — fecha o Bug A da pesquisa (falso positivo de duplicado quando duas empresas ficam com razao social vazia)
+- [Phase ?]: [Fase 26-02] findDuplicates ganhou chave de reserva por Nome Fantasia (namespace separado do de razao social) e tolerancia a nulo na lista de existentes, fechando o Bug B (estouro da validacao do lote inteiro com um cliente de razao social nula no banco)
 
 ### Pending Todos
 
@@ -382,8 +386,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-27T01:53:55.792Z
-Stopped at: Completed 25-03-PLAN.md (checkpoint parcial, blocos 3-7 pendentes de teste manual)
+Last session: 2026-08-27T02:16:51.564Z
+Stopped at: Completed 26-02-PLAN.md
 Resume file:
 
 None
