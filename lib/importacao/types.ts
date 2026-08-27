@@ -1,19 +1,23 @@
 /**
  * Vocabulário canônico de campos do sistema para a importação de clientes
- * (Fase 6). Fonte única reusada por:
+ * em PROSPECÇÃO (Fase 6). Fonte única reusada por:
  * - `modelo.ts` (esta plan) — colunas do modelo de planilha (IMP-02);
  * - `annotarLinha` (06-02) — validação de cada linha da planilha;
  * - `ColumnMappingTable`/mapeamento (06-04) — opções do Select por coluna.
  *
- * Quick task 260819-m8q (D-01/D-02): desde então este vocabulário DEIXOU de
- * espelhar `lib/validations/cliente.ts` (`createClienteSchema`) nos 5
- * campos de endereço (`cep`, `rua`, `numero`, `cidade`, `estado`). O
- * cadastro manual (tela "Novo cliente") continua exigindo os 5; a
- * importação em massa passa a aceitá-los em branco, porque o time precisa
- * importar a base existente mesmo sem endereço completo. `required: true`
- * sobra em exatamente DOIS campos: `razaoSocial` e `responsavel`. Todo
- * cliente importado sempre nasce em "Aguardando contato", então a etapa do
- * funil NUNCA aparece neste vocabulário.
+ * Fase 26 Plano 2 (PROSP-02): a planilha de prospecção existe para importar
+ * empresas ANTES do primeiro contato, quando a razão social quase nunca é
+ * conhecida ainda — só o nome popular ("Nome Fantasia") e quem vai trabalhar
+ * o cliente. Por isso `required: true` passou de `razaoSocial` para
+ * `nomeFantasia`; `responsavel` continua obrigatório (sem ele a linha não
+ * pode nem ser atribuída a um vendedor). `razaoSocial` diverge aqui do
+ * cadastro manual (`createClienteSchema`, tela "Novo cliente", que continua
+ * exigindo razão social) de propósito — a importação em massa aceita o dado
+ * mínimo que existe na fase de prospecção, apoiada na coluna `razao_social`
+ * já nulável desde a migration 0024 (Fase 23). Os 5 campos de endereço
+ * seguem opcionais desde a quick task 260819-m8q. Todo cliente importado
+ * sempre nasce em "Aguardando contato", então a etapa do funil NUNCA aparece
+ * neste vocabulário (PROSP-03).
  *
  * 16 campos desde a Fase 19 (IMP-01/IMP-02): `cnpj` e `nomeFantasia` foram
  * acrescentados, os dois opcionais, logo depois de `razaoSocial` — mapeiam
@@ -56,14 +60,15 @@ export interface SystemFieldDefinition<K extends string = SystemField> {
 /**
  * Ordem e labels seguem 06-UI-SPEC.md linha 165 (com `cnpj`/`nomeFantasia`
  * inseridos logo após `razaoSocial`, Fase 19). `required: true` apenas em
- * `razaoSocial` e `responsavel` desde a quick task 260819-m8q (D-01/D-02) —
- * os 5 campos de endereço deixaram de ser obrigatórios na importação;
- * `multi: true` apenas em produtos (multi-valor, D-01 do domínio do CRM).
+ * `nomeFantasia` e `responsavel` desde a Fase 26 Plano 2 (PROSP-02) —
+ * `razaoSocial` virou opcional no mesmo passo; os 5 campos de endereço já
+ * eram opcionais desde a quick task 260819-m8q; `multi: true` apenas em
+ * produtos (multi-valor, D-01 do domínio do CRM).
  */
 export const SYSTEM_FIELDS: SystemFieldDefinition[] = [
-  { key: "razaoSocial", label: "Razão social", required: true },
+  { key: "razaoSocial", label: "Razão social", required: false },
   { key: "cnpj", label: "CNPJ", required: false },
-  { key: "nomeFantasia", label: "Nome Fantasia", required: false },
+  { key: "nomeFantasia", label: "Nome Fantasia", required: true },
   { key: "cep", label: "CEP", required: false },
   { key: "rua", label: "Rua", required: false },
   { key: "numero", label: "Número", required: false },

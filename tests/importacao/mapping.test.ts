@@ -100,7 +100,7 @@ describe("applyMapping", () => {
 describe("requiredFieldsFaltando", () => {
   it("lists required fields (e.g. Responsável) not yet mapped to any column", () => {
     const mapping = {
-      0: "razaoSocial" as const,
+      0: "nomeFantasia" as const,
       1: "cep" as const,
       2: "rua" as const,
       3: "numero" as const,
@@ -116,7 +116,7 @@ describe("requiredFieldsFaltando", () => {
 
   it("returns an empty list once every required field is mapped", () => {
     const mapping = {
-      0: "razaoSocial" as const,
+      0: "nomeFantasia" as const,
       1: "cep" as const,
       2: "rua" as const,
       3: "numero" as const,

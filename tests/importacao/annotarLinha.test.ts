@@ -15,6 +15,7 @@ import { createImportRowSchema } from "../../lib/validations/importacao"
 function baseRow() {
   return {
     razaoSocial: "Distribuidora ABC Ltda",
+    nomeFantasia: "Distribuidora Exemplo",
     cep: "01310-100",
     rua: "Av. Paulista",
     numero: "1000",
@@ -59,16 +60,23 @@ describe("createImportRowSchema", () => {
     expect(result.success).toBe(true)
   })
 
-  it("rejects a row missing a required field, pointing at the field", () => {
+  it("rejects a row missing a required field (nomeFantasia, PROSP-02), pointing at the field", () => {
     const rest: Record<string, unknown> = { ...baseRow() }
-    delete rest.razaoSocial
+    delete rest.nomeFantasia
     const result = createImportRowSchema.safeParse(rest)
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues.some((i) => i.path[0] === "razaoSocial")).toBe(
+      expect(result.error.issues.some((i) => i.path[0] === "nomeFantasia")).toBe(
         true
       )
     }
+  })
+
+  it("accepts a row missing razão social (optional since Fase 26 Plano 2, PROSP-02)", () => {
+    const rest: Record<string, unknown> = { ...baseRow() }
+    delete rest.razaoSocial
+    const result = createImportRowSchema.safeParse(rest)
+    expect(result.success).toBe(true)
   })
 })
 
@@ -81,10 +89,10 @@ describe("annotarLinha", () => {
     expect(result.resolved.responsavelId).toBe("vendedor-1")
   })
 
-  it("returns status ok with an empty reasons list when only razão social and responsável are filled and the 5 endereço cells are blank (D-01/D-02, quick task 260819-m8q)", () => {
+  it("returns status ok with an empty reasons list when only Nome Fantasia and Responsável are filled and everything else (including razão social) is blank (PROSP-02, Fase 26 Plano 2)", () => {
     const result = annotarLinha(
       {
-        razaoSocial: "Distribuidora ABC Ltda",
+        nomeFantasia: "Distribuidora Exemplo",
         responsavel: "vendedora@raiar.local",
       },
       lookups
@@ -97,12 +105,13 @@ describe("annotarLinha", () => {
   it("resolves the 5 endereço fields to NULL (never empty string) when their cells are blank (D-04, quick task 260819-m8q)", () => {
     const result = annotarLinha(
       {
-        razaoSocial: "Distribuidora ABC Ltda",
+        nomeFantasia: "Distribuidora Exemplo",
         responsavel: "vendedora@raiar.local",
       },
       lookups
     )
 
+    expect(result.status).toBe("ok")
     expect(result.resolved.cep).toBeNull()
     expect(result.resolved.rua).toBeNull()
     expect(result.resolved.numero).toBeNull()
@@ -110,28 +119,24 @@ describe("annotarLinha", () => {
     expect(result.resolved.estado).toBeNull()
   })
 
-  it("still flags a row missing razão social as erro, with the same reason as before (endereço blank adds no reason)", () => {
+  it("flags a row with razão social filled but Nome Fantasia blank as erro, with the Nome Fantasia reason (PROSP-02)", () => {
     const result = annotarLinha(
       {
-        cep: "",
-        rua: "",
-        numero: "",
-        cidade: "",
-        estado: "",
+        razaoSocial: "Distribuidora ABC Ltda",
         responsavel: "vendedora@raiar.local",
       },
       lookups
     )
 
     expect(result.status).toBe("erro")
-    expect(result.reasons).toContain("Razão social não informada")
-    expect(result.reasons).not.toContain("Endereço não informado")
+    expect(result.reasons).toContain("Nome Fantasia não informado")
+    expect(result.reasons).not.toContain("Razão social não informada")
   })
 
-  it("still flags a row missing responsável as erro, with the same reason as before (endereço blank adds no reason)", () => {
+  it("flags a row with Nome Fantasia filled but Responsável blank as erro, with the Responsável reason (PROSP-02)", () => {
     const result = annotarLinha(
       {
-        razaoSocial: "Distribuidora ABC Ltda",
+        nomeFantasia: "Distribuidora Exemplo",
         cep: "",
         rua: "",
         numero: "",
@@ -142,6 +147,24 @@ describe("annotarLinha", () => {
     )
 
     expect(result.status).toBe("erro")
+    expect(result.reasons).toContain("Responsável não informado")
+    expect(result.reasons).not.toContain("Nome Fantasia não informado")
+  })
+
+  it("flags a row with both Nome Fantasia and Responsável blank as erro, with both reasons (PROSP-02)", () => {
+    const result = annotarLinha(
+      {
+        cep: "",
+        rua: "",
+        numero: "",
+        cidade: "",
+        estado: "",
+      },
+      lookups
+    )
+
+    expect(result.status).toBe("erro")
+    expect(result.reasons).toContain("Nome Fantasia não informado")
     expect(result.reasons).toContain("Responsável não informado")
     expect(result.reasons).not.toContain("Endereço não informado")
   })
@@ -280,13 +303,12 @@ describe("annotarLinha", () => {
     expect(result.resolved.nomeFantasia).toBe("Distribuidora Exemplo")
   })
 
-  it("resolves cnpj and nomeFantasia to null when the cells are absent, never adding a reason (IMP-01/IMP-02)", () => {
+  it("resolves cnpj to null when the cell is absent, never adding a reason (IMP-01) — nomeFantasia stays required (PROSP-02) so it is filled by baseRow() here", () => {
     const result = annotarLinha(baseRow(), lookups)
 
     expect(result.status).toBe("ok")
     expect(result.reasons).toEqual([])
     expect(result.resolved.cnpj).toBeNull()
-    expect(result.resolved.nomeFantasia).toBeNull()
   })
 
   it("resolves a whitespace-only cnpj cell to null, not an empty string", () => {

@@ -71,7 +71,7 @@ export type AnnotatedRow = {
 }
 
 const RESPONSAVEL_REASON = "Responsável não informado"
-const RAZAO_SOCIAL_REASON = "Razão social não informada"
+const NOME_FANTASIA_REASON = "Nome Fantasia não informado"
 
 /** Case/acento-insensitive name match — reuses dedupe's normalization
  * (sanctioned by the plan: "pode reaproveitar de dedupe ou uma comparação
@@ -190,12 +190,14 @@ export function annotarLinha(
     reasons.push(`Cidade "${cidadeValor}" não encontrada para o estado ${estadoValor}`)
   }
 
-  // 5. Required fields (razaoSocial, responsavel) — quick task 260819-m8q
-  // (D-01): os 5 campos de endereço deixaram de ser obrigatórios aqui, ao
-  // contrário de createClienteSchema (cadastro manual, que continua exigindo
-  // os 5). O branch abaixo só existe para razaoSocial/responsavel agora.
+  // 5. Required fields (nomeFantasia, responsavel) — Fase 26 Plano 2
+  // (PROSP-02): razaoSocial deixou de ser obrigatória aqui, nomeFantasia
+  // passou a ser. Os 5 campos de endereço continuam opcionais desde a quick
+  // task 260819-m8q, ao contrário de createClienteSchema (cadastro manual,
+  // que continua exigindo os 5 + razão social).
   const parsed = createImportRowSchema.safeParse({
     razaoSocial: sanitized.razaoSocial ?? "",
+    nomeFantasia: sanitized.nomeFantasia ?? "",
     cep: sanitized.cep ?? "",
     rua: sanitized.rua ?? "",
     numero: sanitized.numero ?? "",
@@ -212,8 +214,8 @@ export function annotarLinha(
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
       const field = issue.path[0]
-      if (field === "razaoSocial") {
-        reasons.push(RAZAO_SOCIAL_REASON)
+      if (field === "nomeFantasia") {
+        reasons.push(NOME_FANTASIA_REASON)
       } else if (field === "responsavel") {
         reasons.push(RESPONSAVEL_REASON)
       }

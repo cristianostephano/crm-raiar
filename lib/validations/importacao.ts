@@ -3,13 +3,15 @@ import { z } from "zod"
 /**
  * Per-row Zod schema for the import preview (Fase 6, IMP-05).
  *
- * Quick task 260819-m8q (D-01/D-02): this schema DIVERGED from
- * lib/validations/cliente.ts's createClienteSchema. Only `razaoSocial` and
- * `responsavel` remain required — the 5 endereço fields (cep, rua, numero,
- * cidade, estado) are now optional here, exactly like complemento/contato/
- * telefone already were, so a spreadsheet with incomplete address data is
- * accepted. The manual cadastro form (createClienteSchema) is untouched and
- * still requires all 5 — this divergence is intentional, not a drift.
+ * Fase 26 Plano 2 (PROSP-02): only `nomeFantasia` and `responsavel` remain
+ * required — `razaoSocial` became optional in the same step, since a
+ * prospecção spreadsheet is filled out before the company's razão social is
+ * even known. This DIVERGES from lib/validations/cliente.ts's
+ * createClienteSchema (manual "Novo cliente" form, untouched, still requires
+ * razão social) on purpose. The 5 endereço fields (cep, rua, numero, cidade,
+ * estado) were already optional here since quick task 260819-m8q — same
+ * reasoning, this schema accepts whatever minimal data exists at prospecção
+ * time.
  *
  * Unlike createClienteSchema, this schema is validated directly with
  * `.safeParse()` inside a Server Action (lib/importacao/annotarLinha.ts /
@@ -26,7 +28,8 @@ import { z } from "zod"
  * the right message family.
  */
 export const createImportRowSchema = z.object({
-  razaoSocial: z.string().min(1, "Razão social não informada"),
+  razaoSocial: z.string().optional(),
+  nomeFantasia: z.string().min(1, "Nome Fantasia não informado"),
   responsavel: z.string().min(1, "Responsável não informado"),
   cep: z.string().optional(),
   rua: z.string().optional(),
