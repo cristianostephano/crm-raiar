@@ -16,7 +16,7 @@ Requisitos do marco v1.6. Cada um mapeia para uma fase do roadmap.
 
 ### Importar Clientes em Prospecção
 
-- [ ] **PROSP-01**: "Importar clientes" é renomeada para "Importar Clientes em Prospecção" no menu
+- [x] **PROSP-01**: "Importar clientes" é renomeada para "Importar Clientes em Prospecção" no menu
 - [x] **PROSP-02**: Planilha de prospecção exige só Nome Fantasia + Responsável; razão social e os demais campos (endereço, CNPJ, etc.) ficam opcionais, preenchidos aos poucos
 - [x] **PROSP-03**: Cliente importado por essa planilha entra na primeira etapa do funil ("Aguardando contato"), como já acontece hoje
 
@@ -39,8 +39,8 @@ Requisitos do marco v1.6. Cada um mapeia para uma fase do roadmap.
 
 ### Menu
 
-- [ ] **MENU-01**: "Importar CNPJ" é removida do sistema por completo (código, rota, testes)
-- [ ] **MENU-02**: "Importar frequências" é removida do sistema por completo (código, rota, testes)
+- [x] **MENU-01**: "Importar CNPJ" é removida do sistema por completo (código, rota, testes)
+- [x] **MENU-02**: "Importar frequências" é removida do sistema por completo (código, rota, testes)
 
 ## v2 Requirements
 
@@ -65,7 +65,7 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 | ATIVO-02 | Phase 25 | Complete |
 | ATIVO-03 | Phase 25 | Complete |
 | ATIVO-04 | Phase 25 | Complete |
-| PROSP-01 | Phase 26 | Pending |
+| PROSP-01 | Phase 26 | Complete |
 | PROSP-02 | Phase 26 | Complete |
 | PROSP-03 | Phase 26 | Complete |
 | GANHO-01 | Phase 23 | Complete |
@@ -76,8 +76,8 @@ Nenhum item deferido identificado nesta rodada — escopo do marco definido em c
 | ANCORA-03 | Phase 24 | Complete |
 | ANCORA-04 | Phase 24 | Complete |
 | AGENDA-01 | Phase 24 | Complete |
-| MENU-01 | Phase 26 | Pending (banco: Plan 26-01 concluído — RPC removida; código/rota/testes: Plan 26-04) |
-| MENU-02 | Phase 26 | Pending (banco: Plan 26-01 concluído — RPC removida; código/rota/testes: Plan 26-04) |
+| MENU-01 | Phase 26 | Complete |
+| MENU-02 | Phase 26 | Complete |
 
 **Coverage:**
 

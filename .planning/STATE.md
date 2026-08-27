@@ -4,17 +4,17 @@ milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 26
 current_phase_name: Importação de Clientes em Prospecção e Limpeza de Menu
-status: executing
+status: verifying
 stopped_at: Completed 26-02-PLAN.md
-last_updated: "2026-08-27T12:19:50.843Z"
+last_updated: "2026-08-27T12:46:49.523Z"
 last_activity: 2026-08-27
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
-  percent: 75
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 ## Current Position
 
-Phase: 26 (Importação de Clientes em Prospecção e Limpeza de Menu) — EXECUTING
+Phase: 26 (Importação de Clientes em Prospecção e Limpeza de Menu) — COMPLETE
 Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-08-27 — Phase 26 execution started
+Status: Phase complete — ready for verification (última fase do marco v1.6)
+Last activity: 2026-08-27 — Completed 26-04-PLAN.md, fase 26 e marco v1.6 concluídos
 
-Progress: [███░░░░░░░] 33%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -114,6 +114,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 25 P03 | ~45min | 2 tasks | 8 files |
 | Phase 26 P01 | ~10min + pausa de checkpoint | 3 tasks | 3 files |
 | Phase 26 P02 | ~30min | 3 tasks | 14 files |
+| Phase 26 P04 | ~50min | 4 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -307,6 +308,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 26-02] As tres superficies de obrigatoriedade da planilha de prospeccao (SYSTEM_FIELDS, createImportRowSchema, ramo literal de annotarLinha) trocadas no mesmo commit: nomeFantasia+responsavel passam a ser os unicos obrigatorios, razaoSocial vira opcional (PROSP-02)
 - [Phase ?]: [Fase 26-02] razaoSocial em ResolvedRow/RpcClienteRow segue o padrao 'aparado ou nulo' (nunca texto vazio) — fecha o Bug A da pesquisa (falso positivo de duplicado quando duas empresas ficam com razao social vazia)
 - [Phase ?]: [Fase 26-02] findDuplicates ganhou chave de reserva por Nome Fantasia (namespace separado do de razao social) e tolerancia a nulo na lista de existentes, fechando o Bug B (estouro da validacao do lote inteiro com um cliente de razao social nula no banco)
+- [Phase 26-04]: razao_social permanece tipado string (nao string | null) em ClienteListItem/ClienteRow/ClienteDetalhe de proposito; exibicao roteada por nomeExibicaoCliente() para tratar o valor nulo real sem propagar a mudanca de tipo para PerdaMotivoDialog/GanhoFrequenciaDialog (fora do escopo do plano)
+- [Phase 26-04]: Fase 26 e marco v1.6 concluidos: PROSP-01, PROSP-02, MENU-01, MENU-02 fechados e confirmados no navegador pelo dono do projeto
 
 ### Pending Todos
 
@@ -386,7 +389,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-27T02:16:51.564Z
+Last session: 2026-08-27T12:46:49.513Z
 Stopped at: Completed 26-02-PLAN.md
 Resume file:
 

@@ -97,7 +97,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.5-ROADMAP
 - [x] **Phase 23: Razão Social Opcional e Trava do Ganho Ampliada** - `razao_social` vira opcional no banco e a trava de "ganho" cresce para também exigir razão social + endereço completo, com grandfathering dos clientes antigos. (completed 2026-08-26)
 - [x] **Phase 24: Dia Fixo na Recorrência de Visita** - Definir frequência semanal/quinzenal/mensal de um cliente ativo passa a incluir um dia fixo, a próxima visita sugerida mira esse dia, e a Agenda lembra o vendedor de quem ainda não o definiu. (completed 2026-08-26)
 - [x] **Phase 25: Importação de Clientes Ativos** - Nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho", exigindo todos os dados (menos frequência de visita), com revisão linha a linha e detecção de duplicado. (completed 2026-08-27)
-- [ ] **Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu** - "Importar clientes" é renomeada e relaxada para "Importar Clientes em Prospecção" (só Nome Fantasia + Responsável obrigatórios), e as planilhas avulsas "Importar CNPJ"/"Importar frequências" saem do menu.
+- [x] **Phase 26: Importação de Clientes em Prospecção e Limpeza de Menu** - "Importar clientes" é renomeada e relaxada para "Importar Clientes em Prospecção" (só Nome Fantasia + Responsável obrigatórios), e as planilhas avulsas "Importar CNPJ"/"Importar frequências" saem do menu. (completed 2026-08-27)
 
 ## Phase Details
 
@@ -171,14 +171,14 @@ Plans:
   2. Cliente importado por essa planilha continua entrando na etapa "Aguardando contato", como já acontece hoje.
   3. "Importar CNPJ" e "Importar frequências" não aparecem mais em lugar nenhum do menu, e as rotas antigas deixam de existir.
 
-**Plans**: 2/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 
 - [x] 26-01-PLAN.md — Migration 0028: remover do banco as duas funções de gravação em massa órfãs (CNPJ e frequência de visita) + apagar seus testes de integração + checkpoint de push
 - [x] 26-02-PLAN.md — Vocabulário e anotação de linha da planilha de prospecção: Nome Fantasia obrigatório, razão social opcional, razão social em branco vira valor nulo, comparação de duplicados tolerante a nulo com chave de reserva
-- [ ] 26-03-PLAN.md — Ações de servidor: leitura de clientes existentes tolerante a nulo nos 4 pontos, Nome Fantasia na comparação de duplicados, e produtos consumidos das linhas sem razão social gravados em vez de perdidos
-- [ ] 26-04-PLAN.md — Menu: renomear para "Importar Clientes em Prospecção", remover por completo "Importar CNPJ" e "Importar frequências" (29 arquivos), e nome exibido de cliente sem razão social
+- [x] 26-03-PLAN.md — Ações de servidor: leitura de clientes existentes tolerante a nulo nos 4 pontos, Nome Fantasia na comparação de duplicados, e produtos consumidos das linhas sem razão social gravados em vez de perdidos
+- [x] 26-04-PLAN.md — Menu: renomear para "Importar Clientes em Prospecção", remover por completo "Importar CNPJ" e "Importar frequências" (29 arquivos), e nome exibido de cliente sem razão social
 
 **UI hint**: yes
 
@@ -189,4 +189,4 @@ Plans:
 | 23. Razão Social Opcional e Trava do Ganho Ampliada | 2/2 | Complete   | 2026-08-26 |
 | 24. Dia Fixo na Recorrência de Visita | 3/3 | Complete   | 2026-08-26 |
 | 25. Importação de Clientes Ativos | 3/3 | Complete   | 2026-08-27 |
-| 26. Importação de Clientes em Prospecção e Limpeza de Menu | 2/4 | In Progress|  |
+| 26. Importação de Clientes em Prospecção e Limpeza de Menu | 4/4 | Complete   | 2026-08-27 |
