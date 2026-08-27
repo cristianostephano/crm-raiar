@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import * as XLSX from "@e965/xlsx"
 
 import { buildModeloImportacao } from "../../lib/importacao/modelo"
+import { suggestMapping } from "../../lib/importacao/mapping"
 import { SYSTEM_FIELDS } from "../../lib/importacao/types"
 
 /**
@@ -10,6 +11,10 @@ import { SYSTEM_FIELDS } from "../../lib/importacao/types"
  * reconstitutes the workbook with XLSX.read({ type: "array" }) and asserts
  * against SYSTEM_FIELDS as ground truth so the model can never silently
  * diverge from the mapping vocabulary.
+ *
+ * Fase 26 Plano 2 (PROSP-02): cabeçalhos obrigatórios ganham um sufixo
+ * visível (" *") — as asserções abaixo derivam a expectativa de
+ * SYSTEM_FIELDS.required, nunca listando os 16 textos à mão.
  */
 
 function readRows(buffer: Uint8Array): unknown[][] {
@@ -19,9 +24,20 @@ function readRows(buffer: Uint8Array): unknown[][] {
 }
 
 describe("buildModeloImportacao", () => {
-  it("produces a header row matching SYSTEM_FIELDS labels, in order", () => {
+  it("produces a header row matching SYSTEM_FIELDS labels, marked with ' *' for required fields", () => {
     const rows = readRows(buildModeloImportacao())
-    expect(rows[0]).toEqual(SYSTEM_FIELDS.map((field) => field.label))
+    expect(rows[0]).toEqual(
+      SYSTEM_FIELDS.map((field) =>
+        field.required ? `${field.label} *` : field.label
+      )
+    )
+  })
+
+  it("round-trips every generated header back to its SYSTEM_FIELDS key via suggestMapping", () => {
+    const headerRow = readRows(buildModeloImportacao())[0] as string[]
+    headerRow.forEach((header, index) => {
+      expect(suggestMapping(header)).toBe(SYSTEM_FIELDS[index].key)
+    })
   })
 
   it("produces exactly one example row", () => {

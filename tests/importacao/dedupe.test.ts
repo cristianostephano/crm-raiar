@@ -47,6 +47,11 @@ describe("normalizeRazaoSocial", () => {
       normalizeRazaoSocial("Mercado do João")
     )
   })
+
+  it("returns an empty string for null or undefined, without throwing (Bug B da pesquisa da Fase 26)", () => {
+    expect(normalizeRazaoSocial(null)).toBe("")
+    expect(normalizeRazaoSocial(undefined)).toBe("")
+  })
 })
 
 describe("findDuplicates", () => {
@@ -84,6 +89,62 @@ describe("findDuplicates", () => {
     const batch = [
       { row: 0, razaoSocial: "Padaria do Zé" },
       { row: 1, razaoSocial: "Mercado do João" },
+    ]
+
+    const result = findDuplicates(batch, [])
+
+    expect(result.has(0)).toBe(false)
+    expect(result.has(1)).toBe(false)
+  })
+
+  it("does not throw when the existentes list contains null razões sociais (Bug B da pesquisa da Fase 26)", () => {
+    const batch = [{ row: 0, razaoSocial: "Padaria do Zé" }]
+    const existentes = [null, "Mercado do João", null]
+
+    expect(() => findDuplicates(batch, existentes)).not.toThrow()
+    expect(findDuplicates(batch, existentes).has(0)).toBe(false)
+  })
+
+  it("flags two batch rows without razão social but with the same Nome Fantasia as duplicates of each other (chave de reserva, PROSP-02)", () => {
+    const batch = [
+      { row: 0, razaoSocial: null, nomeFantasia: "Distribuidora Exemplo" },
+      { row: 1, razaoSocial: null, nomeFantasia: "DISTRIBUIDORA EXEMPLO" },
+    ]
+
+    const result = findDuplicates(batch, [])
+
+    expect(result.get(0)).toBe("DISTRIBUIDORA EXEMPLO")
+    expect(result.get(1)).toBe("Distribuidora Exemplo")
+  })
+
+  it("does not flag two batch rows without razão social when their Nome Fantasia differ (chave de reserva, PROSP-02)", () => {
+    const batch = [
+      { row: 0, razaoSocial: null, nomeFantasia: "Distribuidora A" },
+      { row: 1, razaoSocial: null, nomeFantasia: "Distribuidora B" },
+    ]
+
+    const result = findDuplicates(batch, [])
+
+    expect(result.has(0)).toBe(false)
+    expect(result.has(1)).toBe(false)
+  })
+
+  it("skips a batch row with neither razão social nor Nome Fantasia, exactly like before (chave de reserva, PROSP-02)", () => {
+    const batch = [
+      { row: 0, razaoSocial: null, nomeFantasia: null },
+      { row: 1, razaoSocial: "Padaria do Zé" },
+    ]
+
+    const result = findDuplicates(batch, [])
+
+    expect(result.has(0)).toBe(false)
+    expect(result.has(1)).toBe(false)
+  })
+
+  it("does not let a razão social collide with a same-text Nome Fantasia reserve key (separate namespaces, PROSP-02)", () => {
+    const batch = [
+      { row: 0, razaoSocial: "Distribuidora Exemplo" },
+      { row: 1, razaoSocial: null, nomeFantasia: "Distribuidora Exemplo" },
     ]
 
     const result = findDuplicates(batch, [])
