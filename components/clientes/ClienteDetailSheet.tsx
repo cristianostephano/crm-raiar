@@ -87,6 +87,7 @@ import {
 } from "@/lib/funil/frequencia"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
+import { nomeExibicaoCliente } from "@/lib/clientes/nomeExibicao"
 import { UFS, type Uf } from "@/lib/clientes/ufs"
 import {
   updateClienteSchema,
@@ -139,7 +140,13 @@ const SEM_CATEGORIA = "__sem_categoria__"
 function toFormValues(cliente: ClienteDetalhe): UpdateClienteInput {
   return {
     id: cliente.id,
-    razaoSocial: cliente.razaoSocial,
+    // T-26-15: mesma queda "aparado ou nulo -> vazio" que os demais campos
+    // opcionais abaixo — um cliente importado sem razão social (PROSP-02)
+    // não pode virar um Input não-controlado (valor null passado direto a
+    // um campo de formulário controlado). O campo continua editável e
+    // mostrando o valor real, nunca um rótulo de ausência (isso é só para
+    // o rótulo, exibido no título e na exclusão via nomeExibicaoCliente).
+    razaoSocial: cliente.razaoSocial ?? "",
     // Quick task 260819-m8q (D-01/D-02/D-06): cep/rua/numero/cidade/estado
     // are nullable on ClienteDetalhe since migration 0023 (a cliente
     // imported or edited without address has them null in the database).
@@ -711,7 +718,9 @@ export function ClienteDetailSheet({
         >
           <SheetHeader className="flex-row items-start justify-between gap-2 border-b">
             <SheetTitle className="pr-8 text-xl font-semibold">
-              {cliente?.razaoSocial ?? "Cliente"}
+              {cliente
+                ? nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)
+                : "Cliente"}
             </SheetTitle>
             {isSupervisor && cliente ? (
               <Button
@@ -1486,9 +1495,12 @@ export function ClienteDetailSheet({
             <DialogTitle>Apagar cliente</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Tem certeza que deseja apagar o cliente {cliente?.razaoSocial}? Essa
-            ação não pode ser desfeita e vai remover todo o histórico do
-            funil.
+            Tem certeza que deseja apagar o cliente{" "}
+            {cliente
+              ? nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)
+              : ""}
+            ? Essa ação não pode ser desfeita e vai remover todo o histórico
+            do funil.
           </p>
           {deleteError ? (
             <p role="alert" className="text-sm text-destructive">

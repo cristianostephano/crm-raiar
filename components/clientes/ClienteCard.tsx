@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip"
 import type { EtapaKey } from "@/lib/funil/etapas"
 import type { TaskStatus } from "@/lib/funil/staleness"
+import { nomeExibicaoCliente } from "@/lib/clientes/nomeExibicao"
 import { rotuloCidadeEstado } from "@/lib/clientes/rotuloLocalizacao"
 import { cn } from "@/lib/utils"
 
@@ -22,6 +23,10 @@ import { cn } from "@/lib/utils"
 export type ClienteCardData = {
   id: string
   razaoSocial: string
+  /** Fase 26 Plano 4 (T-26-15): repasse do valor lido de `clientes` —
+   * alimenta nomeExibicaoCliente(), que decide o título exibido quando
+   * razão social vier nula (PROSP-02). Nunca lido diretamente aqui. */
+  nomeFantasia: string | null
   categoriaNome: string | null
   responsavelNome: string | null
   etapa: EtapaKey
@@ -198,9 +203,9 @@ export function ClienteCard({
       <CardHeader className="grid-cols-[1fr_auto] items-start gap-2 px-3">
         <CardTitle
           className="truncate text-base leading-tight font-semibold"
-          title={cliente.razaoSocial}
+          title={nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)}
         >
-          {cliente.razaoSocial}
+          {nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)}
         </CardTitle>
         {incompleto ? (
           <Badge variant="destructive" className="shrink-0">

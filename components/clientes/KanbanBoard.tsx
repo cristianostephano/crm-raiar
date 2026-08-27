@@ -44,6 +44,7 @@ import {
   type ClienteCompletudeInput,
 } from "@/lib/clientes/completude"
 import { collectExportIds } from "@/lib/clientes/export-ids"
+import { nomeExibicaoCliente } from "@/lib/clientes/nomeExibicao"
 import { ETAPAS, ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import { diasParado, staleReason, taskStatus } from "@/lib/funil/staleness"
 import type { UpdateClienteInput } from "@/lib/validations/cliente"
@@ -84,9 +85,12 @@ function computeNovaPosicao(before?: number, after?: number): number {
  * "Ordenar por" (Claude's discretion on exact semantics, UI-SPEC copy only):
  * "recentes" leaves the list in its natural drag-managed order (posicao
  * ascending, i.e. does nothing here — the caller simply doesn't re-sort);
- * "az" is alphabetical by razão social; "parado" surfaces the
- * longest-stalled cards first using the same diasParado() the FUN-09
- * highlight already uses, so the two never disagree on "how stalled".
+ * "az" is alphabetical by NOME EXIBIDO (razão social, com queda para Nome
+ * Fantasia — T-26-15) — nunca razão social crua, senão um cliente sem razão
+ * social (PROSP-02) quebraria a comparação ou cairia sempre no mesmo lugar;
+ * "parado" surfaces the longest-stalled cards first using the same
+ * diasParado() the FUN-09 highlight already uses, so the two never disagree
+ * on "how stalled".
  */
 function sortClientes(
   list: ClienteListItem[],
@@ -95,7 +99,10 @@ function sortClientes(
 ): ClienteListItem[] {
   if (sortBy === "az") {
     return [...list].sort((a, b) =>
-      a.razao_social.localeCompare(b.razao_social, "pt-BR")
+      nomeExibicaoCliente(a.razao_social, a.nome_fantasia).localeCompare(
+        nomeExibicaoCliente(b.razao_social, b.nome_fantasia),
+        "pt-BR"
+      )
     )
   }
   if (sortBy === "parado") {
@@ -122,6 +129,7 @@ function toCardData(cliente: ClienteListItem): ClienteCardData {
   return {
     id: cliente.id,
     razaoSocial: cliente.razao_social,
+    nomeFantasia: cliente.nome_fantasia,
     categoriaNome: cliente.categoria_nome,
     responsavelNome: cliente.responsavel_nome,
     etapa: cliente.etapa,
@@ -312,8 +320,14 @@ export function KanbanBoard({
         list = list.filter((cliente) => cliente.incompleto)
       }
       if (normalizedSearch) {
+        // T-26-15: busca pelo NOME EXIBIDO (razão social, com queda para
+        // Nome Fantasia), nunca razão social crua — senão um cliente
+        // importado sem razão social (PROSP-02) ficaria impossível de
+        // encontrar pela busca.
         list = list.filter((cliente) =>
-          cliente.razao_social.toLowerCase().includes(normalizedSearch)
+          nomeExibicaoCliente(cliente.razao_social, cliente.nome_fantasia)
+            .toLowerCase()
+            .includes(normalizedSearch)
         )
       }
       if (filtrosAtivos > 0) {
@@ -533,6 +547,10 @@ export function KanbanBoard({
       const updatedCliente: ClienteListItem = {
         ...existing,
         razao_social: values.razaoSocial,
+        // T-26-15: repasse do valor salvo na ficha, mesma convenção de
+        // contato/telefone/email logo abaixo — nunca string vazia, senão o
+        // cartão e o banco discordariam sobre "sem Nome Fantasia".
+        nome_fantasia: values.nomeFantasia || null,
         categoria_id: values.categoriaId || null,
         categoria_nome: categoriaNome,
         responsavel: values.responsavel,

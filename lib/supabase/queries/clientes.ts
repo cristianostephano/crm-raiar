@@ -18,6 +18,10 @@ export { isClienteIncompleto, type ClienteCompletudeInput }
 export type ClienteListItem = {
   id: string
   razao_social: string
+  /** Fase 26 Plano 4 (T-26-15): repasse do valor já lido de `clientes` —
+   * alimenta lib/clientes/nomeExibicao.ts, a autoridade única do título
+   * exibido no cartão/ficha quando razão social vier nula (PROSP-02). */
+  nome_fantasia: string | null
   categoria_id: string | null
   categoria_nome: string | null
   responsavel: string
@@ -213,6 +217,7 @@ export async function getClienteById(
 type ClienteRow = {
   id: string
   razao_social: string
+  nome_fantasia: string | null
   categoria_id: string | null
   categorias: { nome: string } | null
   responsavel: string
@@ -261,7 +266,7 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome)), cliente_produtos(produto_id, produtos_consumidos(nome))"
+      "id, razao_social, nome_fantasia, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome)), cliente_produtos(produto_id, produtos_consumidos(nome))"
     )
     .order("posicao", { ascending: true })
 
@@ -311,6 +316,7 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
     grouped[key].push({
       id: row.id,
       razao_social: row.razao_social,
+      nome_fantasia: row.nome_fantasia,
       categoria_id: row.categoria_id,
       categoria_nome: row.categorias?.nome ?? null,
       responsavel: row.responsavel,
