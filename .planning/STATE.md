@@ -5,16 +5,16 @@ milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 25
 current_phase_name: Importação de Clientes Ativos
 status: executing
-stopped_at: Completed 25-01-PLAN.md
-last_updated: "2026-08-26T19:52:19.148Z"
+stopped_at: Completed 25-03-PLAN.md (checkpoint parcial, blocos 3-7 pendentes de teste manual)
+last_updated: "2026-08-27T00:47:38.487Z"
 last_activity: 2026-08-26
 last_activity_desc: Phase 25 execution started
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
-  percent: 50
+  completed_plans: 8
+  percent: 75
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 25 (Importação de Clientes Ativos) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-26 — Phase 25 execution started
 
@@ -111,6 +111,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 24 P03 | ~16min (Tasks 1-2) + checkpoint | 3 tasks | 9 files |
 | Phase 25 P01 | ~15min + pausa | 3 tasks | 2 files |
 | Phase 25 P02 | ~25min | 3 tasks | 9 files |
+| Phase 25 P03 | ~45min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -298,6 +299,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 25-02] SYSTEM_FIELDS_ATIVO estende SystemFieldDefinition<SystemField> em vez de criar tipo paralelo — preserva compatibilidade com toda a camada de mapeamento parametrizada desde a Fase 17
 - [Phase ?]: [Fase 25-02] Responsavel preenchido-mas-nao-encontrado tem motivo distinto de responsavel-em-branco na planilha de ativos, melhoria deliberada sobre a importacao antiga
 - [Phase ?]: [Fase 25-02] toRpcClienteRow e as duas constantes de motivo de duplicado exportadas de confirmar.ts (visibilidade apenas) para o fluxo de ativos reusar em vez de duplicar
+- [Phase 25-03]: Fase 25 fechada com checkpoint parcial: blocos 1-2 confirmados no navegador (menu/acesso, 9 colunas obrigatorias batem com a planilha real da equipe); blocos 3-7 (upload real, cliente como ganho, elo com Agenda, bloqueio de rota do Vendedor, telas antigas intactas) documentados como human_judgment pendente no SUMMARY, mesmo padrao da Fase 8
+- [Phase 25-03]: Icone BadgeCheck escolhido para a entrada nova de menu Importar Clientes Ativos, distinto de FileUp/RefreshCw/FileDigit ja usados
 
 ### Pending Todos
 
@@ -377,8 +380,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-26T19:51:39.602Z
-Stopped at: Completed 25-01-PLAN.md
+Last session: 2026-08-27T00:47:38.460Z
+Stopped at: Completed 25-03-PLAN.md (checkpoint parcial, blocos 3-7 pendentes de teste manual)
 Resume file:
 
 None
