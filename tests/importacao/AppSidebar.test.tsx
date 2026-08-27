@@ -28,7 +28,7 @@ function expandSidebar(container: HTMLElement) {
 }
 
 describe("AppSidebar - IMP-10 menu visibility", () => {
-  it("shows 'Importar clientes' for a supervisor", () => {
+  it("shows 'Importar Clientes em Prospecção' for a supervisor", () => {
     const { container } = render(
       <AppSidebar
         fullName="Ana Souza"
@@ -40,10 +40,15 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     )
     expandSidebar(container)
 
-    expect(screen.getByText("Importar clientes")).toBeInTheDocument()
+    expect(
+      screen.getByText("Importar Clientes em Prospecção")
+    ).toBeInTheDocument()
+    // PROSP-01: a renomeação precisa ser completa — o rótulo antigo não pode
+    // continuar sendo renderizado em lugar nenhum do menu.
+    expect(screen.queryByText("Importar clientes")).not.toBeInTheDocument()
   })
 
-  it("hides 'Importar clientes' for a vendedor", () => {
+  it("hides 'Importar Clientes em Prospecção' for a vendedor", () => {
     const { container } = render(
       <AppSidebar
         fullName="João Silva"
@@ -55,7 +60,9 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     )
     expandSidebar(container)
 
-    expect(screen.queryByText("Importar clientes")).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("Importar Clientes em Prospecção")
+    ).not.toBeInTheDocument()
   })
 
   it("shows Importar frequências for a supervisor (frequenciassupervisor)", () => {
@@ -109,13 +116,13 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     const links = Array.from(container.querySelectorAll("a")).map((a) =>
       a.getAttribute("href")
     )
-    const importarClientesIndex = links.indexOf("/clientes/importar")
+    const importarProspeccaoIndex = links.indexOf("/clientes/importar")
     const importarFrequenciasIndex = links.indexOf(
       "/clientes/importar-frequencias"
     )
 
-    expect(importarClientesIndex).toBeGreaterThanOrEqual(0)
-    expect(importarFrequenciasIndex).toBeGreaterThan(importarClientesIndex)
+    expect(importarProspeccaoIndex).toBeGreaterThanOrEqual(0)
+    expect(importarFrequenciasIndex).toBeGreaterThan(importarProspeccaoIndex)
   })
 
   it("shows Importar CNPJ for a supervisor with the correct route (cnpjsupervisor)", () => {

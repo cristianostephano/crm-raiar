@@ -4,8 +4,8 @@ import { ImportWizard } from "@/components/importacao/ImportWizard"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * Supervisor-only "Importar clientes" screen (IMP-10). Redirects any
- * non-Supervisor to "/" — same app-layer guard as
+ * Supervisor-only "Importar Clientes em Prospecção" screen (IMP-10).
+ * Redirects any non-Supervisor to "/" — same app-layer guard as
  * app/(app)/configuracoes/page.tsx and app/(app)/equipe/page.tsx: this is
  * UX only, the real authorization boundary for any write this wizard
  * eventually triggers is the RLS/RPC guard shipped in Fase 7
@@ -34,7 +34,9 @@ export default async function ImportarClientesPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-8 p-6">
-      <h1 className="text-[28px] font-semibold">Importar clientes</h1>
+      <h1 className="text-[28px] font-semibold">
+        Importar Clientes em Prospecção
+      </h1>
       <ImportWizard />
     </div>
   )

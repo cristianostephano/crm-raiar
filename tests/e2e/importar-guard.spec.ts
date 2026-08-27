@@ -50,7 +50,7 @@ test.describe("Importar clientes route guard (IMP-10)", () => {
 
     await expect(page).toHaveURL("/clientes/importar")
     await expect(
-      page.getByRole("heading", { name: "Importar clientes" })
+      page.getByRole("heading", { name: "Importar Clientes em Prospecção" })
     ).toBeVisible()
   })
 })

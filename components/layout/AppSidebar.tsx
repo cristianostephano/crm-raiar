@@ -90,7 +90,11 @@ const ADMIN_SECTION: NavSection = {
   links: [
     { href: "/equipe", label: "Gerenciar equipe", icon: UsersRound },
     { href: "/configuracoes", label: "Configurações", icon: Settings },
-    { href: "/clientes/importar", label: "Importar clientes", icon: FileUp },
+    {
+      href: "/clientes/importar",
+      label: "Importar Clientes em Prospecção",
+      icon: FileUp,
+    },
     // RefreshCw é deliberadamente diferente do ícone Repeat já usado no selo
     // de "Visita" em outro lugar do app — são conceitos diferentes, e usar o
     // mesmo símbolo sugeriria que são a mesma coisa.
@@ -100,19 +104,19 @@ const ADMIN_SECTION: NavSection = {
       icon: RefreshCw,
     },
     // FileDigit (documento com números) é deliberadamente diferente de
-    // FileUp (usado em "Importar clientes") e de RefreshCw (usado em
-    // "Importar frequências") — as três telas fazem coisas distintas, e
-    // repetir símbolo sugeriria que são a mesma coisa.
+    // FileUp (usado em "Importar Clientes em Prospecção") e de RefreshCw
+    // (usado em "Importar frequências") — as três telas fazem coisas
+    // distintas, e repetir símbolo sugeriria que são a mesma coisa.
     {
       href: "/clientes/importar-cnpj",
       label: "Importar CNPJ",
       icon: FileDigit,
     },
     // BadgeCheck (selo com marca de conferido) é deliberadamente diferente de
-    // FileUp (Importar clientes), RefreshCw (Importar frequências) e
-    // FileDigit (Importar CNPJ) — carrega a ideia de cliente já fechado
-    // (ganho), e as quatro telas fazem coisas distintas, então repetir
-    // símbolo sugeriria que são a mesma coisa.
+    // FileUp (Importar Clientes em Prospecção), RefreshCw (Importar
+    // frequências) e FileDigit (Importar CNPJ) — carrega a ideia de cliente
+    // já fechado (ganho), e as quatro telas fazem coisas distintas, então
+    // repetir símbolo sugeriria que são a mesma coisa.
     {
       href: "/clientes/importar-ativos",
       label: "Importar Clientes Ativos",
