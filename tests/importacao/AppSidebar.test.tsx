@@ -173,4 +173,60 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
     expect(importarFrequenciasIndex).toBeGreaterThanOrEqual(0)
     expect(importarCnpjIndex).toBeGreaterThan(importarFrequenciasIndex)
   })
+
+  it("shows Importar Clientes Ativos for a supervisor with the correct route (ativossupervisor)", () => {
+    const { container } = render(
+      <AppSidebar
+        fullName="Ana Souza"
+        roleLabel="Supervisor"
+        role="supervisor"
+        initials="AS"
+        agendaCount={0}
+      />
+    )
+    expandSidebar(container)
+
+    const link = screen.getByText("Importar Clientes Ativos").closest("a")
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute("href", "/clientes/importar-ativos")
+  })
+
+  it("hides Importar Clientes Ativos for a vendedor (ativosvendedor)", () => {
+    const { container } = render(
+      <AppSidebar
+        fullName="João Silva"
+        roleLabel="Vendedor"
+        role="vendedor"
+        initials="JS"
+        agendaCount={0}
+      />
+    )
+    expandSidebar(container)
+
+    expect(
+      screen.queryByText("Importar Clientes Ativos")
+    ).not.toBeInTheDocument()
+  })
+
+  it("renders Importar Clientes Ativos after Importar CNPJ in DOM order (ativosordem)", () => {
+    const { container } = render(
+      <AppSidebar
+        fullName="Ana Souza"
+        roleLabel="Supervisor"
+        role="supervisor"
+        initials="AS"
+        agendaCount={0}
+      />
+    )
+    expandSidebar(container)
+
+    const links = Array.from(container.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href")
+    )
+    const importarCnpjIndex = links.indexOf("/clientes/importar-cnpj")
+    const importarAtivosIndex = links.indexOf("/clientes/importar-ativos")
+
+    expect(importarCnpjIndex).toBeGreaterThanOrEqual(0)
+    expect(importarAtivosIndex).toBeGreaterThan(importarCnpjIndex)
+  })
 })

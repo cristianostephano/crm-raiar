@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  BadgeCheck,
   ChevronLeft,
   ChevronRight,
   FileDigit,
@@ -106,6 +107,16 @@ const ADMIN_SECTION: NavSection = {
       href: "/clientes/importar-cnpj",
       label: "Importar CNPJ",
       icon: FileDigit,
+    },
+    // BadgeCheck (selo com marca de conferido) é deliberadamente diferente de
+    // FileUp (Importar clientes), RefreshCw (Importar frequências) e
+    // FileDigit (Importar CNPJ) — carrega a ideia de cliente já fechado
+    // (ganho), e as quatro telas fazem coisas distintas, então repetir
+    // símbolo sugeriria que são a mesma coisa.
+    {
+      href: "/clientes/importar-ativos",
+      label: "Importar Clientes Ativos",
+      icon: BadgeCheck,
     },
   ],
 }
