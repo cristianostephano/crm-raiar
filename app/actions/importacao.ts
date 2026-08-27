@@ -16,6 +16,10 @@ import {
 } from "@/lib/importacao/confirmar"
 import { findDuplicates } from "@/lib/importacao/dedupe"
 import { nomesExistentesParaDedupe } from "@/lib/importacao/existentes"
+import {
+  produtosPendentesDaCarga,
+  resolverProdutosPendentes,
+} from "@/lib/importacao/produtosPendentes"
 import { createClient } from "@/lib/supabase/server"
 import { getCategoriasAtivas, getProdutosAtivos } from "@/lib/supabase/queries/clientes"
 import { getTodasCidades } from "@/lib/supabase/queries/cidades"
@@ -175,6 +179,19 @@ export async function validarLoteImportacao(
   return { data: { linhas: result } }
 }
 
+/** Motivo em português para a linha pulada quando os produtos consumidos de
+ * uma linha gravada sem razão social não puderam ser vinculados
+ * automaticamente (Fase 26 Plano 3, T-26-09) — cobre tanto a ambiguidade/
+ * ausência de correspondência (resolverProdutosPendentes) quanto uma falha
+ * na gravação complementar em si; nos dois casos, o cliente FOI importado,
+ * só os produtos ficaram de fora e precisam ser preenchidos manualmente.
+ *
+ * NÃO exportar esta constante: um arquivo com a diretiva "use server" só
+ * pode exportar funções assíncronas (Server Actions) — um export de valor
+ * comum quebra o build inteiro do módulo (achado nesta própria task, Rule 1). */
+const PRODUTOS_NAO_VINCULADOS_REASON =
+  "Produtos consumidos não puderam ser vinculados automaticamente — preencha na ficha do cliente"
+
 export type ConfirmarLoteErrorCode = "unauthenticated" | "forbidden" | "generic"
 
 export type ConfirmarLoteResult =
@@ -276,16 +293,94 @@ export async function confirmarLoteImportacao(
     return { error: { code: "generic" } }
   }
 
-  const returnedRazoes = (returnedRows ?? []).map(
-    (row: { razao_social: string | null }) => row.razao_social
-  )
+  // A RPC devolve razao_social + id + status por linha gravada (assinatura
+  // em supabase/migrations/0019_...sql) — id é usado abaixo (Task 2, T-26-09)
+  // para restringir a leitura complementar de produtos pendentes.
+  const returnedRowsTyped = (returnedRows ?? []) as {
+    razao_social: string | null
+    id: string
+    status: string
+  }[]
+
+  const returnedRazoes = returnedRowsTyped.map((row) => row.razao_social)
 
   const { importados, puladasExtra } = reconcileImportados(
     rowsToInsert,
     returnedRazoes
   )
 
-  const puladasFinal = mergePuladas(puladas, puladasExtra)
+  let puladasFinal = mergePuladas(puladas, puladasExtra)
+
+  // Fase 26 Plano 3 (Task 2, T-26-09): completa os produtos consumidos das
+  // linhas gravadas sem razão social — ver o cabeçalho de
+  // lib/importacao/produtosPendentes.ts para o porquê. Sem nenhuma linha
+  // pendente, este bloco não faz NENHUMA leitura ou escrita extra (o
+  // caminho de hoje continua com custo idêntico).
+  const pendencias = produtosPendentesDaCarga(rowsToInsert)
+
+  if (pendencias.length > 0) {
+    // Leitura estreita, restrita aos identificadores devolvidos pela função
+    // de gravação e às linhas de razão social nula — nunca a base inteira.
+    const idsGravadosSemRazaoSocial = returnedRowsTyped
+      .filter((row) => row.razao_social === null)
+      .map((row) => row.id)
+
+    const clientesResult =
+      idsGravadosSemRazaoSocial.length > 0
+        ? await supabase
+            .from("clientes")
+            .select("id, nome_fantasia")
+            .in("id", idsGravadosSemRazaoSocial)
+            .is("razao_social", null)
+        : { data: [], error: null }
+
+    if (clientesResult.error) {
+      // A falha nesta leitura complementar NÃO desfaz nem invalida a
+      // importação já concluída — vira linha pulada com motivo próprio.
+      puladasFinal = mergePuladas(puladasFinal, [
+        { motivo: PRODUTOS_NAO_VINCULADOS_REASON, quantidade: pendencias.length },
+      ])
+    } else {
+      const clientesRecemGravados = (clientesResult.data ?? [])
+        .map((row) => ({
+          id: row.id as string,
+          nomeFantasia: (row.nome_fantasia as string | null)?.trim() ?? "",
+        }))
+        .filter((cliente) => cliente.nomeFantasia.length > 0)
+
+      const { vinculos, naoResolvidas } = resolverProdutosPendentes(
+        pendencias,
+        clientesRecemGravados
+      )
+
+      let falhaNaGravacaoCount = 0
+
+      if (vinculos.length > 0) {
+        const { error: vinculoError } = await supabase
+          .from("cliente_produtos")
+          .upsert(
+            vinculos.map((vinculo) => ({
+              cliente_id: vinculo.clienteId,
+              produto_id: vinculo.produtoId,
+            })),
+            // Chave primária da tabela é o par cliente/produto (migration
+            // 0002) — ignora conflito para que uma reexecução nunca falhe.
+            { onConflict: "cliente_id,produto_id", ignoreDuplicates: true }
+          )
+
+        if (vinculoError) {
+          falhaNaGravacaoCount = pendencias.length - naoResolvidas.length
+        }
+      }
+
+      const problemCount = naoResolvidas.length + falhaNaGravacaoCount
+      if (problemCount > 0) {
+        puladasFinal = mergePuladas(puladasFinal, [
+          { motivo: PRODUTOS_NAO_VINCULADOS_REASON, quantidade: problemCount },
+        ])
+      }
+    }
+  }
 
   revalidatePath("/clientes")
 
