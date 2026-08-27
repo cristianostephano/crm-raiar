@@ -216,6 +216,50 @@
 
 ---
 
+## Milestone: v1.6 — Importação de Clientes Ativos e Prospecção Separadas
+
+**Shipped:** 2026-08-27
+**Phases:** 4 | **Plans:** 12 | **Sessions:** ~1 sessão muito longa (várias quedas por limite de sessão/uso ao longo de todas as 4 fases, todas recuperadas checando `git log`/`git status` antes de re-disparar o agente — nenhum retrabalho de funcionalidade)
+
+### What Was Built
+- Migrations 0024/0025: `razao_social` virou nullable e `mover_card_funil` ganhou dois guards novos de transição (razão social + endereço completo), com grandfathering total pra clientes já "ganho" (Fase 23).
+- Migration 0026: `proxima_data_visita` reescrita de offset fixo pra busca de dia fixo (dia da semana / semana do mês, 1ª-4ª-Última nunca "5ª"), com o cálculo antigo preservado byte a byte como fallback; nova seção "Sem dia fixo definido" na Agenda (Fase 24).
+- Migration 0027: nova RPC `importar_clientes_ativos_lote` que cria cliente já em "ganho", duplicando os guards de razão social/CNPJ/endereço verbatim (nunca passa por `mover_card_funil`); assistente de 3 passos "Importar Clientes Ativos" completo (Fase 25).
+- Migration 0028: remoção das duas RPCs órfãs (`atualizar_cnpj_lote`, `atualizar_frequencia_visita_lote`); "Importar clientes" renomeada/relaxada pra "Importar Clientes em Prospecção" (só Nome Fantasia + Responsável obrigatórios); "Importar CNPJ"/"Importar frequências" removidas por completo (29 arquivos); três defeitos reais descobertos e corrigidos durante o planejamento/execução — falso duplicado com razão social em branco (Bug A), estouro de validação com razão social nula no banco (Bug B), e produtos consumidos perdidos em silêncio por uma comparação de razão social nula=nula no Postgres (Bug C) (Fase 26).
+
+### What Worked
+- **Plan-checker pegou uma lacuna real antes da execução**: a função de completude da RPC de ativos (Fase 25) só validava 7 dos 9 campos obrigatórios, faltando `responsavel` (NOT NULL no banco — travaria o lote inteiro) e `contato`. Corrigido no plano antes de qualquer código rodar, com teste dedicado provando os 9.
+- **Pesquisa focada na fase mais técnica (24)** — o algoritmo de "próxima ocorrência do dia fixo" foi verificado por raciocínio matemático explícito (dias por mês, casos de "1ª/2ª/3ª/4ª sempre existem, Última é contagem regressiva independente") antes de qualquer linha de código, incluindo um caso de teste que expõe a diferença real entre "4ª quinta" e "última quinta" num mês específico.
+- **Ler o código real (não só a pesquisa do marco) durante o planejamento da Fase 26 achou 2 bugs que a pesquisa do marco não tinha previsto** (Bug B pela leitura direta do cast não-checado, Bug C pela leitura da instrução de gravação da migration 0019) — mesma disciplina já confirmada em marcos anteriores, reforçada aqui.
+- **Seed de dado real via script service-role como substituto de verificação de UI** quando upload de arquivo não é automatizável — usado nas Fases 24/25/26 pra provar comportamento (dia fixo, nome exibido, "sem dia fixo") sem depender de uma planilha real subida a mão.
+- Zero exceção `SECURITY DEFINER` nova em 5 migrations (0024-0028) — o projeto termina o marco com as mesmas 4 exceções documentadas desde a v1.2.
+
+### What Was Inefficient
+- **Instabilidade de automação de navegador em praticamente todo tipo de widget interativo** — cards com dnd-kit (Fase 23), Selects customizados de base-ui/Radix (Fase 24), botões de alternância Lista/Calendário (Fase 24), e navegação por clique em geral (Fase 26) exigiram contorno (filtrar por busca desativa o drag; teclado com letra+Enter em vez de clicar a opção; aceitar evidência combinada de leitura de código + testes automatizados em vez de clique real). Isso já tinha aparecido esporadicamente em marcos anteriores (Fase 8), mas neste marco foi sistemático o suficiente pra merecer registro como padrão conhecido, não mais surpresa a cada vez.
+- **Upload de arquivo é categoricamente não automatizável** neste navegador (bloqueio de segurança do próprio navegador em inputs de tipo file) — descoberto nas Fases 25 e 26, ambas fechadas com verificação parcial (menu/rota/campo confirmados ao vivo, fluxo de upload real deixado como pendência documentada pro dono do projeto testar manualmente).
+- **Múltiplas quedas de sessão por limite de uso**, incluindo uma no meio de uma correção de bug já identificada (Fase 26, Task 2) — recuperada sem perda checando `git status`/`git log` antes de retomar, mesma disciplina já estabelecida em marcos anteriores.
+- Uma tarefa de limpeza de dados de teste no meio do marco (contas seed `vendedor.a+test`/`vendedor.b+test` apagadas a pedido do dono, fora do fluxo GSD normal, pra abrir espaço pros 15 vendedores reais da equipe) deixou ~49 arquivos de teste RLS falhando por credencial inválida pelo resto do marco — não é regressão de código, mas ficou como debt técnico registrado, não resolvido dentro do v1.6.
+
+### Patterns Established
+- **Nova RPC que cria uma linha JÁ no estado final (nunca passa pela RPC de transição) precisa duplicar o guard verbatim, com comentário cruzado nomeando a migration de origem** — nunca reusar/parametrizar a RPC de transição, e nunca deixar o guard novo divergir silenciosamente do original (Fase 25, ecoado na Fase 26).
+- **Autoridade única de fallback**: `proxima_data_visita` avalia o caminho sem âncora PRIMEIRO e devolve o cálculo antigo literal, nunca uma segunda função paralela — mesmo padrão de `nomeExibicaoCliente`/`rotuloLocalizacao` (autoridade única de "o que mostrar quando falta X").
+- **Valor nulo, nunca texto vazio, em toda a cadeia até a gravação** — lição geral confirmada duas vezes no mesmo marco (Bug A na Fase 26, e já latente desde a Fase 23 com endereço): um Postgres UNIQUE ou um JOIN por igualdade trata `''` como um valor real, mas `null` nunca colide com `null`.
+- **Seed de dado de teste via service-role + verificação direta no banco** vira o caminho de verificação padrão quando a interação de navegador necessária (upload de arquivo, certos cliques) não é automatizável — documentado explicitamente nos SUMMARY.md das Fases 24/25/26, não apenas feito ad-hoc.
+
+### Key Lessons
+1. Widening de um guard existente (de N pra N+2 campos) é fácil de errar por incompletude, não por lógica errada — o plan-checker pegando a lacuna de 7-pra-9-campos na Fase 25 confirma que vale a pena uma passada de checker mesmo em mudanças que "parecem" só mecânicas.
+2. Matemática de calendário nova (Nth-dia-da-semana-do-mês) precisa de verificação por raciocínio explícito ANTES do código, não só teste depois — um caso de teste que expõe a diferença real entre duas contagens (não um caso trivial) é o que prova que o raciocínio estava certo, não só que o código "roda sem erro".
+3. Automação de navegador neste ambiente tem confiabilidade desigual por tipo de widget — cards arrastáveis, Selects customizados, e uploads de arquivo têm taxas de falha bem diferentes uma da outra. Vale manter essa lição como conhecimento acumulado (não redescobrir a cada fase) e ter um caminho de verificação alternativo pronto (seed + leitura direta do banco) sempre que a interação de UI for uma dessas categorias conhecidas.
+4. Ler a instrução SQL real de uma RPC existente (não só a assinatura/contrato) durante o planejamento acha bugs de junção/comparação (Bug C) que nenhuma pesquisa de padrões abstratos alcançaria — reforça pela terceira vez (v1.3, v1.4, agora v1.6) que grep no código real antes de escrever o brief da fase é o passo de maior retorno do processo.
+5. Uma tarefa de dado (apagar contas de teste) fora do fluxo GSD normal, mesmo pedida e aprovada explicitamente pelo dono, pode deixar debt técnico silencioso (testes de RLS quebrados) que só aparece nas fases seguintes — vale registrar o efeito colateral no mesmo momento da ação, não só quando o teste começa a falhar.
+
+### Cost Observations
+- Model mix: planner em opus, executor/researcher em sonnet, plan-checker em haiku — mesmo padrão dos 5 marcos anteriores.
+- Múltiplas quedas por limite de sessão/uso ao longo de praticamente todas as 4 fases — todas recuperadas sem retrabalho de funcionalidade, só repetição do `Agent()` de execução após checar o estado do git.
+- Duas fases (25, 26) fecharam com verificação de checkpoint humano parcial (não integral) por limitação de ferramenta, não por decisão de pular verificação — a evidência combinada (testes automatizados + leitura de código + verificação parcial ao vivo) foi a base de fechamento, documentada em cada SUMMARY.md.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -228,6 +272,7 @@
 | v1.3 | ~1 sessão contínua longa (múltiplas interrupções por limite recuperadas) | 5 | Verificação pessoal ao vivo em TODO checkpoint (não delegada) virou disciplina consistente; primeira vez que o bloqueio de segurança do harness em `supabase db push` apareceu — resolvido com push manual do orquestrador, nunca contornado |
 | v1.4 | ~1 sessão longa (2 quedas por limite recuperadas, mais uma pausa deliberada do usuário no meio de um checkpoint) | 2 | Primeiro marco a pular discuss-phase/research deliberadamente nas duas fases (escopo já resolvido em conversa + precedente forte no código, confirmado via pergunta explícita); primeiro marco pequeno o suficiente (2 fases) pra caber inteiro numa sessão só, incluindo fechamento |
 | v1.5 | ~1 sessão longa (múltiplas quedas por limite recuperadas, mais uma pausa deliberada do usuário no meio de execução) | 3 | Primeiro marco a usar um esboço jogável (`/gsd-sketch`) antes de travar o roadmap — o dono pediu pra "ver como fica" e isso virou etapa formal; primeira vez que uma pergunta direta sobre caso de borda mudou o roadmap ANTES de ser escrito (AGD-13 virou fase própria) |
+| v1.6 | ~1 sessão muito longa (múltiplas quedas por limite recuperadas em quase todas as fases) | 4 | Primeiro marco onde instabilidade de automação de navegador foi sistemática o suficiente pra virar padrão documentado (não surpresa pontual); primeira vez que verificação de checkpoint parcial (evidência combinada: testes + leitura de código + confirmação ao vivo parcial) foi aceita explicitamente como fechamento, por upload de arquivo ser categoricamente não automatizável |
 
 ### Cumulative Quality
 
@@ -238,6 +283,7 @@
 | v1.3 | Centenas de casos novos across `tests/agenda/*`, `tests/clientes/*`, `tests/configuracoes/*`, `tests/importacao/*` (RLS/integração contra o banco real em todas as fases com migration) | Não medido formalmente | Nenhuma dependência nova — v1.3 reaproveitou `@e965/xlsx` (v1.1) e toda a stack já instalada |
 | v1.4 | Dezenas de casos novos em `tests/clientes/cnpj-ganho.test.ts`, `tests/importacao/rls-cnpj-lote.test.ts`, `tests/importacao/annotarLinhaCnpj.test.ts`/`confirmarCnpj.test.ts` (integração contra o banco real, incluindo caso de nome ambíguo); zero regressão nos arquivos que não deveriam ser tocados (`funil-status`, `funil-constraints`, `rls-visitas`, `rls-frequencia-lote`) | Não medido formalmente | Nenhuma dependência nova — v1.4 reaproveitou toda a stack já instalada |
 | v1.5 | Centenas de casos novos across `tests/agenda/*` (calendário, item concluído, conclusão remota) e `tests/configuracoes/*` (6ª lista); zero regressão em `agenda-list.test.tsx`, `agenda_do_vendedor()`, e nos 4 arquivos de teste de conclusão pré-existentes | Não medido formalmente | Nenhuma dependência nova — grid de calendário montada à mão com `date-fns`/CSS Grid já instalados |
+| v1.6 | Centenas de casos novos across `tests/clientes/*` (guard ampliado, dia fixo, vocabulário), `tests/importacao/*` (RPC de ativos, vocabulário de prospecção, existentes/produtos-pendentes), `tests/agenda/*` (seção "sem dia fixo"); zero regressão nos guards antigos de `mover_card_funil` e em `tests/clientes/frequencia-visita.test.ts` (fallback preservado byte a byte) | Não medido formalmente | Nenhuma dependência nova — 5 migrations + módulos puros novos em cima da stack já instalada |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -249,3 +295,5 @@
 6. Quando o escopo de uma fase pequena já foi resolvido em conversa e existe precedente forte no código, pular discuss-phase/research é uma economia real — mas só depois de o orquestrador verificar o precedente por conta própria (grep/leitura direta) antes de perguntar ao usuário se pode pular (v1.4, v1.5).
 7. Um esboço jogável (HTML sem dependência) resolve ambiguidade de design de UI nova mais rápido do que descrever em texto, e vira o contrato visual literal que a execução segue sem reabrir discussão — primeira vez usado formalmente em v1.5, candidato a padrão pra toda fase de UI nova sem analógico direto no código.
 8. Perguntar explicitamente sobre casos de borda ("o que acontece com X passado/histórico?") antes de escrever requisitos revela escopo real que pesquisa automática sozinha não captura — confirmado em v1.5 (AGD-13 nasceu de uma pergunta direta, não da pesquisa inicial).
+9. Instabilidade de automação de navegador varia bastante por tipo de widget (dnd-kit, Selects customizados, botões de alternância, uploads de arquivo) — vale ter um caminho de verificação alternativo pronto (seed de dado via service-role + leitura direta do banco) em vez de insistir em forçar o clique a cada vez; confirmado sistematicamente em v1.6, após aparições pontuais em marcos anteriores (v1.0's Fase 8).
+10. Widening de um guard existente é fácil de errar por incompletude (esquecer um campo), não por lógica errada — plan-checker pegou isso antes da execução em v1.6 (Fase 25, 7→9 campos); vale checar contagem de campos/condições mesmo em mudanças que "parecem" só mecânicas.
