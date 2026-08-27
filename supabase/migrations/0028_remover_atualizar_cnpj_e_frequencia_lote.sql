@@ -1,0 +1,31 @@
+-- Phase 26 Plan 1: remover do banco as duas funções de gravação em massa
+-- que ficaram órfãs quando a Fase 25 entregou a planilha "Importar
+-- Clientes Ativos" (importar_clientes_ativos_lote, migration 0027):
+-- atualizar_cnpj_lote (migration 0020) e atualizar_frequencia_visita_lote
+-- (migration 0017). A nova planilha de ativos cobre o mesmo caso de uso
+-- das duas planilhas avulsas (atualizar CNPJ e frequência de clientes já
+-- "ganho"), então as duas telas antigas deixam de fazer sentido.
+--
+-- MENU-01/MENU-02 exigem que "Importar CNPJ" e "Importar frequências"
+-- saiam do sistema por completo — o dono do projeto confirmou
+-- explicitamente que isso inclui apagar as duas funções do banco, não só
+-- esconder as telas. Enquanto elas existissem, continuariam chamáveis
+-- diretamente pela API mesmo sem tela nenhuma apontando para elas.
+--
+-- A remoção usa a assinatura completa `(p_atualizacoes jsonb)` de cada
+-- função — remoção sem assinatura é ambígua e pode atingir uma sobrecarga
+-- errada, mesma disciplina já documentada na migration 0018.
+--
+-- Funções que continuam intocadas por esta migration: importar_clientes_lote
+-- (migration 0019, importação de clientes em prospecção) e
+-- importar_clientes_ativos_lote (migration 0027, importação de clientes
+-- ativos).
+--
+-- NEW file — nunca editar 0017 nem 0020, que já estão aplicadas em
+-- produção (regra do CLAUDE.md: uma vez pusheada, qualquer mudança futura
+-- é uma migration NOVA).
+--
+-- Source: .planning/phases/26-importa-o-de-clientes-em-prospec-o-e-limpeza-de-menu/26-01-PLAN.md
+
+drop function if exists atualizar_cnpj_lote(p_atualizacoes jsonb);
+drop function if exists atualizar_frequencia_visita_lote(p_atualizacoes jsonb);
