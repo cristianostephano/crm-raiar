@@ -41,6 +41,19 @@ function findByNome<T extends { nome: string }>(
   return options.find((option) => normalizeRazaoSocial(option.nome) === key)
 }
 
+/**
+ * Terceiro critério de casamento de Responsável, SOMENTE nesta importação de
+ * Clientes Ativos (D-02, quick task 260831-mod) — `lib/importacao/
+ * annotarLinha.ts` (Prospecção) não ganha o mesmo tratamento nesta task; a
+ * planilha real da equipe só traz o primeiro nome do vendedor na coluna
+ * Responsável (ex: "Leonardo", "Diego"), então email exato e "nome sobrenome"
+ * exato sozinhos rejeitavam quase toda linha real.
+ *
+ * Ambiguidade nunca resolve por acaso (D-03): quando 2+ vendedores da lista
+ * de lookups compartilham o mesmo primeiro nome, o critério devolve
+ * `undefined` de propósito — não é um bug a corrigir depois, é a garantia de
+ * que o cliente nunca é atribuído ao vendedor errado por engano.
+ */
 function findVendedor(
   vendedores: VendedorLookup[],
   valor: string
@@ -52,11 +65,20 @@ function findVendedor(
   )
   if (byEmail) return byEmail
 
-  return vendedores.find(
+  const byNomeCompleto = vendedores.find(
     (v) =>
       normalizeRazaoSocial(`${v.nome} ${v.sobrenome}`) ===
       normalizeRazaoSocial(valor)
   )
+  if (byNomeCompleto) return byNomeCompleto
+
+  const chavePrimeiroNome = normalizeRazaoSocial(valor)
+  const candidatosPorPrimeiroNome = vendedores.filter(
+    (v) => normalizeRazaoSocial(v.nome) === chavePrimeiroNome
+  )
+  return candidatosPorPrimeiroNome.length === 1
+    ? candidatosPorPrimeiroNome[0]
+    : undefined
 }
 
 /** Sanitizes every defined cell value with sanitizeCell (T-25-08) before any

@@ -42,6 +42,24 @@ const lookups: AnnotarLinhaLookups = {
       sobrenome: "Lima",
       email: "bruno@raiar.local",
     },
+    {
+      id: "vendedor-3",
+      nome: "Leonardo",
+      sobrenome: "Martins",
+      email: "leonardo@raiar.local",
+    },
+    {
+      id: "vendedor-4",
+      nome: "Diego",
+      sobrenome: "Fernandes",
+      email: "diego.fernandes@raiar.local",
+    },
+    {
+      id: "vendedor-5",
+      nome: "Diego",
+      sobrenome: "Ramos",
+      email: "diego.ramos@raiar.local",
+    },
   ],
   categorias: [
     { id: "cat-1", nome: "Food Service" },
@@ -211,6 +229,43 @@ describe("annotarLinhaAtivo", () => {
     )
 
     expect(result.resolved.contato).toBe("'=cmd|' /C calc'!A1")
+  })
+
+  it("primeironomeunico: responsavel preenchido com o primeiro nome de exatamente um vendedor resolve para aquele vendedor, insensivel a maiusculas/minusculas", () => {
+    const comMaiuscula = annotarLinhaAtivo(
+      { ...baseRow(), responsavel: "Leonardo" },
+      lookups
+    )
+    expect(comMaiuscula.status).toBe("ok")
+    expect(comMaiuscula.resolved.responsavelId).toBe("vendedor-3")
+
+    const comMinuscula = annotarLinhaAtivo(
+      { ...baseRow(), responsavel: "leonardo" },
+      lookups
+    )
+    expect(comMinuscula.status).toBe("ok")
+    expect(comMinuscula.resolved.responsavelId).toBe("vendedor-3")
+  })
+
+  it("primeironomeambiguo: primeiro nome compartilhado por 2+ vendedores nunca resolve por acaso (D-03)", () => {
+    const result = annotarLinhaAtivo(
+      { ...baseRow(), responsavel: "Diego" },
+      lookups
+    )
+
+    expect(result.status).toBe("erro")
+    expect(result.reasons).toEqual(['Responsável "Diego" não foi encontrado'])
+    expect(result.resolved.responsavelId).toBeNull()
+  })
+
+  it("responsavelnomecompleto: casamento por nome sobrenome exato continua funcionando (regressao)", () => {
+    const result = annotarLinhaAtivo(
+      { ...baseRow(), responsavel: "Bruno Lima" },
+      lookups
+    )
+
+    expect(result.status).toBe("ok")
+    expect(result.resolved.responsavelId).toBe("vendedor-2")
   })
 
   it("loteindependente: anotar um lote de 3 linhas onde so a do meio esta incompleta devolve ok, erro, ok", () => {
