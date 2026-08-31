@@ -279,20 +279,25 @@ describe("importar_clientes_ativos_lote (25-01, ATIVO-01/ATIVO-02/ATIVO-03)", ()
     expect(clienteSemResponsavel).toBeNull()
   })
 
-  // `contato` é anulável em `clientes` — sem esta cobertura a linha entraria
-  // calada com contato nulo (falha silenciosa, sem exceção e sem sinal no
-  // retorno), quebrando a promessa de ficha completa de ATIVO-01.
-  it("semcontato: linha com contato em branco (só espaços) é devolvida como incompleto e não é gravada", async () => {
-    const razaoSocial = uniqueRazaoSocial("sem-contato")
-    const row = linhaCompleta(razaoSocial, vendedorId, { contato: soEspacos() })
+  // `contato` é anulável em `clientes` e, desde a migration 0029 (quick task
+  // 260831-mod), deixou de participar da checagem de completude desta RPC —
+  // reversão da decisão original da Fase 25 (ATIVO-01): a planilha real da
+  // equipe ainda não tem contato/telefone coletado, os vendedores preenchem
+  // depois na ficha do cliente. Esta cobertura prova o comportamento NOVO: a
+  // linha é aceita e gravada normalmente mesmo sem contato.
+  it("contatoopcional (revertido, quick task 260831-mod): linha com contato nulo é aceita e gravada normalmente", async () => {
+    const razaoSocial = uniqueRazaoSocial("contato-opcional")
+    const row = linhaCompleta(razaoSocial, vendedorId, { contato: null })
 
     const { data, error } = await importar([row])
     expect(error).toBeNull()
-    expect(data![0].status).toBe("incompleto")
-    expect(data![0].id).toBeNull()
+    expect(data![0].status).toBe("inserido")
+    expect(data![0].id).toBeTruthy()
+    createdClienteIds.push(data![0].id)
 
     const cliente = await lerClientePorRazaoSocial(razaoSocial)
-    expect(cliente).toBeNull()
+    expect(cliente).not.toBeNull()
+    expect(cliente?.contato).toBeNull()
   })
 
   it("duplicado: razão social já existente é devolvida como 'duplicado', identificador nulo, sem criar segundo cliente", async () => {

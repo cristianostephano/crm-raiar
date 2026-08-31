@@ -26,7 +26,6 @@ const REQUIRED_KEYS = [
   "cidade",
   "estado",
   "responsavel",
-  "contato",
 ]
 
 function readRows(buffer: Uint8Array): unknown[][] {
@@ -51,9 +50,9 @@ describe("SYSTEM_FIELDS_ATIVO", () => {
     ).toBe(false)
   })
 
-  it("obrigatorios: exatamente 9 definicoes sao required, as 9 do contrato ATIVO-01", () => {
+  it("obrigatorios: exatamente 8 definicoes sao required (contato revertido para opcional, quick task 260831-mod)", () => {
     const required = SYSTEM_FIELDS_ATIVO.filter((f) => f.required)
-    expect(required).toHaveLength(9)
+    expect(required).toHaveLength(8)
     expect(required.map((f) => f.key).sort()).toEqual([...REQUIRED_KEYS].sort())
   })
 
@@ -84,7 +83,7 @@ describe("SYSTEM_FIELDS_ATIVO", () => {
     expect(suggestMapping("municipio", SYSTEM_FIELDS_ATIVO)).toBe("cidade")
   })
 
-  it("obrigatoriosfaltando: requiredFieldsFaltando com mapeamento vazio devolve as 9; com as 9 mapeadas devolve vazio", () => {
+  it("obrigatoriosfaltando: requiredFieldsFaltando com mapeamento vazio devolve as 8; com as 8 mapeadas devolve vazio", () => {
     const semNada = requiredFieldsFaltando(
       {} as ColumnMapping,
       SYSTEM_FIELDS_ATIVO

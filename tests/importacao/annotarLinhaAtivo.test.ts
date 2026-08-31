@@ -110,15 +110,26 @@ describe("annotarLinhaAtivo", () => {
     const rest: MappedRow = { ...baseRow() }
     delete rest.cnpj
     delete rest.numero
-    delete rest.contato
+    delete rest.cidade
 
     const result = annotarLinhaAtivo(rest, lookups)
 
     expect(result.status).toBe("erro")
     expect(result.reasons.sort()).toEqual(
-      [fieldReason("cnpj"), fieldReason("numero"), fieldReason("contato")].sort()
+      [fieldReason("cnpj"), fieldReason("numero"), fieldReason("cidade")].sort()
     )
     expect(new Set(result.reasons).size).toBe(result.reasons.length)
+  })
+
+  it("contatoopcional (revertido, quick task 260831-mod): linha sem contato resulta em ok, sem motivos, contato resolvido nulo", () => {
+    const semContato: MappedRow = { ...baseRow() }
+    delete semContato.contato
+
+    const result = annotarLinhaAtivo(semContato, lookups)
+
+    expect(result.status).toBe("ok")
+    expect(result.reasons).toEqual([])
+    expect(result.resolved.contato).toBeNull()
   })
 
   it("responsavelnaoencontrado: responsavel preenchido mas sem casamento produz motivo DIFERENTE do de responsavel em branco", () => {

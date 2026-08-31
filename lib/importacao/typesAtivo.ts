@@ -24,13 +24,13 @@ import type { SystemField, SystemFieldDefinition } from "@/lib/importacao/types"
  * projeto no checkpoint humano do plano 25-03 — não remover este comentário
  * ao alterar a lista):
  *
- * - Os 9 obrigatórios desta lista (razaoSocial, cnpj, cep, rua, numero,
- *   cidade, estado, responsavel, contato) são, JUNTOS, EXATAMENTE a
- *   condição que `cliente_ativo_pronto_para_ganho` (RPC do plano 25-01,
- *   migration 0027) exige para gravar — mesma lista, mesma cardinalidade,
- *   sem subconjunto nem superconjunto. Uma linha sem qualquer um deles é
- *   recusada pelo banco de qualquer jeito; exigir na tela só antecipa a
- *   recusa com uma explicação melhor.
+ * - Os 8 obrigatórios desta lista (razaoSocial, cnpj, cep, rua, numero,
+ *   cidade, estado, responsavel) são, JUNTOS, EXATAMENTE a condição que
+ *   `cliente_ativo_pronto_para_ganho` (RPC do plano 25-01, migration 0027,
+ *   corpo ajustado pela migration 0029) exige para gravar — mesma lista,
+ *   mesma cardinalidade, sem subconjunto nem superconjunto. Uma linha sem
+ *   qualquer um deles é recusada pelo banco de qualquer jeito; exigir na
+ *   tela só antecipa a recusa com uma explicação melhor.
  * - Razão social, CNPJ e os 5 campos de endereço: cópia dos guards de ganho
  *   das migrations 0018/0025.
  * - Responsável: a coluna é obrigatória (`not null`) no esquema da tabela
@@ -39,10 +39,17 @@ import type { SystemField, SystemFieldDefinition } from "@/lib/importacao/types"
  *   LOTE INTEIRO por violação de restrição, não só a própria linha — por
  *   isso ela também entra no filtro da RPC do 25-01, e não fica só nesta
  *   lista.
- * - Contato: nomeado literalmente no requisito ATIVO-01. É anulável na
- *   tabela, então o banco NÃO a recusaria sozinho — sem a exigência aqui e
- *   no filtro da RPC, a linha entraria calada com contato nulo, sem erro e
- *   sem sinal na tela.
+ * - Contato: nomeado literalmente no requisito ATIVO-01 e mantido como
+ *   obrigatório desde o checkpoint humano do plano 25-03. REVERTIDO na quick
+ *   task 260831-mod (2026-08-31), por decisão do dono do projeto depois do
+ *   teste ao vivo com a planilha real da equipe (1909 linhas): a base ainda
+ *   não tem contato/telefone coletado — os vendedores vão preencher esse
+ *   dado depois, individualmente, na ficha do cliente. O campo continua
+ *   existindo no vocabulário e continua sendo GRAVADO quando a planilha traz
+ *   um valor (ver `resolved.contato` em `annotarLinhaAtivo.ts`); só deixou de
+ *   BLOQUEAR a linha quando vem em branco — a checagem de completude
+ *   equivalente no banco foi ajustada junto, na migration 0029, preservando
+ *   a aridade da RPC.
  * - Frequência de visita e dia fixo NÃO aparecem neste vocabulário, por
  *   decisão travada — são definidos depois, individualmente, pela ficha/
  *   Agenda da Fase 24. Um cliente importado por aqui nasce sem frequência e
@@ -115,12 +122,7 @@ export const SYSTEM_FIELDS_ATIVO: SystemFieldDefinitionAtivo[] = [
     campoFaltandoReason: "Estado não informado",
   },
   { key: "categoria", label: "Categoria", required: false },
-  {
-    key: "contato",
-    label: "Contato",
-    required: true,
-    campoFaltandoReason: "Contato não informado",
-  },
+  { key: "contato", label: "Contato", required: false },
   { key: "telefone", label: "Telefone", required: false },
   { key: "email", label: "Email", required: false },
   { key: "produtos", label: "Produtos consumidos", required: false, multi: true },
