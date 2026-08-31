@@ -4,10 +4,10 @@ milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 6
 status: Awaiting next milestone
-stopped_at: Completed quick task 260827-nh4
-last_updated: "2026-08-27T20:15:00.000Z"
-last_activity: 2026-08-27
-last_activity_desc: Quick task 260827-nh4 — corrigido asterisco de obrigatoriedade no modelo de Importar Clientes Ativos
+stopped_at: Completed quick task 260831-mod
+last_updated: "2026-08-31T16:50:00.000Z"
+last_activity: 2026-08-31
+last_activity_desc: Quick task 260831-mod — contato opcional na importação de Clientes Ativos + casamento de Responsável por primeiro nome único (migration 0029 aplicada)
 progress:
   total_phases: 4
   completed_phases: 4
@@ -361,6 +361,7 @@ None yet.
 | 260819-l6o | Corrigir busca de cidades na importação de clientes: `validarLoteImportacao` lia a tabela `cidades` (5571 linhas IBGE) sem paginação, truncada em 1000 pelo PostgREST — cidades reais (ex: São Paulo/SP, Curitiba/PR) eram rejeitadas como "não encontrada". Novo leitor paginado `getTodasCidades()` | 2026-08-19 | 683c8cb | [260819-l6o-bug-busca-de-cidades-na-importacao-de-cl](./quick/260819-l6o-bug-busca-de-cidades-na-importacao-de-cl/) |
 | 260819-m8q | Tornar CEP/Rua/Número/Cidade/Estado opcionais na importação em massa e na ficha de edição (migration 0023, coluna nullable), mantendo obrigatórios só no cadastro manual novo (`createClienteSchema` intocado). Rótulo "Sem cidade"/"Sem estado" único (`rotuloLocalizacao.ts`) no card/filtro/export, filtro ganha sentinelas "Sem estado"/"Sem cidade" | 2026-08-19 | 4d248cb | [260819-m8q-tornar-cep-rua-numero-cidade-e-estado-ca](./quick/260819-m8q-tornar-cep-rua-numero-cidade-e-estado-ca/) |
 | 260827-nh4 | Bug: modelo de planilha "Importar Clientes Ativos" (`buildModeloAtivos`) não sufixava cabeçalhos obrigatórios (incluindo CNPJ) com `" *"`, ao contrário do modelo de prospecção que já usa `REQUIRED_MARKER` desde a Fase 26. Corrigido para espelhar o mesmo padrão + testes novos | 2026-08-27 | 8e3126c | [260827-nh4-bug-o-modelo-de-planilha-de-importar-cli](./quick/260827-nh4-bug-o-modelo-de-planilha-de-importar-cli/) |
+| 260831-mod | Ajuste pós teste ao vivo (1909 linhas reais): Contato deixa de ser obrigatório na importação de Clientes Ativos (reversão de D-01/ATIVO-01 da Fase 25, vocabulário + migration 0029 no corpo de `cliente_ativo_pronto_para_ganho`, aridade preservada) e `findVendedor` passa a casar Responsável por primeiro nome único, sem resolver ambiguidade por acaso | 2026-08-31 | b75ed1a | [260831-mod-ajustar-a-importacao-de-clientes-ativos-](./quick/260831-mod-ajustar-a-importacao-de-clientes-ativos-/) |
 
 ### Roadmap Evolution
 
