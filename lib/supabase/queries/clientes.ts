@@ -6,6 +6,7 @@ import type { DiaSemanaVisita, SemanaDoMesVisita } from "@/lib/funil/diaFixo"
 import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 import { staleReason, type TarefaAberta } from "@/lib/funil/staleness"
+import { buscarPaginado } from "@/lib/supabase/queries/paginacao"
 import { createClient } from "@/lib/supabase/server"
 
 // Re-exported so every existing import path (this module used to define
@@ -263,15 +264,28 @@ type ClienteRow = {
 export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosPorEtapa> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from("clientes")
-    .select(
-      "id, razao_social, nome_fantasia, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome)), cliente_produtos(produto_id, produtos_consumidos(nome))"
-    )
-    .order("posicao", { ascending: true })
+  // Leitura paginada (quick task 260914-ng5): a tabela `clientes` passou de
+  // 1000 linhas pela primeira vez (2181 hoje), e o PostgREST devolve no
+  // máximo 1000 linhas por requisição sem `.range()` explícito — um select
+  // direto aqui truncava o Kanban (mostrou "571" em vez de 1752 na etapa
+  // "1ª venda concluída"). `.order("id", ...)` entra como desempate de
+  // `posicao` (não garantidamente única entre etapas diferentes), garantindo
+  // ordem estável entre as chamadas de `.range()` separadas.
+  const rows = await buscarPaginado<ClienteRow>(async (inicio, fim) => {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select(
+        "id, razao_social, nome_fantasia, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome)), cliente_produtos(produto_id, produtos_consumidos(nome))"
+      )
+      .order("posicao", { ascending: true })
+      .order("id", { ascending: true })
+      .range(inicio, fim)
 
-  if (error) {
-    throw new Error(`Falha ao carregar clientes: ${error.message}`)
+    return { data: data as unknown as ClienteRow[] | null, error }
+  })
+
+  if (rows === null) {
+    throw new Error(`Falha ao carregar clientes: leitura paginada incompleta`)
   }
 
   const grouped = Object.fromEntries(
@@ -280,7 +294,7 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
 
   const now = new Date()
 
-  for (const row of (data ?? []) as unknown as ClienteRow[]) {
+  for (const row of rows) {
     const key = row.etapa
 
     const tarefasAbertas: TarefaAberta[] = (row.tarefas ?? [])
@@ -416,30 +430,58 @@ type ClienteExportQueryRow = {
  * back as 0 rows for that id, never an error or a widened result. When
  * `ids` is null/undefined/empty, every RLS-visible row is returned.
  */
+const CLIENTE_EXPORT_SELECT =
+  "razao_social, cep, rua, numero, complemento, cidade, estado, categorias(nome), profiles(nome, sobrenome), contato, telefone, email, numero_de_lojas, cliente_produtos(produtos_consumidos(nome)), etapa, status_acompanhamento, observacao"
+
 export async function getClientesParaExportacao(
   ids?: string[] | null
 ): Promise<ClienteExportRow[]> {
   const supabase = await createClient()
 
-  let query = supabase
-    .from("clientes")
-    .select(
-      "razao_social, cep, rua, numero, complemento, cidade, estado, categorias(nome), profiles(nome, sobrenome), contato, telefone, email, numero_de_lojas, cliente_produtos(produtos_consumidos(nome)), etapa, status_acompanhamento, observacao"
-    )
+  let rows: ClienteExportQueryRow[]
 
   if (ids && ids.length > 0) {
-    query = query.in("id", ids)
+    // Caminho COM ids: continua exatamente como estava, sem paginação — a
+    // tela sempre manda um recorte já filtrado e pequeno, `.in("id", ids)`
+    // já basta.
+    const { data, error } = await supabase
+      .from("clientes")
+      .select(CLIENTE_EXPORT_SELECT)
+      .in("id", ids)
+
+    if (error) {
+      throw new Error(`Falha ao carregar clientes para exportação: ${error.message}`)
+    }
+
+    rows = (data ?? []) as unknown as ClienteExportQueryRow[]
+  } else {
+    // Caminho SEM ids ("exportar tudo", quick task 260914-ng5): a tabela
+    // `clientes` passou de 1000 linhas (2181 hoje), e o PostgREST devolve no
+    // máximo 1000 por requisição sem `.range()` explícito. `.order("id", ...)`
+    // é novo aqui (não havia nenhum `.order()` neste caminho antes) — só para
+    // estabilidade de paginação, não muda o formato de saída.
+    const rowsPaginadas = await buscarPaginado<ClienteExportQueryRow>(
+      async (inicio, fim) => {
+        const { data, error } = await supabase
+          .from("clientes")
+          .select(CLIENTE_EXPORT_SELECT)
+          .order("id", { ascending: true })
+          .range(inicio, fim)
+
+        return { data: data as unknown as ClienteExportQueryRow[] | null, error }
+      }
+    )
+
+    if (rowsPaginadas === null) {
+      throw new Error(
+        `Falha ao carregar clientes para exportação: leitura paginada incompleta`
+      )
+    }
+
+    rows = rowsPaginadas
   }
 
-  const { data, error } = await query
-
-  if (error) {
-    throw new Error(`Falha ao carregar clientes para exportação: ${error.message}`)
-  }
-
-  return (data ?? []).map((row) => {
-    const r = row as unknown as ClienteExportQueryRow
-
+  return rows.map((r) => {
     return {
       razaoSocial: r.razao_social,
       cep: r.cep,

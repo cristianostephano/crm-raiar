@@ -19,7 +19,7 @@ function gerarItens(total: number): { id: number }[] {
   return Array.from({ length: total }, (_, i) => ({ id: i }))
 }
 
-function simularBusca<T>(dataset: T[]): ReturnType<typeof vi.fn> {
+function simularBusca<T>(dataset: T[]) {
   return vi.fn(
     async (inicio: number, fim: number): Promise<ResultadoPagina<T>> => ({
       data: dataset.slice(inicio, fim + 1),
