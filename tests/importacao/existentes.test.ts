@@ -54,7 +54,12 @@ describe("nomesExistentesParaDedupe", () => {
   it("returns two empty lists for an empty read", () => {
     const result = nomesExistentesParaDedupe([])
 
-    expect(result).toEqual({ razoesSociais: [], nomesFantasia: [] })
+    expect(result).toEqual({
+      razoesSociais: [],
+      nomesFantasia: [],
+      razoesSociaisCnpj: [],
+      nomesFantasiaCnpj: [],
+    })
   })
 
   it("trims surrounding whitespace from usable values", () => {
@@ -64,5 +69,42 @@ describe("nomesExistentesParaDedupe", () => {
 
     expect(result.razoesSociais).toEqual(["Comércio XYZ"])
     expect(result.nomesFantasia).toEqual(["Fantasia XYZ"])
+  })
+
+  // Quick task 260914-j8g: nomesExistentesParaDedupe passa a extrair também o
+  // CNPJ de cada cliente já cadastrado, alinhado por índice com os nomes já
+  // extraídos — insumo da regra de desambiguação de findDuplicates.
+
+  it("aligns razoesSociaisCnpj and nomesFantasiaCnpj by index with razoesSociais/nomesFantasia, even after independent filtering of the two names", () => {
+    const result = nomesExistentesParaDedupe([
+      { razao_social: "Empresa A", nome_fantasia: "Fantasia A", cnpj: "11.111.111/0001-11" },
+      { razao_social: null, nome_fantasia: "Fantasia B", cnpj: "22.222.222/0001-22" },
+      { razao_social: "Empresa C", nome_fantasia: null, cnpj: "33.333.333/0001-33" },
+    ])
+
+    expect(result.razoesSociais).toEqual(["Empresa A", "Empresa C"])
+    expect(result.razoesSociaisCnpj).toEqual([
+      "11.111.111/0001-11",
+      "33.333.333/0001-33",
+    ])
+    expect(result.nomesFantasia).toEqual(["Fantasia A", "Fantasia B"])
+    expect(result.nomesFantasiaCnpj).toEqual([
+      "11.111.111/0001-11",
+      "22.222.222/0001-22",
+    ])
+  })
+
+  it("turns a whitespace-only cnpj into null in the output list (same tolerance already tested for razão social/Nome Fantasia)", () => {
+    const result = nomesExistentesParaDedupe([
+      { razao_social: "Empresa A", cnpj: "   " },
+      { razao_social: "Empresa B", cnpj: null },
+      { razao_social: "Empresa C", cnpj: "44.444.444/0001-44" },
+    ])
+
+    expect(result.razoesSociaisCnpj).toEqual([
+      null,
+      null,
+      "44.444.444/0001-44",
+    ])
   })
 })

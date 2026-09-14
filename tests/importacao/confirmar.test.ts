@@ -270,6 +270,29 @@ describe("planConfirmacao", () => {
     expect(result.puladasCount).toBe(0)
   })
 
+  it("does not exclude an 'ok' row whose nome bate mas cujo CNPJ diverge do CNPJ correspondente em existentesCnpj (quick task 260914-j8g, D-02 respeita a regra de CNPJ)", () => {
+    const linha = makeRow({
+      row: 0,
+      status: "ok",
+      resolved: makeResolved({
+        razaoSocial: "Nova Distribuidora Ltda",
+        cnpj: "11.111.111/0001-11",
+      }),
+    })
+
+    const result = planConfirmacao(
+      [linha],
+      {},
+      ["Nova Distribuidora Ltda"],
+      [],
+      ["22.222.222/0001-22"]
+    )
+
+    expect(result.rowsToInsert).toHaveLength(1)
+    expect(result.rowsToInsert[0].razao_social).toBe("Nova Distribuidora Ltda")
+    expect(result.puladasCount).toBe(0)
+  })
+
   it("includes an 'ok' row with the 5 endereço fields null, entering rowsToInsert with null values (D-01/D-02, quick task 260819-m8q)", () => {
     const linha = makeRow({
       row: 0,
