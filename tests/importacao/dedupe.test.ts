@@ -152,4 +152,136 @@ describe("findDuplicates", () => {
     expect(result.has(0)).toBe(false)
     expect(result.has(1)).toBe(false)
   })
+
+  // Quick task 260914-j8g: falso positivo real e confirmado ao vivo — redes
+  // com várias lojas (ex. Carrefour, Outback) têm filiais com razão social
+  // igual e CNPJ diferente marcadas como "Possível duplicado" uma da outra,
+  // quando são clientes PJ legitimamente diferentes. Regra travada: nome
+  // igual só vira duplicado quando o CNPJ também bate OU quando falta CNPJ
+  // em pelo menos um dos dois lados (sem CNPJ não há como desambiguar).
+
+  it("(a1) flags nome igual + CNPJ igual as duplicate when comparing batch against existentes (regressão preservada)", () => {
+    const batch = [
+      { row: 0, razaoSocial: "Distribuidora ABC Ltda", cnpj: "12.345.678/0001-90" },
+    ]
+    const existentes = ["Distribuidora ABC Ltda"]
+    const existentesCnpj = ["12345678000190"]
+
+    const result = findDuplicates(batch, existentes, [], existentesCnpj)
+
+    expect(result.get(0)).toBe("Distribuidora ABC Ltda")
+  })
+
+  it("(a2) flags nome igual + CNPJ igual as duplicate within the same batch (regressão preservada)", () => {
+    const batch = [
+      { row: 0, razaoSocial: "Distribuidora ABC Ltda", cnpj: "12.345.678/0001-90" },
+      { row: 1, razaoSocial: "DISTRIBUIDORA ABC LTDA.", cnpj: "12345678000190" },
+    ]
+
+    const result = findDuplicates(batch, [])
+
+    expect(result.get(1)).toBe("Distribuidora ABC Ltda")
+    expect(result.get(0)).toBe("DISTRIBUIDORA ABC LTDA.")
+  })
+
+  it("(b1) does not flag nome igual + CNPJ diferente (ambos presentes) against existentes — filial de rede (o fix, ex. Carrefour)", () => {
+    const batch = [
+      {
+        row: 0,
+        razaoSocial: "CARREFOUR COMERCIO E INDUSTRIA LTDA",
+        cnpj: "45.543.915/0001-70",
+      },
+    ]
+    const existentes = ["Carrefour Comercio e Industria Ltda"]
+    const existentesCnpj = ["45.543.915/0002-51"]
+
+    const result = findDuplicates(batch, existentes, [], existentesCnpj)
+
+    expect(result.has(0)).toBe(false)
+  })
+
+  it("(b2) does not flag nome igual + CNPJ diferente (ambos presentes) within the same batch — filiais de rede (o fix, ex. Outback)", () => {
+    const batch = [
+      {
+        row: 0,
+        razaoSocial: "OUTBACK STEAKHOUSE RESTAURANTES BRASIL S.A.",
+        cnpj: "02.190.917/0001-52",
+      },
+      {
+        row: 1,
+        razaoSocial: "Outback Steakhouse Restaurantes Brasil S.A.",
+        cnpj: "02.190.917/0002-33",
+      },
+    ]
+
+    const result = findDuplicates(batch, [])
+
+    expect(result.has(0)).toBe(false)
+    expect(result.has(1)).toBe(false)
+  })
+
+  it("(c1) still flags nome igual when the DB side has no CNPJ (ambíguo = duplicado, regressão preservada)", () => {
+    const batch = [
+      { row: 0, razaoSocial: "Distribuidora ABC Ltda", cnpj: "12.345.678/0001-90" },
+    ]
+    const existentes = ["Distribuidora ABC Ltda"]
+
+    const result = findDuplicates(batch, existentes, [], [null])
+
+    expect(result.get(0)).toBe("Distribuidora ABC Ltda")
+  })
+
+  it("(c2) still flags nome igual when the batch side has no CNPJ (ambíguo = duplicado, regressão preservada)", () => {
+    const batch = [{ row: 0, razaoSocial: "Distribuidora ABC Ltda", cnpj: "   " }]
+    const existentes = ["Distribuidora ABC Ltda"]
+    const existentesCnpj = ["12.345.678/0001-90"]
+
+    const result = findDuplicates(batch, existentes, [], existentesCnpj)
+
+    expect(result.get(0)).toBe("Distribuidora ABC Ltda")
+  })
+
+  it("(d) never flags a different razão social as duplicate, even with the same CNPJ (nome continua o filtro primário)", () => {
+    const batch = [{ row: 0, razaoSocial: "Padaria do Zé", cnpj: "11.111.111/0001-11" }]
+    const existentes = ["Mercado do João"]
+    const existentesCnpj = ["11.111.111/0001-11"]
+
+    const result = findDuplicates(batch, existentes, [], existentesCnpj)
+
+    expect(result.has(0)).toBe(false)
+  })
+
+  it("(e) matches a batch row against only the existentes entry whose CNPJ actually bate, when duas filiais já cadastradas compartilham o mesmo nome", () => {
+    const existentes = ["Rede XYZ Comercio Ltda", "Rede XYZ Comercio Ltda"]
+    const existentesCnpj = ["10.000.000/0001-00", "10.000.000/0002-90"]
+
+    const batchBateSegunda = [
+      { row: 0, razaoSocial: "Rede XYZ Comercio Ltda", cnpj: "10.000.000/0002-90" },
+    ]
+    const resultBate = findDuplicates(batchBateSegunda, existentes, [], existentesCnpj)
+    expect(resultBate.get(0)).toBe("Rede XYZ Comercio Ltda")
+
+    const batchNaoBateNenhuma = [
+      { row: 0, razaoSocial: "Rede XYZ Comercio Ltda", cnpj: "10.000.000/0003-71" },
+    ]
+    const resultNaoBate = findDuplicates(
+      batchNaoBateNenhuma,
+      existentes,
+      [],
+      existentesCnpj
+    )
+    expect(resultNaoBate.has(0)).toBe(false)
+  })
+
+  it("(f) treats CNPJ with different punctuation but the same digits as the same CNPJ (comparação por dígitos)", () => {
+    const batch = [
+      { row: 0, razaoSocial: "Distribuidora ABC Ltda", cnpj: "12345678000190" },
+    ]
+    const existentes = ["Distribuidora ABC Ltda"]
+    const existentesCnpj = ["12.345.678/0001-90"]
+
+    const result = findDuplicates(batch, existentes, [], existentesCnpj)
+
+    expect(result.get(0)).toBe("Distribuidora ABC Ltda")
+  })
 })
