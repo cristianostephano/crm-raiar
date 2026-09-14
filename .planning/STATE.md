@@ -4,10 +4,10 @@ milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 6
 status: Awaiting next milestone
-stopped_at: Completed quick task 260831-oax
-last_updated: "2026-08-31T20:35:00.000Z"
-last_activity: 2026-08-31
-last_activity_desc: Quick task 260831-oax — limite de payload das server actions de importação subido de 1MB para 10MB (next.config.ts)
+stopped_at: Completed quick task 260914-giv
+last_updated: "2026-09-14T14:55:00.000Z"
+last_activity: 2026-09-14
+last_activity_desc: Quick task 260914-giv — mensagem de erro da importação de Prospecção agora distingue "Responsável não informado" (campo vazio) de "Responsável não encontrado" (nome preenchido sem correspondência), igual já funcionava na importação de Ativos
 progress:
   total_phases: 4
   completed_phases: 4
@@ -363,6 +363,7 @@ None yet.
 | 260827-nh4 | Bug: modelo de planilha "Importar Clientes Ativos" (`buildModeloAtivos`) não sufixava cabeçalhos obrigatórios (incluindo CNPJ) com `" *"`, ao contrário do modelo de prospecção que já usa `REQUIRED_MARKER` desde a Fase 26. Corrigido para espelhar o mesmo padrão + testes novos | 2026-08-27 | 8e3126c | | [260827-nh4-bug-o-modelo-de-planilha-de-importar-cli](./quick/260827-nh4-bug-o-modelo-de-planilha-de-importar-cli/) |
 | 260831-mod | Ajuste pós teste ao vivo (1909 linhas reais): Contato deixa de ser obrigatório na importação de Clientes Ativos (reversão de D-01/ATIVO-01 da Fase 25, vocabulário + migration 0029 no corpo de `cliente_ativo_pronto_para_ganho`, aridade preservada) e `findVendedor` passa a casar Responsável por primeiro nome único, sem resolver ambiguidade por acaso | 2026-08-31 | b75ed1a | Verified | [260831-mod-ajustar-a-importacao-de-clientes-ativos-](./quick/260831-mod-ajustar-a-importacao-de-clientes-ativos-/) |
 | 260831-oax | Bug: Server Action de importação de Clientes Ativos estourava o limite padrão de 1MB do Next.js ("Body exceeded 1 MB limit") ao confirmar planilha real grande (1909 linhas). Corrigido subindo `experimental.serverActions.bodySizeLimit` para `10mb` em `next.config.ts`, documentando que o teto real de produção é o limite de payload de Serverless Function da Vercel (~4.5MB, restrição de plataforma) | 2026-08-31 | 28432cc | | [260831-oax-bug-server-action-de-importacao-de-clien](./quick/260831-oax-bug-server-action-de-importacao-de-clien/) |
+| 260914-giv | Bug: importação de Clientes em Prospecção (`lib/importacao/annotarLinha.ts`) mostrava "Responsável não informado" tanto pra campo vazio quanto pra nome preenchido sem correspondência no cadastro — confundindo o usuário. Encontrado via teste ao vivo real (231/429 linhas de uma planilha real erraram assim, nenhuma vazia de verdade). Corrigido com mensagem distinta `Responsável "X" não foi encontrado`, espelhando o padrão já correto de `annotarLinhaAtivo.ts` | 2026-09-14 | 953c4c3 | | [260914-giv-bug-mensagem-confusa-na-importacao-de-cl](./quick/260914-giv-bug-mensagem-confusa-na-importacao-de-cl/) |
 
 ### Roadmap Evolution
 
