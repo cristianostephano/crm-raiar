@@ -98,7 +98,11 @@ export async function validarLoteImportacao(
       // nome_fantasia (Fase 26 Plano 3, PROSP-02): a chave de reserva do
       // fluxo de prospecção precisa comparar Nome Fantasia contra Nome
       // Fantasia já cadastrado, não só razão social contra razão social.
-      supabase.from("clientes").select("razao_social, nome_fantasia"),
+      // Traz também cnpj (quick task 260914-j8g): RLS já escopa a leitura
+      // por LINHA, não por coluna — trazer mais uma coluna da mesma tabela
+      // clientes, já lida sob a mesma policy, não expõe nenhum dado novo;
+      // alimenta a regra de desambiguação de duplicado por CNPJ.
+      supabase.from("clientes").select("razao_social, nome_fantasia, cnpj"),
       // Lista completa de cidades (LOC-01/LOC-02), paginada por
       // getTodasCidades (lib/supabase/queries/cidades.ts) — a tabela tem
       // 5571 linhas e o PostgREST devolve no máximo 1000 por requisição sem
@@ -128,21 +132,34 @@ export async function validarLoteImportacao(
   // sobre razão social pelo módulo tolerante a nulo — um cliente do banco
   // com razão social nula não pode mais derrubar a validação do lote
   // inteiro.
-  const { razoesSociais: existentes, nomesFantasia: existentesNomesFantasia } =
-    nomesExistentesParaDedupe(existentesResult.data ?? [])
+  const {
+    razoesSociais: existentes,
+    nomesFantasia: existentesNomesFantasia,
+    razoesSociaisCnpj: existentesCnpj,
+    nomesFantasiaCnpj: existentesNomesFantasiaCnpj,
+  } = nomesExistentesParaDedupe(existentesResult.data ?? [])
 
   const annotated = linhas.map((linha) => annotarLinha(linha, lookups))
 
   // Fase 26 Plano 3 (PROSP-02): leva também o Nome Fantasia de cada linha
   // anotada, ao lado da razão social — sem isso, duas linhas sem razão
   // social nunca seriam comparadas contra os Nomes Fantasia já cadastrados.
+  // Quick task 260914-j8g: leva também o CNPJ da linha já resolvida/saneada
+  // (annotarLinha já produz esse valor — nenhum parsing novo aqui).
   const batchForDedupe = annotated.map((annotatedRow, index) => ({
     row: index,
     razaoSocial: annotatedRow.resolved.razaoSocial,
     nomeFantasia: annotatedRow.resolved.nomeFantasia,
+    cnpj: annotatedRow.resolved.cnpj,
   }))
 
-  const duplicates = findDuplicates(batchForDedupe, existentes, existentesNomesFantasia)
+  const duplicates = findDuplicates(
+    batchForDedupe,
+    existentes,
+    existentesNomesFantasia,
+    existentesCnpj,
+    existentesNomesFantasiaCnpj
+  )
 
   // Precedence: erro > duplicado > ok — a row that already failed
   // required-field/lookup validation is never promoted to "duplicado", even
@@ -257,10 +274,12 @@ export async function confirmarLoteImportacao(
   // validarLoteImportacao uses. For a Supervisor, clientes' RLS SELECT
   // policy returns the whole base, so NEVER add a manual responsavel
   // filter here. Traz também nome_fantasia (Fase 26 Plano 3), mesma razão
-  // da leitura de validarLoteImportacao acima.
+  // da leitura de validarLoteImportacao acima. Traz também cnpj (quick
+  // task 260914-j8g), mesma justificativa de RLS por linha da leitura
+  // acima em validarLoteImportacao.
   const existentesResult = await supabase
     .from("clientes")
-    .select("razao_social, nome_fantasia")
+    .select("razao_social, nome_fantasia, cnpj")
 
   if (existentesResult.error) {
     return { error: { code: "generic" } }
@@ -271,13 +290,17 @@ export async function confirmarLoteImportacao(
   const {
     razoesSociais: existentesRazaoSocial,
     nomesFantasia: existentesNomesFantasia,
+    razoesSociaisCnpj: existentesCnpj,
+    nomesFantasiaCnpj: existentesNomesFantasiaCnpj,
   } = nomesExistentesParaDedupe(existentesResult.data ?? [])
 
   const { rowsToInsert, puladas } = planConfirmacao(
     linhas,
     decisions,
     existentesRazaoSocial,
-    existentesNomesFantasia
+    existentesNomesFantasia,
+    existentesCnpj,
+    existentesNomesFantasiaCnpj
   )
 
   if (rowsToInsert.length === 0) {

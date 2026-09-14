@@ -89,7 +89,11 @@ export async function validarLoteAtivos(
       // Consulta estreita, sem NENHUM filtro manual de dono — para o
       // Supervisor a regra de leitura de clientes já devolve a base inteira,
       // exatamente o conjunto que a detecção de duplicado (ATIVO-04) precisa.
-      supabase.from("clientes").select("razao_social"),
+      // Traz também cnpj (quick task 260914-j8g): RLS opera por LINHA, não
+      // por coluna — trazer mais uma coluna da mesma tabela clientes, já
+      // lida sob a mesma policy, não expõe nenhum dado novo; alimenta a
+      // regra de desambiguação de duplicado por CNPJ.
+      supabase.from("clientes").select("razao_social, cnpj"),
       // Leitor paginado obrigatório (mesmo bug já corrigido uma vez neste
       // projeto): a tabela cidades tem 5571 linhas e um select direto trunca
       // em 1000, fazendo a validação rejeitar cidade real.
@@ -114,18 +118,22 @@ export async function validarLoteAtivos(
   // Diferença deliberada dos dois fluxos: o de clientes ativos NÃO ganha
   // comparação por Nome Fantasia — o vocabulário de clientes ativos exige
   // razão social em toda linha, então a chave de reserva não tem uso aqui.
-  const { razoesSociais: existentes } = nomesExistentesParaDedupe(
-    existentesResult.data ?? []
-  )
+  const { razoesSociais: existentes, razoesSociaisCnpj: existentesCnpj } =
+    nomesExistentesParaDedupe(existentesResult.data ?? [])
 
   const annotated = annotarLoteAtivos(linhas, lookups)
 
+  // Quick task 260914-j8g: leva também o CNPJ da linha já resolvida/saneada
+  // (annotarLoteAtivos já produz esse valor — nenhum parsing novo aqui).
   const batchForDedupe = annotated.map((annotatedRow, index) => ({
     row: index,
     razaoSocial: annotatedRow.resolved.razaoSocial,
+    cnpj: annotatedRow.resolved.cnpj,
   }))
 
-  const duplicates = findDuplicates(batchForDedupe, existentes)
+  // 3º argumento (`[]`) é existentesNomesFantasia, mantido vazio de
+  // propósito (fluxo de ativos não usa Nome Fantasia na comparação).
+  const duplicates = findDuplicates(batchForDedupe, existentes, [], existentesCnpj)
 
   // Precedência: erro > duplicado > ok — uma linha que já falhou a checagem
   // de campo obrigatório/lookup nunca é promovida a "duplicado".
@@ -207,24 +215,33 @@ export async function confirmarLoteAtivos(
   }
 
   // D-02-equivalente (ATIVO-04) revalidation read — mesma consulta estreita,
-  // RLS-escopada, de validarLoteAtivos.
-  const existentesResult = await supabase.from("clientes").select("razao_social")
+  // RLS-escopada, de validarLoteAtivos. Traz também cnpj (quick task
+  // 260914-j8g), mesma justificativa de RLS por linha da leitura acima em
+  // validarLoteAtivos.
+  const existentesResult = await supabase
+    .from("clientes")
+    .select("razao_social, cnpj")
 
   if (existentesResult.error) {
     return { error: { code: "generic" } }
   }
 
   // Fase 26 Plano 3 (T-26-08): mesma substituição da conversão de tipo não
-  // checada; a consulta acima continua trazendo só razão social, de
+  // checada; a consulta acima continua trazendo só razão social e cnpj, de
   // propósito (ver comentário em validarLoteAtivos).
-  const { razoesSociais: existentesRazaoSocial } = nomesExistentesParaDedupe(
-    existentesResult.data ?? []
-  )
+  const {
+    razoesSociais: existentesRazaoSocial,
+    razoesSociaisCnpj: existentesCnpj,
+  } = nomesExistentesParaDedupe(existentesResult.data ?? [])
 
+  // 4º argumento (`[]`) é existentesNomesFantasia, mantido vazio de
+  // propósito (fluxo de ativos não usa Nome Fantasia na comparação).
   const { rowsToInsert, puladas } = planConfirmacao(
     linhas,
     decisoes,
-    existentesRazaoSocial
+    existentesRazaoSocial,
+    [],
+    existentesCnpj
   )
 
   if (rowsToInsert.length === 0) {
