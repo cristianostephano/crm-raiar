@@ -112,12 +112,22 @@ export function toRpcClienteRow(resolved: ResolvedRow): RpcClienteRow {
  * ONLY over the "ok" candidates (never the explicit "importar" overrides)
  * against `existentesRazaoSocial`. Any ok candidate that now matches is
  * moved to skipped under DUPLICADO_ENCONTRADO_AO_CONFIRMAR_REASON.
+ *
+ * Quick task 260914-j8g: a revalidação D-02 agora aplica a MESMA regra de
+ * CNPJ da validação inicial (validarLoteImportacao/validarLoteAtivos) — um
+ * candidato "ok" cujo nome bate mas cujo CNPJ diverge do CNPJ correspondente
+ * em `existentesCnpj`/`existentesNomesFantasiaCnpj` NÃO é mais excluído
+ * como duplicado; sem isso, o falso positivo de filiais de rede
+ * (Carrefour/Outback) voltaria a aparecer silenciosamente só no momento de
+ * confirmar.
  */
 export function planConfirmacao(
   linhas: ValidatedRow[],
   decisions: Record<number, "importar" | "pular">,
   existentesRazaoSocial: string[],
-  existentesNomesFantasia: string[] = []
+  existentesNomesFantasia: string[] = [],
+  existentesCnpj: (string | null | undefined)[] = [],
+  existentesNomesFantasiaCnpj: (string | null | undefined)[] = []
 ): PlanConfirmacaoResult {
   const skippedRows = new Set<number>()
   const reasonCounts = new Map<string, number>()
@@ -161,6 +171,7 @@ export function planConfirmacao(
     row: c.row,
     razaoSocial: c.resolved.razaoSocial,
     nomeFantasia: c.resolved.nomeFantasia,
+    cnpj: c.resolved.cnpj,
   }))
   // Fase 26 Plano 3: `existentesNomesFantasia` é OPCIONAL (lista vazia por
   // padrão) para que a chamada existente de confirmarLoteAtivos continue
@@ -170,7 +181,9 @@ export function planConfirmacao(
   const newDuplicates = findDuplicates(
     batchForDedupe,
     existentesRazaoSocial,
-    existentesNomesFantasia
+    existentesNomesFantasia,
+    existentesCnpj,
+    existentesNomesFantasiaCnpj
   )
 
   const rowsToInsert: RpcClienteRow[] = []

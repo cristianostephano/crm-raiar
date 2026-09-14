@@ -18,15 +18,24 @@
 
 /** Uma linha bruta devolvida pela consulta de clientes já cadastrados —
  * razão social possivelmente nula, Nome Fantasia possivelmente ausente da
- * consulta (o fluxo de clientes ativos nunca traz essa coluna). */
+ * consulta (o fluxo de clientes ativos nunca traz essa coluna). `cnpj`
+ * (quick task 260914-j8g) segue a mesma tolerância a nulo/ausência —
+ * alimenta a regra de desambiguação por CNPJ de findDuplicates. */
 export type ExistenteRow = {
   razao_social?: string | null
   nome_fantasia?: string | null
+  cnpj?: string | null
 }
 
 export type NomesExistentesParaDedupe = {
   razoesSociais: string[]
   nomesFantasia: string[]
+  /** CNPJ de cada entrada de `razoesSociais`, alinhado por índice (quick
+   * task 260914-j8g) — insumo de findDuplicates para a regra de CNPJ. */
+  razoesSociaisCnpj: (string | null)[]
+  /** CNPJ de cada entrada de `nomesFantasia`, alinhado por índice (mesma
+   * regra acima). */
+  nomesFantasiaCnpj: (string | null)[]
 }
 
 /** Aparado ou descartado — nunca texto vazio na lista de saída. Nulo,
@@ -46,20 +55,37 @@ function textoUtilizavel(valor: string | null | undefined): string | null {
  * nulável no banco desde a migration 0024. Quando o campo de Nome Fantasia
  * não vem na consulta (fluxo de clientes ativos), a lista de Nomes Fantasia
  * sai vazia. Uma leitura vazia devolve duas listas vazias.
+ *
+ * Quick task 260914-j8g: também extrai o CNPJ de cada cliente já cadastrado,
+ * em `razoesSociaisCnpj`/`nomesFantasiaCnpj`, alinhado por ÍNDICE com
+ * `razoesSociais`/`nomesFantasia` respectivamente — cada CNPJ é empilhado no
+ * MESMO bloco condicional que empilha o nome correspondente, então o
+ * alinhamento se mantém mesmo com a filtragem independente entre razão
+ * social e Nome Fantasia (uma linha pode contribuir pra uma lista e não pra
+ * outra). `cnpj` ausente/nulo/só espaço vira `null` na lista de saída,
+ * mesma tolerância já aplicada a razão social/Nome Fantasia.
  */
 export function nomesExistentesParaDedupe(
   rows: ExistenteRow[]
 ): NomesExistentesParaDedupe {
   const razoesSociais: string[] = []
   const nomesFantasia: string[] = []
+  const razoesSociaisCnpj: (string | null)[] = []
+  const nomesFantasiaCnpj: (string | null)[] = []
 
   for (const row of rows) {
     const razaoSocial = textoUtilizavel(row.razao_social)
-    if (razaoSocial) razoesSociais.push(razaoSocial)
+    if (razaoSocial) {
+      razoesSociais.push(razaoSocial)
+      razoesSociaisCnpj.push(textoUtilizavel(row.cnpj))
+    }
 
     const nomeFantasia = textoUtilizavel(row.nome_fantasia)
-    if (nomeFantasia) nomesFantasia.push(nomeFantasia)
+    if (nomeFantasia) {
+      nomesFantasia.push(nomeFantasia)
+      nomesFantasiaCnpj.push(textoUtilizavel(row.cnpj))
+    }
   }
 
-  return { razoesSociais, nomesFantasia }
+  return { razoesSociais, nomesFantasia, razoesSociaisCnpj, nomesFantasiaCnpj }
 }
