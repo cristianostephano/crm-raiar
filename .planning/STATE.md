@@ -4,10 +4,10 @@ milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 6
 status: Awaiting next milestone
-stopped_at: Completed quick task 260914-k3g
-last_updated: "2026-09-14T18:55:00.000Z"
+stopped_at: Completed quick task 260914-ng5
+last_updated: "2026-09-14T20:20:00.000Z"
 last_activity: 2026-09-14
-last_activity_desc: Quick task 260914-k3g — trava de unicidade de razao_social no banco (desde a migration 0002) trocada para razao_social+CNPJ, corrigindo o bloqueio real de redes com varias lojas na importacao em massa (migrations 0030-0033)
+last_activity_desc: Quick task 260914-ng5 — corrigido o corte de 1000 linhas do PostgREST em 5 leituras da tabela clientes (Kanban, Agenda "Sem dia fixo", checagem de duplicado nas duas importacoes, exportacao sem filtro), via novo paginador generico buscarPaginado, mesmo padrao ja usado em getTodasCidades()
 progress:
   total_phases: 4
   completed_phases: 4
@@ -366,6 +366,7 @@ None yet.
 | 260914-giv | Bug: importação de Clientes em Prospecção (`lib/importacao/annotarLinha.ts`) mostrava "Responsável não informado" tanto pra campo vazio quanto pra nome preenchido sem correspondência no cadastro — confundindo o usuário. Encontrado via teste ao vivo real (231/429 linhas de uma planilha real erraram assim, nenhuma vazia de verdade). Corrigido com mensagem distinta `Responsável "X" não foi encontrado`, espelhando o padrão já correto de `annotarLinhaAtivo.ts` | 2026-09-14 | 953c4c3 | | [260914-giv-bug-mensagem-confusa-na-importacao-de-cl](./quick/260914-giv-bug-mensagem-confusa-na-importacao-de-cl/) |
 | 260914-j8g | Bug de regra de negócio: `findDuplicates` (`lib/importacao/dedupe.ts`) marcava "Possível duplicado" comparando só a razão social, ignorando CNPJ — falso positivo real para redes com várias lojas (mesma razão social, CNPJ diferente por filial, ex: Carrefour/Outback). Corrigido: CNPJ diferente entre os dois lados (ambos presentes) nunca é mais duplicado; CNPJ ausente de um lado mantém o comportamento antigo. Propagado por `existentes.ts`, `confirmar.ts` (revalidação D-02) e as duas Server Actions de importação | 2026-09-14 | 4764683 | Verified | [260914-j8g-bug-de-regra-de-negocio-findduplicates-l](./quick/260914-j8g-bug-de-regra-de-negocio-findduplicates-l/) |
 | 260914-k3g | Bug de schema (causa raiz real do bug acima): `clientes.razao_social` tinha unique constraint no banco desde a migration 0002, bloqueando SILENCIOSAMENTE qualquer segunda linha com mesma razão social mesmo com CNPJ diferente (743/1755 linhas de uma importação real de Ativos puladas por isso). Migration 0030 trocou a trava pra razão social+CNPJ (função `razao_social_cnpj_colide` + trigger `SECURITY DEFINER` preservando `error.code 23505` do cadastro manual + as duas RPCs de importação recriadas com pré-filtro). Migrations 0031/0032/0033 corrigiram, no mesmo dia, 3 bugs descobertos só depois de aplicar 0030 no banco real (erro de sintaxe `with ordinality`, e duas rodadas de correção de uma autocolisão na classificação pós-INSERT da RPC de Ativos) | 2026-09-14 | 999195d | Verified | [260914-k3g-bug-de-schema-clientes-razao-social-tem-](./quick/260914-k3g-bug-de-schema-clientes-razao-social-tem-/) |
+| 260914-ng5 | Bug de escala: a tabela `clientes` passou de 1000 linhas pela primeira vez hoje (2181 atualmente), e o corte padrão de 1000 linhas do PostgREST (sem `.range()`) passou a truncar 5 leituras reais — confirmado ao vivo: quadro Kanban mostrou "571" em vez de 1752 na coluna "1ª venda concluída", Agenda mostrou "(1000)" em vez de ~1752 em "Sem dia fixo definido". Corrigido reaproveitando o padrão já existente em `getTodasCidades()` via um novo paginador genérico `buscarPaginado` (`lib/supabase/queries/paginacao.ts`), aplicado em `getClientesAgrupadosPorEtapa` (Kanban), `getClientesSemDiaFixo` (Agenda), `getClientesParaExportacao` (só caminho sem `ids`), e nas 4 checagens de duplicado das duas importações em massa | 2026-09-14 | 09bcd1b | Needs Review | [260914-ng5-bug-de-escala-tabela-clientes-passou-de-](./quick/260914-ng5-bug-de-escala-tabela-clientes-passou-de-/) |
 
 ### Roadmap Evolution
 
