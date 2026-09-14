@@ -1,5 +1,6 @@
 import type { AgendaItem, ClienteSemDiaFixo } from "@/lib/agenda/itens"
 import type { FrequenciaVisita } from "@/lib/funil/frequencia"
+import { buscarPaginado } from "@/lib/supabase/queries/paginacao"
 import { createClient } from "@/lib/supabase/server"
 
 /**
@@ -181,24 +182,37 @@ function mapClienteSemDiaFixoRow(row: ClienteSemDiaFixoRow): ClienteSemDiaFixo {
 export async function getClientesSemDiaFixo(): Promise<ClienteSemDiaFixo[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from("clientes")
-    .select(
-      "id, razao_social, responsavel, profiles(nome, sobrenome), frequencia_visita, dia_semana_visita, semana_do_mes_visita"
-    )
-    .eq("status_acompanhamento", "ganho")
-    .or(
-      "frequencia_visita.is.null,and(frequencia_visita.neq.nenhuma,dia_semana_visita.is.null),and(frequencia_visita.eq.mensal,semana_do_mes_visita.is.null)"
-    )
-    .order("razao_social", { ascending: true })
+  // Leitura paginada (quick task 260914-ng5): a tabela `clientes` passou de
+  // 1000 linhas pela primeira vez (2181 hoje), e o PostgREST devolve no
+  // máximo 1000 por requisição sem `.range()` explícito — a seção "Sem dia
+  // fixo definido" mostrava "(1000)" em vez de ~1752. `.order("id", ...)`
+  // entra como desempate de `razao_social` (não garantidamente única desde a
+  // migration 0030), garantindo ordem estável entre as chamadas de
+  // `.range()` separadas.
+  const rows = await buscarPaginado<ClienteSemDiaFixoRow>(
+    async (inicio, fim) => {
+      const { data, error } = await supabase
+        .from("clientes")
+        .select(
+          "id, razao_social, responsavel, profiles(nome, sobrenome), frequencia_visita, dia_semana_visita, semana_do_mes_visita"
+        )
+        .eq("status_acompanhamento", "ganho")
+        .or(
+          "frequencia_visita.is.null,and(frequencia_visita.neq.nenhuma,dia_semana_visita.is.null),and(frequencia_visita.eq.mensal,semana_do_mes_visita.is.null)"
+        )
+        .order("razao_social", { ascending: true })
+        .order("id", { ascending: true })
+        .range(inicio, fim)
 
-  if (error) {
+      return { data: data as unknown as ClienteSemDiaFixoRow[] | null, error }
+    }
+  )
+
+  if (rows === null) {
     throw new Error(
-      `Falha ao carregar clientes sem dia fixo: ${error.message}`
+      `Falha ao carregar clientes sem dia fixo: leitura paginada incompleta`
     )
   }
 
-  return (data ?? []).map((row) =>
-    mapClienteSemDiaFixoRow(row as unknown as ClienteSemDiaFixoRow)
-  )
+  return rows.map((row) => mapClienteSemDiaFixoRow(row))
 }
