@@ -4,10 +4,10 @@ milestone: v1.6
 milestone_name: Importação de Clientes Ativos e Prospecção Separadas
 current_phase: 6
 status: Awaiting next milestone
-stopped_at: Completed quick task 260914-j8g
-last_updated: "2026-09-14T17:05:00.000Z"
+stopped_at: Completed quick task 260914-k3g
+last_updated: "2026-09-14T18:55:00.000Z"
 last_activity: 2026-09-14
-last_activity_desc: Quick task 260914-j8g — detecção de "possível duplicado" na importação passa a considerar CNPJ: mesma razão social com CNPJ diferente (redes com várias lojas) deixa de ser marcada como duplicado
+last_activity_desc: Quick task 260914-k3g — trava de unicidade de razao_social no banco (desde a migration 0002) trocada para razao_social+CNPJ, corrigindo o bloqueio real de redes com varias lojas na importacao em massa (migrations 0030-0033)
 progress:
   total_phases: 4
   completed_phases: 4
@@ -365,6 +365,7 @@ None yet.
 | 260831-oax | Bug: Server Action de importação de Clientes Ativos estourava o limite padrão de 1MB do Next.js ("Body exceeded 1 MB limit") ao confirmar planilha real grande (1909 linhas). Corrigido subindo `experimental.serverActions.bodySizeLimit` para `10mb` em `next.config.ts`, documentando que o teto real de produção é o limite de payload de Serverless Function da Vercel (~4.5MB, restrição de plataforma) | 2026-08-31 | 28432cc | | [260831-oax-bug-server-action-de-importacao-de-clien](./quick/260831-oax-bug-server-action-de-importacao-de-clien/) |
 | 260914-giv | Bug: importação de Clientes em Prospecção (`lib/importacao/annotarLinha.ts`) mostrava "Responsável não informado" tanto pra campo vazio quanto pra nome preenchido sem correspondência no cadastro — confundindo o usuário. Encontrado via teste ao vivo real (231/429 linhas de uma planilha real erraram assim, nenhuma vazia de verdade). Corrigido com mensagem distinta `Responsável "X" não foi encontrado`, espelhando o padrão já correto de `annotarLinhaAtivo.ts` | 2026-09-14 | 953c4c3 | | [260914-giv-bug-mensagem-confusa-na-importacao-de-cl](./quick/260914-giv-bug-mensagem-confusa-na-importacao-de-cl/) |
 | 260914-j8g | Bug de regra de negócio: `findDuplicates` (`lib/importacao/dedupe.ts`) marcava "Possível duplicado" comparando só a razão social, ignorando CNPJ — falso positivo real para redes com várias lojas (mesma razão social, CNPJ diferente por filial, ex: Carrefour/Outback). Corrigido: CNPJ diferente entre os dois lados (ambos presentes) nunca é mais duplicado; CNPJ ausente de um lado mantém o comportamento antigo. Propagado por `existentes.ts`, `confirmar.ts` (revalidação D-02) e as duas Server Actions de importação | 2026-09-14 | 4764683 | Verified | [260914-j8g-bug-de-regra-de-negocio-findduplicates-l](./quick/260914-j8g-bug-de-regra-de-negocio-findduplicates-l/) |
+| 260914-k3g | Bug de schema (causa raiz real do bug acima): `clientes.razao_social` tinha unique constraint no banco desde a migration 0002, bloqueando SILENCIOSAMENTE qualquer segunda linha com mesma razão social mesmo com CNPJ diferente (743/1755 linhas de uma importação real de Ativos puladas por isso). Migration 0030 trocou a trava pra razão social+CNPJ (função `razao_social_cnpj_colide` + trigger `SECURITY DEFINER` preservando `error.code 23505` do cadastro manual + as duas RPCs de importação recriadas com pré-filtro). Migrations 0031/0032/0033 corrigiram, no mesmo dia, 3 bugs descobertos só depois de aplicar 0030 no banco real (erro de sintaxe `with ordinality`, e duas rodadas de correção de uma autocolisão na classificação pós-INSERT da RPC de Ativos) | 2026-09-14 | 999195d | Verified | [260914-k3g-bug-de-schema-clientes-razao-social-tem-](./quick/260914-k3g-bug-de-schema-clientes-razao-social-tem-/) |
 
 ### Roadmap Evolution
 
@@ -388,7 +389,7 @@ Items acknowledged and carried forward from previous milestone close:
 | Test infra | Contas seed de teste (`vendedor.a+test`/`vendedor.b+test`) apagadas a pedido do dono (quick task 260819-l6o) — ~49 arquivos de teste falham até uma decisão (recriar como contas técnicas ou migrar testes para 2 dos 15 vendedores reais) | Aberto — decisão pendente | 2026-08-19 |
 | Filter UX | Select do filtro de vendedor na Agenda perde a seleção em qualquer recarga da tela (achado na Fase 20-05, fora de escopo) | Aberto — quick task futura | 2026-08-18 |
 
-**SECURITY DEFINER exceptions (4 no codebase):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10) e `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a). O v1.6 **não deve adicionar uma quinta** — a nova RPC `importar_clientes_ativos_lote` (Fase 25) segue o padrão de `importar_clientes_lote`/`mover_card_funil` (não-security-definer, guard explícito de `is_supervisor()`), e nenhuma fase do marco precisa de Auth Admin API. Os 2 gatilhos de auditoria `SECURITY DEFINER` (`tarefas_before_update_historico`/`visitas_after_update_historico`) são um balde separado e já existente.
+**SECURITY DEFINER exceptions (5 no codebase, atualizado 2026-09-14):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10), `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a), e agora `clientes_bloqueia_duplicata_razao_social_cnpj()` (migration 0030, quick task 260914-k3g) — trigger de `before insert or update of razao_social, cnpj on clientes` que substitui a antiga unique constraint simples de `razao_social` por uma checagem de razão social+CNPJ; precisa rodar com privilégio elevado porque a checagem precisa enxergar TODOS os clientes (de qualquer vendedor), não só os do vendedor autenticado sob RLS. `importar_clientes_ativos_lote`/`importar_clientes_lote` continuam não-security-definer (guard explícito de `is_supervisor()`, pré-filtram candidatos antes do INSERT, nunca dependem do trigger pra bloquear duplicata em lote — o trigger é backstop morto nesse caminho). Os 2 gatilhos de auditoria `SECURITY DEFINER` (`tarefas_before_update_historico`/`visitas_after_update_historico`) são um balde separado e já existente.
 
 ## Session Continuity
 
