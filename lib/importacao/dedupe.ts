@@ -84,6 +84,10 @@ export type DedupeBatchItem = {
   row: number
   razaoSocial: string | null
   nomeFantasia?: string | null
+  /** CNPJ opcional — alimenta a regra de desambiguação por CNPJ (quick task
+   * 260914-j8g, bug de falso positivo em filiais de rede — ex.
+   * Carrefour/Outback: razão social igual, CNPJ diferente, NUNCA duplicado). */
+  cnpj?: string | null
 }
 
 /** Espaço de nomes de cada chave, para que a normalização de uma razão
@@ -111,6 +115,38 @@ function chaveDeComparacao(
 }
 
 /**
+ * Normaliza um CNPJ SÓ para fins de COMPARAÇÃO de duplicados — remove tudo
+ * que não é dígito. NUNCA usar o retorno para exibição/gravação (mesmo
+ * aviso de escopo que `normalizeRazaoSocial` já faz para a chave de nome).
+ * Nulo, indefinido ou string vazia/só espaço viram string vazia, que
+ * representa "CNPJ ausente" (ambíguo) no restante desta comparação.
+ */
+function normalizeCnpjParaComparacao(valor: string | null | undefined): string {
+  if (!valor) return ""
+  return valor.replace(/\D/g, "")
+}
+
+/**
+ * Verdadeiro SOMENTE quando os dois CNPJs, depois de normalizados pra
+ * dígitos, ficam ambos não vazios E diferentes entre si — o caso "ambos os
+ * lados têm CNPJ e são de empresas distintas" (quick task 260914-j8g: o fix
+ * do falso positivo de filiais de rede, ex. Carrefour/Outback). Quando
+ * qualquer um dos lados fica vazio depois de normalizado (nulo, indefinido,
+ * ou só espaço/pontuação), devolve `false` — "não diverge", o valor que
+ * PRESERVA o comportamento antigo (ambíguo = trata como possível duplicado,
+ * porque sem CNPJ não há como desambiguar).
+ */
+function cnpjDivergente(
+  a: string | null | undefined,
+  b: string | null | undefined
+): boolean {
+  const digitosA = normalizeCnpjParaComparacao(a)
+  const digitosB = normalizeCnpjParaComparacao(b)
+  if (!digitosA || !digitosB) return false
+  return digitosA !== digitosB
+}
+
+/**
  * Dada uma lista de linhas do batch (com o índice de linha original) e uma
  * lista de razões sociais já existentes no banco, mapeia cada índice de
  * linha cujo nome normalizado bate com um existente OU com outra linha do
@@ -130,31 +166,61 @@ function chaveDeComparacao(
  * com o mesmo Nome Fantasia como possível duplicado uma da outra.
  * `existentesNomesFantasia` é OPCIONAL (lista vazia por padrão) para que as
  * três chamadas existentes continuem compilando sem alteração.
+ *
+ * Quick task 260914-j8g: nome igual só vira "possível duplicado" quando o
+ * CNPJ também bate OU quando falta CNPJ em pelo menos um dos dois lados;
+ * nome igual com CNPJ diferente presente nos DOIS lados NUNCA é duplicado —
+ * corrige o falso positivo real de filiais de rede com razão social igual e
+ * CNPJ diferente (ex. "CARREFOUR COMERCIO E INDUSTRIA LTDA", "OUTBACK
+ * STEAKHOUSE RESTAURANTES BRASIL S.A."). `existentesCnpj` e
+ * `existentesNomesFantasiaCnpj` são OPCIONAIS (lista vazia por padrão,
+ * alinhados por índice a `existentes`/`existentesNomesFantasia`
+ * respectivamente) para que chamadas existentes que não passam CNPJ
+ * continuem compilando e se comportando exatamente como antes (banco "sem
+ * CNPJ" em todo índice = ambíguo = continua tratando como possível
+ * duplicado).
  */
 export function findDuplicates(
   batch: DedupeBatchItem[],
   existentes: (string | null | undefined)[],
-  existentesNomesFantasia: (string | null | undefined)[] = []
+  existentesNomesFantasia: (string | null | undefined)[] = [],
+  existentesCnpj: (string | null | undefined)[] = [],
+  existentesNomesFantasiaCnpj: (string | null | undefined)[] = []
 ): Map<number, string> {
   const result = new Map<number, string>()
 
-  const existentesByKey = new Map<string, string>()
-  for (const nome of existentes) {
-    const key = normalizeRazaoSocial(nome)
-    if (key && !existentesByKey.has(RAZAO_SOCIAL_NAMESPACE + key)) {
-      existentesByKey.set(RAZAO_SOCIAL_NAMESPACE + key, nome as string)
-    }
-  }
-  for (const nome of existentesNomesFantasia) {
-    const key = normalizeRazaoSocial(nome)
-    if (key && !existentesByKey.has(NOME_FANTASIA_NAMESPACE + key)) {
-      existentesByKey.set(NOME_FANTASIA_NAMESPACE + key, nome as string)
-    }
-  }
+  type CandidatoExistente = { nome: string; cnpj: string | null | undefined }
 
-  // Primeira ocorrência de cada chave dentro do próprio batch, na ordem de
-  // entrada — usada como "nome parecido" para colisões puramente internas.
-  const firstInBatchByKey = new Map<string, { row: number; nome: string }>()
+  // Cada chave agora mapeia para uma LISTA de candidatos (não mais um único
+  // nome) — duas empresas diferentes podem compartilhar a mesma chave de
+  // nome com CNPJs diferentes (cenário Carrefour/Outback: duas filiais).
+  const existentesByKey = new Map<string, CandidatoExistente[]>()
+
+  existentes.forEach((nome, index) => {
+    const key = normalizeRazaoSocial(nome)
+    if (!key) return
+    const fullKey = RAZAO_SOCIAL_NAMESPACE + key
+    const lista = existentesByKey.get(fullKey) ?? []
+    lista.push({ nome: nome as string, cnpj: existentesCnpj[index] })
+    existentesByKey.set(fullKey, lista)
+  })
+  existentesNomesFantasia.forEach((nome, index) => {
+    const key = normalizeRazaoSocial(nome)
+    if (!key) return
+    const fullKey = NOME_FANTASIA_NAMESPACE + key
+    const lista = existentesByKey.get(fullKey) ?? []
+    lista.push({ nome: nome as string, cnpj: existentesNomesFantasiaCnpj[index] })
+    existentesByKey.set(fullKey, lista)
+  })
+
+  type AncoraDoBatch = { row: number; nome: string; cnpj: string | null | undefined }
+
+  // Âncoras de cada chave dentro do próprio batch, na ordem de entrada —
+  // usadas como "nome parecido" para colisões puramente internas. Também
+  // vira LISTA pelo mesmo motivo: duas linhas do MESMO lote com nome igual e
+  // CNPJ diferente precisam virar âncoras separadas, nunca comparadas entre
+  // si.
+  const firstInBatchByKey = new Map<string, AncoraDoBatch[]>()
 
   for (const item of batch) {
     const key = chaveDeComparacao(item.razaoSocial, item.nomeFantasia)
@@ -164,25 +230,42 @@ export function findDuplicates(
     // presente, senão o Nome Fantasia (a mesma chave de reserva usada acima).
     const nomeExibido = item.razaoSocial || item.nomeFantasia || ""
 
-    const existingMatch = existentesByKey.get(key)
+    const candidatosExistentes = existentesByKey.get(key) ?? []
+    const existingMatch = candidatosExistentes.find(
+      (candidato) => !cnpjDivergente(item.cnpj, candidato.cnpj)
+    )
     if (existingMatch) {
-      result.set(item.row, existingMatch)
-      if (!firstInBatchByKey.has(key)) {
-        firstInBatchByKey.set(key, { row: item.row, nome: nomeExibido })
+      result.set(item.row, existingMatch.nome)
+      const ancoras = firstInBatchByKey.get(key) ?? []
+      const jaTemAncoraCompativel = ancoras.some(
+        (ancora) => !cnpjDivergente(item.cnpj, ancora.cnpj)
+      )
+      if (!jaTemAncoraCompativel) {
+        ancoras.push({ row: item.row, nome: nomeExibido, cnpj: item.cnpj })
+        firstInBatchByKey.set(key, ancoras)
       }
       continue
     }
 
-    const firstInBatch = firstInBatchByKey.get(key)
-    if (firstInBatch && firstInBatch.row !== item.row) {
-      result.set(item.row, firstInBatch.nome)
-      // A primeira ocorrência também é duplicada (das demais), a menos que
-      // já tenha sido marcada contra o banco acima.
-      if (!result.has(firstInBatch.row)) {
-        result.set(firstInBatch.row, nomeExibido)
+    const ancoras = firstInBatchByKey.get(key) ?? []
+    const ancoraCompativel = ancoras.find(
+      (ancora) => ancora.row !== item.row && !cnpjDivergente(item.cnpj, ancora.cnpj)
+    )
+    if (ancoraCompativel) {
+      result.set(item.row, ancoraCompativel.nome)
+      // A âncora também é duplicada (das demais), a menos que já tenha sido
+      // marcada contra o banco acima.
+      if (!result.has(ancoraCompativel.row)) {
+        result.set(ancoraCompativel.row, nomeExibido)
       }
-    } else if (!firstInBatch) {
-      firstInBatchByKey.set(key, { row: item.row, nome: nomeExibido })
+    } else {
+      const jaTemAncoraCompativel = ancoras.some(
+        (ancora) => !cnpjDivergente(item.cnpj, ancora.cnpj)
+      )
+      if (!jaTemAncoraCompativel) {
+        ancoras.push({ row: item.row, nome: nomeExibido, cnpj: item.cnpj })
+        firstInBatchByKey.set(key, ancoras)
+      }
     }
   }
 
