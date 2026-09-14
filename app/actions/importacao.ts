@@ -15,7 +15,10 @@ import {
   type PuladaGroup,
 } from "@/lib/importacao/confirmar"
 import { findDuplicates } from "@/lib/importacao/dedupe"
-import { nomesExistentesParaDedupe } from "@/lib/importacao/existentes"
+import {
+  nomesExistentesParaDedupe,
+  type ExistenteRow,
+} from "@/lib/importacao/existentes"
 import {
   produtosPendentesDaCarga,
   resolverProdutosPendentes,
@@ -23,6 +26,7 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { getCategoriasAtivas, getProdutosAtivos } from "@/lib/supabase/queries/clientes"
 import { getTodasCidades } from "@/lib/supabase/queries/cidades"
+import { buscarPaginado } from "@/lib/supabase/queries/paginacao"
 
 export type ValidarLoteErrorCode = "unauthenticated" | "forbidden" | "generic"
 
@@ -42,6 +46,43 @@ export type ValidatedRow = {
 export type ValidateLoteResult =
   | { data: { linhas: ValidatedRow[] }; error?: undefined }
   | { data?: undefined; error: { code: ValidarLoteErrorCode } }
+
+/**
+ * Leitura paginada de clientes já cadastrados para a checagem de duplicado
+ * (quick task 260914-ng5) — reusada pelos dois pontos de leitura deste
+ * arquivo (validarLoteImportacao/confirmarLoteImportacao). A tabela
+ * `clientes` passou de 1000 linhas (2181 hoje), e o PostgREST devolve no
+ * máximo 1000 por requisição sem `.range()` explícito: sem paginar, a
+ * checagem de duplicado só comparava contra as primeiras 1000 linhas.
+ * `.order("id", ...)` é novo aqui (nenhuma das duas colunas de negócio
+ * selecionadas é garantidamente única) — só para estabilidade de paginação.
+ * O `{ data, error }` devolvido é sintético (nunca vem direto do PostgREST),
+ * mas preserva EXATAMENTE o formato que os dois chamadores já checam hoje.
+ */
+async function buscarClientesExistentesParaDedupe(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<{ data: ExistenteRow[] | null; error: Error | null }> {
+  const data = await buscarPaginado<ExistenteRow>(async (inicio, fim) => {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("razao_social, nome_fantasia, cnpj")
+      .order("id", { ascending: true })
+      .range(inicio, fim)
+
+    return { data: data as unknown as ExistenteRow[] | null, error }
+  })
+
+  if (data === null) {
+    return {
+      data: null,
+      error: new Error(
+        "Falha ao carregar clientes existentes para checagem de duplicado"
+      ),
+    }
+  }
+
+  return { data, error: null }
+}
 
 /**
  * Read-only Server Action orchestrating the import preview (IMP-04/IMP-05/
@@ -101,8 +142,11 @@ export async function validarLoteImportacao(
       // Traz também cnpj (quick task 260914-j8g): RLS já escopa a leitura
       // por LINHA, não por coluna — trazer mais uma coluna da mesma tabela
       // clientes, já lida sob a mesma policy, não expõe nenhum dado novo;
-      // alimenta a regra de desambiguação de duplicado por CNPJ.
-      supabase.from("clientes").select("razao_social, nome_fantasia, cnpj"),
+      // alimenta a regra de desambiguação de duplicado por CNPJ. Paginada
+      // por buscarClientesExistentesParaDedupe (quick task 260914-ng5) — a
+      // tabela clientes passou de 1000 linhas, um select direto truncava a
+      // checagem de duplicado nas primeiras 1000.
+      buscarClientesExistentesParaDedupe(supabase),
       // Lista completa de cidades (LOC-01/LOC-02), paginada por
       // getTodasCidades (lib/supabase/queries/cidades.ts) — a tabela tem
       // 5571 linhas e o PostgREST devolve no máximo 1000 por requisição sem
@@ -276,10 +320,10 @@ export async function confirmarLoteImportacao(
   // filter here. Traz também nome_fantasia (Fase 26 Plano 3), mesma razão
   // da leitura de validarLoteImportacao acima. Traz também cnpj (quick
   // task 260914-j8g), mesma justificativa de RLS por linha da leitura
-  // acima em validarLoteImportacao.
-  const existentesResult = await supabase
-    .from("clientes")
-    .select("razao_social, nome_fantasia, cnpj")
+  // acima em validarLoteImportacao. Paginada por
+  // buscarClientesExistentesParaDedupe (quick task 260914-ng5), mesma razão
+  // documentada acima em validarLoteImportacao.
+  const existentesResult = await buscarClientesExistentesParaDedupe(supabase)
 
   if (existentesResult.error) {
     return { error: { code: "generic" } }

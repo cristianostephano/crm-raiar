@@ -21,10 +21,14 @@ import {
   type RpcRetornoAtivo,
 } from "@/lib/importacao/confirmarAtivo"
 import { findDuplicates } from "@/lib/importacao/dedupe"
-import { nomesExistentesParaDedupe } from "@/lib/importacao/existentes"
+import {
+  nomesExistentesParaDedupe,
+  type ExistenteRow,
+} from "@/lib/importacao/existentes"
 import { createClient } from "@/lib/supabase/server"
 import { getCategoriasAtivas, getProdutosAtivos } from "@/lib/supabase/queries/clientes"
 import { getTodasCidades } from "@/lib/supabase/queries/cidades"
+import { buscarPaginado } from "@/lib/supabase/queries/paginacao"
 import type { PuladaGroup } from "@/lib/importacao/confirmar"
 
 export type LoteAtivosErrorCode = "unauthenticated" | "forbidden" | "generic"
@@ -47,6 +51,38 @@ export type ValidatedRowAtivo = {
 export type ValidarLoteAtivosResult =
   | { data: { linhas: ValidatedRowAtivo[] }; error?: undefined }
   | { data?: undefined; error: { code: LoteAtivosErrorCode } }
+
+/**
+ * Leitura paginada de clientes já cadastrados para a checagem de duplicado
+ * (quick task 260914-ng5) — irmã literal de buscarClientesExistentesParaDedupe
+ * (app/actions/importacao.ts), nome diferente de propósito: este fluxo nunca
+ * usa Nome Fantasia. Reusada pelos dois pontos de leitura deste arquivo
+ * (validarLoteAtivos/confirmarLoteAtivos).
+ */
+async function buscarClientesExistentesCnpjParaDedupe(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<{ data: ExistenteRow[] | null; error: Error | null }> {
+  const data = await buscarPaginado<ExistenteRow>(async (inicio, fim) => {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("razao_social, cnpj")
+      .order("id", { ascending: true })
+      .range(inicio, fim)
+
+    return { data: data as unknown as ExistenteRow[] | null, error }
+  })
+
+  if (data === null) {
+    return {
+      data: null,
+      error: new Error(
+        "Falha ao carregar clientes existentes para checagem de duplicado"
+      ),
+    }
+  }
+
+  return { data, error: null }
+}
 
 /**
  * Ação de validação, SOMENTE LEITURA (ATIVO-03/ATIVO-04): nunca escreve nem
@@ -92,8 +128,11 @@ export async function validarLoteAtivos(
       // Traz também cnpj (quick task 260914-j8g): RLS opera por LINHA, não
       // por coluna — trazer mais uma coluna da mesma tabela clientes, já
       // lida sob a mesma policy, não expõe nenhum dado novo; alimenta a
-      // regra de desambiguação de duplicado por CNPJ.
-      supabase.from("clientes").select("razao_social, cnpj"),
+      // regra de desambiguação de duplicado por CNPJ. Paginada por
+      // buscarClientesExistentesCnpjParaDedupe (quick task 260914-ng5) — a
+      // tabela clientes passou de 1000 linhas, um select direto truncava a
+      // checagem de duplicado nas primeiras 1000.
+      buscarClientesExistentesCnpjParaDedupe(supabase),
       // Leitor paginado obrigatório (mesmo bug já corrigido uma vez neste
       // projeto): a tabela cidades tem 5571 linhas e um select direto trunca
       // em 1000, fazendo a validação rejeitar cidade real.
@@ -217,10 +256,10 @@ export async function confirmarLoteAtivos(
   // D-02-equivalente (ATIVO-04) revalidation read — mesma consulta estreita,
   // RLS-escopada, de validarLoteAtivos. Traz também cnpj (quick task
   // 260914-j8g), mesma justificativa de RLS por linha da leitura acima em
+  // validarLoteAtivos. Paginada por buscarClientesExistentesCnpjParaDedupe
+  // (quick task 260914-ng5), mesma razão documentada acima em
   // validarLoteAtivos.
-  const existentesResult = await supabase
-    .from("clientes")
-    .select("razao_social, cnpj")
+  const existentesResult = await buscarClientesExistentesCnpjParaDedupe(supabase)
 
   if (existentesResult.error) {
     return { error: { code: "generic" } }
