@@ -149,6 +149,9 @@ describe("annotarLinha", () => {
     expect(result.status).toBe("erro")
     expect(result.reasons).toContain("Responsável não informado")
     expect(result.reasons).not.toContain("Nome Fantasia não informado")
+    expect(result.reasons.some((r) => r.includes("não foi encontrado"))).toBe(
+      false
+    )
   })
 
   it("flags a row with both Nome Fantasia and Responsável blank as erro, with both reasons (PROSP-02)", () => {
@@ -225,7 +228,10 @@ describe("annotarLinha", () => {
     )
 
     expect(result.status).toBe("erro")
-    expect(result.reasons).toContain("Responsável não informado")
+    expect(result.reasons).toContain(
+      'Responsável "ninguem@raiar.local" não foi encontrado'
+    )
+    expect(result.reasons).not.toContain("Responsável não informado")
     expect(result.resolved.responsavelId).toBeNull()
   })
 

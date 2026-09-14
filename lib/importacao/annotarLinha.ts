@@ -78,6 +78,16 @@ export type AnnotatedRow = {
 const RESPONSAVEL_REASON = "Responsável não informado"
 const NOME_FANTASIA_REASON = "Nome Fantasia não informado"
 
+/** Distinto do motivo reservado ao campo em branco (RESPONSAVEL_REASON, usado
+ * só no required-field check do passo 5) — um responsável PREENCHIDO que não
+ * casa com nenhum vendedor é um problema diferente do campo vazio, e
+ * confundir os dois na mesma frase é exatamente o bug corrigido pela quick
+ * task 260914-giv (planilha real: 231 de 429 linhas erraram com a frase
+ * errada, nenhuma com célula de fato vazia). Mesmo padrão já usado em
+ * lib/importacao/annotarLinhaAtivo.ts desde a quick task 260831-mod. */
+const RESPONSAVEL_NAO_ENCONTRADO_REASON = (valor: string): string =>
+  `Responsável "${valor}" não foi encontrado`
+
 /** Case/acento-insensitive name match — reuses dedupe's normalization
  * (sanctioned by the plan: "pode reaproveitar de dedupe ou uma comparação
  * case-insensitive simples") for categoria/produto/vendedor name lookups. */
@@ -162,8 +172,11 @@ export function annotarLinha(
   }
 
   // 4. Responsável (vendedor) — an empty value is caught by the required-
-  // field check below (step 5), so only a NON-empty-but-unmatched value adds
-  // a reason here, avoiding a duplicate "Responsável não informado" entry.
+  // field check below (step 5), which keeps the original blank-field reason
+  // (RESPONSAVEL_REASON). A NON-empty-but-unmatched value gets its OWN
+  // distinct reason (RESPONSAVEL_NAO_ENCONTRADO_REASON), naming the value
+  // read, instead of being confused with the blank-field case (quick task
+  // 260914-giv).
   let responsavelId: string | null = null
   const responsavelValor = sanitized.responsavel?.trim()
   if (responsavelValor) {
@@ -171,7 +184,7 @@ export function annotarLinha(
     if (match) {
       responsavelId = match.id
     } else {
-      reasons.push(RESPONSAVEL_REASON)
+      reasons.push(RESPONSAVEL_NAO_ENCONTRADO_REASON(responsavelValor))
     }
   }
 
