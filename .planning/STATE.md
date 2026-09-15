@@ -311,7 +311,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- **Cliente "ganho" deve sumir do Kanban de prospecção, ficando só na Agenda** — pedido explícito do dono do projeto (2026-09-14), discussão começada mas pausada antes do planejamento (nenhum arquivo de plano criado, nada commitado). Decisões já confirmadas com o dono nessa conversa: cliente ganho NÃO precisa de uma tela própria de "Clientes Ativos" — ele deve aparecer só na Agenda (via visitas/tarefas agendadas), nunca mais nas colunas do funil de prospecção. Retomar com `/gsd-quick --validate` (ou reabrir a discussão) descrevendo essa mesma regra.
 
 ### Blockers/Concerns
 
