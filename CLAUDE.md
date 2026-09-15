@@ -31,6 +31,17 @@ O GSD já roda o loop **Discuss → Plan → Execute → Verify → Ship** com s
 
 Continue exigindo aprovação humana explícita na etapa de Discuss/Plan antes de deixar a etapa de Execute rodar.
 
+## Fluxo de Deploy (regra obrigatória desde 2026-09-15)
+
+A Vercel está configurada para publicar em produção (o site que a equipe de vendas usa) toda vez que algo chega na branch `master` do GitHub. Por isso, nenhuma mudança pode ir direto pra `master` sem passar por uma validação antes:
+
+1. Toda mudança pronta (fim de uma quick task, plano ou fase do GSD) é primeiro empurrada para a branch `staging` no GitHub — **nunca direto para `master`**.
+2. A Vercel gera automaticamente um link de teste isolado para a `staging` (Preview Deployment), sem afetar o site real.
+3. O agente testa esse link e confirma no chat o que verificou; o dono do projeto também pode abrir o link e conferir por conta própria quando quiser.
+4. Só depois dessa validação a mudança é enviada para `master`, que é o que realmente atualiza o site em produção.
+
+Não existe trava técnica no GitHub impedindo um push direto em `master` (decisão explícita do dono do projeto — confia no processo acima em vez de uma trava rígida). Por isso este passo precisa ser seguido por disciplina, não é imposto pela ferramenta.
+
 ## Estrutura de pastas
 
 ```
@@ -59,7 +70,7 @@ Continue exigindo aprovação humana explícita na etapa de Discuss/Plan antes d
 ## O que NÃO fazer
 
 - Não introduzir novas dependências/serviços externos sem antes explicar o motivo e o impacto no custo (o objetivo é manter tudo em free tier).
-- Não fazer deploy direto em produção sem passar por uma etapa de revisão.
+- Não fazer deploy direto em produção sem passar por uma etapa de revisão — ver "Fluxo de Deploy" acima (mudança sempre passa pela branch `staging` e por um link de teste antes de ir para `master`).
 - Não deletar ou sobrescrever migrations já aplicadas — sempre criar uma nova migration para alterações de schema.
 - Não implementar autenticação/autorização "por conta própria" — sempre usar Supabase Auth + RLS.
 
