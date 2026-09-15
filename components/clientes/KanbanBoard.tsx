@@ -376,12 +376,21 @@ export function KanbanBoard({
 
     setIsExporting(true)
     try {
-      const ids = collectExportIds(filteredGrouped)
+      // Quick task 260915-ls7: sem a bandeira, esconder cliente ganho do
+      // quadro (para dentro de filteredGrouped) escondia esse mesmo cliente
+      // da exportação — hoje o único jeito de tirar a base completa do
+      // sistema. Sem filtro ativo, o alcance de hoje É a base inteira, então
+      // mandamos escopoTudo em vez dos ids da tela (que agora excluem
+      // ganhos). Com filtro ativo, nada muda: a exportação continua
+      // espelhando a tela (EXP-03).
+      const body = hasActiveFilters
+        ? { ids: collectExportIds(filteredGrouped) }
+        : { escopoTudo: true }
 
       const res = await fetch("/api/clientes/exportar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
