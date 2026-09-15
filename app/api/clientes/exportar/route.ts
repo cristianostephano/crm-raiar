@@ -22,6 +22,11 @@ import { createClient } from "@/lib/supabase/server"
  * the real boundary. Any id the caller cannot see simply returns 0 rows for
  * it — the same non-revealing posture as getClienteById. There is
  * deliberately no manual role/is_supervisor() branch anywhere in this file.
+ *
+ * `escopoTudo` (quick task 260915-ls7) also is NOT an authorization input:
+ * "tudo" means "tudo que ESTE usuário já enxerga", because
+ * getClientesParaExportacao(null) is scoped by RLS in either code path — a
+ * Vendedor receives only their own clientes, with or without the flag.
  */
 export const runtime = "nodejs"
 
@@ -46,20 +51,30 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const ids = (body as { ids?: unknown } | null)?.ids
+  const escopoTudo = (body as { escopoTudo?: unknown } | null)?.escopoTudo === true
 
-  const isStringArray =
-    Array.isArray(ids) && ids.every((id) => typeof id === "string")
+  let idsParaExportar: string[] | null
 
-  if (!isStringArray) {
-    return NextResponse.json(
-      { error: "`ids` deve ser uma lista de strings." },
-      { status: 400 }
-    )
+  if (escopoTudo) {
+    idsParaExportar = null
+  } else {
+    const ids = (body as { ids?: unknown } | null)?.ids
+
+    const isStringArray =
+      Array.isArray(ids) && ids.every((id) => typeof id === "string")
+
+    if (!isStringArray) {
+      return NextResponse.json(
+        { error: "`ids` deve ser uma lista de strings." },
+        { status: 400 }
+      )
+    }
+
+    idsParaExportar = ids
   }
 
   try {
-    const clientes = await getClientesParaExportacao(ids)
+    const clientes = await getClientesParaExportacao(idsParaExportar)
     const workbook = buildClientesWorkbook(clientes)
     const filename = `clientes_${new Date().toISOString().slice(0, 10)}.xlsx`
 

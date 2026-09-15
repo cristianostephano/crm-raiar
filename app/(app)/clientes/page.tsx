@@ -81,8 +81,9 @@ export default async function ClientesPage() {
       {totalClientes === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-16 text-center">
           <p className="text-base font-semibold">
-            Nenhum cliente cadastrado ainda. Clique em &quot;Novo cliente&quot;
-            para começar.
+            Nenhum cliente em prospecção no momento. Clientes já ganhos
+            aparecem na Agenda. Clique em &quot;Novo cliente&quot; para
+            começar uma nova prospecção.
           </p>
         </div>
       ) : (
