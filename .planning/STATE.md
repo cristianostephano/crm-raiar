@@ -6,8 +6,8 @@ current_phase: 6
 status: Awaiting next milestone
 stopped_at: Completed quick task 260914-ng5
 last_updated: "2026-09-14T20:20:00.000Z"
-last_activity: 2026-09-14
-last_activity_desc: Quick task 260914-ng5 — corrigido o corte de 1000 linhas do PostgREST em 5 leituras da tabela clientes (Kanban, Agenda "Sem dia fixo", checagem de duplicado nas duas importacoes, exportacao sem filtro), via novo paginador generico buscarPaginado, mesmo padrao ja usado em getTodasCidades()
+last_activity: 2026-09-15
+last_activity_desc: Quick task 260915-ls7 — cliente ganho deixa de aparecer no Kanban de prospeccao, passando a existir so pela Agenda; exportacao de clientes preservada via flag escopoTudo. Verificacao automatizada passou 100%; falta checagem humana ao vivo (contagem de coluna e download da exportacao)
 progress:
   total_phases: 4
   completed_phases: 4
@@ -311,7 +311,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- **Cliente "ganho" deve sumir do Kanban de prospecção, ficando só na Agenda** — pedido explícito do dono do projeto (2026-09-14), discussão começada mas pausada antes do planejamento (nenhum arquivo de plano criado, nada commitado). Decisões já confirmadas com o dono nessa conversa: cliente ganho NÃO precisa de uma tela própria de "Clientes Ativos" — ele deve aparecer só na Agenda (via visitas/tarefas agendadas), nunca mais nas colunas do funil de prospecção. Retomar com `/gsd-quick --validate` (ou reabrir a discussão) descrevendo essa mesma regra.
+None yet.
 
 ### Blockers/Concerns
 
@@ -367,6 +367,7 @@ Recent decisions affecting current work:
 | 260914-j8g | Bug de regra de negócio: `findDuplicates` (`lib/importacao/dedupe.ts`) marcava "Possível duplicado" comparando só a razão social, ignorando CNPJ — falso positivo real para redes com várias lojas (mesma razão social, CNPJ diferente por filial, ex: Carrefour/Outback). Corrigido: CNPJ diferente entre os dois lados (ambos presentes) nunca é mais duplicado; CNPJ ausente de um lado mantém o comportamento antigo. Propagado por `existentes.ts`, `confirmar.ts` (revalidação D-02) e as duas Server Actions de importação | 2026-09-14 | 4764683 | Verified | [260914-j8g-bug-de-regra-de-negocio-findduplicates-l](./quick/260914-j8g-bug-de-regra-de-negocio-findduplicates-l/) |
 | 260914-k3g | Bug de schema (causa raiz real do bug acima): `clientes.razao_social` tinha unique constraint no banco desde a migration 0002, bloqueando SILENCIOSAMENTE qualquer segunda linha com mesma razão social mesmo com CNPJ diferente (743/1755 linhas de uma importação real de Ativos puladas por isso). Migration 0030 trocou a trava pra razão social+CNPJ (função `razao_social_cnpj_colide` + trigger `SECURITY DEFINER` preservando `error.code 23505` do cadastro manual + as duas RPCs de importação recriadas com pré-filtro). Migrations 0031/0032/0033 corrigiram, no mesmo dia, 3 bugs descobertos só depois de aplicar 0030 no banco real (erro de sintaxe `with ordinality`, e duas rodadas de correção de uma autocolisão na classificação pós-INSERT da RPC de Ativos) | 2026-09-14 | 999195d | Verified | [260914-k3g-bug-de-schema-clientes-razao-social-tem-](./quick/260914-k3g-bug-de-schema-clientes-razao-social-tem-/) |
 | 260914-ng5 | Bug de escala: a tabela `clientes` passou de 1000 linhas pela primeira vez hoje (2181 atualmente), e o corte padrão de 1000 linhas do PostgREST (sem `.range()`) passou a truncar 5 leituras reais — confirmado ao vivo: quadro Kanban mostrou "571" em vez de 1752 na coluna "1ª venda concluída", Agenda mostrou "(1000)" em vez de ~1752 em "Sem dia fixo definido". Corrigido reaproveitando o padrão já existente em `getTodasCidades()` via um novo paginador genérico `buscarPaginado` (`lib/supabase/queries/paginacao.ts`), aplicado em `getClientesAgrupadosPorEtapa` (Kanban), `getClientesSemDiaFixo` (Agenda), `getClientesParaExportacao` (só caminho sem `ids`), e nas 4 checagens de duplicado das duas importações em massa | 2026-09-14 | 09bcd1b | Needs Review | [260914-ng5-bug-de-escala-tabela-clientes-passou-de-](./quick/260914-ng5-bug-de-escala-tabela-clientes-passou-de-/) |
+| 260915-ls7 | Feature: cliente "ganho" deixa de aparecer no Kanban de prospecção (as 7 colunas do funil) — passa a existir só pela Agenda (visitas/tarefas), sem tela própria de "Clientes Ativos". Novo módulo puro `lib/funil/prospeccao.ts` (`STATUS_FORA_DA_PROSPECCAO`/`apareceNaProspeccao`) como fonte única da regra, consumido pelo filtro SQL de `getClientesAgrupadosPorEtapa` e por um guard de loop equivalente. Exportação de clientes preservada via nova flag `escopoTudo` (`app/api/clientes/exportar/route.ts` + `KanbanBoard.tsx`) — sem ela, "Exportar todos" cairia de 2181 para ~429 linhas silenciosamente. Zero migração/RLS/RPC nova | 2026-09-15 | (pendente) | Needs Review | [260915-ls7-cliente-ganho-deve-sumir-do-kanban-de-pr](./quick/260915-ls7-cliente-ganho-deve-sumir-do-kanban-de-pr/) |
 
 ### Roadmap Evolution
 
