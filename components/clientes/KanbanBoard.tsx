@@ -65,6 +65,12 @@ import type {
  * item (useSortable). A drop optimistically re-arranges local state, calls
  * moverCard() over the mover_card_funil RPC, and rolls back on any error
  * (FUN-02/FUN-03).
+ *
+ * Since quick task 260921-n0a: beyond dragging, each card also offers two
+ * arrows to advance/go back exactly one adjacent etapa (D-01/D-02) — both
+ * entry points end at the same moverCard() call (handleMoverEtapaAdjacente
+ * mirrors handleDragEnd's optimism/rollback contract), so no movement logic
+ * is ever duplicated between the two.
  */
 
 /**
@@ -145,10 +151,14 @@ function DraggableClienteCard({
   cliente,
   showResponsavel,
   onOpen,
+  onMoverEtapa,
+  movendoEtapa,
 }: {
   cliente: ClienteListItem
   showResponsavel: boolean
   onOpen: () => void
+  onMoverEtapa: (destino: EtapaKey) => void
+  movendoEtapa: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: cliente.id })
@@ -172,6 +182,8 @@ function DraggableClienteCard({
         dragHandleProps={
           { ...attributes, ...listeners } as HTMLAttributes<HTMLDivElement>
         }
+        onMoverEtapa={onMoverEtapa}
+        movendoEtapa={movendoEtapa}
       />
     </div>
   )
@@ -193,10 +205,14 @@ function StaticClienteCard({
   cliente,
   showResponsavel,
   onOpen,
+  onMoverEtapa,
+  movendoEtapa,
 }: {
   cliente: ClienteListItem
   showResponsavel: boolean
   onOpen: () => void
+  onMoverEtapa: (destino: EtapaKey) => void
+  movendoEtapa: boolean
 }) {
   return (
     <ClienteCard
@@ -206,6 +222,8 @@ function StaticClienteCard({
       isOverdue={cliente.isOverdue}
       overdueTooltip={cliente.overdue_tooltip ?? undefined}
       onOpen={onOpen}
+      onMoverEtapa={onMoverEtapa}
+      movendoEtapa={movendoEtapa}
     />
   )
 }
@@ -252,6 +270,10 @@ export function KanbanBoard({
     type: "success" | "error"
     text: string
   } | null>(null)
+
+  // Quick task 260921-n0a: trava de clique-duplo por card enquanto uma seta
+  // de avançar/voltar etapa está com a Server Action no ar (T-n0a-03).
+  const [movendoEtapaId, setMovendoEtapaId] = useState<string | null>(null)
 
   // EXP-01/EXP-02/EXP-03 — the Exportar button's in-flight guard (blocks
   // double-clicks while a download is being generated server-side).
@@ -508,6 +530,72 @@ export function KanbanBoard({
     showToast("success", `Card movido para "${etapaLabel}".`)
   }
 
+  /**
+   * Fiação das setas de avançar/voltar etapa do card (D-01/D-02, quick task
+   * 260921-n0a) — espelha o mesmo contrato de handleDragEnd acima (otimismo
+   * local → moverCard() → rollback + banner em erro → banner de sucesso), a
+   * MESMA Server Action que o arrastar já chama (D-04). Nenhuma consulta
+   * nova, nenhum `.rpc()` direto aqui: a trava mora no RPC (D-05). A posição
+   * de destino é sempre o fim da coluna, calculada sobre `grouped` (o
+   * conjunto COMPLETO, nunca `filteredGrouped`) — funciona também quando o
+   * arrastar está desligado (busca/filtros/aba Incompletos/ordenação
+   * diferente de "Mais recentes"), que é justamente onde o vendedor hoje
+   * fica sem nenhuma saída.
+   */
+  async function handleMoverEtapaAdjacente(clienteId: string, destino: EtapaKey) {
+    if (movendoEtapaId !== null) return
+
+    const origem = findEtapaDoCartao(grouped, clienteId)
+    if (!origem) return
+
+    const moving = grouped[origem].find((c) => c.id === clienteId)
+    if (!moving) return
+
+    const previousGrouped = grouped
+
+    const destinoList = grouped[destino]
+    const before = destinoList[destinoList.length - 1]?.posicao
+    const novaPosicao = computeNovaPosicao(before, undefined)
+
+    const etapaAlteradaEm = new Date().toISOString()
+    const reason = staleReason(
+      { etapaAlteradaEm },
+      moving.tarefas_abertas,
+      new Date()
+    )
+
+    const movedCliente: ClienteListItem = {
+      ...moving,
+      etapa: destino,
+      posicao: novaPosicao,
+      etapa_alterada_em: etapaAlteradaEm,
+      isOverdue: reason !== null,
+      overdue_tooltip: reason?.label ?? null,
+    }
+
+    setGrouped({
+      ...grouped,
+      [origem]: grouped[origem].filter((c) => c.id !== clienteId),
+      [destino]: [...grouped[destino], movedCliente],
+    })
+
+    setMovendoEtapaId(clienteId)
+    try {
+      const result = await moverCard(clienteId, destino, novaPosicao)
+
+      if (result.error) {
+        setGrouped(previousGrouped)
+        showToast("error", result.error.message)
+        return
+      }
+
+      const etapaLabel = ETAPAS.find((e) => e.key === destino)?.label ?? destino
+      showToast("success", `Card movido para "${etapaLabel}".`)
+    } finally {
+      setMovendoEtapaId(null)
+    }
+  }
+
   function handleOpenCliente(clienteId: string) {
     setSelectedClienteId(clienteId)
     setSheetOpen(true)
@@ -694,6 +782,10 @@ export function KanbanBoard({
                         cliente={cliente}
                         showResponsavel={showResponsavel}
                         onOpen={() => handleOpenCliente(cliente.id)}
+                        onMoverEtapa={(destino) => {
+                          void handleMoverEtapaAdjacente(cliente.id, destino)
+                        }}
+                        movendoEtapa={movendoEtapaId === cliente.id}
                       />
                     ))
                   )}
@@ -747,6 +839,10 @@ export function KanbanBoard({
                             cliente={cliente}
                             showResponsavel={showResponsavel}
                             onOpen={() => handleOpenCliente(cliente.id)}
+                            onMoverEtapa={(destino) => {
+                              void handleMoverEtapaAdjacente(cliente.id, destino)
+                            }}
+                            movendoEtapa={movendoEtapaId === cliente.id}
                           />
                         ))
                       )}
