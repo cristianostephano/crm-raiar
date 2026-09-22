@@ -340,6 +340,11 @@ None yet.
 - **Planilha real da equipe (`Listagem_Clientes_por_Vendedor.xlsx`) é a carteira de CLIENTES ATIVOS, não prospecção** — origem direta do escopo do marco v1.6 (Fase 25).
 - Sistema zerado de clientes em 2026-08-19 (0 clientes hoje) após uma importação de teste (1099 linhas) ter sido desfeita a pedido do dono, por ter sido importada como prospecção quando deveria ser como ativo.
 
+**Ativos, novos (2026-09-22):**
+
+- **Vercel "Deployment Protection" bloqueia o uso real do link de preview da `staging`:** a regra de deploy combinada em 2026-09-15 (`CLAUDE.md`, seção "Fluxo de Deploy") depende de abrir o link de teste antes de ir pra `master` — mas a proteção padrão da Vercel exige login na conta Vercel pra abrir QUALQUER link de Preview Deployment, inclusive pra quem só tem o link (confirmado ao vivo: duas tentativas de abrir o preview da `staging` caíram na tela de login da Vercel). Isso significa que o time de vendas nunca vai conseguir abrir um link de preview no celular deles pra testar antes da produção — só quem está logado na conta Vercel do projeto consegue. Decisão pendente do dono do projeto: (a) desligar a proteção só para Preview Deployments (Vercel → Settings → Deployment Protection), deixando `master`/produção intocada, ou (b) aceitar que só o dono valida o preview sozinho antes de aprovar. Até essa decisão, cada validação em `staging` esbarra nesse mesmo bloqueio.
+- **Quick task 260921-n0a foi liberada direto para `master` SEM a validação isolada em `staging`** — exceção pontual aprovada explicitamente pelo dono do projeto (2026-09-22), por causa do bloqueio acima. Não é o novo padrão; a regra de "staging antes de master" continua valendo, só não pôde ser seguida à risca desta vez. A checagem humana ao vivo (setas no celular/tablet, bordas do funil, arrastar intacto, recusa de cliente ganho — lista completa em `260921-n0a-PLAN.md`, bloco `<verification>`) ainda está pendente, agora direto em produção.
+
 **Herdados, ainda relevantes:**
 
 - Gap de verificação humana aceito formalmente (Fase 8): o drag-and-drop com auto-scroll do kanban foi revisado por código, não exercitado por um drag real de mouse. Risco julgado baixo. Ver `.planning/phases/08-rolagem-por-coluna-no-kanban/08-VERIFICATION.md`.
