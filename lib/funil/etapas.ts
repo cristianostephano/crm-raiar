@@ -30,3 +30,22 @@ export const ETAPA_KEYS = ETAPAS.map((etapa) => etapa.key) as [
 
 /** Only stage from which status_acompanhamento can become 'ganho' (FUN-05). */
 export const ETAPA_FINAL: EtapaKey = "primeira_venda"
+
+/**
+ * Etapa vizinha (anterior/seguinte) na GRADE fixa do funil, para as setas de
+ * avançar/voltar do card (D-02, quick task 260921-n0a). Descrevem só a
+ * ordem das 7 colunas — nenhuma regra de negócio, nenhuma duplicação de
+ * trava: `mover_card_funil` continua sendo a única autoridade sobre o que
+ * pode ou não ser movido (D-05).
+ */
+export function etapaAnterior(etapa: EtapaKey): EtapaKey | null {
+  const index = ETAPA_KEYS.indexOf(etapa)
+  return index > 0 ? ETAPA_KEYS[index - 1] : null
+}
+
+export function etapaSeguinte(etapa: EtapaKey): EtapaKey | null {
+  const index = ETAPA_KEYS.indexOf(etapa)
+  return index >= 0 && index < ETAPA_KEYS.length - 1
+    ? ETAPA_KEYS[index + 1]
+    : null
+}
