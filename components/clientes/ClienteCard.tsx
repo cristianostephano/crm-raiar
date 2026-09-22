@@ -1,6 +1,13 @@
 "use client"
 
-import { CalendarClock, MessageCircle, Phone, TriangleAlert } from "lucide-react"
+import {
+  CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  MessageCircle,
+  Phone,
+  TriangleAlert,
+} from "lucide-react"
 import type { HTMLAttributes, KeyboardEvent, ReactNode } from "react"
 
 import { Badge } from "@/components/ui/badge"
@@ -10,7 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { EtapaKey } from "@/lib/funil/etapas"
+import { etapaAnterior, etapaSeguinte, type EtapaKey } from "@/lib/funil/etapas"
 import type { TaskStatus } from "@/lib/funil/staleness"
 import { nomeExibicaoCliente } from "@/lib/clientes/nomeExibicao"
 import { rotuloCidadeEstado } from "@/lib/clientes/rotuloLocalizacao"
@@ -146,6 +153,42 @@ function QuickActionButton({
   )
 }
 
+/** Seta de avançar/voltar etapa direto no card (D-01/D-02, quick task
+ * 260921-n0a). O par de `stopPropagation` é obrigatório: o do `onClick`
+ * impede que o clique suba até o elemento raiz do `Card` e abra a ficha
+ * (`onOpen`); o do `onPointerDown` impede que os listeners do dnd-kit —
+ * espalhados no mesmo elemento raiz via `dragHandleProps` — comecem a
+ * rastrear um arraste a partir do botão. O destino é sempre a etapa
+ * ADJACENTE, nunca um salto livre entre as 7 etapas (D-02). */
+function EtapaArrowButton({
+  label,
+  disabled,
+  onMove,
+  children,
+}: {
+  label: string
+  disabled: boolean
+  onMove: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      className="flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation()
+        onMove()
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
 /**
  * Compact, presentational kanban card (D-03/D-04). Full forward-looking prop
  * contract locked in now so 02-04 (drag), 02-05 ("Incompleto" badge/overdue
@@ -169,6 +212,8 @@ export function ClienteCard({
   overdueTooltip,
   onOpen,
   dragHandleProps,
+  onMoverEtapa,
+  movendoEtapa = false,
 }: {
   cliente: ClienteCardData
   showResponsavel: boolean
@@ -177,7 +222,16 @@ export function ClienteCard({
   overdueTooltip?: string
   onOpen?: () => void
   dragHandleProps?: HTMLAttributes<HTMLDivElement>
+  /** Chama a MESMA Server Action que o arrastar já usa (`moverCard`) —
+   * ver o comentário de `EtapaArrowButton` acima. Opcional para manter o
+   * card utilizável por qualquer outro consumidor sem essa prop. */
+  onMoverEtapa?: (destino: EtapaKey) => void
+  /** Trava de clique-duplo enquanto a chamada de `onMoverEtapa` está no
+   * ar — nunca uma tentativa de adivinhar recusa do RPC (D-05). */
+  movendoEtapa?: boolean
 }) {
+  const etapaAnteriorVizinha = etapaAnterior(cliente.etapa)
+  const etapaSeguinteVizinha = etapaSeguinte(cliente.etapa)
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!onOpen) return
     if (event.key === "Enter" || event.key === " ") {
@@ -266,6 +320,28 @@ export function ClienteCard({
           <QuickActionButton onAction={onOpen ?? null} label="Agendar tarefa">
             <CalendarClock className="size-[18px]" />
           </QuickActionButton>
+          {onMoverEtapa ? (
+            <div className="ml-auto flex items-center">
+              {etapaAnteriorVizinha ? (
+                <EtapaArrowButton
+                  label="Voltar para a etapa anterior"
+                  disabled={movendoEtapa}
+                  onMove={() => onMoverEtapa(etapaAnteriorVizinha)}
+                >
+                  <ChevronLeft className="size-[18px]" />
+                </EtapaArrowButton>
+              ) : null}
+              {etapaSeguinteVizinha ? (
+                <EtapaArrowButton
+                  label="Avançar para a próxima etapa"
+                  disabled={movendoEtapa}
+                  onMove={() => onMoverEtapa(etapaSeguinteVizinha)}
+                >
+                  <ChevronRight className="size-[18px]" />
+                </EtapaArrowButton>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>
