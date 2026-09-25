@@ -130,7 +130,12 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
   3. O card sem filtro continua exatamente como está hoje, e no card filtrado as setas de voltar/avançar etapa continuam funcionando (nenhuma regressão do que a quick task 260921-n0a entregou).
   4. Na seção "Sem dia fixo definido" da Agenda, cada linha mostra o nome do cliente junto do nome do vendedor responsável — inclusive para cliente sem razão social, que aparece pelo Nome Fantasia (mesma regra de nome exibido já usada no card e na ficha).
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 27-01-PLAN.md — AGD-15: nome_fantasia da consulta até a linha "Sem dia fixo definido", título via nomeExibicaoCliente() (onda 1, autônomo)
+- [ ] 27-02-PLAN.md — KAN-03: diagnóstico ao vivo pelo dono do projeto (checkpoint bloqueante) e registro do resultado, sem mudar código (onda 1)
+- [ ] 27-03-PLAN.md — KAN-03: correção condicional ao diagnóstico — div simples no StaticClienteCard + teste de paridade + guarda das setas (onda 2, depende do 27-02)
 **UI hint**: yes
 
 ### Phase 28: Relatório de Perdidos
