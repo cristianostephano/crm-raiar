@@ -21,7 +21,7 @@ Requisitos do marco v1.7 (Ajustes Pós-Teste com o Time de Vendas). Cada um mape
 
 ### Agenda (correção)
 
-- [ ] **AGD-15**: Seção "Sem dia fixo definido" da Agenda mostra o nome do cliente junto do nome do vendedor responsável
+- [x] **AGD-15**: Seção "Sem dia fixo definido" da Agenda mostra o nome do cliente junto do nome do vendedor responsável
 
 ### Encerrar Cliente Ativo
 
@@ -58,7 +58,7 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 | PERD-04 | Phase 28 | Pending |
 | PERD-05 | Phase 28 | Pending |
 | KAN-03 | Phase 27 | Pending |
-| AGD-15 | Phase 27 | Pending |
+| AGD-15 | Phase 27 | Complete |
 | ENCR-01 | Phase 29 | Pending |
 | ENCR-02 | Phase 29 | Pending |
 | ENCR-03 | Phase 29 | Pending |
