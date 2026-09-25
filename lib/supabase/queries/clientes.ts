@@ -7,7 +7,7 @@ import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import type { FrequenciaVisita } from "@/lib/funil/frequencia"
 import {
   apareceNaProspeccao,
-  STATUS_FORA_DA_PROSPECCAO,
+  STATUS_FORA_DA_PROSPECCAO_LISTA,
 } from "@/lib/funil/prospeccao"
 import { staleReason, type TarefaAberta } from "@/lib/funil/staleness"
 import { buscarPaginado } from "@/lib/supabase/queries/paginacao"
@@ -265,15 +265,17 @@ type ClienteRow = {
  * (D-02: categoria_id/contato/telefone/email/numero_de_lojas blank ->
  * "Incompleto" badge in a later plan).
  *
- * Quick task 260915-ls7: esta leitura devolve apenas clientes que ainda
- * estão em prospecção — cliente ganho é excluído de propósito, porque saiu
- * do funil (já fechou a primeira venda) e passou a ser acompanhado pela
- * Agenda. Este recorte é regra de EXIBIÇÃO desta tela, jamais fronteira de
- * autorização (RLS acima continua sendo a fronteira real de quais linhas
- * voltam) — nunca deve virar policy de RLS nem ser copiado para as leituras
- * da Agenda, da ficha, do Diário ou do Dashboard, que precisam continuar
- * enxergando cliente ganho normalmente. Ver lib/funil/prospeccao.ts para a
- * definição única da regra.
+ * Quick task 260915-ls7 + Fase 28 (PERD-01/D-06): esta leitura devolve
+ * apenas clientes que ainda estão em prospecção ativa (em andamento) —
+ * cliente ganho é excluído porque já fechou a primeira venda e passou a ser
+ * acompanhado pela Agenda; cliente perdido é excluído porque deixou de ser
+ * prospecção ativa e passou a ser encontrado na tela Perdidos. Este recorte
+ * é regra de EXIBIÇÃO desta tela, jamais fronteira de autorização (RLS acima
+ * continua sendo a fronteira real de quais linhas voltam) — nunca deve virar
+ * policy de RLS nem ser copiado para as leituras da Agenda, da ficha, do
+ * Diário, do Dashboard, da exportação nem da leitura da tela Perdidos, que
+ * precisam continuar enxergando cliente ganho e perdido normalmente. Ver
+ * lib/funil/prospeccao.ts para a definição única da regra.
  */
 export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosPorEtapa> {
   const supabase = await createClient()
@@ -291,9 +293,16 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
       .select(
         "id, razao_social, nome_fantasia, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome)), cliente_produtos(produto_id, produtos_consumidos(nome))"
       )
-      // Quick task 260915-ls7: cliente ganho saiu do funil de prospecção —
-      // filtrado aqui, no SQL, ANTES da paginação (egress + páginas úteis).
-      .neq("status_acompanhamento", STATUS_FORA_DA_PROSPECCAO)
+      // Quick task 260915-ls7 + Fase 28 (PERD-01/D-06): ganho e perdido
+      // saíram do funil de prospecção — filtrados aqui, no SQL, ANTES da
+      // paginação (egress + páginas úteis). A string interpolada vem só das
+      // duas literais fixas de STATUS_FORA_DA_PROSPECCAO_LISTA (as const),
+      // nunca de entrada de usuário.
+      .not(
+        "status_acompanhamento",
+        "in",
+        `(${STATUS_FORA_DA_PROSPECCAO_LISTA.join(",")})`
+      )
       .order("posicao", { ascending: true })
       .order("id", { ascending: true })
       .range(inicio, fim)
@@ -312,10 +321,10 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
   const now = new Date()
 
   for (const row of rows) {
-    // Rede de segurança (quick task 260915-ls7): mesma definição do filtro
-    // SQL acima (lib/funil/prospeccao.ts), reaplicada aqui para o caso de
-    // alguém remover o `.neq(...)` numa edição futura sem perceber o que
-    // ele fazia. As duas aplicações nunca podem divergir.
+    // Rede de segurança (quick task 260915-ls7 + Fase 28): mesma definição
+    // do filtro SQL acima (lib/funil/prospeccao.ts), reaplicada aqui para o
+    // caso de alguém remover o `.not(...)` numa edição futura sem perceber o
+    // que ele fazia. As duas aplicações nunca podem divergir.
     if (!apareceNaProspeccao(row.status_acompanhamento)) continue
 
     const key = row.etapa

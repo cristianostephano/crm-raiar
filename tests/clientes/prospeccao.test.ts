@@ -2,14 +2,18 @@ import { describe, expect, it } from "vitest"
 
 import {
   apareceNaProspeccao,
-  STATUS_FORA_DA_PROSPECCAO,
+  STATUS_FORA_DA_PROSPECCAO_LISTA,
 } from "../../lib/funil/prospeccao"
 import type { StatusAcompanhamento } from "../../lib/supabase/queries/clientes"
 
 /**
- * Unit tests for the regra de visibilidade do funil de prospecção (quick
- * task 260915-ls7) — fonte única consumida tanto pelo filtro SQL quanto pela
- * guarda do laço de agrupamento em getClientesAgrupadosPorEtapa.
+ * Unit tests for the regra de visibilidade do funil de prospecção — fonte
+ * única consumida tanto pelo filtro SQL quanto pela guarda do laço de
+ * agrupamento em getClientesAgrupadosPorEtapa.
+ *
+ * Fase 28 (PERD-01, D-06): a regra deixou de excluir um status só ("ganho",
+ * quick task 260915-ls7) e passou a excluir um CONJUNTO de dois
+ * ("ganho" e "perdido") das 7 colunas do Kanban.
  */
 
 const TODOS_OS_STATUS: StatusAcompanhamento[] = [
@@ -23,22 +27,29 @@ describe("apareceNaProspeccao", () => {
     expect(apareceNaProspeccao("em_andamento")).toBe(true)
   })
 
-  it("cliente perdido continua aparecendo no funil de prospecção", () => {
-    expect(apareceNaProspeccao("perdido")).toBe(true)
+  it("cliente perdido sai do funil de prospecção (PERD-01/D-06)", () => {
+    expect(apareceNaProspeccao("perdido")).toBe(false)
   })
 
   it("cliente ganho sai do funil de prospecção", () => {
     expect(apareceNaProspeccao("ganho")).toBe(false)
   })
 
-  it("STATUS_FORA_DA_PROSPECCAO vale exatamente 'ganho'", () => {
-    expect(STATUS_FORA_DA_PROSPECCAO).toBe("ganho")
+  it("STATUS_FORA_DA_PROSPECCAO_LISTA vale exatamente ['ganho', 'perdido']", () => {
+    expect(STATUS_FORA_DA_PROSPECCAO_LISTA).toEqual(["ganho", "perdido"])
   })
 
-  it("exatamente um dos três status possíveis sai da prospecção", () => {
+  it("exatamente dois dos três status possíveis saem da prospecção", () => {
     const escondidos = TODOS_OS_STATUS.filter(
       (status) => !apareceNaProspeccao(status)
     )
-    expect(escondidos).toEqual(["ganho"])
+    expect(escondidos).toEqual(["perdido", "ganho"])
+  })
+
+  it("em_andamento é o único status que continua aparecendo na prospecção", () => {
+    const visiveis = TODOS_OS_STATUS.filter((status) =>
+      apareceNaProspeccao(status)
+    )
+    expect(visiveis).toEqual(["em_andamento"])
   })
 })
