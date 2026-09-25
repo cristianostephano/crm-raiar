@@ -5,8 +5,8 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 27
 current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
 status: planning
-stopped_at: Phase 28 - Plan 28-02 (PERD-01) complete; Plan 28-01 awaiting owner approval for db push
-last_updated: "2026-09-25T23:36:52.554Z"
+stopped_at: Phase 28 - Plan 28-01 complete (migration applied, requirements close after 28-04 UI lands); Waves 1 (28-01,28-02) done, starting Wave 2 (28-03)
+last_updated: "2026-09-25T23:49:06.572Z"
 last_activity: 2026-09-25
 last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
 progress:
@@ -416,8 +416,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-25T23:36:52.528Z
-Stopped at: Phase 28 - Plan 28-02 (PERD-01) complete; Plan 28-01 awaiting owner approval for db push
+Last session: 2026-09-25T23:49:06.546Z
+Stopped at: Phase 28 - Plan 28-01 complete (migration applied, requirements close after 28-04 UI lands); Waves 1 (28-01,28-02) done, starting Wave 2 (28-03)
 Resume file: .planning/phases/28-relat-rio-de-perdidos/28-01-SUMMARY.md
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
