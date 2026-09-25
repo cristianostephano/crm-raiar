@@ -6,6 +6,7 @@ import {
   motivoSemDiaFixo,
   type ClienteSemDiaFixo,
 } from "@/lib/agenda/itens"
+import { nomeExibicaoCliente } from "@/lib/clientes/nomeExibicao"
 import { cn } from "@/lib/utils"
 
 /**
@@ -40,6 +41,10 @@ const CARD_SM_CLASSNAME =
  * componente inteiro — este item não tem data, selo de origem nem botão de
  * concluir, que não se aplicam aqui. Nenhum campo de edição na própria
  * linha (D-02/D-03): clicar leva à ficha, onde o dia fixo se define.
+ *
+ * Desde a Fase 27 (AGD-15), o título usa a autoridade única de nome exibido
+ * (lib/clientes/nomeExibicao.ts, Fase 26, T-26-15), para que um cliente sem
+ * razão social apareça pelo Nome Fantasia em vez de ficar em branco.
  */
 export function AgendaSemDiaFixo({
   clientes,
@@ -72,9 +77,9 @@ export function AgendaSemDiaFixo({
             <CardHeader className="px-3">
               <CardTitle
                 className="truncate text-base leading-tight font-semibold"
-                title={cliente.razaoSocial ?? undefined}
+                title={nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)}
               >
-                {cliente.razaoSocial}
+                {nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-1.5 px-3">

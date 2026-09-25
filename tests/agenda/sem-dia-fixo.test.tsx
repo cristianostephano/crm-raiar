@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 import { AgendaSemDiaFixo } from "@/components/agenda/AgendaSemDiaFixo"
 import type { ClienteSemDiaFixo } from "@/lib/agenda/itens"
+import { ROTULO_SEM_NOME } from "@/lib/clientes/nomeExibicao"
 
 /**
  * Teste de tela do componente novo do aviso de dia fixo (AGENDA-01, Fase 24,
@@ -125,5 +126,130 @@ describe("AgendaSemDiaFixo", () => {
     )
 
     expect(screen.getByText("Ana")).toBeInTheDocument()
+  })
+})
+
+/**
+ * AGD-15 (Fase 27 Plano 1): o título da linha passa a sair de
+ * nomeExibicaoCliente() em vez do campo cru de razão social, para que um
+ * cliente sem razão social apareça pelo Nome Fantasia em vez de título
+ * vazio. Não duplica a cobertura de nomeExibicaoCliente() em si
+ * (tests/clientes/nome-exibicao.test.ts) — só prova o uso na tela.
+ */
+describe("AgendaSemDiaFixo — nome exibido (AGD-15)", () => {
+  it("razão social preenchida: aparece pela razão social, e o title é igual", () => {
+    const clientes = [
+      buildCliente({
+        razaoSocial: "Padaria Central Ltda",
+        nomeFantasia: "Padaria Central",
+      }),
+    ]
+
+    render(
+      <AgendaSemDiaFixo
+        clientes={clientes}
+        showResponsavel={false}
+        onOpenCliente={vi.fn()}
+      />
+    )
+
+    const titulo = screen.getByText("Padaria Central Ltda")
+    expect(titulo).toBeInTheDocument()
+    expect(titulo).toHaveAttribute("title", "Padaria Central Ltda")
+  })
+
+  it("razão social nula: aparece pelo Nome Fantasia, e o title é igual", () => {
+    const clientes = [
+      buildCliente({ razaoSocial: null, nomeFantasia: "Mercado Bom Preço" }),
+    ]
+
+    render(
+      <AgendaSemDiaFixo
+        clientes={clientes}
+        showResponsavel={false}
+        onOpenCliente={vi.fn()}
+      />
+    )
+
+    const titulo = screen.getByText("Mercado Bom Preço")
+    expect(titulo).toBeInTheDocument()
+    expect(titulo).toHaveAttribute("title", "Mercado Bom Preço")
+  })
+
+  it("razão social só com espaços: conta como ausente, aparece pelo Nome Fantasia", () => {
+    const clientes = [
+      buildCliente({ razaoSocial: "   ", nomeFantasia: "Mercado Bom Preço" }),
+    ]
+
+    render(
+      <AgendaSemDiaFixo
+        clientes={clientes}
+        showResponsavel={false}
+        onOpenCliente={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText("Mercado Bom Preço")).toBeInTheDocument()
+  })
+
+  it("razão social e Nome Fantasia ausentes: aparece o rótulo único de ausência", () => {
+    const clientes = [buildCliente({ razaoSocial: null, nomeFantasia: null })]
+
+    render(
+      <AgendaSemDiaFixo
+        clientes={clientes}
+        showResponsavel={false}
+        onOpenCliente={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText(ROTULO_SEM_NOME)).toBeInTheDocument()
+  })
+
+  it("D-03: com showResponsavel, o nome do vendedor aparece junto do nome do cliente, no mesmo botão da linha", () => {
+    const clientes = [
+      buildCliente({
+        razaoSocial: null,
+        nomeFantasia: "Mercado Bom Preço",
+        responsavelNome: "Ana",
+      }),
+    ]
+
+    render(
+      <AgendaSemDiaFixo
+        clientes={clientes}
+        showResponsavel={true}
+        onOpenCliente={vi.fn()}
+      />
+    )
+
+    const linha = within(screen.getByRole("button"))
+    expect(linha.getByText("Mercado Bom Preço")).toBeInTheDocument()
+    expect(linha.getByText("Ana")).toBeInTheDocument()
+  })
+
+  it("clicar na linha identificada pelo Nome Fantasia chama onOpenCliente com o clienteId daquela linha", () => {
+    const onOpenCliente = vi.fn()
+    const clientes = [
+      buildCliente({
+        clienteId: "cliente-nf-1",
+        razaoSocial: null,
+        nomeFantasia: "Mercado Bom Preço",
+      }),
+    ]
+
+    render(
+      <AgendaSemDiaFixo
+        clientes={clientes}
+        showResponsavel={false}
+        onOpenCliente={onOpenCliente}
+      />
+    )
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Mercado Bom Preço/ })
+    )
+
+    expect(onOpenCliente).toHaveBeenCalledWith("cliente-nf-1")
   })
 })
