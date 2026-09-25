@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Ajustes Pós-Teste com o Time de Vendas
 status: planning
-last_updated: "2026-09-25T15:54:37.602Z"
+last_updated: "2026-09-25T16:09:14.794Z"
 last_activity: 2026-09-25
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-24)
+See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 26 — Importação de Clientes em Prospecção e Limpeza de Menu
+**Current focus:** Phase 27 — Correções do Primeiro Uso — Card Filtrado e Agenda
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 27 of 30 (Correções do Primeiro Uso — Card Filtrado e Agenda) — 1ª de 4 fases do marco v1.7
 Plan: —
-Status: Defining requirements
-Last activity: 2026-09-25 — Milestone v1.7 started
+Status: Ready to plan
+Last activity: 2026-09-25 — Roadmap v1.7 criado (Fases 27-30)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -117,6 +119,10 @@ Last activity: 2026-09-25 — Milestone v1.7 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- **Roadmap v1.7 (2026-09-25):** 4 fases (27 Correções do Primeiro Uso — Card Filtrado e Agenda / 28 Relatório de Perdidos / 29 Encerrar Cliente Ativo / 30 Aderência de Uso no Dashboard) derivadas dos 15 requisitos do marco (PERD/KAN/AGD/ENCR/ADER), numeração continuando da v1.6 (última = Fase 26). 15/15 mapeados, sem órfãos nem duplicados. KAN-03 e AGD-15 (duas correções pequenas e isoladas, sem arquivo em comum) ficaram juntas numa fase própria, em vez de dobradas dentro das fases de funcionalidade, para chegarem ao time primeiro — o time já esbarra nelas no uso diário. Fase 28 espelha a quick task 260915-ls7 (a regra única de `lib/funil/prospeccao.ts` passa de um status só para um conjunto; mesma armadilha de exportação resolvida lá com `escopoTudo`). Fase 29 depende levemente da 28 (mesmo formato: status que tira o cliente de uma visão de rotina + lista própria + caminho de volta, mexendo na mesma regra de status). Fase 30 por último: tecnicamente a mais nova, e conta as ações novas das Fases 28/29 (reabrir/encerrar/reativar).
+- **Roadmap v1.7 — lacuna de requisito na Fase 29 (ENCR-05):** os requisitos não dizem onde um cliente encerrado fica achável para ser reativado. Desde a quick task 260915-ls7, cliente "ganho" só é achável pela Agenda; um encerrado fora da Agenda ficaria inalcançável. Recomendado espelhar a tela de Perdidos da Fase 28 — confirmar no Discuss da Fase 29, não presumir.
+- **Roadmap v1.7 — reativar dispara as travas de ganho (Fase 29):** reativar é uma transição de volta para "ganho", e os guards de transição de `mover_card_funil` (CNPJ/razão social/endereço/frequência, migrations 0018/0025) disparam exatamente quando o status atual não é "ganho". Um cliente antigo com grandfathering seria bloqueado ao reativar. Decidir no Discuss da Fase 29.
+- **Roadmap v1.7 — viabilidade da Fase 30 (ADER):** (1) não existe histórico de acesso no sistema — só o último login dentro do Supabase Auth; o sinal "entrou no sistema" só começa a contar a partir do dia em que a fase for para produção (a métrica nasce com a janela de 28 dias incompleta); (2) com a sessão persistente do app, o vendedor quase nunca "faz login" de novo — recomendado medir "abriu o sistema no dia"; (3) `historico` já registra troca de etapa/status e conclusões com autor e data (conta retroativamente), mas NÃO registra cadastro nem edição de cliente (o gatilho `clientes_after_update_historico` só olha etapa/status) — também precisa de registro novo; (4) registro diário de uso é dado pessoal de funcionário (LGPD): guardar só quem + dia, dia carimbado pelo servidor, leitura só do Supervisor, prazo de guarda limitado. Se o dono quiser a métrica completa já no lançamento, a alternativa é antecipar só a captura de acesso diário (quick task, ou reordenar a Fase 30 para logo depois da 27).
 - **Roadmap v1.6 (2026-08-24):** 4 fases (23 Razão Social Opcional e Trava do Ganho Ampliada / 24 Dia Fixo na Recorrência de Visita / 25 Importação de Clientes Ativos / 26 Importação de Clientes em Prospecção e Limpeza de Menu) derivadas dos 17 requisitos do marco, numeração continuando da v1.5 (última = Fase 22). 17/17 requisitos mapeados, sem órfãos nem duplicados. Fase 23 absorve a nulabilidade de `razao_social` (schema novo desta fase, nunca foi opcional antes) porque o guard de GANHO-01 só faz sentido com a coluna já nullable — mesmo raciocínio que já tornou `endereco` opcional numa quick task fora do marco (`quick-m8q`, 2026-08-19, já em produção antes deste roadmap). Fase 25 depende da Fase 23 (a nova RPC `importar_clientes_ativos_lote` duplica verbatim o guard de ganho ampliado — achado da pesquisa: Pitfall 1, guard drift). Fase 26 depende da Fase 23 (razão social nullable, usada pela planilha de prospecção) e da Fase 25 (as duas planilhas antigas só saem do menu depois que a nova planilha de Ativos prova substituir o caso de uso). Fase 24 é tecnicamente independente das outras três (arquivos praticamente disjuntos: enum/colunas de âncora + `proxima_data_visita` + Select de frequência + nova seção da Agenda), ordenada em segundo por convenção do marco. Diferente da pesquisa (`research/SUMMARY.md`), que propôs uma fase horizontal "Schema & RPC Foundation" separada de uma fase de UI, o roadmap final usa fatias verticais (schema+UI por fase) — o padrão que este projeto já usa desde a v1.3 (Fases 13/15/21/22 sempre bundlam migration + UI wiring na mesma fase, entregando uma capacidade observável pelo usuário por fase).
 - **Roadmap v1.6 — gap a confirmar no Discuss da Fase 24:** o fluxo de ganho (`GanhoFrequenciaDialog`) continua coletando frequência de visita SEM o dia fixo (GANHO-03 trava isso deliberadamente — a caixinha não cresce). Isso significa que `proxima_data_visita`, reescrita na Fase 24 para mirar o dia fixo, precisa de um comportamento definido para o estado "frequência definida, âncora ainda nula" — exatamente o que AGENDA-01 lista como pendência a resolver. Não presumir durante o planejamento; confirmar no Discuss da Fase 24 se o seed da primeira visita no momento do ganho fica adiado até o dia fixo existir, ou se cai num fallback baseado no intervalo antigo.
 - **Roadmap v1.6 — GANHO-01 só é alcançável hoje por causa de uma quick task anterior:** a branch de "endereço incompleto" do guard ampliado só existe porque `endereco` (CEP/rua/número/cidade/estado) já é opcional desde a quick task `260819-m8q` (2026-08-19, fora deste marco, migration 0023). Sem essa mudança prévia a branch nunca dispararia. `razao_social` opcional é schema genuinamente novo desta fase.
@@ -311,7 +317,15 @@ None yet.
 
 ### Blockers/Concerns
 
-**Ativos para o v1.6:**
+**Ativos para o v1.7:**
+
+- **Fase 28 — reabrir perdido de vendedor desativado:** a regra da v1.2 deixa clientes perdidos com o vendedor desativado; reabrir um deles criaria um cliente "em andamento" sem dono ativo no funil. Confirmar no Discuss da Fase 28 (junto com: em qual etapa o cliente reaberto reaparece).
+- **Fase 29 — onde o encerrado fica achável para reativar** e **reativar x travas de ganho** (ver Decisions acima).
+- **Fase 29 — Dashboard x status novo:** qualquer leitura que conte `status_acompanhamento = 'ganho'` pelo estado ATUAL (e não pelo evento no `historico`) passaria a esquecer clientes encerrados depois de ganhos — conferir cada função `dashboard_*` e o comparativo por vendedor no planejamento.
+- **Fase 29 — valor novo de enum:** se "encerrado" virar valor novo de `status_acompanhamento_enum`, o Postgres não deixa usar um valor de enum recém-adicionado na mesma transação em que ele foi criado — planejar a migration em dois passos (adicionar o valor; depois constraints/RPC que o usam).
+- **Fase 30 — início a frio da métrica e LGPD** (ver Decisions acima). Motivo de encerramento em texto livre (Fase 29) também é risco LGPD — texto livre convida a registrar informação pessoal sensível; lista editável é o caminho recomendado.
+
+**Resolvidos na v1.6 (histórico):**
 
 - **Fallback de `proxima_data_visita` para "frequência sem âncora" (Fase 24):** o fluxo de ganho (`GanhoFrequenciaDialog`) continua definindo frequência de visita SEM dia fixo (GANHO-03 trava isso de propósito — a caixinha não cresce). `proxima_data_visita`, reescrita nesta fase para mirar o dia fixo, precisa de um comportamento definido para esse estado intermediário (frequência definida, âncora nula) — exatamente o que AGENDA-01 lista como pendência a resolver. Confirmar no Discuss da Fase 24, não presumir no planejamento.
 - **`razao_social` nullable depende de `endereco` já ter sido tornado opcional fora do marco (Fase 23):** a branch de "endereço incompleto" do guard de GANHO-01 só é alcançável hoje porque `endereco` já é opcional desde a quick task `260819-m8q` (migration 0023, em produção). `razao_social` nullable é schema genuinamente novo desta fase — nunca foi opcional antes, inclusive no cadastro manual.
@@ -373,6 +387,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- **Marco v1.7 roteirizado (2026-09-25):** 4 fases novas (27 Correções do Primeiro Uso — Card Filtrado e Agenda / 28 Relatório de Perdidos / 29 Encerrar Cliente Ativo / 30 Aderência de Uso no Dashboard) derivadas dos 15 requisitos do marco (PERD/KAN/AGD/ENCR/ADER), numeração continuando da v1.6 (última = Fase 26). 15/15 requisitos mapeados, sem órfãos nem duplicados. Ordem: 27 primeiro (correções isoladas que já afetam o time), 28 (Perdidos, padrão já provado pela quick task 260915-ls7), 29 (Encerrar, mesmo formato da 28, depende dela de forma leve), 30 por último (Aderência, a mais nova tecnicamente, conta as ações das 28/29). Fases 27-30 marcadas "Not started".
 - **Marco v1.6 roteirizado (2026-08-24):** 4 fases novas (23 Razão Social Opcional e Trava do Ganho Ampliada / 24 Dia Fixo na Recorrência de Visita / 25 Importação de Clientes Ativos / 26 Importação de Clientes em Prospecção e Limpeza de Menu) derivadas dos 17 requisitos do marco (ATIVO/PROSP/GANHO/ANCORA/AGENDA/MENU), numeração continuando da v1.5 (última = Fase 22). 17/17 requisitos mapeados, sem órfãos nem duplicados. Ordem: 23 primeiro (fundação de schema, sem dependência); 24 segundo (independente, mas maior novidade técnica — Nth-weekday-of-month é matemática de calendário nova no projeto); 25 depende de 23 (guard duplicado verbatim); 26 depende de 23 e 25 (razão social nullable + substituto provado antes da limpeza de menu). Fases 23-26 marcadas "Not started".
 - **Marco v1.5 roteirizado (2026-08-17):** 3 fases novas (20 Calendário da Agenda — Mês, Semana e Dia / 21 Calendário — O Que Já Foi Feito em Datas Passadas / 22 Conclusão Remota com Motivo) derivadas dos 12 requisitos do marco (AGD-07..AGD-14, CONC-02..CONC-05), numeração continuando da v1.4 (última = Fase 19). 12/12 requisitos mapeados, sem órfãos nem duplicados. Primeiro marco do projeto com duas frentes de arquivos disjuntos — as Fases 20/21 (calendário) e a Fase 22 (conclusão remota) não têm dependência técnica entre si; a ordem escolhida só evita mexer duas vezes na fiação do diálogo de conclusão dentro de `AgendaList.tsx`. AGD-13 (mostrar concluídos em datas passadas) foi isolado numa fase própria por ser o único requisito do calendário que exige trabalho novo de banco, e por ter chegado depois da pesquisa paralela — a Fase 20 é construída para que a Fase 21 acrescente a segunda fonte de dados num ponto só. Fases 20-22 marcadas "Not started".
 - **Marco v1.4 roteirizado (2026-08-10):** 2 fases novas (18 CNPJ Obrigatório no Ganho / 19 Planilhas de CNPJ e Nome Fantasia) derivadas dos 5 requisitos do marco (CNPJ/IMP), numeração continuando da v1.3 (última = Fase 17). 5/5 requisitos mapeados, sem órfãos nem duplicados. Granularidade deliberadamente baixa dado o tamanho e o precedente forte do marco (2 fases, não 4-6). Fases 18-19 marcadas "Not started".
@@ -397,14 +412,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-27T12:46:49.513Z
-Stopped at: Completed 26-02-PLAN.md
-Resume file:
+Last session: 2026-09-25T16:09:14.794Z
+Stopped at: Roadmap v1.7 criado (Fases 27-30), aguardando aprovação do dono do projeto
+Resume file: None
 
-None
-
-- Roadmap v1.6 criado (Fases 23-26). Próximo passo: `/gsd-plan-phase 23`.
+- Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Revisar e aprovar o roadmap v1.7 (Fases 27-30); depois rodar /gsd-discuss-phase 27

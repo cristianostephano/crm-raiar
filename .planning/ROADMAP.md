@@ -8,6 +8,8 @@ O marco v1.5 deu à Agenda uma segunda forma de visualização — um calendári
 
 O marco v1.6 separou as duas portas de importação em massa que conviviam numa só: uma nova planilha "Importar Clientes Ativos" cria clientes já em status "ganho" exigindo todos os dados (menos a frequência de visita), enquanto "Importar clientes" foi renomeada para "Importar Clientes em Prospecção" e passou a exigir só Nome Fantasia + Responsável. A trava de "ganho" cresceu para também exigir razão social e endereço completo (grandfathering dos clientes antigos, mesmo padrão do CNPJ na v1.4), as duas planilhas avulsas "Importar CNPJ" e "Importar frequências" saíram do menu por terem ficado redundantes, e a recorrência de visita ganhou um dia fixo (dia da semana para semanal/quinzenal, semana do mês para mensal) — com a Agenda lembrando o vendedor de definir esse dia fixo para quem ainda não tem.
 
+O marco atual, v1.7, nasce do primeiro uso real do sistema pelo time de vendas: corrige dois defeitos de tela que o time encontrou (card do Kanban comprimido ao filtrar por vendedor, e nome errado na seção "Sem dia fixo definido" da Agenda), fecha as duas pontas soltas do ciclo de vida do cliente — cliente "perdido" sai do funil e ganha uma tela própria com reabertura de um toque, e cliente ativo que parou de comprar pode ser encerrado (com motivo) e reativado depois — e dá ao Supervisor uma medida de aderência de uso por vendedor no Dashboard, guardando o mínimo possível sobre cada pessoa.
+
 Detalhes completos de cada marco arquivado estão em `.planning/milestones/`.
 
 ## Milestones
@@ -19,6 +21,7 @@ Detalhes completos de cada marco arquivado estão em `.planning/milestones/`.
 - ✅ **v1.4 CNPJ Obrigatório no Ganho** — Phases 18-19 (shipped 2026-08-14) — see `.planning/milestones/v1.4-ROADMAP.md`
 - ✅ **v1.5 Calendário na Agenda e Conclusão Remota** — Phases 20-22 (shipped 2026-08-19) — see `.planning/milestones/v1.5-ROADMAP.md`
 - ✅ **v1.6 Importação de Clientes Ativos e Prospecção Separadas** — Phases 23-26 (shipped 2026-08-27) — see `.planning/milestones/v1.6-ROADMAP.md`
+- 🚧 **v1.7 Ajustes Pós-Teste com o Time de Vendas** — Phases 27-30 (planning started 2026-09-25)
 
 ## Phases
 
@@ -104,6 +107,90 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
 
 </details>
 
-## Next Milestone
+### 🚧 v1.7 Ajustes Pós-Teste com o Time de Vendas (Phases 27-30) — IN PROGRESS
 
-Planejamento ainda não iniciado — rode `/gsd-new-milestone` para começar.
+**Milestone Goal:** Corrigir problemas reais encontrados no primeiro uso do sistema pelo time de vendas, fechar uma lacuna do ciclo de vida do cliente (perdidos e ativos que encerram), e dar ao Supervisor uma forma de medir se o time está usando a ferramenta como deveria.
+
+- [ ] **Phase 27: Correções do Primeiro Uso — Card Filtrado e Agenda** - O card do Kanban fica idêntico com ou sem filtro de vendedor, e a seção "Sem dia fixo definido" da Agenda passa a mostrar o nome do cliente junto do vendedor.
+- [ ] **Phase 28: Relatório de Perdidos** - Cliente "Perdido" sai das 7 colunas do funil e ganha uma tela própria (motivo, data, vendedor), com filtro por período, visibilidade por papel e botão "Reabrir" de um toque.
+- [ ] **Phase 29: Encerrar Cliente Ativo** - Vendedor encerra um cliente ativo que parou de comprar (com motivo obrigatório), o cliente sai da rotina da Agenda mantendo histórico e diário, e pode ser reativado depois.
+- [ ] **Phase 30: Aderência de Uso no Dashboard** - Supervisor vê, na tabela comparativa por vendedor, o % de dias úteis com uso real do sistema nas últimas 4 semanas, com o registro de uso guardando só o mínimo sobre cada pessoa.
+
+## Phase Details
+
+### Phase 27: Correções do Primeiro Uso — Card Filtrado e Agenda
+
+**Goal**: Os dois defeitos de tela que o time de vendas encontrou no primeiro uso deixam de acontecer — o card do Kanban mostra as mesmas informações com ou sem filtro de vendedor, e a seção "Sem dia fixo definido" da Agenda deixa claro de qual cliente cada linha fala.
+**Depends on**: Nada dentro do marco. As duas correções são pequenas, isoladas e sem arquivo em comum entre si nem com as Fases 28-30 — ordenadas primeiro porque o time já esbarra nelas no uso diário e não dependem de nada novo.
+**Requirements**: KAN-03, AGD-15
+**Success Criteria** (what must be TRUE):
+
+  1. Com o filtro de vendedor ligado no Kanban, cada card mostra categoria, vendedor, cidade/estado e os ícones, exatamente como o mesmo card aparece sem filtro.
+  2. Nomes de cliente no card filtrado não ficam cortados — o card tem a mesma largura e quebra de linha do card sem filtro.
+  3. O card sem filtro continua exatamente como está hoje, e no card filtrado as setas de voltar/avançar etapa continuam funcionando (nenhuma regressão do que a quick task 260921-n0a entregou).
+  4. Na seção "Sem dia fixo definido" da Agenda, cada linha mostra o nome do cliente junto do nome do vendedor responsável — inclusive para cliente sem razão social, que aparece pelo Nome Fantasia (mesma regra de nome exibido já usada no card e na ficha).
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 28: Relatório de Perdidos
+
+**Goal**: Cliente perdido para de ocupar espaço no funil de prospecção e passa a ter uma tela própria, onde cada vendedor vê os seus perdidos (o Supervisor vê os de todos), filtra por período e reabre com um toque o cliente que voltou a ter chance.
+**Depends on**: Nada tecnicamente dentro do marco (independente da Fase 27). Espelha a regra "ganho sai do Kanban" já em produção (quick task 260915-ls7): a regra única de `lib/funil/prospeccao.ts` passa de um status só ("ganho") para um conjunto ("ganho" + "perdido"), e a mesma armadilha de exportação que a 260915-ls7 resolveu com `escopoTudo` precisa ser respeitada aqui.
+**Requirements**: PERD-01, PERD-02, PERD-03, PERD-04, PERD-05
+**Success Criteria** (what must be TRUE):
+
+  1. Ao marcar um cliente como "Perdido" (com motivo, como já acontece hoje), o card some das 7 colunas do Kanban — e "Exportar todos" continua trazendo os clientes perdidos na planilha, sem a contagem cair em silêncio.
+  2. Vendedor e Supervisor abrem uma tela "Perdidos" pelo menu e veem, para cada cliente perdido, o nome do cliente, o motivo da perda, a data em que foi marcado como perdido e o vendedor responsável — sem expor dados de contato da pessoa do cliente (esses continuam só na ficha).
+  3. Vendedor vê na tela de Perdidos só os próprios clientes; Supervisor vê os de todo o time — e um vendedor não consegue ver perdidos de outro vendedor nem acessando os dados diretamente (regra garantida pelo RLS, não só pela tela).
+  4. Ao escolher um período, a lista mostra só os clientes marcados como perdidos dentro dele.
+  5. Um toque em "Reabrir" numa linha tira o cliente da lista de Perdidos e o devolve ao Kanban com status "Em andamento", e a reabertura fica registrada no histórico do cliente.
+
+**Notas para o Discuss**: (a) em qual etapa do funil o cliente reaberto reaparece — a mesma em que foi perdido, ou "Aguardando contato"; (b) o que acontece ao reabrir um perdido cujo vendedor responsável foi desativado (a regra da v1.2 deixa perdidos com o vendedor desativado — reabrir criaria um cliente "em andamento" sem dono ativo); (c) de onde vem a "data em que foi marcado como perdido" (o `historico` já registra a troca de status com data — confirmar se basta ou se vale uma coluna própria).
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 29: Encerrar Cliente Ativo
+
+**Goal**: Cliente ativo que parou de comprar pode ser encerrado pelo próprio vendedor, com motivo, e sai da rotina da Agenda sem perder nada do histórico — e pode ser reativado depois, voltando à rotina normal de visitas.
+**Depends on**: Fase 28 (dependência leve, de padrão e de sequência): mesmo formato de mudança — um status que tira o cliente de uma visão de rotina, uma lista própria onde ele continua achável, e um caminho de volta. A Fase 28 muda a regra única de "fora da prospecção" (`lib/funil/prospeccao.ts`) e as mesmas travas de status em `clientes`/`mover_card_funil`; fazer as duas em sequência evita duas fases mexendo na mesma regra de status ao mesmo tempo, e a tela de Perdidos vira o modelo natural de onde os encerrados são encontrados para reativação.
+**Requirements**: ENCR-01, ENCR-02, ENCR-03, ENCR-04, ENCR-05
+**Success Criteria** (what must be TRUE):
+
+  1. Vendedor encerra um dos próprios clientes ativos pela ficha, sem precisar do Supervisor, e o sistema não deixa concluir o encerramento sem um motivo — um vendedor nunca consegue encerrar cliente de outro vendedor.
+  2. Cliente encerrado some da rotina da Agenda — Lista, Calendário (itens pendentes), seção "Sem dia fixo definido" e contador do menu — e nenhuma visita nova é sugerida para ele.
+  3. O histórico e o diário do cliente encerrado continuam intactos e consultáveis, e o próprio encerramento fica registrado no histórico.
+  4. Vendedor encontra os próprios clientes encerrados (o Supervisor, os de todo o time) num lugar próprio e reativa um deles; o cliente volta a aparecer na rotina normal da Agenda, com visitas voltando a ser sugeridas.
+  5. Cliente encerrado nunca reaparece nas 7 colunas do Kanban de prospecção, e os números históricos do Dashboard (negócios ganhos, ciclo médio) não mudam por um cliente ter sido encerrado depois de ganho.
+
+**Notas para o Discuss**: (a) o motivo é uma lista editável pelo Supervisor (7ª lista, mesmo padrão de motivo de perda e de conclusão remota — recomendado, porque agrega no relatório e evita texto livre com informação pessoal sensível) ou texto livre; (b) onde os encerrados são listados para reativação — os requisitos não dizem, e hoje cliente "ganho" só é achável pela Agenda (desde a quick task 260915-ls7), então um encerrado fora da Agenda ficaria inalcançável sem uma tela/aba própria (recomendado espelhar a tela de Perdidos da Fase 28); (c) reativar é uma transição de volta para "ganho" — as travas de ganho (CNPJ, razão social, endereço completo, frequência) disparam na transição, então um cliente antigo com grandfathering seria bloqueado ao reativar se nada for feito; decidir se a reativação passa pelas travas ou não; (d) ao reativar, a próxima visita é sugerida a partir da frequência/dia fixo que o cliente já tinha, ou pedida de novo ao vendedor.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 30: Aderência de Uso no Dashboard
+
+**Goal**: O Supervisor passa a enxergar, na tabela comparativa por vendedor do Dashboard, quanto cada vendedor de fato usa o sistema — o % de dias úteis com uso nas últimas 4 semanas — com o registro de uso guardando o mínimo possível sobre cada pessoa.
+**Depends on**: Fase 29 (dependência leve): as ações novas de reabrir perdido (Fase 28) e encerrar/reativar cliente (Fase 29) entram na conta de "ação real no funil". É a fase tecnicamente mais nova do marco — precisa de um registro de uso diário que hoje não existe (ver notas).
+**Requirements**: ADER-01, ADER-02, ADER-03
+**Success Criteria** (what must be TRUE):
+
+  1. Na tabela comparativa por vendedor do Dashboard, o Supervisor vê uma coluna nova com o % de aderência de uso de cada vendedor; nem a coluna nem os dados por trás dela aparecem para um Vendedor.
+  2. Um dia conta como "usado" quando o vendedor entra no sistema OU faz uma ação real — mover etapa, concluir tarefa ou visita, cadastrar ou editar cliente — bastando uma dessas coisas no dia.
+  3. O % é a média dos últimos 28 dias: dias usados divididos pelos dias úteis do período; enquanto a janela ainda não está completa desde que a medição começou, o Dashboard deixa isso claro em vez de mostrar um % artificialmente baixo.
+  4. O registro de uso guarda só quem e qual dia — sem horário, IP, aparelho ou localização — e um vendedor não consegue ler o registro de outro, nem inflar o próprio registrando dias em que não usou (o dia é carimbado pelo servidor).
+
+**Notas para o Discuss/pesquisa**: (a) hoje o sistema não guarda histórico de acesso — só o último login, dentro do Supabase Auth — então a parte "entrou no sistema" da métrica só começa a contar a partir do dia em que esta fase for para produção; mover/concluir já têm data e autor no `historico` e podem contar retroativamente, mas cadastro e edição de cliente NÃO ficam registrados no `historico` hoje (o gatilho só grava troca de etapa/status e conclusões) e também precisam de registro novo; (b) com a sessão persistente do app, o vendedor quase nunca "faz login" de novo — ele só abre o sistema já logado; recomendado interpretar "login" como "abriu o sistema naquele dia" (senão a métrica subestima quem usa todo dia); (c) "dias úteis" = segunda a sexta, com ou sem feriados; como tratar vendedor admitido ou desativado no meio da janela; (d) LGPD: registro de uso de funcionário é dado pessoal — confirmar prazo de guarda (só o necessário para a janela de 28 dias, com descarte do resto) e a comunicação ao time de que o uso é medido. Se o dono quiser a métrica completa já no dia do lançamento, a alternativa é antecipar só a captura de acesso diário (quick task ou reordenar esta fase para logo depois da Fase 27).
+**Plans**: TBD
+**UI hint**: yes
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 27 → 28 → 29 → 30
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 27. Correções do Primeiro Uso — Card Filtrado e Agenda | v1.7 | 0/TBD | Not started | - |
+| 28. Relatório de Perdidos | v1.7 | 0/TBD | Not started | - |
+| 29. Encerrar Cliente Ativo | v1.7 | 0/TBD | Not started | - |
+| 30. Aderência de Uso no Dashboard | v1.7 | 0/TBD | Not started | - |

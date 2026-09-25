@@ -52,27 +52,27 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERD-01 | TBD | Pending |
-| PERD-02 | TBD | Pending |
-| PERD-03 | TBD | Pending |
-| PERD-04 | TBD | Pending |
-| PERD-05 | TBD | Pending |
-| KAN-03 | TBD | Pending |
-| AGD-15 | TBD | Pending |
-| ENCR-01 | TBD | Pending |
-| ENCR-02 | TBD | Pending |
-| ENCR-03 | TBD | Pending |
-| ENCR-04 | TBD | Pending |
-| ENCR-05 | TBD | Pending |
-| ADER-01 | TBD | Pending |
-| ADER-02 | TBD | Pending |
-| ADER-03 | TBD | Pending |
+| PERD-01 | Phase 28 | Pending |
+| PERD-02 | Phase 28 | Pending |
+| PERD-03 | Phase 28 | Pending |
+| PERD-04 | Phase 28 | Pending |
+| PERD-05 | Phase 28 | Pending |
+| KAN-03 | Phase 27 | Pending |
+| AGD-15 | Phase 27 | Pending |
+| ENCR-01 | Phase 29 | Pending |
+| ENCR-02 | Phase 29 | Pending |
+| ENCR-03 | Phase 29 | Pending |
+| ENCR-04 | Phase 29 | Pending |
+| ENCR-05 | Phase 29 | Pending |
+| ADER-01 | Phase 30 | Pending |
+| ADER-02 | Phase 30 | Pending |
+| ADER-03 | Phase 30 | Pending |
 
 **Coverage:**
 - v1 requirements: 15 total
-- Mapped to phases: 0 (preenchido pelo roteiro)
-- Unmapped: 15 ⚠️ (aguardando `gsd-roadmapper`)
+- Mapped to phases: 15 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-09-25*
-*Last updated: 2026-09-25 after initial definition (marco v1.7)*
+*Last updated: 2026-09-25 after roadmap creation (marco v1.7 — Fases 27-30)*
