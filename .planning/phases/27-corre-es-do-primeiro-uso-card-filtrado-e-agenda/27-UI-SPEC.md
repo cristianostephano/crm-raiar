@@ -40,7 +40,9 @@ Not a new declaration for this phase — the two touched components already use 
 | md | 12px (`px-3`, `py-3`) | `CardHeader`/`CardContent` horizontal padding (`px-3`), card vertical padding (`py-3`, matched exactly by `AgendaSemDiaFixo`'s `CARD_SM_CLASSNAME`) |
 | Touch target | 44px (`size-11`) | Every quick-action icon/button and the two `EtapaArrowButton`s (KAN-03 success criterion 3 — must not regress) |
 
-**Exceptions:** none. KAN-03's fix (whatever it turns out to be, per the mandatory live-diagnosis gate) must NOT introduce a new spacing value — the target is the existing unfiltered card's spacing, unchanged.
+**Exceptions:** none new. KAN-03's fix (whatever it turns out to be, per the mandatory live-diagnosis gate) must NOT introduce a new spacing value — the target is the existing unfiltered card's spacing, unchanged.
+
+**Pre-existing exceptions (frozen by this phase's scope, not introduced here):** 6px (`gap-1.5`, used by `ClienteCard`'s root and `CardContent`) and 44px (touch-target minimum for `size-11` quick-action icons and arrow buttons) deviate from strict 4px-multiple alignment, required respectively for Tailwind/Radix compatibility and accessibility minimum touch-target standards. Both must NOT change per KAN-03 and AGD-15's regression guardrails — this note exists only to make clear that stricter spacing validation isn't being silently suspended, per the UI checker's review recommendation.
 
 ---
 
