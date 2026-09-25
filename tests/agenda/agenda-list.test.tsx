@@ -356,6 +356,7 @@ describe("AgendaList", () => {
         {
           clienteId: "cliente-sem-frequencia",
           razaoSocial: "Padaria Sem Frequência",
+          nomeFantasia: null,
           responsavel: "vendedor-1",
           responsavelNome: "Vendedor Um",
           frequenciaVisita: null,

@@ -131,7 +131,8 @@ export async function getAgendaConcluidos(
 
 type ClienteSemDiaFixoRow = {
   id: string
-  razao_social: string
+  razao_social: string | null
+  nome_fantasia: string | null
   responsavel: string
   profiles: { nome: string; sobrenome: string } | null
   frequencia_visita: FrequenciaVisita | null
@@ -141,6 +142,7 @@ function mapClienteSemDiaFixoRow(row: ClienteSemDiaFixoRow): ClienteSemDiaFixo {
   return {
     clienteId: row.id,
     razaoSocial: row.razao_social,
+    nomeFantasia: row.nome_fantasia,
     responsavel: row.responsavel,
     responsavelNome: row.profiles
       ? `${row.profiles.nome} ${row.profiles.sobrenome}`
@@ -194,7 +196,7 @@ export async function getClientesSemDiaFixo(): Promise<ClienteSemDiaFixo[]> {
       const { data, error } = await supabase
         .from("clientes")
         .select(
-          "id, razao_social, responsavel, profiles(nome, sobrenome), frequencia_visita, dia_semana_visita, semana_do_mes_visita"
+          "id, razao_social, nome_fantasia, responsavel, profiles(nome, sobrenome), frequencia_visita, dia_semana_visita, semana_do_mes_visita"
         )
         .eq("status_acompanhamento", "ganho")
         .or(

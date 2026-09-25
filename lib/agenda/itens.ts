@@ -505,7 +505,15 @@ export function intervaloDeHistorico(
  */
 export type ClienteSemDiaFixo = {
   clienteId: string
-  razaoSocial: string
+  /** Repasse cru de `clientes.razao_social`. Anulável desde a migration 0024
+   * (Fase 23) — razão social deixou de ser obrigatória no banco. A queda
+   * para Nome Fantasia/"Sem nome" acontece só na tela, via
+   * `nomeExibicaoCliente()` (lib/clientes/nomeExibicao.ts), nunca aqui. */
+  razaoSocial: string | null
+  /** Fase 27 Plano 1 (AGD-15): repasse cru do valor lido de `clientes`,
+   * alimenta `nomeExibicaoCliente()`, que decide o nome exibido quando razão
+   * social vier nula. Nunca lido diretamente pela tela. */
+  nomeFantasia: string | null
   responsavel: string | null
   responsavelNome: string | null
   /** Frequência de visita do cliente, `null` quando ainda não foi definida

@@ -635,6 +635,7 @@ function clienteSemDiaFixo(
   return {
     clienteId: "cliente-1",
     razaoSocial: "Cliente 1",
+    nomeFantasia: null,
     responsavel: "vendedor-a",
     responsavelNome: "Ana Vendedora",
     frequenciaVisita: null,

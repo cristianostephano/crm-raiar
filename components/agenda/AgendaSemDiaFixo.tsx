@@ -72,7 +72,7 @@ export function AgendaSemDiaFixo({
             <CardHeader className="px-3">
               <CardTitle
                 className="truncate text-base leading-tight font-semibold"
-                title={cliente.razaoSocial}
+                title={cliente.razaoSocial ?? undefined}
               >
                 {cliente.razaoSocial}
               </CardTitle>

@@ -17,6 +17,7 @@ function buildCliente(partial: Partial<ClienteSemDiaFixo> = {}): ClienteSemDiaFi
   return {
     clienteId: `cliente-${nextId}`,
     razaoSocial: `Cliente ${nextId}`,
+    nomeFantasia: null,
     responsavel: "vendedor-1",
     responsavelNome: "Vendedor Um",
     frequenciaVisita: null,
