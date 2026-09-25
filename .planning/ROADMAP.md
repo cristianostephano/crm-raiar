@@ -152,7 +152,13 @@ Plans:
   5. Um toque em "Reabrir" numa linha tira o cliente da lista de Perdidos e o devolve ao Kanban com status "Em andamento", e a reabertura fica registrada no histórico do cliente.
 
 **Notas para o Discuss**: (a) em qual etapa do funil o cliente reaberto reaparece — a mesma em que foi perdido, ou "Aguardando contato"; (b) o que acontece ao reabrir um perdido cujo vendedor responsável foi desativado (a regra da v1.2 deixa perdidos com o vendedor desativado — reabrir criaria um cliente "em andamento" sem dono ativo); (c) de onde vem a "data em que foi marcado como perdido" (o `historico` já registra a troca de status com data — confirmar se basta ou se vale uma coluna própria).
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 28-01-PLAN.md — PERD-02..05 (banco): migration 0034 com a leitura `clientes_perdidos` (invoker, data da perda pelo histórico, 7 colunas sem contato) + 11 testes de integração + aprovação do dono antes do `db push` (onda 1, checkpoint bloqueante)
+- [ ] 28-02-PLAN.md — PERD-01: `lib/funil/prospeccao.ts` vira conjunto ganho+perdido, Kanban usa o filtro de lista, prova ao vivo da sintaxe, guarda de regressão da exportação (D-07) e texto de Kanban vazio (onda 1, autônomo)
+- [ ] 28-03-PLAN.md — camada de dados da tela: regras puras de período/busca, leitor paginado e Server Action com validação (onda 2, depende do 28-01)
+- [ ] 28-04-PLAN.md — tela `/perdidos`, linha com Reabrir de um toque via `marcarStatus`, filtro de período, busca e item "Perdidos" no menu sem contador (onda 3, depende de 28-02 e 28-03)
 **UI hint**: yes
 
 ### Phase 29: Encerrar Cliente Ativo
