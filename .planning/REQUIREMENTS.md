@@ -9,7 +9,7 @@ Requisitos do marco v1.7 (Ajustes Pós-Teste com o Time de Vendas). Cada um mape
 
 ### Relatório de Perdidos
 
-- [ ] **PERD-01**: Cliente marcado como "Perdido" sai das 7 colunas do funil de prospecção (mesmo padrão já usado para "Ganho")
+- [x] **PERD-01**: Cliente marcado como "Perdido" sai das 7 colunas do funil de prospecção (mesmo padrão já usado para "Ganho")
 - [ ] **PERD-02**: Vendedor/Supervisor visualiza uma tela "Perdidos" com motivo da perda, data e vendedor responsável
 - [ ] **PERD-03**: Vendedor vê só os próprios clientes perdidos; Supervisor vê os de todo o time
 - [ ] **PERD-04**: Tela de Perdidos tem filtro por período (data em que foi marcado como perdido)
@@ -52,7 +52,7 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERD-01 | Phase 28 | Pending |
+| PERD-01 | Phase 28 | Complete |
 | PERD-02 | Phase 28 | Pending |
 | PERD-03 | Phase 28 | Pending |
 | PERD-04 | Phase 28 | Pending |
