@@ -5,8 +5,8 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 27
 current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
 status: planning
-stopped_at: Phase 27 context gathered
-last_updated: "2026-09-25T16:31:23.394Z"
+stopped_at: Phase 27 UI-SPEC approved
+last_updated: "2026-09-25T17:23:38.122Z"
 last_activity: 2026-09-25
 last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
 progress:
@@ -416,9 +416,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-25T16:31:23.361Z
-Stopped at: Phase 27 context gathered
-Resume file: .planning/phases/27-corre-es-do-primeiro-uso-card-filtrado-e-agenda/27-CONTEXT.md
+Last session: 2026-09-25T17:23:38.077Z
+Stopped at: Phase 27 UI-SPEC approved
+Resume file: .planning/phases/27-corre-es-do-primeiro-uso-card-filtrado-e-agenda/27-UI-SPEC.md
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 
