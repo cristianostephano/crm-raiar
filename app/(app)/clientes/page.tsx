@@ -82,8 +82,8 @@ export default async function ClientesPage() {
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-16 text-center">
           <p className="text-base font-semibold">
             Nenhum cliente em prospecção no momento. Clientes já ganhos
-            aparecem na Agenda. Clique em &quot;Novo cliente&quot; para
-            começar uma nova prospecção.
+            aparecem na Agenda, e os perdidos na tela Perdidos. Clique em
+            &quot;Novo cliente&quot; para começar uma nova prospecção.
           </p>
         </div>
       ) : (
