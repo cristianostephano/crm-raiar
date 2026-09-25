@@ -5,8 +5,8 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 27
 current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
 status: planning
-stopped_at: Phase 27 - Plan 27-01 (AGD-15) complete, Plan 27-02 awaiting human diagnosis for KAN-03
-last_updated: "2026-09-25T18:01:09.348Z"
+stopped_at: Phase 28 context gathered
+last_updated: "2026-09-25T19:52:04.232Z"
 last_activity: 2026-09-25
 last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
 progress:
@@ -416,9 +416,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-25T18:01:09.307Z
-Stopped at: Phase 27 - Plan 27-01 (AGD-15) complete, Plan 27-02 awaiting human diagnosis for KAN-03
-Resume file: .planning/phases/27-corre-es-do-primeiro-uso-card-filtrado-e-agenda/27-01-SUMMARY.md
+Last session: 2026-09-25T19:52:04.189Z
+Stopped at: Phase 28 context gathered
+Resume file: .planning/phases/28-relat-rio-de-perdidos/28-CONTEXT.md
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 
