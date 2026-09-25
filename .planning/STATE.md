@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Importação de Clientes Ativos e Prospecção Separadas
-current_phase: 6
-status: Awaiting next milestone
-stopped_at: Completed quick task 260914-ng5
-last_updated: "2026-09-14T20:20:00.000Z"
-last_activity: 2026-09-22
-last_activity_desc: Quick task 260921-n0a — setas de avancar/voltar etapa direto no card do Kanban (segunda forma de mudar etapa, alem de arrastar), motivado por teste real com o time mostrando ficcao no gesto de arrastar em celular/tablet. tsc/eslint/testes automatizados passaram 100%; falta checagem humana ao vivo no preview da staging (toque nas setas, bordas do funil, arrastar intacto, recusa do RPC pra cliente ganho)
+milestone: v1.7
+milestone_name: Ajustes Pós-Teste com o Time de Vendas
+status: planning
+last_updated: "2026-09-25T15:54:37.602Z"
+last_activity: 2026-09-25
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
-current_phase_name: Importação de Clientes em Prospecção e Limpeza de Menu
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 ## Current Position
 
-Phase: Milestone v1.6 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-27 — Milestone v1.6 completed and archived
+Status: Defining requirements
+Last activity: 2026-09-25 — Milestone v1.7 started
 
 ## Performance Metrics
 

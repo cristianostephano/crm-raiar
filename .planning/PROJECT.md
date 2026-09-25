@@ -21,9 +21,16 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, o sistema cobre o pós-venda (cliente "ganho" define uma frequência de visita com dia fixo, uma Agenda única junta o que precisa ser feito e lembra o vendedor de quem ainda não tem dia fixo definido, concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado), a Agenda tem uma segunda visualização (calendário de dia/semana/mês, incluindo o que já foi feito em datas passadas) além da lista, concluir um item aceita ser marcado como não-presencial com um motivo categorizado, e a importação em massa tem duas portas claras — "Importar Clientes Ativos" (cria cliente já ganho, dados completos) e "Importar Clientes em Prospecção" (mínimo: Nome Fantasia + Responsável) — com a trava de "ganho" exigindo razão social, endereço completo e CNPJ antes de deixar um cliente virar ativo, sempre com grandfathering dos clientes antigos.
 
-## Next Milestone Goals
+## Current Milestone: v1.7 Ajustes Pós-Teste com o Time de Vendas
 
-Nada capturado ainda. Rode `/gsd-new-milestone` para começar o próximo marco.
+**Goal:** Corrigir problemas reais encontrados no primeiro uso do sistema pelo time de vendas, fechar uma lacuna do ciclo de vida do cliente (perdidos e ativos que encerram), e dar ao Supervisor uma forma de medir se o time está usando a ferramenta como deveria.
+
+**Target features:**
+- Relatório de Perdidos — cliente "Perdido" sai do funil de prospecção (mesmo padrão já usado para "Ganho"), nova tela com motivo/data/vendedor, filtro por período, visibilidade por papel (vendedor só os próprios, Supervisor todos), botão "Reabrir" de toque simples.
+- Correção de layout do Kanban ao filtrar por vendedor — card comprimido (falta categoria/vendedor/cidade/ícones, nomes cortados) precisa ficar idêntico ao card sem filtro.
+- Correção de nome errado na Agenda — seção "Sem dia fixo definido" mostra só o vendedor; precisa mostrar cliente + vendedor juntos.
+- Encerrar cliente ativo — novo status "Inativo/Encerrado" com motivo obrigatório, some da Agenda mas mantém histórico, o próprio vendedor faz, reativável depois.
+- Aderência de uso no Dashboard (só Supervisor) — nova métrica na tabela comparativa por vendedor: % de dias usados (login OU ação real no funil) sobre dias úteis, média móvel de 4 semanas.
 
 ## Requirements
 
@@ -107,7 +114,16 @@ Nada capturado ainda. Rode `/gsd-new-milestone` para começar o próximo marco.
 
 ### Active
 
-Nada capturado ainda — próximo marco a definir via `/gsd-new-milestone`.
+- [ ] Cliente marcado como "Perdido" sai das 7 colunas do funil de prospecção
+- [ ] Nova tela "Perdidos" (motivo, data, vendedor responsável), com filtro por período
+- [ ] Cada vendedor vê só os próprios perdidos; Supervisor vê de todos
+- [ ] Botão "Reabrir" na lista de Perdidos, volta o cliente pro funil como "Em andamento"
+- [ ] Card do Kanban filtrado por vendedor mostra as mesmas informações que o card sem filtro
+- [ ] Seção "Sem dia fixo definido" da Agenda mostra o nome do cliente junto do nome do vendedor
+- [ ] Novo status "Inativo/Encerrado" para cliente ativo que parou de comprar, com motivo obrigatório
+- [ ] Cliente "Inativo/Encerrado" sai da rotina da Agenda mas mantém histórico/diário
+- [ ] Vendedor consegue encerrar e reativar os próprios clientes ativos, sem depender do Supervisor
+- [ ] Dashboard (Supervisor) mostra % de aderência de uso por vendedor (login OU ação no funil, média móvel de 4 semanas)
 
 ### Out of Scope
 
@@ -234,4 +250,4 @@ Este documento evolui nas transições de fase e nos marcos do projeto.
 5. Atualizar Context com o estado atual (usuários, feedback, métricas)
 
 ---
-*Last updated: 2026-08-27 — after v1.6 milestone (Importação de Clientes Ativos e Prospecção Separadas)*
+*Last updated: 2026-09-25 — start of v1.7 milestone (Ajustes Pós-Teste com o Time de Vendas)*
