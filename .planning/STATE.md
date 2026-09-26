@@ -5,8 +5,8 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 27
 current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
 status: planning
-stopped_at: "Phase 28 (Relatório de Perdidos) COMPLETA — Plano 28-04 (tela: menu, lista, Reabrir) concluído. Pendente checagem humana em staging (fluxo de deploy do CLAUDE.md) antes do fechamento formal da fase."
-last_updated: "2026-09-26T00:12:59.948Z"
+stopped_at: Phase 29 context gathered
+last_updated: "2026-09-26T12:20:48.531Z"
 last_activity: 2026-09-25
 last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
 progress:
@@ -418,9 +418,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-26T00:12:59.934Z
-Stopped at: Phase 28 (Relatório de Perdidos) COMPLETA — Plano 28-04 (tela: menu, lista, Reabrir) concluído. Pendente checagem humana em staging (fluxo de deploy do CLAUDE.md) antes do fechamento formal da fase.
-Resume file: .planning/phases/28-relat-rio-de-perdidos/28-04-SUMMARY.md
+Last session: 2026-09-26T12:20:48.485Z
+Stopped at: Phase 29 context gathered
+Resume file: .planning/phases/29-encerrar-cliente-ativo/29-CONTEXT.md
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 
