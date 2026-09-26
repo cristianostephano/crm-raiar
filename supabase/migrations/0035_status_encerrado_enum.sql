@@ -1,0 +1,25 @@
+-- Fase 29 Plano 1: passo 1 de 2 para ensinar o banco o novo status
+-- "Encerrado" (D-01/D-02). Este arquivo contém, DE PROPÓSITO, um único
+-- comando: adicionar o valor 'encerrado' a status_acompanhamento_enum.
+--
+-- Por quê separado da migration 0036 (que traz a lista de motivos, as
+-- travas e a RPC que efetivamente usam esse valor): o Postgres proíbe usar
+-- um valor de enum recém-adicionado (em comparação, CHECK, WHERE ou corpo
+-- de função) na mesma transação em que ele foi criado — "unsafe use of new
+-- value" é o erro literal que o banco devolve. O Supabase CLI aplica cada
+-- arquivo de migration na sua própria transação, em sequência, então basta
+-- este arquivo vir antes do 0036 na ordem de aplicação para o valor já
+-- estar comitado quando o 0036 precisar dele.
+--
+-- Se alguém aplicar as migrations à mão pelo SQL Editor (caminho já usado
+-- neste projeto nas Fases 18/19/21/28): rodar ESTE arquivo sozinho,
+-- confirmar que terminou, e só depois rodar o 0036 num segundo comando
+-- separado — nunca colar os dois arquivos juntos numa única execução.
+--
+-- `add value if not exists` torna este arquivo re-executável sem erro caso
+-- alguém rode a mesma migration duas vezes (mesma prática já usada nas
+-- migrations aplicadas manualmente das Fases 18/19/21/28).
+--
+-- Source: .planning/phases/29-encerrar-cliente-ativo/29-01-PLAN.md
+
+alter type status_acompanhamento_enum add value if not exists 'encerrado';
