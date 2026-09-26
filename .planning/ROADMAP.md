@@ -112,7 +112,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
 **Milestone Goal:** Corrigir problemas reais encontrados no primeiro uso do sistema pelo time de vendas, fechar uma lacuna do ciclo de vida do cliente (perdidos e ativos que encerram), e dar ao Supervisor uma forma de medir se o time está usando a ferramenta como deveria.
 
 - [ ] **Phase 27: Correções do Primeiro Uso — Card Filtrado e Agenda** - O card do Kanban fica idêntico com ou sem filtro de vendedor, e a seção "Sem dia fixo definido" da Agenda passa a mostrar o nome do cliente junto do vendedor.
-- [ ] **Phase 28: Relatório de Perdidos** - Cliente "Perdido" sai das 7 colunas do funil e ganha uma tela própria (motivo, data, vendedor), com filtro por período, visibilidade por papel e botão "Reabrir" de um toque.
+- [x] **Phase 28: Relatório de Perdidos** - Cliente "Perdido" sai das 7 colunas do funil e ganha uma tela própria (motivo, data, vendedor), com filtro por período, visibilidade por papel e botão "Reabrir" de um toque. (completed 2026-09-26)
 - [ ] **Phase 29: Encerrar Cliente Ativo** - Vendedor encerra um cliente ativo que parou de comprar (com motivo obrigatório), o cliente sai da rotina da Agenda mantendo histórico e diário, e pode ser reativado depois.
 - [ ] **Phase 30: Aderência de Uso no Dashboard** - Supervisor vê, na tabela comparativa por vendedor, o % de dias úteis com uso real do sistema nas últimas 4 semanas, com o registro de uso guardando só o mínimo sobre cada pessoa.
 
@@ -133,9 +133,11 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
 **Plans**: 3 plans
 
 Plans:
+
 - [ ] 27-01-PLAN.md — AGD-15: nome_fantasia da consulta até a linha "Sem dia fixo definido", título via nomeExibicaoCliente() (onda 1, autônomo)
 - [ ] 27-02-PLAN.md — KAN-03: diagnóstico ao vivo pelo dono do projeto (checkpoint bloqueante) e registro do resultado, sem mudar código (onda 1)
 - [ ] 27-03-PLAN.md — KAN-03: correção condicional ao diagnóstico — div simples no StaticClienteCard + teste de paridade + guarda das setas (onda 2, depende do 27-02)
+
 **UI hint**: yes
 
 ### Phase 28: Relatório de Perdidos
@@ -152,13 +154,15 @@ Plans:
   5. Um toque em "Reabrir" numa linha tira o cliente da lista de Perdidos e o devolve ao Kanban com status "Em andamento", e a reabertura fica registrada no histórico do cliente.
 
 **Notas para o Discuss**: (a) em qual etapa do funil o cliente reaberto reaparece — a mesma em que foi perdido, ou "Aguardando contato"; (b) o que acontece ao reabrir um perdido cujo vendedor responsável foi desativado (a regra da v1.2 deixa perdidos com o vendedor desativado — reabrir criaria um cliente "em andamento" sem dono ativo); (c) de onde vem a "data em que foi marcado como perdido" (o `historico` já registra a troca de status com data — confirmar se basta ou se vale uma coluna própria).
-**Plans**: 4 plans
+**Plans**: 4/4 plans complete
 
 Plans:
-- [ ] 28-01-PLAN.md — PERD-02..05 (banco): migration 0034 com a leitura `clientes_perdidos` (invoker, data da perda pelo histórico, 7 colunas sem contato) + 11 testes de integração + aprovação do dono antes do `db push` (onda 1, checkpoint bloqueante)
-- [ ] 28-02-PLAN.md — PERD-01: `lib/funil/prospeccao.ts` vira conjunto ganho+perdido, Kanban usa o filtro de lista, prova ao vivo da sintaxe, guarda de regressão da exportação (D-07) e texto de Kanban vazio (onda 1, autônomo)
-- [ ] 28-03-PLAN.md — camada de dados da tela: regras puras de período/busca, leitor paginado e Server Action com validação (onda 2, depende do 28-01)
-- [ ] 28-04-PLAN.md — tela `/perdidos`, linha com Reabrir de um toque via `marcarStatus`, filtro de período, busca e item "Perdidos" no menu sem contador (onda 3, depende de 28-02 e 28-03)
+
+- [x] 28-01-PLAN.md — PERD-02..05 (banco): migration 0034 com a leitura `clientes_perdidos` (invoker, data da perda pelo histórico, 7 colunas sem contato) + 11 testes de integração + aprovação do dono antes do `db push` (onda 1, checkpoint bloqueante)
+- [x] 28-02-PLAN.md — PERD-01: `lib/funil/prospeccao.ts` vira conjunto ganho+perdido, Kanban usa o filtro de lista, prova ao vivo da sintaxe, guarda de regressão da exportação (D-07) e texto de Kanban vazio (onda 1, autônomo)
+- [x] 28-03-PLAN.md — camada de dados da tela: regras puras de período/busca, leitor paginado e Server Action com validação (onda 2, depende do 28-01)
+- [x] 28-04-PLAN.md — tela `/perdidos`, linha com Reabrir de um toque via `marcarStatus`, filtro de período, busca e item "Perdidos" no menu sem contador (onda 3, depende de 28-02 e 28-03)
+
 **UI hint**: yes
 
 ### Phase 29: Encerrar Cliente Ativo
@@ -202,6 +206,6 @@ Phases execute in numeric order: 27 → 28 → 29 → 30
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 27. Correções do Primeiro Uso — Card Filtrado e Agenda | v1.7 | 0/TBD | Not started | - |
-| 28. Relatório de Perdidos | v1.7 | 0/TBD | Not started | - |
+| 28. Relatório de Perdidos | v1.7 | 4/4 | Complete   | 2026-09-26 |
 | 29. Encerrar Cliente Ativo | v1.7 | 0/TBD | Not started | - |
 | 30. Aderência de Uso no Dashboard | v1.7 | 0/TBD | Not started | - |

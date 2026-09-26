@@ -5,16 +5,16 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 27
 current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
 status: planning
-stopped_at: Phase 28 - Plan 28-03 complete (data layer for Perdidos); starting Wave 3 (28-04, the screen)
-last_updated: "2026-09-25T23:58:40.067Z"
+stopped_at: "Phase 28 (Relatório de Perdidos) COMPLETA — Plano 28-04 (tela: menu, lista, Reabrir) concluído. Pendente checagem humana em staging (fluxo de deploy do CLAUDE.md) antes do fechamento formal da fase."
+last_updated: "2026-09-26T00:12:59.948Z"
 last_activity: 2026-09-25
 last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 25
 ---
 
 # Project State
@@ -115,6 +115,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 26 P01 | ~10min + pausa de checkpoint | 3 tasks | 3 files |
 | Phase 26 P02 | ~30min | 3 tasks | 14 files |
 | Phase 26 P04 | ~50min | 4 tasks | 15 files |
+| Phase 28 P04 | ~35min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -314,6 +315,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 26-02] findDuplicates ganhou chave de reserva por Nome Fantasia (namespace separado do de razao social) e tolerancia a nulo na lista de existentes, fechando o Bug B (estouro da validacao do lote inteiro com um cliente de razao social nula no banco)
 - [Phase 26-04]: razao_social permanece tipado string (nao string | null) em ClienteListItem/ClienteRow/ClienteDetalhe de proposito; exibicao roteada por nomeExibicaoCliente() para tratar o valor nulo real sem propagar a mudanca de tipo para PerdaMotivoDialog/GanhoFrequenciaDialog (fora do escopo do plano)
 - [Phase 26-04]: Fase 26 e marco v1.6 concluidos: PROSP-01, PROSP-02, MENU-01, MENU-02 fechados e confirmados no navegador pelo dono do projeto
+- [Phase ?]: Fase 28 (28-04): item Perdidos no menu entre Clientes e Dashboard, icone Archive, sem contador em nenhum estado (D-01/D-02/D-03); showResponsavel na tela de Perdidos e isSupervisor, sem filtro de vendedor proprio.
 
 ### Pending Todos
 
@@ -416,9 +418,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-25T23:58:40.046Z
-Stopped at: Phase 28 - Plan 28-03 complete (data layer for Perdidos); starting Wave 3 (28-04, the screen)
-Resume file: .planning/phases/28-relat-rio-de-perdidos/28-03-SUMMARY.md
+Last session: 2026-09-26T00:12:59.934Z
+Stopped at: Phase 28 (Relatório de Perdidos) COMPLETA — Plano 28-04 (tela: menu, lista, Reabrir) concluído. Pendente checagem humana em staging (fluxo de deploy do CLAUDE.md) antes do fechamento formal da fase.
+Resume file: .planning/phases/28-relat-rio-de-perdidos/28-04-SUMMARY.md
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 

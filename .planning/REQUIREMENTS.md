@@ -10,10 +10,10 @@ Requisitos do marco v1.7 (Ajustes Pós-Teste com o Time de Vendas). Cada um mape
 ### Relatório de Perdidos
 
 - [x] **PERD-01**: Cliente marcado como "Perdido" sai das 7 colunas do funil de prospecção (mesmo padrão já usado para "Ganho")
-- [ ] **PERD-02**: Vendedor/Supervisor visualiza uma tela "Perdidos" com motivo da perda, data e vendedor responsável
-- [ ] **PERD-03**: Vendedor vê só os próprios clientes perdidos; Supervisor vê os de todo o time
-- [ ] **PERD-04**: Tela de Perdidos tem filtro por período (data em que foi marcado como perdido)
-- [ ] **PERD-05**: Vendedor reabre um cliente perdido direto na lista (botão de toque simples), voltando o status para "Em andamento"
+- [x] **PERD-02**: Vendedor/Supervisor visualiza uma tela "Perdidos" com motivo da perda, data e vendedor responsável
+- [x] **PERD-03**: Vendedor vê só os próprios clientes perdidos; Supervisor vê os de todo o time
+- [x] **PERD-04**: Tela de Perdidos tem filtro por período (data em que foi marcado como perdido)
+- [x] **PERD-05**: Vendedor reabre um cliente perdido direto na lista (botão de toque simples), voltando o status para "Em andamento"
 
 ### Kanban (correção)
 
@@ -53,10 +53,10 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PERD-01 | Phase 28 | Complete |
-| PERD-02 | Phase 28 | Pending |
-| PERD-03 | Phase 28 | Pending |
-| PERD-04 | Phase 28 | Pending |
-| PERD-05 | Phase 28 | Pending |
+| PERD-02 | Phase 28 | Complete |
+| PERD-03 | Phase 28 | Complete |
+| PERD-04 | Phase 28 | Complete |
+| PERD-05 | Phase 28 | Complete |
 | KAN-03 | Phase 27 | Pending |
 | AGD-15 | Phase 27 | Complete |
 | ENCR-01 | Phase 29 | Pending |
@@ -69,6 +69,7 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 | ADER-03 | Phase 30 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 15 total
 - Mapped to phases: 15 ✓
 - Unmapped: 0
