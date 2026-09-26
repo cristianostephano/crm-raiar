@@ -2,7 +2,7 @@
 phase: 29
 slug: encerrar-cliente-ativo
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-09-26
 ---
@@ -37,12 +37,22 @@ created: 2026-09-26
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 29-01-W0 | 01 | 0 | ENCR-01, ENCR-02 | — | ALTER TYPE isolado em migration própria | manual review | `git diff` da migration 0035 mostra só o ADD VALUE | ❌ W0 | ⬜ pending |
-| 29-01-01 | 01 | 1 | ENCR-01, ENCR-02, ENCR-03 | T-29-01 | Sem security definer, RLS única fronteira | integration | `npx vitest run tests/funil/encerrados-rpc.test.ts` | ❌ W0 — novo | ⬜ pending |
-| 29-02-01 | 02 | 1 | ENCR-05 | T-29-02 | Guard de frequência usa valor efetivo, não cru | unit + integration | `npx vitest run tests/funil/reativar-guard.test.ts` | ❌ W0 — novo | ⬜ pending |
-| 29-02-02 | 02 | 1 | ENCR-04 | T-29-03 | Reativar/encerrar cliente alheio afeta 0 linhas | integration | `npx vitest run tests/funil/encerrados-rpc.test.ts` | ❌ W0 | ⬜ pending |
-| 29-03-01 | 03 | 2 | ENCR-01, ENCR-04 | — | N/A | integration | mesmo arquivo de dados da fase (molde 28-03) | ❌ W0 | ⬜ pending |
-| 29-04-01 | 04 | 3 | ENCR-01..05 | — | N/A | render/e2e-lite | testes de componente (molde 28-04) | ❌ W0 | ⬜ pending |
+| 29-01-01 | 01 | 1 | ENCR-01..05 | T-29-01, T-29-02, T-29-04, T-29-06 | 0035 só com o ALTER TYPE; 0036 sem elevação de privilégio nem campo de contato | structural (node) | script do bloco verify da Tarefa 1 do 29-01 | ❌ criado no plano | ⬜ pending |
+| 29-01-02 | 01 | 1 | ENCR-01..05 | T-29-01, T-29-03, T-29-05, T-29-07 | RLS, guards, Agenda, reativar (com/sem frequência) | integration (RED até 29-03) | `npx vitest run tests/funil/encerrados-rpc.test.ts` | ❌ criado no plano | ⬜ pending |
+| 29-02-01 | 02 | 1 | ENCR-03, ENCR-05 | T-29-10, T-29-11 | 5 funções dashboard sem elevação, mesma assinatura | structural (node) | script do bloco verify da Tarefa 1 do 29-02 | ❌ criado no plano | ⬜ pending |
+| 29-02-02 | 02 | 1 | ENCR-03, ENCR-05 | T-29-11, T-29-12 | encerrar/reativar não mudam números do Dashboard | integration (RED até 29-03) | `npx vitest run tests/dashboard/encerrado-preserva-historico.test.ts` | ❌ criado no plano | ⬜ pending |
+| 29-03-02 | 03 | 2 | ENCR-01..05 | T-29-14, T-29-15, T-29-16 | aplicação aprovada, na ordem; migrations antigas intocadas | integration (GREEN) | `npx vitest run tests/funil/encerrados-rpc.test.ts tests/dashboard/encerrado-preserva-historico.test.ts` | ✅ após 29-01/29-02 | ⬜ pending |
+| 29-04-01 | 04 | 3 | ENCR-01 | — | rótulo "Encerrado" na exportação | unit | `npx vitest run tests/clientes/exportacao-status-encerrado.test.ts` | ❌ criado no plano | ⬜ pending |
+| 29-04-02 | 04 | 3 | ENCR-03 | T-29-20, T-29-21 | encerrado fora das 7 colunas | unit + integration (live) | `npx vitest run tests/clientes/prospeccao.test.ts tests/clientes/kanban-sem-perdidos.test.ts tests/clientes/filtro-prospeccao-postgrest.test.ts` | ✅ (atualizados) | ⬜ pending |
+| 29-04-03 | 04 | 3 | ENCR-01, ENCR-02, ENCR-04, ENCR-05 | T-29-18, T-29-19 | frequência efetiva, pré-checagens de encerrar | unit (mock) | `npx vitest run tests/funil/reativar-guard.test.ts` | ❌ criado no plano | ⬜ pending |
+| 29-05-01 | 05 | 2 | ENCR-05 | T-29-23 | período/validação/busca | unit | `npx vitest run tests/funil/encerrados-lista.test.ts` | ❌ criado no plano | ⬜ pending |
+| 29-05-02 | 05 | 2 | ENCR-02, ENCR-04, ENCR-05 | T-29-24, T-29-25 | sem checagem de papel; 7 campos | unit (mock) | `npx vitest run tests/funil/encerrados-query.test.ts` | ❌ criado no plano | ⬜ pending |
+| 29-05-03 | 05 | 2 | ENCR-02 | T-29-26 | 7ª aba de Configurações | render | `npx vitest run tests/configuracoes/configuracoes-tabs.test.tsx` | ✅ (atualizado) | ⬜ pending |
+| 29-06-01 | 06 | 4 | ENCR-02 | T-29-28 | diálogo de motivo obrigatório | render | `npx vitest run tests/clientes/encerramento-motivo-dialog.test.tsx` | ❌ criado no plano | ⬜ pending |
+| 29-06-02 | 06 | 4 | ENCR-01, ENCR-03, ENCR-04 | T-29-29 | opção Encerrado + recarga da Agenda | render | `npx vitest run tests/clientes/cliente-detail-sheet-encerrar.test.tsx` | ❌ criado no plano | ⬜ pending |
+| 29-07-01 | 07 | 3 | ENCR-05 | T-29-32 | linha + filtro | render | `npx vitest run tests/funil/encerrados-item-row.test.tsx tests/funil/encerrados-periodo-filter.test.tsx` | ❌ criado no plano | ⬜ pending |
+| 29-07-02 | 07 | 3 | ENCR-04, ENCR-05 | T-29-34, T-29-36 | lista + Reativar de um toque | render | `npx vitest run tests/funil/encerrados-list.test.tsx` | ❌ criado no plano | ⬜ pending |
+| 29-07-03 | 07 | 3 | ENCR-05 | T-29-35 | menu sem contador | render | `npx vitest run tests/funil/app-sidebar-encerrados.test.tsx` | ❌ criado no plano | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -60,7 +70,7 @@ created: 2026-09-26
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Reativar um cliente encerrado sem frequência de visita nunca definida (cliente antigo, pré-Fase-13) | ENCR-05 (edge case) | Cenário de dado legado real, difícil de simular com certeza absoluta em fixture | Verificar manualmente com um cliente ganho antigo real (se existir na base) — confirmar que o erro acionável aparece em vez de quebrar silenciosamente |
+| Reativar um cliente encerrado sem frequência de visita (caso comum: todo ativo importado nasce sem frequência, migration 0027) | ENCR-05 | Coberto automaticamente no banco (`reativar-sem-frequencia-restaura`, 29-01) e na ação (`reativar-sem-frequencia-restaura`, 29-04); a checagem manual confirma o efeito visível | No link de teste da staging, encerrar e reativar um ativo importado sem frequência — ele deve voltar como "Ganho" e reaparecer em "Sem dia fixo definido" (decisão do planejamento, 29-01 conflitos_resolvidos 1, confirmada pelo dono no checkpoint do 29-03) |
 | Visual da tela "Encerrados" em celular/tablet | ENCR-01/02 | Confirmação visual/toque em dispositivo real | Abrir o novo item de menu, conferir leitura e toque do botão "Reativar" |
 
 ---

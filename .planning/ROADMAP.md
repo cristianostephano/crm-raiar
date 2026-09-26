@@ -179,7 +179,17 @@ Plans:
   5. Cliente encerrado nunca reaparece nas 7 colunas do Kanban de prospecção, e os números históricos do Dashboard (negócios ganhos, ciclo médio) não mudam por um cliente ter sido encerrado depois de ganho.
 
 **Notas para o Discuss**: (a) o motivo é uma lista editável pelo Supervisor (7ª lista, mesmo padrão de motivo de perda e de conclusão remota — recomendado, porque agrega no relatório e evita texto livre com informação pessoal sensível) ou texto livre; (b) onde os encerrados são listados para reativação — os requisitos não dizem, e hoje cliente "ganho" só é achável pela Agenda (desde a quick task 260915-ls7), então um encerrado fora da Agenda ficaria inalcançável sem uma tela/aba própria (recomendado espelhar a tela de Perdidos da Fase 28); (c) reativar é uma transição de volta para "ganho" — as travas de ganho (CNPJ, razão social, endereço completo, frequência) disparam na transição, então um cliente antigo com grandfathering seria bloqueado ao reativar se nada for feito; decidir se a reativação passa pelas travas ou não; (d) ao reativar, a próxima visita é sugerida a partir da frequência/dia fixo que o cliente já tinha, ou pedida de novo ao vendedor.
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+
+- [ ] 29-01-PLAN.md — ENCR-01..05 (banco): migration 0035 (só o valor 'encerrado' do enum) + 0036 (7ª lista `motivos_encerramento` com RLS, `motivo_encerramento_id`, 2 CHECKs, `mover_card_funil` de 8 parâmetros com guards de encerrar e reativação sem frequência, `agenda_do_vendedor` sem encerrados, leitura `clientes_encerrados`) + 25 testes de integração (onda 1, vermelho até o 29-03)
+- [ ] 29-02-PLAN.md — critério 5: migration 0037 recria as 5 funções de ganho do Dashboard para encerrar/reativar não mudarem números históricos + teste de integração (onda 1)
+- [ ] 29-03-PLAN.md — aprovação do dono (checkpoint bloqueante) e aplicação de 0035 → 0036 → 0037 em produção, testes de integração verdes (onda 2, depende de 29-01 e 29-02)
+- [ ] 29-04-PLAN.md — tipo `StatusAcompanhamento` + rótulo de exportação, Kanban exclui encerrado (`prospeccao.ts` 2→3), `marcarStatus` com pré-checagens de encerrar, motivo, frequência efetiva (Reativar de um toque) e revalidação da Agenda (onda 3, depende de 29-03)
+- [ ] 29-05-PLAN.md — camada de dados da tela Encerrados (regras puras, leitor paginado, Server Actions, catálogo de motivos) + aba "Motivos de encerramento" em Configurações (onda 2, depende de 29-01)
+- [ ] 29-06-PLAN.md — ficha: opção "Encerrado" no Select de Status (desabilitada fora de Ganho), `EncerramentoMotivoDialog` e recarga da Agenda após troca de status (onda 4, depende de 29-04 e 29-05)
+- [ ] 29-07-PLAN.md — tela `/encerrados` com período, busca e Reativar de um toque via `marcarStatus`, item "Encerrados" no menu sem contador (onda 3, depende de 29-05)
 **UI hint**: yes
 
 ### Phase 30: Aderência de Uso no Dashboard
