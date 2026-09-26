@@ -10,19 +10,22 @@ import {
 } from "@/lib/validations/lista"
 import { createClient } from "@/lib/supabase/server"
 
-/** The 6 editable-list lookup tables administered by "Configurações"
- * (ADM-01..04) — all 6 share the exact same schema/RLS shape. The 5th,
- * `frequencias_pedido`, chegou na Fase 16 para o campo "Frequência de
- * pedidos" da ficha do cliente ativo (ATV-02, migration
+/** As 7 tabelas de lista editável administradas por "Configurações"
+ * (ADM-01..04) — todas as 7 compartilham exatamente a mesma forma de
+ * schema/RLS. A 5ª, `frequencias_pedido`, chegou na Fase 16 para o campo
+ * "Frequência de pedidos" da ficha do cliente ativo (ATV-02, migration
  * 0016_frequencias_pedido.sql). A 6ª, `motivos_conclusao_remota`, chegou
  * na Fase 22 (migration 0022_conclusao_remota_com_motivo.sql) para o
- * motivo de uma conclusão remota (CONC-03) — as duas entram na mesma
- * união genérica sem nenhuma mudança nas 4 funções abaixo. */
+ * motivo de uma conclusão remota (CONC-03). A 7ª, `motivos_encerramento`,
+ * chegou na Fase 29 (migration 0036) para o motivo obrigatório ao encerrar
+ * um cliente ativo (ENCR-02) — todas entram na mesma união genérica sem
+ * nenhuma mudança nas 4 funções abaixo. */
 export type ListaTabela =
   | "categorias"
   | "produtos_consumidos"
   | "tipos_tarefa"
   | "motivos_perda"
+  | "motivos_encerramento"
   | "frequencias_pedido"
   | "motivos_conclusao_remota"
 

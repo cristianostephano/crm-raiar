@@ -5,22 +5,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ListaTabela } from "@/app/actions/listas"
 
 /**
- * Tab shell for "Configurações" (D-01) — the 6 editable-list tabs in the
- * exact domain order from the UI-SPEC's Copywriting Contract (client
- * attributes first, then funnel-related lists): Categoria (03-01/03-02),
- * then Produtos consumidos / Tipos de tarefa / Motivos de perda (03-03).
- * Each tab is pure configuration over the same generic EditableListTab —
- * no per-tab CRUD logic, since all 6 lookup tables share the identical
- * { id, nome, ativo } shape (ListaTabela union in app/actions/listas.ts).
+ * Tab shell for "Configurações" (D-01) — as 7 abas de lista editável na
+ * ordem de domínio do UI-SPEC (atributos do cliente primeiro, depois listas
+ * do funil): Categoria (03-01/03-02), então Produtos consumidos / Tipos de
+ * tarefa / Motivos de perda (03-03). Cada aba é configuração pura sobre o
+ * mesmo EditableListTab genérico — nenhuma lógica de CRUD por aba, já que
+ * as 7 tabelas de lookup compartilham a mesma forma { id, nome, ativo }
+ * (união ListaTabela em app/actions/listas.ts).
+ *
+ * "Motivos de encerramento" (Fase 29, ENCR-02/D-03) entra logo DEPOIS de
+ * "Motivos de perda" por ser a lista irmã — os dois explicam por que um
+ * cliente saiu da rotina (perdido vs. encerrado). Decisão discricionária,
+ * exceção deliberada à regra "a mais nova vai por último".
  *
  * "Frequência de pedidos" (Fase 16, ATV-02) foi acrescentada depois da
  * quarta, fora da ordem "atributos do cliente primeiro, listas do funil
  * depois": ela É um atributo do cliente, mas só existe para o cliente já
- * ganho — a mais específica das cinco originais.
+ * ganho — a mais específica das sete.
  *
  * "Motivos de conclusão remota" (Fase 22, CONC-03) entra por último de
  * todas: ela não é atributo do cliente nem lista do funil, é vocabulário
- * de COMO um item da Agenda foi concluído — a mais periférica das seis
+ * de COMO um item da Agenda foi concluído — a mais periférica das sete
  * para o uso diário do Supervisor.
  */
 const TABS: {
@@ -52,6 +57,12 @@ const TABS: {
     label: "Motivos de perda",
     inputPlaceholder: "Nome do motivo",
     pluralAtivoLabel: "motivos ativos",
+  },
+  {
+    tabela: "motivos_encerramento",
+    label: "Motivos de encerramento",
+    inputPlaceholder: "Nome do motivo de encerramento",
+    pluralAtivoLabel: "motivos de encerramento ativos",
   },
   {
     tabela: "frequencias_pedido",
