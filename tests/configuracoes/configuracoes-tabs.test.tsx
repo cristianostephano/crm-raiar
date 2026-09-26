@@ -5,11 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ConfiguracoesTabs } from "@/components/configuracoes/ConfiguracoesTabs"
 
 /**
- * Prova de renderização das 6 abas de "Configurações" (Fase 22, CONC-03) —
- * não exercita nenhum gesto de clique (a biblioteca de abas tem quirks
+ * Prova de renderização das 7 abas de "Configurações" (Fase 29, ENCR-02/D-03)
+ * — não exercita nenhum gesto de clique (a biblioteca de abas tem quirks
  * conhecidos de ponteiro no ambiente simulado deste projeto, precedente em
  * tests/agenda/agenda-list.test.tsx), já que o painel é mantido montado
- * (`keepMounted`) e por isso as 6 buscas disparam na montagem, sem
+ * (`keepMounted`) e por isso as 7 buscas disparam na montagem, sem
  * interação nenhuma.
  *
  * O módulo inteiro de ações de lista é simulado (precedente de
@@ -34,6 +34,7 @@ const ROTULOS_NA_ORDEM = [
   "Produtos consumidos",
   "Tipos de tarefa",
   "Motivos de perda",
+  "Motivos de encerramento",
   "Frequência de pedidos",
   "Motivos de conclusão remota",
 ]
@@ -43,16 +44,17 @@ const TABELAS_NA_ORDEM = [
   "produtos_consumidos",
   "tipos_tarefa",
   "motivos_perda",
+  "motivos_encerramento",
   "frequencias_pedido",
   "motivos_conclusao_remota",
 ]
 
-describe("ConfiguracoesTabs (6 abas, Fase 22)", () => {
+describe("ConfiguracoesTabs (7 abas, Fase 29)", () => {
   beforeEach(() => {
     mockedGetListaValores.mockClear()
   })
 
-  it("seisabas: os seis rótulos aparecem, e o rótulo da aba nova é o texto literal do requisito", async () => {
+  it("seteabas: os sete rótulos aparecem, incluindo 'Motivos de encerramento'", async () => {
     render(<ConfiguracoesTabs />)
 
     for (const rotulo of ROTULOS_NA_ORDEM) {
@@ -60,11 +62,11 @@ describe("ConfiguracoesTabs (6 abas, Fase 22)", () => {
     }
 
     expect(
-      screen.getByRole("tab", { name: "Motivos de conclusão remota" })
+      screen.getByRole("tab", { name: "Motivos de encerramento" })
     ).toBeInTheDocument()
   })
 
-  it("ordem: os seis rótulos aparecem NA ORDEM esperada, com o novo por último", async () => {
+  it("ordem: os sete rótulos aparecem NA ORDEM esperada, com 'Motivos de encerramento' logo depois de 'Motivos de perda'", async () => {
     render(<ConfiguracoesTabs />)
 
     await screen.findByRole("tab", { name: "Motivos de conclusão remota" })
@@ -75,14 +77,14 @@ describe("ConfiguracoesTabs (6 abas, Fase 22)", () => {
     expect(rotulosEncontrados).toEqual(ROTULOS_NA_ORDEM)
   })
 
-  it("ligada: a ação de listar foi chamada uma vez para CADA um dos seis nomes de tabela", async () => {
+  it("ligada: a ação de listar foi chamada uma vez para CADA um dos sete nomes de tabela", async () => {
     render(<ConfiguracoesTabs />)
 
     await screen.findByRole("tab", { name: "Motivos de conclusão remota" })
 
     // O painel é mantido montado (keepMounted) — se não estivesse, só o
     // painel ativo teria buscado, e esta asserção falharia com 1 chamada
-    // em vez de 6.
+    // em vez de 7.
     expect(mockedGetListaValores).toHaveBeenCalledTimes(TABELAS_NA_ORDEM.length)
 
     for (const tabela of TABELAS_NA_ORDEM) {
