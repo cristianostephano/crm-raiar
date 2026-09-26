@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  Archive,
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
@@ -65,12 +66,22 @@ type NavSection = {
  * constant stays the single source of truth for ORDER; `badgeCount` is
  * filled in dynamically inside the component (see `sections` below), never
  * set here.
+ *
+ * Desde a Fase 28, a ordem inclui "Perdidos" logo depois de "Clientes" —
+ * o outro lado do funil de Clientes (D-01: mesmo nível de Agenda/Clientes/
+ * Dashboard, nunca uma aba dentro de Clientes).
  */
 const PRINCIPAL_SECTION: NavSection = {
   label: "Principal",
   links: [
     { href: "/agenda", label: "Agenda", icon: ListChecks },
     { href: "/clientes", label: "Clientes", icon: Users },
+    // D-01 (mesmo nível de Agenda/Clientes/Dashboard, não uma aba de
+    // Clientes); D-02 (nunca recebe contador — perdido não é pendência
+    // urgente, um número aqui soaria como alarme, decisão explícita do dono
+    // do projeto); D-03 (Archive = registros guardados, ícone distinto dos
+    // já usados; XCircle foi rejeitado pela conotação de erro).
+    { href: "/perdidos", label: "Perdidos", icon: Archive },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   ],
 }
