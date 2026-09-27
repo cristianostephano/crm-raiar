@@ -5,16 +5,16 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 27
 current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
 status: planning
-stopped_at: Phase 29 - Wave 3 complete (Kanban exclusion, frequency-guard fix, Encerrados screen); starting Wave 4 (29-06, final plan)
-last_updated: "2026-09-27T03:07:11.791Z"
+stopped_at: Phase 29 (Encerrar Cliente Ativo) COMPLETA — todos os 7 planos concluidos. Pendente checagem humana em staging antes do fechamento formal, junto com as Fases 27/28.
+last_updated: "2026-09-27T03:17:36.341Z"
 last_activity: 2026-09-25
 last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 14
-  completed_plans: 11
-  percent: 25
+  completed_plans: 12
+  percent: 50
 ---
 
 # Project State
@@ -418,9 +418,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-27T03:07:11.753Z
-Stopped at: Phase 29 - Wave 3 complete (Kanban exclusion, frequency-guard fix, Encerrados screen); starting Wave 4 (29-06, final plan)
-Resume file: .planning/phases/29-encerrar-cliente-ativo/29-07-SUMMARY.md
+Last session: 2026-09-27T03:17:36.308Z
+Stopped at: Phase 29 (Encerrar Cliente Ativo) COMPLETA — todos os 7 planos concluidos. Pendente checagem humana em staging antes do fechamento formal, junto com as Fases 27/28.
+Resume file: .planning/phases/29-encerrar-cliente-ativo/29-06-SUMMARY.md
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 

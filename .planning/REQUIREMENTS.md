@@ -25,11 +25,11 @@ Requisitos do marco v1.7 (Ajustes Pós-Teste com o Time de Vendas). Cada um mape
 
 ### Encerrar Cliente Ativo
 
-- [ ] **ENCR-01**: Vendedor marca um cliente ativo como "Inativo/Encerrado" quando ele para de comprar
-- [ ] **ENCR-02**: Marcar como Inativo/Encerrado exige informar um motivo
-- [ ] **ENCR-03**: Cliente Inativo/Encerrado sai da rotina da Agenda mas mantém histórico e diário intactos
-- [ ] **ENCR-04**: Vendedor encerra os próprios clientes ativos sem depender do Supervisor
-- [ ] **ENCR-05**: Vendedor reativa um cliente Inativo/Encerrado, voltando à rotina normal da Agenda
+- [x] **ENCR-01**: Vendedor marca um cliente ativo como "Inativo/Encerrado" quando ele para de comprar
+- [x] **ENCR-02**: Marcar como Inativo/Encerrado exige informar um motivo
+- [x] **ENCR-03**: Cliente Inativo/Encerrado sai da rotina da Agenda mas mantém histórico e diário intactos
+- [x] **ENCR-04**: Vendedor encerra os próprios clientes ativos sem depender do Supervisor
+- [x] **ENCR-05**: Vendedor reativa um cliente Inativo/Encerrado, voltando à rotina normal da Agenda
 
 ### Aderência de Uso
 
@@ -59,11 +59,11 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 | PERD-05 | Phase 28 | Complete |
 | KAN-03 | Phase 27 | Pending |
 | AGD-15 | Phase 27 | Complete |
-| ENCR-01 | Phase 29 | Pending |
-| ENCR-02 | Phase 29 | Pending |
-| ENCR-03 | Phase 29 | Pending |
-| ENCR-04 | Phase 29 | Pending |
-| ENCR-05 | Phase 29 | Pending |
+| ENCR-01 | Phase 29 | Complete |
+| ENCR-02 | Phase 29 | Complete |
+| ENCR-03 | Phase 29 | Complete |
+| ENCR-04 | Phase 29 | Complete |
+| ENCR-05 | Phase 29 | Complete |
 | ADER-01 | Phase 30 | Pending |
 | ADER-02 | Phase 30 | Pending |
 | ADER-03 | Phase 30 | Pending |
