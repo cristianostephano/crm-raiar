@@ -21,6 +21,11 @@
 -- aqui.
 --
 -- Nenhuma policy de 0038 muda. Nenhuma cláusula de elevação de privilégio.
+--
+-- Postgres não permite `create or replace function` mudar o tipo de
+-- retorno de uma função já existente (erro 42P13) — precisa apagar antes.
+
+drop function if exists registrar_acesso_diario();
 
 create or replace function registrar_acesso_diario()
 returns jsonb
