@@ -33,9 +33,9 @@ Requisitos do marco v1.7 (Ajustes Pós-Teste com o Time de Vendas). Cada um mape
 
 ### Aderência de Uso
 
-- [x] **ADER-01**: Supervisor visualiza, na tabela comparativa por vendedor do Dashboard, um percentual de aderência de uso de cada vendedor
-- [x] **ADER-02**: Um dia conta como "usado" quando o vendedor faz login OU realiza qualquer ação real no funil (mover etapa, completar tarefa/visita, cadastrar/editar cliente) naquele dia
-- [x] **ADER-03**: A métrica de aderência é uma média móvel dos últimos 28 dias (4 semanas), contando dias usados sobre dias úteis do período
+- [ ] **ADER-01**: Supervisor visualiza, na tabela comparativa por vendedor do Dashboard, um percentual de aderência de uso de cada vendedor
+- [ ] **ADER-02**: Um dia conta como "usado" quando o vendedor faz login OU realiza qualquer ação real no funil (mover etapa, completar tarefa/visita, cadastrar/editar cliente) naquele dia
+- [ ] **ADER-03**: A métrica de aderência é uma média móvel dos últimos 28 dias (4 semanas), contando dias usados sobre dias úteis do período
 
 ## v2 Requirements
 
@@ -64,9 +64,9 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 | ENCR-03 | Phase 29 | Complete |
 | ENCR-04 | Phase 29 | Complete |
 | ENCR-05 | Phase 29 | Complete |
-| ADER-01 | Phase 30 | Complete |
-| ADER-02 | Phase 30 | Complete |
-| ADER-03 | Phase 30 | Complete |
+| ADER-01 | Phase 30 | Pending |
+| ADER-02 | Phase 30 | Pending |
+| ADER-03 | Phase 30 | Pending |
 
 **Coverage:**
 
