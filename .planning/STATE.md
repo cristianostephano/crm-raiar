@@ -4,17 +4,17 @@ milestone: v1.7
 milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 30
 current_phase_name: ader-ncia-de-uso-no-dashboard
-status: executing
+status: verifying
 stopped_at: Completed 30-04-PLAN.md
-last_updated: "2026-09-27T20:44:10.405Z"
+last_updated: "2026-09-27T20:53:25.708Z"
 last_activity: 2026-09-27
 last_activity_desc: Phase 30 execution started
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 20
-  completed_plans: 17
-  percent: 50
+  completed_plans: 18
+  percent: 75
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 Phase: 30 (ader-ncia-de-uso-no-dashboard) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-27 — Phase 30 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -120,6 +120,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 30 P02 | 55min | 2 tasks | 2 files |
 | Phase 30 P04 | 10min | 3 tasks | 6 files |
 | Phase 30 P05 | 20min | 2 tasks | 7 files |
+| Phase 30 P06 | ~15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -331,6 +332,7 @@ Recent decisions affecting current work:
 - [Phase ?]: dashboard_comparativo_vendedor() e getComparativoVendedor() nao mudam de assinatura - a juncao por responsavel acontece so na camada de consulta/acao
 - [Phase ?]: aderenciaPct nunca e multiplicado por 100 - ja chega em pontos percentuais do banco, ao contrario de taxaConversao (razao 0-1)
 - [Phase ?]: getAderenciaUso().catch(() => null) isola a falha da metrica nova - o comparativo mantem o comportamento de erro de sempre
+- [Phase 30]: 30-06: coluna Aderencia de uso renderizada exatamente como planejado, sem checagem de papel nova (D-08 garantido por DashboardClient + RLS) — Nenhuma decisao fora do que o plano ja travava
 
 ### Pending Todos
 
@@ -433,7 +435,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-27T16:56:54.997Z
+Last session: 2026-09-27T20:52:57.898Z
 Stopped at: Completed 30-04-PLAN.md
 Resume file: None
 

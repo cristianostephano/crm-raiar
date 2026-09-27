@@ -114,7 +114,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
 - [ ] **Phase 27: Correções do Primeiro Uso — Card Filtrado e Agenda** - O card do Kanban fica idêntico com ou sem filtro de vendedor, e a seção "Sem dia fixo definido" da Agenda passa a mostrar o nome do cliente junto do vendedor.
 - [x] **Phase 28: Relatório de Perdidos** - Cliente "Perdido" sai das 7 colunas do funil e ganha uma tela própria (motivo, data, vendedor), com filtro por período, visibilidade por papel e botão "Reabrir" de um toque. (completed 2026-09-26)
 - [x] **Phase 29: Encerrar Cliente Ativo** - Vendedor encerra um cliente ativo que parou de comprar (com motivo obrigatório), o cliente sai da rotina da Agenda mantendo histórico e diário, e pode ser reativado depois. (completed 2026-09-27)
-- [ ] **Phase 30: Aderência de Uso no Dashboard** - Supervisor vê, na tabela comparativa por vendedor, o % de dias úteis com uso real do sistema nas últimas 4 semanas, com o registro de uso guardando só o mínimo sobre cada pessoa.
+- [x] **Phase 30: Aderência de Uso no Dashboard** - Supervisor vê, na tabela comparativa por vendedor, o % de dias úteis com uso real do sistema nas últimas 4 semanas, com o registro de uso guardando só o mínimo sobre cada pessoa. (completed 2026-09-27)
 
 ## Phase Details
 
@@ -206,7 +206,7 @@ Plans:
   4. O registro de uso guarda só quem e qual dia — sem horário, IP, aparelho ou localização — e um vendedor não consegue ler o registro de outro, nem inflar o próprio registrando dias em que não usou (o dia é carimbado pelo servidor).
 
 **Notas para o Discuss/pesquisa**: (a) hoje o sistema não guarda histórico de acesso — só o último login, dentro do Supabase Auth — então a parte "entrou no sistema" da métrica só começa a contar a partir do dia em que esta fase for para produção; mover/concluir já têm data e autor no `historico` e podem contar retroativamente, mas cadastro e edição de cliente NÃO ficam registrados no `historico` hoje (o gatilho só grava troca de etapa/status e conclusões) e também precisam de registro novo; (b) com a sessão persistente do app, o vendedor quase nunca "faz login" de novo — ele só abre o sistema já logado; recomendado interpretar "login" como "abriu o sistema naquele dia" (senão a métrica subestima quem usa todo dia); (c) "dias úteis" = segunda a sexta, com ou sem feriados; como tratar vendedor admitido ou desativado no meio da janela; (d) LGPD: registro de uso de funcionário é dado pessoal — confirmar prazo de guarda (só o necessário para a janela de 28 dias, com descarte do resto) e a comunicação ao time de que o uso é medido. Se o dono quiser a métrica completa já no dia do lançamento, a alternativa é antecipar só a captura de acesso diário (quick task ou reordenar esta fase para logo depois da Fase 27).
-**Plans**: 5/6 plans executed
+**Plans**: 6/6 plans complete
 
 Plans:
 
@@ -215,7 +215,7 @@ Plans:
 - [x] 30-03-PLAN.md — aprovação do dono com alerta de LGPD (checkpoint bloqueante), aplicação manual 0038 → 0039 → 0040 pelo SQL Editor e 40 testes de integração verdes (onda 2)
 - [x] 30-04-PLAN.md — ADER-02: registro do dia no middleware (cookie por dia e por conta, nunca bloqueia) e em cadastrar/editar cliente e editar frequência, com testes de dublê (onda 1, autônomo)
 - [x] 30-05-PLAN.md — camada de dados: regras puras de exibição (percentual, "N de M dias úteis", "Coletando dados desde"), leitor `getAderenciaUso()` e junção tolerante a falha na ação do comparativo (onda 2, depende do 30-02)
-- [ ] 30-06-PLAN.md — coluna "Aderência de uso" na tabela comparativa do Supervisor + casos de tela (onda 3, depende do 30-05)
+- [x] 30-06-PLAN.md — coluna "Aderência de uso" na tabela comparativa do Supervisor + casos de tela (onda 3, depende do 30-05)
 
 **UI hint**: yes
 
@@ -229,4 +229,4 @@ Phases execute in numeric order: 27 → 28 → 29 → 30
 | 27. Correções do Primeiro Uso — Card Filtrado e Agenda | v1.7 | 0/TBD | Not started | - |
 | 28. Relatório de Perdidos | v1.7 | 4/4 | Complete   | 2026-09-26 |
 | 29. Encerrar Cliente Ativo | v1.7 | 0/TBD | Not started | - |
-| 30. Aderência de Uso no Dashboard | v1.7 | 5/6 | In Progress|  |
+| 30. Aderência de Uso no Dashboard | v1.7 | 6/6 | Complete   | 2026-09-27 |
