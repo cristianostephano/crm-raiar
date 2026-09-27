@@ -1,29 +1,13 @@
--- Phase 30 Plan 3 — diagnóstico temporário (0041 não resolveu o bug).
---
--- 0041 trocou o corpo por IF EXISTS(...) THEN INSERT ... VALUES(...) e o
--- mesmo erro 42501 continuou. Isso descarta a hipótese de que a FORMA da
--- instrução (SELECT sem FROM vs VALUES) era a causa: mesmo um INSERT
--- simples, de dentro de uma função plpgsql chamada via .rpc(), viola a
--- policy — enquanto o MESMO insert, feito direto pelo cliente (sem
--- função), passa.
---
--- Este arquivo troca temporariamente o retorno da função de `void` para
--- `jsonb`, SEM fazer nenhum INSERT ainda — só devolve o que a função
--- enxerga (auth.uid(), o dia calculado, e o resultado do exists() de
--- role/ativo) para eu confirmar exatamente o que difere entre os dois
--- contextos, antes de escrever a correção definitiva na próxima migration.
--- Não guarda nem expõe nada além do que o próprio chamador já sabe sobre
--- si mesmo (LGPD: nenhum dado de terceiro é lido ou devolvido aqui).
---
--- Este arquivo é uma etapa de diagnóstico, não a correção final — a
--- próxima migration (0043) vai restaurar `registrar_acesso_diario()` com
--- `returns void` e o comportamento real, já usando o que for aprendido
--- aqui.
---
--- Nenhuma policy de 0038 muda. Nenhuma cláusula de elevação de privilégio.
---
--- Postgres não permite `create or replace function` mudar o tipo de
--- retorno de uma função já existente (erro 42P13) — precisa apagar antes.
+/*
+ * Fase 30 Plano 3 - diagnostico temporario (0041 nao resolveu o bug 42501).
+ * Troca o retorno de registrar_acesso_diario() de void para jsonb, sem
+ * fazer nenhum INSERT, so para inspecionar o que a funcao enxerga por
+ * dentro (auth.uid(), o dia calculado, o resultado do exists de
+ * role+ativo). Nao guarda nem expoe nada alem do que o proprio chamador
+ * ja sabe sobre si mesmo. Etapa de diagnostico, nao a correcao final - a
+ * proxima migration restaura o retorno void com o comportamento real.
+ * Nenhuma policy de 0038 muda. Nenhuma clausula de elevacao de privilegio.
+ */
 
 drop function if exists registrar_acesso_diario();
 
