@@ -76,7 +76,14 @@ export type ClientesAgrupadosPorEtapa = Record<EtapaKey, ClienteListItem[]>
  * edit form's multi-select checklist only needs to know which ids are
  * checked.
  */
-export type StatusAcompanhamento = "em_andamento" | "perdido" | "ganho"
+/** "encerrado" = cliente ativo que parou de comprar (Fase 29, D-01/D-02),
+ * valor do enum nativo `status_acompanhamento_enum` desde a migration 0035;
+ * só é alcançável a partir de "ganho" (D-04). */
+export type StatusAcompanhamento =
+  | "em_andamento"
+  | "perdido"
+  | "ganho"
+  | "encerrado"
 
 export type ClienteDetalhe = {
   id: string

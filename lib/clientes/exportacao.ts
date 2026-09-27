@@ -21,6 +21,7 @@ const STATUS_LABELS: Record<ClienteExportRow["statusAcompanhamento"], string> = 
   em_andamento: "Em andamento",
   ganho: "Ganho",
   perdido: "Perdido",
+  encerrado: "Encerrado",
 }
 
 /**
