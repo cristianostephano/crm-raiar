@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { ComparativoVendedorTable } from "@/components/dashboard/ComparativoVendedorTable"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import type { ComparativoVendedorRow } from "@/lib/supabase/queries/dashboard"
+import type { ComparativoVendedorLinha } from "@/lib/aderencia/exibicao"
 
 vi.mock("@/app/actions/dashboard", () => ({
   getComparativoVendedorAction: vi.fn(),
@@ -14,13 +14,15 @@ import { getComparativoVendedorAction } from "@/app/actions/dashboard"
 
 const mockedAction = vi.mocked(getComparativoVendedorAction)
 
-/** Builds a ComparativoVendedorRow from partial values, defaulting everything
- * else to a "vendedor sem nada ainda" shape (counts at 0, ratio/average null).
+/** Builds a ComparativoVendedorLinha from partial values, defaulting
+ * everything else to a "vendedor sem nada ainda" shape (counts at 0,
+ * ratio/average null, aderencia nula — a coluna nova é renderizada pelo
+ * plano 30-06, este arquivo só precisa do tipo compilar).
  * `responsavel` defaults to a distinct id per call so rows never collide. */
 let nextResponsavelId = 0
 function buildRow(
-  partial: Partial<ComparativoVendedorRow> = {}
-): ComparativoVendedorRow {
+  partial: Partial<ComparativoVendedorLinha> = {}
+): ComparativoVendedorLinha {
   nextResponsavelId += 1
   return {
     responsavel: `vendedor-${nextResponsavelId}`,
@@ -30,6 +32,7 @@ function buildRow(
     perdido: 0,
     cicloMedioDias: null,
     taxaConversao: null,
+    aderencia: null,
     ...partial,
   }
 }
