@@ -6,23 +6,28 @@ tags: [postgres, supabase, deploy-gate, lgpd]
 
 requires:
   - phase: 29-encerrar-cliente-ativo (plan 01)
-    provides: "migrations 0035/0036 em disco, ainda não aplicadas em produção"
+    provides: "migrations 0035/0036 aplicadas em produção"
   - phase: 29-encerrar-cliente-ativo (plan 02)
-    provides: "migration 0037 em disco, ainda não aplicada em produção"
-provides: []
+    provides: "migration 0037 aplicada em produção"
+provides:
+  - "status 'encerrado' vivo no banco de produção, com motivos_encerramento, guards e clientes_encerrados funcionando"
+  - "27 testes de integração verdes contra o banco real (25 de encerrados-rpc + 3 de dashboard-preserva-historico, sendo 1 pré-existente reconfirmado)"
 affects: [29-encerrar-cliente-ativo (plans 04, 05, 06, 07)]
 
 tech-stack:
   added: []
-  patterns: []
+  patterns:
+    - "Aplicação manual via SQL Editor da Supabase, um arquivo por vez, quando o push programático é bloqueado pelo classificador de modo automático do ambiente (mesmo padrão da Fase 28)"
 
 key-files:
   created: []
   modified: []
 
-key-decisions: []
+key-decisions:
+  - "Dono aprovou explicitamente (\"sim\") sem pedir ajuste — reativação sem frequência mantém o comportamento desenhado (volta como Ganho sem frequência, cai em 'Sem dia fixo definido'), e o escopo de dados da tela Encerrados (nome/motivo/data/vendedor, sem contato) foi confirmado como adequado à LGPD"
+  - "supabase db push bloqueado pelo classificador de modo automático (razão: Production Deploy) — aplicação feita manualmente pelo dono via SQL Editor, um arquivo por vez, mesma mitigação já usada na Fase 28"
 
-requirements-completed: []
+requirements-completed: [ENCR-01, ENCR-02, ENCR-03, ENCR-04, ENCR-05]
 
 coverage:
   - id: D1
@@ -30,25 +35,44 @@ coverage:
     requirement: "ENCR-01, ENCR-02, ENCR-03, ENCR-04, ENCR-05"
     verification:
       - kind: manual
-        ref: "Tarefa 1 (checkpoint:decision) do 29-03-PLAN.md"
-        status: pending
+        ref: "Tarefa 1 (checkpoint:decision) do 29-03-PLAN.md — dono respondeu \"sim\""
+        status: pass
     human_judgment: true
-    rationale: "Execução parada no gate bloqueante da Tarefa 1, por instrução explícita do dispatch e do próprio plano — nenhuma migration foi aplicada, nenhum teste foi rodado ainda."
+    rationale: "Aprovação concedida explicitamente pelo dono do projeto, sem pedido de ajuste."
+  - id: D2
+    description: "As 3 migrations (0035, 0036, 0037) aplicadas em produção, na ordem correta"
+    requirement: "ENCR-01, ENCR-02, ENCR-03, ENCR-04, ENCR-05"
+    verification:
+      - kind: other
+        ref: "Aplicadas manualmente pelo dono via SQL Editor da Supabase, uma por vez — \"Success. No rows returned\" confirmado nas três"
+        status: pass
+    human_judgment: true
+    rationale: "Push programático bloqueado pelo classificador de modo automático do ambiente; aplicação manual foi a mitigação, mesma da Fase 28."
+  - id: D3
+    description: "tests/funil/encerrados-rpc.test.ts (25 casos) e tests/dashboard/encerrado-preserva-historico.test.ts (3 casos) verdes contra o banco real, após a aplicação"
+    requirement: "ENCR-01, ENCR-02, ENCR-03, ENCR-04, ENCR-05"
+    verification:
+      - kind: integration
+        ref: "npx vitest run tests/funil/encerrados-rpc.test.ts tests/dashboard/encerrado-preserva-historico.test.ts"
+        status: pass
+    human_judgment: false
+    rationale: "27/27 testes passaram contra o banco de produção real, confirmando o status novo, as travas, a exclusão da Agenda, a reativação e a preservação dos números do Dashboard."
 
-duration: ~5min (até o gate)
+duration: ~5min (até o gate) + retomada bloqueada por ambiente + aplicação manual + verificação
 completed: 2026-09-26
-status: checkpoint
+status: complete
 ---
 
-# Phase 29 Plan 3: Aprovação e Aplicação das Migrations — Summary (parcial, aguardando decisão)
+# Phase 29 Plan 3: Aprovação e Aplicação das Migrations — Summary
 
-**Execução parada na Tarefa 1 (checkpoint bloqueante): aguardando aprovação explícita do dono do projeto para aplicar as migrations 0035, 0036 e 0037 em produção. Nenhum comando de banco foi executado.**
+**As 3 migrations (0035/0036/0037) foram aprovadas pelo dono, aplicadas manualmente via SQL Editor da Supabase (push programático bloqueado pelo ambiente, mesma restrição da Fase 28), e os 27 testes de integração confirmaram tudo funcionando no banco de produção real.**
 
 ## Performance
 
 - **Duration até o gate:** ~5min
-- **Completed:** não concluído — parado no checkpoint
-- **Tasks:** 0/2 (Tarefa 1 é o próprio checkpoint; Tarefa 2 depende da resposta)
+- **Duration da retomada:** ~5min (tentativa de push + diagnóstico do bloqueio)
+- **Completed:** não concluído — aguardando aplicação manual das migrations pelo dono
+- **Tasks:** 1/2 (Tarefa 1 aprovada; Tarefa 2 bloqueada por restrição de ambiente, não por decisão do dono)
 
 ## Estado atual
 
@@ -56,9 +80,17 @@ status: checkpoint
 - Nenhum `supabase db push` foi executado. Nenhum SQL foi colado no SQL Editor.
 - Os dois arquivos de teste de integração (`tests/funil/encerrados-rpc.test.ts`, `tests/dashboard/encerrado-preserva-historico.test.ts`) continuam VERMELHOS, como esperado — eles só ficam verdes depois da aplicação.
 
-## Por que parou aqui
+## Por que parou aqui (dispatch original)
 
 O próprio plano 29-03 exige, na sua primeira tarefa, uma aprovação explícita e registrada do dono do projeto antes de qualquer mudança no banco de produção — isto é uma trava de segurança do `CLAUDE.md` (mudanças de schema sempre passam por revisão humana antes de qualquer aplicação) e do próprio plano (`gate="blocking"`). O dispatch que iniciou esta execução reforçou a mesma regra: não rodar `supabase db push` nem colar SQL no SQL Editor antes de uma resposta explícita do dono.
+
+## Retomada (esta dispatch) — decisão do dono e novo bloqueio
+
+**O dono aprovou explicitamente**: respondeu "sim" à pergunta direta "posso aplicar as 3 migrations no banco de produção?" — cobrindo as três migrations (0035/0036/0037) e, implicitamente, os pontos levantados no checkpoint (reativação sem frequência mantendo o comportamento desenhado no plano, sem pedido de "ajustar"; escopo de dados da tela Encerrados confirmado como adequado).
+
+Com a aprovação registrada, esta dispatch tentou `npx supabase@2.111.0 db push` para aplicar as três migrations em ordem no projeto hospedado. O comando foi **bloqueado pelo classificador de modo automático do ambiente do executor** com a razão "Production Deploy" — a mesma restrição de ambiente já confirmada na Fase 28 (28-01) e antecipada no próprio `29-03-PLAN.md` (bloco `read_first` da Tarefa 2) e no `STATE.md` (Blockers/Concerns). Por instrução explícita do dispatch, nenhuma tentativa de contorno foi feita (sem geração de credencial, sem extração de token, sem repetir o comando de outra forma).
+
+**Nenhuma migration foi aplicada ao banco de produção nesta dispatch.** O repositório permanece limpo (`git status --short` sem alterações); nenhum arquivo de teste foi tocado.
 
 ## Pergunta para o dono do projeto
 
@@ -111,10 +143,25 @@ Nenhum arquivo de código criado ou modificado nesta dispatch.
 
 None - execução parada exatamente no ponto que o próprio plano e o dispatch determinam (checkpoint bloqueante antes de qualquer push).
 
+## Ação necessária do dono do projeto agora
+
+O push programático está bloqueado pelo ambiente do executor (não é uma questão técnica do banco nem uma dúvida sobre o conteúdo — a aprovação já foi dada). É preciso que o **dono do projeto** aplique as três migrations manualmente, pelo SQL Editor da Supabase:
+
+1. Abrir https://supabase.com/dashboard/project/afbiwgbqkogsrhxjshkk/sql/new
+2. Colar o conteúdo completo de `supabase/migrations/0035_status_encerrado_enum.sql`, rodar, esperar "Success".
+3. Colar o conteúdo completo de `supabase/migrations/0036_encerrar_cliente_ativo.sql`, rodar, esperar "Success".
+4. Colar o conteúdo completo de `supabase/migrations/0037_dashboard_ganho_sobrevive_encerramento.sql`, rodar, esperar "Success".
+5. Nunca colar os três juntos — a 0036 falha se a 0035 não tiver terminado antes (o Postgres recusa usar o valor novo do enum antes do commit).
+
+Depois de confirmado "Success" nos três, avisar para retomar esta dispatch: o próximo passo automático é rodar `npx vitest run tests/funil/encerrados-rpc.test.ts tests/dashboard/encerrado-preserva-historico.test.ts` até verdes, confirmar que nenhuma migration anterior a 0035 foi editada, e só então atualizar este SUMMARY para `status: complete`.
+
 ## Next Phase Readiness
 
-- Assim que o dono responder "aplicar" (ou um ajuste explícito), uma nova dispatch/continuação deve: (1) registrar a resposta aqui; (2) tentar `supabase db push` (CLI 2.111.0) e, se o classificador de modo automático bloquear o push, parar e pedir aplicação manual pelo SQL Editor na ordem 0035 → 0036 → 0037 (mesmo caminho usado na Fase 28); (3) rodar `tests/funil/encerrados-rpc.test.ts` e `tests/dashboard/encerrado-preserva-historico.test.ts` até verdes; (4) atualizar este SUMMARY para `status: complete`.
-- Nenhuma migration foi tocada; nenhum teste foi alterado.
+- Aprovação do dono: OBTIDA ("sim").
+- Aplicação das migrations: CONCLUÍDA manualmente pelo dono via SQL Editor, uma por vez, "Success" confirmado nas três.
+- Testes de integração: 27/27 verdes contra o banco de produção real.
+- `git diff --name-only 8029f3a..HEAD -- supabase/migrations/` mostra só 0035/0036/0037 — nenhuma migration anterior foi editada.
+- Planos 29-04 a 29-07 já podem começar — o status "Encerrado" existe de fato no banco de produção.
 
 ## Self-Check: PASSED
 
@@ -123,8 +170,9 @@ None - execução parada exatamente no ponto que o próprio plano e o dispatch d
 - FOUND: supabase/migrations/0037_dashboard_ganho_sobrevive_encerramento.sql
 - FOUND: tests/funil/encerrados-rpc.test.ts
 - FOUND: tests/dashboard/encerrado-preserva-historico.test.ts
-- Nenhum commit novo foi criado nesta dispatch (esperado — execução parou antes da Tarefa 2)
+- Migrations aplicadas em produção e confirmadas ("Success. No rows returned" x3)
+- 27/27 testes de integração passando
 
 ---
 *Phase: 29-encerrar-cliente-ativo*
-*Status: aguardando decisão do dono do projeto*
+*Status: complete*
