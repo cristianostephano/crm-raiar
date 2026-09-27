@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from "vitest"
 
 import { ComparativoVendedorTable } from "@/components/dashboard/ComparativoVendedorTable"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import type { ComparativoVendedorLinha } from "@/lib/aderencia/exibicao"
+import {
+  TEXTO_TOOLTIP_ADERENCIA,
+  type ComparativoVendedorLinha,
+} from "@/lib/aderencia/exibicao"
+import type { AderenciaUsoRow } from "@/lib/supabase/queries/dashboard"
 
 vi.mock("@/app/actions/dashboard", () => ({
   getComparativoVendedorAction: vi.fn(),
@@ -33,6 +37,20 @@ function buildRow(
     cicloMedioDias: null,
     taxaConversao: null,
     aderencia: null,
+    ...partial,
+  }
+}
+
+/** Builds an AderenciaUsoRow from partial values for the "Aderência de uso"
+ * column cases (plan 30-06) — defaults to a fully-collected, non-zero shape
+ * so each test only needs to override the fields it cares about. */
+function aderencia(partial: Partial<AderenciaUsoRow> = {}): AderenciaUsoRow {
+  return {
+    responsavel: "vendedor-aderencia",
+    diasUsados: 0,
+    diasUteis: 0,
+    aderenciaPct: null,
+    coletandoDesde: null,
     ...partial,
   }
 }
@@ -170,5 +188,121 @@ describe("ComparativoVendedorTable", () => {
     expect(
       screen.getByRole("button", { name: "Tentar novamente" })
     ).toBeInTheDocument()
+  })
+
+  it("coluna-aderencia-cabecalho: o 6º cabeçalho contém 'Aderência de uso' e o rótulo acessível do tooltip existe na tela", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [buildRow()],
+    })
+
+    renderTable()
+
+    const table = await screen.findByRole("table")
+    const headers = within(table).getAllByRole("columnheader")
+    expect(headers).toHaveLength(6)
+    expect(headers[5].textContent).toContain("Aderência de uso")
+    expect(screen.getByLabelText(TEXTO_TOOLTIP_ADERENCIA)).toBeInTheDocument()
+  })
+
+  it("aderencia-percentual: mostra o percentual com 1 casa e 'N de M dias úteis'", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildRow({
+          aderencia: aderencia({
+            aderenciaPct: 85,
+            diasUsados: 17,
+            diasUteis: 20,
+            coletandoDesde: null,
+          }),
+        }),
+      ],
+    })
+
+    renderTable()
+
+    const table = await screen.findByRole("table")
+    const rows = within(table).getAllByRole("row").slice(1)
+    const cells = within(rows[0]).getAllByRole("cell")
+    expect(cells[5].textContent).toContain("85,0%")
+    expect(cells[5].textContent).toContain("17 de 20 dias úteis")
+  })
+
+  it("aderencia-coletando: mostra 'Coletando dados desde DD/MM/AAAA' e não mostra percentual", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildRow({
+          aderencia: aderencia({
+            aderenciaPct: 40,
+            diasUsados: 8,
+            diasUteis: 20,
+            coletandoDesde: "2026-09-27",
+          }),
+        }),
+      ],
+    })
+
+    renderTable()
+
+    const table = await screen.findByRole("table")
+    const rows = within(table).getAllByRole("row").slice(1)
+    const cells = within(rows[0]).getAllByRole("cell")
+    expect(cells[5].textContent).toContain("Coletando dados desde 27/09/2026")
+    expect(cells[5].textContent).not.toContain("%")
+  })
+
+  it("aderencia-nula: aderência nula mostra travessão", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [buildRow({ aderencia: null })],
+    })
+
+    renderTable()
+
+    const table = await screen.findByRole("table")
+    const rows = within(table).getAllByRole("row").slice(1)
+    const cells = within(rows[0]).getAllByRole("cell")
+    expect(cells[5].textContent).toBe("—")
+  })
+
+  it("descricao-menciona-28-dias: a descrição do cartão contém 'últimos 28 dias'", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [buildRow()],
+    })
+
+    renderTable()
+
+    await screen.findByRole("table")
+    expect(screen.getByText(/últimos 28 dias/)).toBeInTheDocument()
+  })
+
+  it("colunas-antigas-intactas: com aderência preenchida, as células 0-4 continuam iguais ao caso 'distingue zero real'", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildRow({
+          responsavelNome: "Sem Nada Ainda",
+          negociosIniciados: 0,
+          ganho: 0,
+          taxaConversao: null,
+          cicloMedioDias: null,
+          aderencia: aderencia({
+            aderenciaPct: 85,
+            diasUsados: 17,
+            diasUteis: 20,
+          }),
+        }),
+      ],
+    })
+
+    renderTable()
+
+    const table = await screen.findByRole("table")
+    const rows = within(table).getAllByRole("row").slice(1)
+    expect(rows).toHaveLength(1)
+
+    const cells = within(rows[0]).getAllByRole("cell")
+    expect(cells[0].textContent).toBe("Sem Nada Ainda")
+    expect(cells[1].textContent).toBe("—")
+    expect(cells[2].textContent).toBe("0")
+    expect(cells[3].textContent).toBe("0")
+    expect(cells[4].textContent).toContain("—")
   })
 })
