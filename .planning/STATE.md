@@ -5,15 +5,15 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 27
 current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
 status: planning
-stopped_at: Phase 29 - Wave 1 (29-01, 29-02) complete; starting Wave 2 (29-03 checkpoint + 29-05)
-last_updated: "2026-09-26T20:24:26.162Z"
+stopped_at: Phase 29 - Wave 2 complete (migrations live, 27 tests green, data layer done); starting Wave 3 (29-04, 29-07)
+last_updated: "2026-09-27T02:55:06.380Z"
 last_activity: 2026-09-25
 last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 14
-  completed_plans: 7
+  completed_plans: 9
   percent: 25
 ---
 
@@ -418,9 +418,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-26T20:24:26.131Z
-Stopped at: Phase 29 - Wave 1 (29-01, 29-02) complete; starting Wave 2 (29-03 checkpoint + 29-05)
-Resume file: .planning/phases/29-encerrar-cliente-ativo/29-01-SUMMARY.md
+Last session: 2026-09-27T02:55:06.334Z
+Stopped at: Phase 29 - Wave 2 complete (migrations live, 27 tests green, data layer done); starting Wave 3 (29-04, 29-07)
+Resume file: .planning/phases/29-encerrar-cliente-ativo/29-03-SUMMARY.md
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 
