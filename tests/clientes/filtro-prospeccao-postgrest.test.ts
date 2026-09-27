@@ -10,17 +10,19 @@ import {
 
 /**
  * Prova ao vivo contra o PostgREST real (Fase 28, fecha a premissa A1 da
- * pesquisa 28-RESEARCH.md) — confirma que o filtro de exclusão por lista
- * usado no Kanban (`.not("status_acompanhamento", "in", "(...)")`) é aceito
- * pelo PostgREST e exclui os dois status ("ganho" e "perdido") corretamente.
+ * pesquisa 28-RESEARCH.md; Fase 29, D-13, estende para 3 status) — confirma
+ * que o filtro de exclusão por lista usado no Kanban
+ * (`.not("status_acompanhamento", "in", "(...)")`) é aceito pelo PostgREST e
+ * exclui os três status ("ganho", "perdido" e "encerrado") corretamente.
  *
  * Usa SÓ o cliente de serviço (nenhum login, nenhuma chamada a
  * `signInWithPassword`, logo nenhum risco do limite de autenticação conhecido
  * do projeto): o que se prova aqui é a SINTAXE do filtro, não a RLS — a RLS
- * do Kanban não muda nesta fase (Fase 28, D-06). `createTestMember` só
- * fornece um `responsavel` válido para o insert (a coluna é `not null
- * references profiles(id)`); nunca atribuímos um cliente de teste a um
- * vendedor real, porque ele apareceria no Kanban de alguém de verdade.
+ * do Kanban não muda nesta fase (Fase 28, D-06; Fase 29, D-13).
+ * `createTestMember` só fornece um `responsavel` válido para o insert (a
+ * coluna é `not null references profiles(id)`); nunca atribuímos um cliente
+ * de teste a um vendedor real, porque ele apareceria no Kanban de alguém de
+ * verdade.
  *
  * O filtro é montado SEMPRE a partir de `STATUS_FORA_DA_PROSPECCAO_LISTA`
  * (lib/funil/prospeccao.ts) — nunca da literal escrita à mão — para este
@@ -31,10 +33,15 @@ const razaoSocialPrefixo = `Teste FiltroProspeccaoPostgrest ${Date.now()}-${Math
 
 let responsavel: TestMember
 let motivoPerdaId: string
-const clienteIds: Record<"emAndamento" | "perdido" | "ganho", string> = {
+let motivoEncerramentoId: string
+const clienteIds: Record<
+  "emAndamento" | "perdido" | "ganho" | "encerrado",
+  string
+> = {
   emAndamento: "",
   perdido: "",
   ganho: "",
+  encerrado: "",
 }
 
 function camposEnderecoFicticio() {
@@ -64,6 +71,21 @@ beforeAll(async () => {
   }
   motivoPerdaId = motivo.id as string
 
+  const { data: motivoEncerramento, error: motivoEncerramentoError } =
+    await serviceClient()
+      .from("motivos_encerramento")
+      .select("id")
+      .eq("ativo", true)
+      .limit(1)
+      .single()
+
+  if (motivoEncerramentoError || !motivoEncerramento) {
+    throw new Error(
+      `Falha ao ler um motivo de encerramento ativo para o fixture: ${motivoEncerramentoError?.message}`
+    )
+  }
+  motivoEncerramentoId = motivoEncerramento.id as string
+
   const { data: rows, error } = await serviceClient()
     .from("clientes")
     .insert([
@@ -89,11 +111,19 @@ beforeAll(async () => {
         etapa: "primeira_venda",
         status_acompanhamento: "ganho",
       },
+      {
+        razao_social: `${razaoSocialPrefixo} encerrado`,
+        ...camposEnderecoFicticio(),
+        responsavel: responsavel.id,
+        etapa: "primeira_venda",
+        status_acompanhamento: "encerrado",
+        motivo_encerramento_id: motivoEncerramentoId,
+      },
     ])
     .select("id, status_acompanhamento")
 
   if (error || !rows) {
-    throw new Error(`Falha ao semear os 3 clientes fixture: ${error?.message}`)
+    throw new Error(`Falha ao semear os 4 clientes fixture: ${error?.message}`)
   }
 
   for (const row of rows) {
@@ -103,6 +133,8 @@ beforeAll(async () => {
       clienteIds.perdido = row.id
     } else if (row.status_acompanhamento === "ganho") {
       clienteIds.ganho = row.id
+    } else if (row.status_acompanhamento === "encerrado") {
+      clienteIds.encerrado = row.id
     }
   }
 })
@@ -116,8 +148,8 @@ afterAll(async () => {
   await deleteTestMember(responsavel.id)
 })
 
-describe("filtro de exclusão do PostgREST usado no Kanban (Fase 28, A1)", () => {
-  it("controle: consultando pelo cliente de serviço os 3 clientes semeados só por id, voltam as 3 linhas", async () => {
+describe("filtro de exclusão do PostgREST usado no Kanban (Fase 28, A1; Fase 29, D-13)", () => {
+  it("controle: consultando pelo cliente de serviço os 4 clientes semeados só por id, voltam as 4 linhas", async () => {
     const ids = Object.values(clienteIds)
 
     const { data, error } = await serviceClient()

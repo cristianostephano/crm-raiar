@@ -272,17 +272,19 @@ type ClienteRow = {
  * (D-02: categoria_id/contato/telefone/email/numero_de_lojas blank ->
  * "Incompleto" badge in a later plan).
  *
- * Quick task 260915-ls7 + Fase 28 (PERD-01/D-06): esta leitura devolve
- * apenas clientes que ainda estão em prospecção ativa (em andamento) —
- * cliente ganho é excluído porque já fechou a primeira venda e passou a ser
- * acompanhado pela Agenda; cliente perdido é excluído porque deixou de ser
- * prospecção ativa e passou a ser encontrado na tela Perdidos. Este recorte
- * é regra de EXIBIÇÃO desta tela, jamais fronteira de autorização (RLS acima
- * continua sendo a fronteira real de quais linhas voltam) — nunca deve virar
- * policy de RLS nem ser copiado para as leituras da Agenda, da ficha, do
- * Diário, do Dashboard, da exportação nem da leitura da tela Perdidos, que
- * precisam continuar enxergando cliente ganho e perdido normalmente. Ver
- * lib/funil/prospeccao.ts para a definição única da regra.
+ * Quick task 260915-ls7 + Fase 28 (PERD-01/D-06) + Fase 29 (D-13): esta
+ * leitura devolve apenas clientes que ainda estão em prospecção ativa (em
+ * andamento) — cliente ganho é excluído porque já fechou a primeira venda e
+ * passou a ser acompanhado pela Agenda; cliente perdido é excluído porque
+ * deixou de ser prospecção ativa e passou a ser encontrado na tela Perdidos;
+ * cliente encerrado é excluído porque parou de comprar e passou a ser
+ * encontrado na tela Encerrados. Este recorte é regra de EXIBIÇÃO desta
+ * tela, jamais fronteira de autorização (RLS acima continua sendo a
+ * fronteira real de quais linhas voltam) — nunca deve virar policy de RLS
+ * nem ser copiado para as leituras da Agenda, da ficha, do Diário, do
+ * Dashboard, da exportação nem da leitura das telas Perdidos/Encerrados, que
+ * precisam continuar enxergando cliente ganho, perdido e encerrado
+ * normalmente. Ver lib/funil/prospeccao.ts para a definição única da regra.
  */
 export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosPorEtapa> {
   const supabase = await createClient()
@@ -300,11 +302,12 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
       .select(
         "id, razao_social, nome_fantasia, categoria_id, categorias(nome), responsavel, profiles(nome, sobrenome), etapa, status_acompanhamento, cidade, estado, contato, telefone, email, numero_de_lojas, posicao, etapa_alterada_em, tarefas(concluida, data_conclusao, tipos_tarefa(nome)), cliente_produtos(produto_id, produtos_consumidos(nome))"
       )
-      // Quick task 260915-ls7 + Fase 28 (PERD-01/D-06): ganho e perdido
-      // saíram do funil de prospecção — filtrados aqui, no SQL, ANTES da
-      // paginação (egress + páginas úteis). A string interpolada vem só das
-      // duas literais fixas de STATUS_FORA_DA_PROSPECCAO_LISTA (as const),
-      // nunca de entrada de usuário.
+      // Quick task 260915-ls7 + Fase 28 (PERD-01/D-06) + Fase 29 (D-13):
+      // ganho, perdido e encerrado saíram do funil de prospecção —
+      // filtrados aqui, no SQL, ANTES da paginação (egress + páginas
+      // úteis). A string interpolada vem só das três literais fixas de
+      // STATUS_FORA_DA_PROSPECCAO_LISTA (as const), nunca de entrada de
+      // usuário.
       .not(
         "status_acompanhamento",
         "in",
@@ -328,10 +331,10 @@ export async function getClientesAgrupadosPorEtapa(): Promise<ClientesAgrupadosP
   const now = new Date()
 
   for (const row of rows) {
-    // Rede de segurança (quick task 260915-ls7 + Fase 28): mesma definição
-    // do filtro SQL acima (lib/funil/prospeccao.ts), reaplicada aqui para o
-    // caso de alguém remover o `.not(...)` numa edição futura sem perceber o
-    // que ele fazia. As duas aplicações nunca podem divergir.
+    // Rede de segurança (quick task 260915-ls7 + Fase 28 + Fase 29): mesma
+    // definição do filtro SQL acima (lib/funil/prospeccao.ts), reaplicada
+    // aqui para o caso de alguém remover o `.not(...)` numa edição futura
+    // sem perceber o que ele fazia. As duas aplicações nunca podem divergir.
     if (!apareceNaProspeccao(row.status_acompanhamento)) continue
 
     const key = row.etapa

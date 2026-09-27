@@ -12,14 +12,19 @@ import type { StatusAcompanhamento } from "../../lib/supabase/queries/clientes"
  * agrupamento em getClientesAgrupadosPorEtapa.
  *
  * Fase 28 (PERD-01, D-06): a regra deixou de excluir um status só ("ganho",
- * quick task 260915-ls7) e passou a excluir um CONJUNTO de dois
- * ("ganho" e "perdido") das 7 colunas do Kanban.
+ * quick task 260915-ls7) e passou a excluir um CONJUNTO de dois ("ganho" e
+ * "perdido") das 7 colunas do Kanban.
+ *
+ * Fase 29 (D-13): a regra passa de dois para TRÊS status excluídos — cliente
+ * encerrado (era ganho, parou de comprar) também some das 7 colunas e passa
+ * a ser encontrado na tela Encerrados.
  */
 
 const TODOS_OS_STATUS: StatusAcompanhamento[] = [
   "em_andamento",
   "perdido",
   "ganho",
+  "encerrado",
 ]
 
 describe("apareceNaProspeccao", () => {
@@ -35,15 +40,23 @@ describe("apareceNaProspeccao", () => {
     expect(apareceNaProspeccao("ganho")).toBe(false)
   })
 
-  it("STATUS_FORA_DA_PROSPECCAO_LISTA vale exatamente ['ganho', 'perdido']", () => {
-    expect(STATUS_FORA_DA_PROSPECCAO_LISTA).toEqual(["ganho", "perdido"])
+  it("cliente encerrado sai do funil de prospecção (Fase 29, D-13)", () => {
+    expect(apareceNaProspeccao("encerrado")).toBe(false)
   })
 
-  it("exatamente dois dos três status possíveis saem da prospecção", () => {
+  it("STATUS_FORA_DA_PROSPECCAO_LISTA vale exatamente ['ganho', 'perdido', 'encerrado']", () => {
+    expect(STATUS_FORA_DA_PROSPECCAO_LISTA).toEqual([
+      "ganho",
+      "perdido",
+      "encerrado",
+    ])
+  })
+
+  it("exatamente três dos quatro status possíveis saem da prospecção", () => {
     const escondidos = TODOS_OS_STATUS.filter(
       (status) => !apareceNaProspeccao(status)
     )
-    expect(escondidos).toEqual(["perdido", "ganho"])
+    expect(escondidos).toEqual(["perdido", "ganho", "encerrado"])
   })
 
   it("em_andamento é o único status que continua aparecendo na prospecção", () => {

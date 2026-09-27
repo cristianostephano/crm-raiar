@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 /**
- * Unit test for getClientesAgrupadosPorEtapa (Fase 28, PERD-01/D-06/D-08) —
- * prova, com mock de @/lib/supabase/server, que:
+ * Unit test for getClientesAgrupadosPorEtapa (Fase 28, PERD-01/D-06/D-08;
+ * Fase 29, D-13) — prova, com mock de @/lib/supabase/server, que:
  *   (1) o leitor do Kanban manda o filtro de exclusão certo ao PostgREST
- *       (.not("status_acompanhamento", "in", "(ganho,perdido)")), montado a
- *       partir de STATUS_FORA_DA_PROSPECCAO_LISTA (lib/funil/prospeccao.ts);
- *   (2) a guarda do laço de agrupamento descarta perdido/ganho mesmo que o
- *       filtro SQL acima seja removido por engano numa edição futura — as
- *       duas aplicações da regra nunca podem divergir;
+ *       (.not("status_acompanhamento", "in", "(ganho,perdido,encerrado)")),
+ *       montado a partir de STATUS_FORA_DA_PROSPECCAO_LISTA
+ *       (lib/funil/prospeccao.ts);
+ *   (2) a guarda do laço de agrupamento descarta perdido/ganho/encerrado
+ *       mesmo que o filtro SQL acima seja removido por engano numa edição
+ *       futura — as duas aplicações da regra nunca podem divergir;
  *   (3) um cliente reaberto (em_andamento numa etapa do meio) reaparece na
  *       etapa em que já estava (D-08).
  *
@@ -55,7 +56,7 @@ type MockClienteRow = {
   responsavel: string
   profiles: { nome: string; sobrenome: string } | null
   etapa: (typeof ETAPA_KEYS)[number]
-  status_acompanhamento: "em_andamento" | "perdido" | "ganho"
+  status_acompanhamento: "em_andamento" | "perdido" | "ganho" | "encerrado"
   cidade: string | null
   estado: string | null
   contato: string | null
@@ -121,11 +122,11 @@ describe("getClientesAgrupadosPorEtapa (Fase 28, PERD-01/D-06/D-08)", () => {
     expect(notSpy).toHaveBeenCalledWith(
       "status_acompanhamento",
       "in",
-      "(ganho,perdido)"
+      "(ganho,perdido,encerrado)"
     )
   })
 
-  it("guarda-do-laco: com uma linha em_andamento, uma perdido e uma ganho na mesma página, só a em_andamento aparece no agrupamento", async () => {
+  it("guarda-do-laco: com uma linha em_andamento, uma perdido, uma ganho e uma encerrada na mesma página, só a em_andamento aparece no agrupamento", async () => {
     simularUmaPagina([
       linha({
         id: "cliente-em-andamento",
@@ -141,6 +142,11 @@ describe("getClientesAgrupadosPorEtapa (Fase 28, PERD-01/D-06/D-08)", () => {
         id: "cliente-ganho",
         etapa: "aguardando_contato",
         status_acompanhamento: "ganho",
+      }),
+      linha({
+        id: "cliente-encerrado",
+        etapa: "aguardando_contato",
+        status_acompanhamento: "encerrado",
       }),
     ])
 

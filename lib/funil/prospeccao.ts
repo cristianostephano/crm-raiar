@@ -2,7 +2,8 @@ import type { StatusAcompanhamento } from "@/lib/supabase/queries/clientes"
 
 /**
  * Regra de visibilidade do funil de prospecção (quick task 260915-ls7,
- * estendida na Fase 28 — Relatório de Perdidos, PERD-01, D-06).
+ * estendida na Fase 28 — Relatório de Perdidos, PERD-01, D-06 — e na Fase
+ * 29 — Encerrar Cliente Ativo, D-13).
  *
  * (1) Regra de produto: cliente ganho deixou de ser prospecção — ele já
  * fechou a primeira venda, então sai das 7 colunas do funil de `/clientes` e
@@ -12,15 +13,20 @@ import type { StatusAcompanhamento } from "@/lib/supabase/queries/clientes"
  * Perdidos, de onde pode ser reaberto com um toque (Fase 28, PERD-01/D-06).
  * Ao reabrir (status volta a "em andamento") ele passa de novo por esta
  * regra e reaparece na etapa em que já estava (D-08) — a etapa nunca muda ao
- * marcar/desmarcar perdido, só o status.
+ * marcar/desmarcar perdido, só o status. Cliente encerrado também sai das 7
+ * colunas (Fase 29, D-13): era um ativo (ganho) que parou de comprar, é
+ * encontrado na tela Encerrados e, ao reativar, volta para "ganho" —
+ * portanto continua fora do Kanban e volta a ser acompanhado pela Agenda
+ * (Fase 29, D-10).
  *
  * (2) Isto é regra de EXIBIÇÃO, nunca de autorização. O mesmo usuário
- * continua podendo ler seus próprios clientes ganhos e perdidos em toda
- * outra tela — Agenda, ficha, Diário, Dashboard e a própria tela Perdidos
- * (Fase 28), que lê cliente perdido normalmente. Quem tentar transformar
- * esta regra em policy de RLS quebra todas essas telas de uma vez: RLS
- * decide QUEM pode ver uma linha, este módulo decide só o que aparece nas 7
- * colunas do Kanban de prospecção.
+ * continua podendo ler seus próprios clientes ganhos, perdidos e encerrados
+ * em toda outra tela — Agenda, ficha, Diário, Dashboard, a tela Perdidos
+ * (Fase 28) e a tela Encerrados (Fase 29), que leem cliente perdido/
+ * encerrado normalmente. Quem tentar transformar esta regra em policy de
+ * RLS quebra todas essas telas de uma vez: RLS decide QUEM pode ver uma
+ * linha, este módulo decide só o que aparece nas 7 colunas do Kanban de
+ * prospecção.
  *
  * (3) Este módulo é a definição ÚNICA da regra, consumida em dois pontos da
  * mesma leitura (`getClientesAgrupadosPorEtapa`): o filtro SQL e a guarda do
@@ -28,8 +34,8 @@ import type { StatusAcompanhamento } from "@/lib/supabase/queries/clientes"
  * (lib/clientes/completude.ts), que também é uma única fonte consumida por
  * dois consumidores. A leitura de exportação (`getClientesParaExportacao`)
  * NÃO consome este módulo de propósito (Fase 28, D-07) — "Exportar todos"
- * precisa continuar trazendo ganhos e perdidos mesmo depois de saírem do
- * Kanban.
+ * precisa continuar trazendo ganhos, perdidos e encerrados mesmo depois de
+ * saírem do Kanban.
  *
  * Módulo puro, sem nenhuma dependência de runtime — só importa o TIPO
  * StatusAcompanhamento (import type, some na compilação), então pode ser
@@ -49,6 +55,7 @@ import type { StatusAcompanhamento } from "@/lib/supabase/queries/clientes"
 export const STATUS_FORA_DA_PROSPECCAO_LISTA = [
   "ganho",
   "perdido",
+  "encerrado",
 ] as const satisfies readonly StatusAcompanhamento[]
 
 const STATUS_FORA_DA_PROSPECCAO_SET: ReadonlySet<StatusAcompanhamento> =
@@ -56,7 +63,7 @@ const STATUS_FORA_DA_PROSPECCAO_SET: ReadonlySet<StatusAcompanhamento> =
 
 /**
  * `true` só para "em andamento" (aparece nas 7 colunas do Kanban); `false`
- * para "ganho" e "perdido", que saem da prospecção ativa.
+ * para "ganho", "perdido" e "encerrado", que saem da prospecção ativa.
  */
 export function apareceNaProspeccao(status: StatusAcompanhamento): boolean {
   return !STATUS_FORA_DA_PROSPECCAO_SET.has(status)
