@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  PauseCircle,
   Settings,
   Users,
   UsersRound,
@@ -69,7 +70,8 @@ type NavSection = {
  *
  * Desde a Fase 28, a ordem inclui "Perdidos" logo depois de "Clientes" —
  * o outro lado do funil de Clientes (D-01: mesmo nível de Agenda/Clientes/
- * Dashboard, nunca uma aba dentro de Clientes).
+ * Dashboard, nunca uma aba dentro de Clientes). Desde a Fase 29, a ordem é
+ * Agenda, Clientes, Perdidos, Encerrados, Dashboard.
  */
 const PRINCIPAL_SECTION: NavSection = {
   label: "Principal",
@@ -82,6 +84,11 @@ const PRINCIPAL_SECTION: NavSection = {
     // do projeto); D-03 (Archive = registros guardados, ícone distinto dos
     // já usados; XCircle foi rejeitado pela conotação de erro).
     { href: "/perdidos", label: "Perdidos", icon: Archive },
+    // Mesmo nível de Perdidos (tela irmã, Fase 29, D-07); nunca recebe
+    // contador — encerrado não é pendência (UI-SPEC §1, mesmo raciocínio de
+    // Perdidos); PauseCircle = "pausado", distinto de Archive (Perdidos) —
+    // o encerrado pode ser reativado.
+    { href: "/encerrados", label: "Encerrados", icon: PauseCircle },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   ],
 }
