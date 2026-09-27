@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Ajustes Pós-Teste com o Time de Vendas
-current_phase: 27
-current_phase_name: Correções do Primeiro Uso — Card Filtrado e Agenda
-status: planning
+current_phase: 30
+current_phase_name: ader-ncia-de-uso-no-dashboard
+status: executing
 stopped_at: Phase 30 context gathered
-last_updated: "2026-09-27T13:51:48.396Z"
-last_activity: 2026-09-25
-last_activity_desc: Roadmap v1.7 criado (Fases 27-30)
+last_updated: "2026-09-27T16:11:12.029Z"
+last_activity: 2026-09-27
+last_activity_desc: Phase 30 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 14
-  completed_plans: 12
+  total_plans: 20
+  completed_plans: 13
   percent: 50
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-25)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 27 — Correções do Primeiro Uso — Card Filtrado e Agenda
+**Current focus:** Phase 30 — ader-ncia-de-uso-no-dashboard
 
 ## Current Position
 
-Phase: 27 of 30 (Correções do Primeiro Uso — Card Filtrado e Agenda) — 1ª de 4 fases do marco v1.7
-Plan: —
-Status: Ready to plan
-Last activity: 2026-09-25 — Roadmap v1.7 criado (Fases 27-30)
+Phase: 30 (ader-ncia-de-uso-no-dashboard) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-09-27 — Phase 30 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -116,6 +116,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 26 P02 | ~30min | 3 tasks | 14 files |
 | Phase 26 P04 | ~50min | 4 tasks | 15 files |
 | Phase 28 P04 | ~35min | 3 tasks | 9 files |
+| Phase 30 P01 | 40min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -316,6 +317,10 @@ Recent decisions affecting current work:
 - [Phase 26-04]: razao_social permanece tipado string (nao string | null) em ClienteListItem/ClienteRow/ClienteDetalhe de proposito; exibicao roteada por nomeExibicaoCliente() para tratar o valor nulo real sem propagar a mudanca de tipo para PerdaMotivoDialog/GanhoFrequenciaDialog (fora do escopo do plano)
 - [Phase 26-04]: Fase 26 e marco v1.6 concluidos: PROSP-01, PROSP-02, MENU-01, MENU-02 fechados e confirmados no navegador pelo dono do projeto
 - [Phase ?]: Fase 28 (28-04): item Perdidos no menu entre Clientes e Dashboard, icone Archive, sem contador em nenhum estado (D-01/D-02/D-03); showResponsavel na tela de Perdidos e isSupervisor, sem filtro de vendedor proprio.
+- [Phase ?]: Policy de DELETE de acessos_diarios exige is_supervisor() (nao usuario_id=auth.uid()): a leitura ja e Supervisor-only, entao o proprio vendedor nunca enxergaria linha para apagar
+- [Phase ?]: Policy de INSERT exige dia = hoje em Sao Paulo + vendedor ativo, alem do proprio usuario_id: impede gravacao direta com dia retroativo
+- [Phase ?]: profiles.desativado_em e reativado_em (duas colunas): uma coluna so perderia os dias antes da desativacao e trataria todo periodo desativado como dia util esperado
+- [Phase ?]: ADER-01/02/03 deixados como Pending em REQUIREMENTS.md apos o plano 30-01 (nao marcados Complete) — o source_audit do proprio plano mostra que cada requisito so fecha depois dos planos 30-02/30-03/30-04/30-05/30-06 (leitura agregada, aplicacao, registro em producao, UI); mesma convencao ja travada nas Fases 9-01/19-01/22-01
 
 ### Pending Todos
 
@@ -418,7 +423,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-27T13:51:48.370Z
+Last session: 2026-09-27T16:09:40.209Z
 Stopped at: Phase 30 context gathered
 Resume file: .planning/phases/30-ader-ncia-de-uso-no-dashboard/30-CONTEXT.md
 
