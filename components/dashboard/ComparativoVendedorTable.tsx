@@ -22,7 +22,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import type { ComparativoVendedorRow } from "@/lib/supabase/queries/dashboard"
+import {
+  rotuloAderencia,
+  TEXTO_TOOLTIP_ADERENCIA,
+  type ComparativoVendedorLinha,
+} from "@/lib/aderencia/exibicao"
 
 const integerFormatter = new Intl.NumberFormat("pt-BR")
 const percentFormatter = new Intl.NumberFormat("pt-BR", {
@@ -51,7 +55,7 @@ function formatDias(value: number | null): string {
 type FetchState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; rows: ComparativoVendedorRow[] }
+  | { status: "ready"; rows: ComparativoVendedorLinha[] }
 
 /**
  * "Comparativo por vendedor" (VEND-01) — read-only history table, one row
@@ -70,6 +74,16 @@ type FetchState =
  * Fetches independently on mount via getComparativoVendedorAction() and owns
  * its own loading/error/empty states, mirroring FunilDetalhadoTable's
  * posture, so a failure here never blanks the rest of the dashboard.
+ *
+ * "Aderência de uso" (ADER-01/03, Phase 30) is the last column — unlike the
+ * five columns above, which are full-history figures, this one is a rolling
+ * 28-day window computed entirely by the backend (dashboard_aderencia_uso(),
+ * plan 30-02) and merged in by getComparativoVendedorAction() (plan 30-05).
+ * The cell only calls rotuloAderencia() — it never formats dates, computes a
+ * percentage, or decides "coletando" itself (D-09). This component still has
+ * no role check and never reorders/filters rows; whether the sales team was
+ * told their usage is being measured (D-12) is the project owner's own
+ * communication decision, never a banner this codebase renders.
  */
 export function ComparativoVendedorTable() {
   const [state, setState] = useState<FetchState>({ status: "loading" })
@@ -108,7 +122,8 @@ export function ComparativoVendedorTable() {
           Comparativo por vendedor
         </CardTitle>
         <CardDescription>
-          Histórico completo — não é afetado pelo filtro de período
+          Histórico completo — não é afetado pelo filtro de período. A
+          aderência de uso considera os últimos 28 dias.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -156,22 +171,56 @@ export function ComparativoVendedorTable() {
                     </Tooltip>
                   </div>
                 </TableHead>
+                <TableHead>
+                  <div className="flex items-center gap-1">
+                    Aderência de uso
+                    <Tooltip>
+                      <TooltipTrigger
+                        className="inline-flex shrink-0 items-center bg-transparent p-0"
+                        aria-label={TEXTO_TOOLTIP_ADERENCIA}
+                      >
+                        <CircleHelp className="size-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>{TEXTO_TOOLTIP_ADERENCIA}</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {state.rows.map((row) => (
-                <TableRow key={row.responsavel}>
-                  <TableCell className="font-medium">
-                    {row.responsavelNome}
-                  </TableCell>
-                  <TableCell>{formatConversao(row.taxaConversao)}</TableCell>
-                  <TableCell>
-                    {integerFormatter.format(row.negociosIniciados)}
-                  </TableCell>
-                  <TableCell>{integerFormatter.format(row.ganho)}</TableCell>
-                  <TableCell>{formatDias(row.cicloMedioDias)}</TableCell>
-                </TableRow>
-              ))}
+              {state.rows.map((row) => {
+                const rotulo = rotuloAderencia(row.aderencia)
+
+                return (
+                  <TableRow key={row.responsavel}>
+                    <TableCell className="font-medium">
+                      {row.responsavelNome}
+                    </TableCell>
+                    <TableCell>{formatConversao(row.taxaConversao)}</TableCell>
+                    <TableCell>
+                      {integerFormatter.format(row.negociosIniciados)}
+                    </TableCell>
+                    <TableCell>{integerFormatter.format(row.ganho)}</TableCell>
+                    <TableCell>{formatDias(row.cicloMedioDias)}</TableCell>
+                    <TableCell>
+                      {rotulo.coletando ? (
+                        <span className="text-sm text-muted-foreground">
+                          {rotulo.principal}
+                        </span>
+                      ) : (
+                        <div className="flex flex-col">
+                          <span>{rotulo.principal}</span>
+                          {rotulo.detalhe !== null ? (
+                            <span className="text-xs text-muted-foreground">
+                              {rotulo.detalhe}
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         )}
