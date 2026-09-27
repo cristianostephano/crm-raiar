@@ -68,6 +68,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PerdaMotivoDialog } from "@/components/clientes/PerdaMotivoDialog"
 import { GanhoFrequenciaDialog } from "@/components/clientes/GanhoFrequenciaDialog"
+import { EncerramentoMotivoDialog } from "@/components/clientes/EncerramentoMotivoDialog"
 import { HistoricoTimeline } from "@/components/clientes/HistoricoTimeline"
 import { DiarioTimeline } from "@/components/clientes/DiarioTimeline"
 import {
@@ -110,11 +111,16 @@ const LOAD_ERROR =
   "Não foi possível carregar os dados do cliente. Tente novamente."
 const DELETE_GENERIC_ERROR = "Não foi possível apagar o cliente. Tente novamente."
 const GANHO_TOOLTIP = 'Disponível somente na etapa "1ª venda concluída".'
+// Fase 29 (D-04): mesmo formato de GANHO_TOOLTIP, para a 4ª opção do Select
+// de Status — "Encerrado" só é alcançável a partir de "Ganho".
+const ENCERRADO_TOOLTIP =
+  'Disponível somente quando o cliente já está "Ganho".'
 
 const STATUS_OPTIONS: { value: StatusAcompanhamento; label: string }[] = [
   { value: "em_andamento", label: "Em andamento" },
   { value: "perdido", label: "Perdido" },
   { value: "ganho", label: "Ganho" },
+  { value: "encerrado", label: "Encerrado" },
 ]
 
 // Base UI's <Select.Value> only resolves a human-readable label for a
@@ -211,6 +217,7 @@ export function ClienteDetailSheet({
   vendedorOptions,
   onSaved,
   onDeleted,
+  onStatusChanged,
 }: {
   clienteId: string | null
   open: boolean
@@ -221,6 +228,11 @@ export function ClienteDetailSheet({
   vendedorOptions: { id: string; nome: string }[]
   onSaved: (values: UpdateClienteInput) => void
   onDeleted: (id: string) => void
+  /** Fase 29 (critério 2): avisa quem abriu a ficha que o status mudou — a
+   * Agenda usa isto para recarregar e o cliente encerrado sumir dela na
+   * hora, sem esperar a próxima navegação. Opcional: o Kanban não precisa
+   * passar (ele já recarrega a lista inteira por outros meios). */
+  onStatusChanged?: (novoStatus: StatusAcompanhamento) => void
 }) {
   const [cliente, setCliente] = useState<ClienteDetalhe | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -246,6 +258,7 @@ export function ClienteDetailSheet({
   const [isSavingStatus, setIsSavingStatus] = useState(false)
   const [perdaDialogOpen, setPerdaDialogOpen] = useState(false)
   const [ganhoDialogOpen, setGanhoDialogOpen] = useState(false)
+  const [encerramentoDialogOpen, setEncerramentoDialogOpen] = useState(false)
   const [frequenciaError, setFrequenciaError] = useState<string | null>(null)
   const [isSavingFrequencia, setIsSavingFrequencia] = useState(false)
 
@@ -310,6 +323,7 @@ export function ClienteDetailSheet({
       setStatusError(null)
       setPerdaDialogOpen(false)
       setGanhoDialogOpen(false)
+      setEncerramentoDialogOpen(false)
       setFrequenciaError(null)
       setIsSavingFrequencia(false)
       setAddingTarefa(false)
@@ -390,7 +404,8 @@ export function ClienteDetailSheet({
     novoStatus: StatusAcompanhamento,
     motivoPerdaId?: string,
     frequenciaVisita?: FrequenciaVisita,
-    cnpj?: string
+    cnpj?: string,
+    motivoEncerramentoId?: string
   ): Promise<MarcarStatusResult> {
     if (!cliente) return { error: { code: "cliente_nao_encontrado", message: LOAD_ERROR } }
 
@@ -403,7 +418,8 @@ export function ClienteDetailSheet({
         novoStatus,
         motivoPerdaId,
         frequenciaVisita,
-        cnpj
+        cnpj,
+        motivoEncerramentoId
       )
 
       if (result.error) {
@@ -452,6 +468,7 @@ export function ClienteDetailSheet({
       setIsSavingStatus(false)
       await refreshHistorico()
       await refreshDiario()
+      onStatusChanged?.(novoStatus)
       return result
     } catch {
       const error = {
@@ -473,6 +490,10 @@ export function ClienteDetailSheet({
     }
     if (novoStatus === "ganho") {
       setGanhoDialogOpen(true)
+      return
+    }
+    if (novoStatus === "encerrado") {
+      setEncerramentoDialogOpen(true)
       return
     }
     void handleStatusChange(novoStatus)
@@ -1116,43 +1137,68 @@ export function ClienteDetailSheet({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {STATUS_OPTIONS.map((option) => (
-                            <SelectItem
-                              key={option.value}
-                              value={option.value}
-                              disabled={
-                                option.value === "ganho" &&
-                                cliente.etapa !== ETAPA_FINAL
-                              }
-                            >
-                              <span className="inline-flex items-center gap-1.5">
-                                <span
-                                  aria-hidden="true"
-                                  className={cn(
-                                    "size-2 rounded-full",
-                                    option.value === "em_andamento" &&
-                                      "bg-muted-foreground",
-                                    option.value === "perdido" && "bg-destructive",
-                                    option.value === "ganho" && "bg-green-600"
-                                  )}
-                                />
-                                {option.label}
-                                {option.value === "ganho" &&
-                                cliente.etapa !== ETAPA_FINAL ? (
-                                  <Tooltip>
-                                    <TooltipTrigger
-                                      className="pointer-events-auto inline-flex items-center bg-transparent p-0"
-                                      aria-label={GANHO_TOOLTIP}
-                                      onClick={(event) => event.stopPropagation()}
-                                    >
-                                      <Info className="size-3.5 text-muted-foreground" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>{GANHO_TOOLTIP}</TooltipContent>
-                                  </Tooltip>
-                                ) : null}
-                              </span>
-                            </SelectItem>
-                          ))}
+                          {STATUS_OPTIONS.map((option) => {
+                            // Decisão de tela 2 (29-06-PLAN.md): "Encerrado"
+                            // NÃO fica desabilitada para quem já está
+                            // encerrado — só fora de "ganho"/"encerrado" (o
+                            // UI-SPEC §2 desabilita sempre que o status não é
+                            // "ganho", o que confundiria a opção já
+                            // selecionada com o tooltip de "Ganho").
+                            const encerradoDesabilitado =
+                              option.value === "encerrado" &&
+                              cliente.statusAcompanhamento !== "ganho" &&
+                              cliente.statusAcompanhamento !== "encerrado"
+                            const ganhoDesabilitado =
+                              option.value === "ganho" &&
+                              cliente.etapa !== ETAPA_FINAL
+
+                            return (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                disabled={ganhoDesabilitado || encerradoDesabilitado}
+                              >
+                                <span className="inline-flex items-center gap-1.5">
+                                  <span
+                                    aria-hidden="true"
+                                    className={cn(
+                                      "size-2 rounded-full",
+                                      option.value === "em_andamento" &&
+                                        "bg-muted-foreground",
+                                      option.value === "perdido" && "bg-destructive",
+                                      option.value === "ganho" && "bg-green-600",
+                                      option.value === "encerrado" && "bg-slate-500"
+                                    )}
+                                  />
+                                  {option.label}
+                                  {ganhoDesabilitado ? (
+                                    <Tooltip>
+                                      <TooltipTrigger
+                                        className="pointer-events-auto inline-flex items-center bg-transparent p-0"
+                                        aria-label={GANHO_TOOLTIP}
+                                        onClick={(event) => event.stopPropagation()}
+                                      >
+                                        <Info className="size-3.5 text-muted-foreground" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>{GANHO_TOOLTIP}</TooltipContent>
+                                    </Tooltip>
+                                  ) : null}
+                                  {encerradoDesabilitado ? (
+                                    <Tooltip>
+                                      <TooltipTrigger
+                                        className="pointer-events-auto inline-flex items-center bg-transparent p-0"
+                                        aria-label={ENCERRADO_TOOLTIP}
+                                        onClick={(event) => event.stopPropagation()}
+                                      >
+                                        <Info className="size-3.5 text-muted-foreground" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>{ENCERRADO_TOOLTIP}</TooltipContent>
+                                    </Tooltip>
+                                  ) : null}
+                                </span>
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                       {statusError ? (
@@ -1547,6 +1593,14 @@ export function ClienteDetailSheet({
             exigirCnpj={cliente.statusAcompanhamento !== "ganho"}
             onConfirm={(frequencia, cnpj) =>
               handleStatusChange("ganho", undefined, frequencia, cnpj)
+            }
+          />
+          <EncerramentoMotivoDialog
+            open={encerramentoDialogOpen}
+            onOpenChange={setEncerramentoDialogOpen}
+            nomeCliente={nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)}
+            onConfirm={(motivoId) =>
+              handleStatusChange("encerrado", undefined, undefined, undefined, motivoId)
             }
           />
         </>

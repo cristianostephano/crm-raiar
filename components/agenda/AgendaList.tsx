@@ -495,6 +495,8 @@ export function AgendaList({
         vendedorOptions={vendedorOptions}
         onSaved={handleRecarregar}
         onDeleted={handleRecarregar}
+        // Fase 29 (critério 2): encerrar/reativar pela ficha tira/põe o cliente da Agenda.
+        onStatusChanged={handleRecarregar}
       />
 
       {concluirItem ? (
