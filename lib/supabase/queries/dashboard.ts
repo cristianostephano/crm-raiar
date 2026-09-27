@@ -3,10 +3,11 @@ import { ETAPA_KEYS, type EtapaKey } from "@/lib/funil/etapas"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * Typed .rpc() readers for the eight dashboard_* aggregate functions (the
- * five from the 0003 migration, dashboard_funil_detalhado/
- * dashboard_tempo_ate_fechamento from 0009 in Phase 11, and
- * dashboard_comparativo_vendedor from 0011 in this phase). Mirrors
+ * Typed .rpc() readers for the dashboard_* aggregate functions (the five
+ * from the 0003 migration, dashboard_funil_detalhado/
+ * dashboard_tempo_ate_fechamento from 0009 in Phase 11,
+ * dashboard_comparativo_vendedor from 0011 in that same phase, and
+ * dashboard_aderencia_uso from 0040 in Phase 30). Mirrors
  * lib/supabase/queries/clientes.ts's getClientesAgrupadosPorEtapa()
  * throw-on-error posture — a dashboard chart that silently renders empty on
  * a real fetch error is worse than an explicit failed-fetch state (UI-SPEC's
@@ -269,6 +270,52 @@ export async function getComparativoVendedor(): Promise<ComparativoVendedorRow[]
         taxaConversao: taxaConversao(ganho, perdido),
       }
     }
+  )
+}
+
+export type AderenciaUsoRow = {
+  responsavel: string
+  diasUsados: number
+  diasUteis: number
+  // Já em pontos percentuais (0 a 100) — nulo quando diasUteis é zero
+  // (dashboard_aderencia_uso() decide isso no banco, nunca aqui).
+  aderenciaPct: number | null
+  // "AAAA-MM-DD" ou nulo. Preenchido = mostrar o aviso "Coletando dados
+  // desde" (D-09) em vez do percentual; quem decide é o Postgres.
+  coletandoDesde: string | null
+}
+
+/**
+ * ADER-01..03: leitura agregada, read-only, de dashboard_aderencia_uso()
+ * (migration 0040, plano 30-02). Nenhuma checagem de papel aqui — a função
+ * do banco já devolve zero linhas para quem não é Supervisor (D-08); esta
+ * função roda como o chamador, sem elevação de privilégio, no mesmo molde
+ * das demais leituras deste arquivo. dashboard_comparativo_vendedor() e
+ * getComparativoVendedor() não mudam — a junção por `responsavel` acontece
+ * na Server Action (plano 30-05), nunca no banco nem aqui.
+ */
+export async function getAderenciaUso(): Promise<AderenciaUsoRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("dashboard_aderencia_uso")
+
+  if (error) {
+    throw new Error(`Falha ao carregar aderência de uso: ${error.message}`)
+  }
+
+  return (data ?? []).map(
+    (row: {
+      responsavel: string
+      dias_usados: number | string
+      dias_uteis: number | string
+      aderencia_pct: number | string | null
+      coletando_desde: string | null
+    }) => ({
+      responsavel: row.responsavel,
+      diasUsados: Number(row.dias_usados),
+      diasUteis: Number(row.dias_uteis),
+      aderenciaPct: row.aderencia_pct === null ? null : Number(row.aderencia_pct),
+      coletandoDesde: row.coletando_desde,
+    })
   )
 }
 

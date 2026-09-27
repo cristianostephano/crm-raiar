@@ -1,7 +1,9 @@
 "use server"
 
+import { mesclarAderencia, type ComparativoVendedorLinha } from "@/lib/aderencia/exibicao"
 import { createClient } from "@/lib/supabase/server"
 import {
+  getAderenciaUso,
   getClientesPorEtapa,
   getComparativoVendedor,
   getDesempenhoVendedor,
@@ -11,7 +13,6 @@ import {
   getProspeccaoPorProduto,
   getTempoAteFechamento,
   type ClientesPorEtapaRow,
-  type ComparativoVendedorRow,
   type DesempenhoVendedorRow,
   type FunilDetalhadoRow,
   type GanhosPerdidosRow,
@@ -244,10 +245,20 @@ export async function getTempoAteFechamentoAction(): Promise<GetTempoAteFechamen
 }
 
 export type GetComparativoVendedorResult =
-  | { data: ComparativoVendedorRow[]; error?: undefined }
+  | { data: ComparativoVendedorLinha[]; error?: undefined }
   | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
 
-/** VEND-01 — live snapshot, no period parameter; Supervisor-only gate lives in DashboardClient, not here. */
+/**
+ * VEND-01 — live snapshot, no period parameter; Supervisor-only gate lives
+ * in DashboardClient, not here. ADER-01..03: a aderência de uso é uma
+ * métrica nova, decorativa em relação ao comparativo já em produção — se só
+ * ela falhar (`.catch(() => null)`), a tabela comparativa continua
+ * carregando normalmente, com a coluna de aderência em travessão em todas
+ * as linhas; se o comparativo falhar, o erro devolvido é o mesmo de sempre.
+ * Nenhuma checagem de papel aqui: D-08 já é garantido no banco
+ * (dashboard_aderencia_uso() devolve zero linhas para quem não é
+ * Supervisor) e DashboardClient nem monta este componente para Vendedor.
+ */
 export async function getComparativoVendedorAction(): Promise<GetComparativoVendedorResult> {
   const supabase = await createClient()
   const {
@@ -259,7 +270,12 @@ export async function getComparativoVendedorAction(): Promise<GetComparativoVend
   }
 
   try {
-    return { data: await getComparativoVendedor() }
+    const [comparativo, aderencia] = await Promise.all([
+      getComparativoVendedor(),
+      getAderenciaUso().catch(() => null),
+    ])
+
+    return { data: mesclarAderencia(comparativo, aderencia ?? []) }
   } catch {
     return {
       error: {
