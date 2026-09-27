@@ -107,6 +107,7 @@ export type MarcarStatusErrorCode =
   | "frequencia_obrigatoria"
   | "cnpj_obrigatorio"
   | "ficha_incompleta"
+  | "encerramento_travado"
   | "mover_falhou"
 
 export type MarcarStatusResult =
@@ -140,20 +141,41 @@ export type MarcarStatusResult =
  * campo falta. `lib/funil/fichaParaGanho.ts` é a autoridade única dessa
  * regra do lado TypeScript e precisa concordar campo por campo com o guard
  * do banco — ver o cabeçalho daquele módulo.
+ *
+ * Fase 29 (D-04/D-10/D-11/D-12, migration 0036): encerrar só é possível a
+ * partir de "ganho" e sempre com motivo (`motivoEncerramentoId`, 6º
+ * parâmetro) — mesma relação cortesia/backstop das pré-checagens acima,
+ * backstop real nas CHECKs `chk_encerrado_exige_motivo`/
+ * `chk_encerrado_somente_etapa_final` e no guard novo da RPC. A frequência
+ * agora usa o valor EFETIVO (parâmetro OU o já gravado no cliente) tanto na
+ * pré-checagem quanto no parâmetro da RPC — sem isso, "Reativar" de um
+ * toque (marcarStatus(id, "ganho") sem frequência) falharia sempre, mesmo
+ * para quem já tem frequência gravada (Pitfall 1 da pesquisa). Na
+ * reativação (status atual "encerrado") sem frequência gravada, a
+ * pré-checagem NÃO bloqueia — o cliente volta como "ganho sem frequência"
+ * (mesmo estado de todo cliente vindo de "Importar Clientes Ativos",
+ * migration 0027), e a RPC aceita isso só quando o status atual é
+ * "encerrado" (29-01, conflitos_resolvidos 1). As pré-checagens de CNPJ e
+ * de ficha incompleta abaixo continuam valendo na reativação sem mudança —
+ * "encerrado" é diferente de "ganho" nas condições delas (D-11). No
+ * sucesso, além de "/clientes" revalida "/agenda": encerrar/reativar tira/
+ * põe o cliente na Agenda e muda o selo do menu, que o layout calcula no
+ * servidor (D-12, critério 2).
  */
 export async function marcarStatus(
   clienteId: string,
   novoStatus: StatusAcompanhamento,
   motivoPerdaId?: string,
   frequenciaVisita?: FrequenciaVisita,
-  cnpj?: string
+  cnpj?: string,
+  motivoEncerramentoId?: string
 ): Promise<MarcarStatusResult> {
   const supabase = await createClient()
 
   const { data: cliente, error: fetchError } = await supabase
     .from("clientes")
     .select(
-      "etapa, status_acompanhamento, cnpj, razao_social, cep, rua, numero, cidade, estado"
+      "etapa, status_acompanhamento, cnpj, razao_social, cep, rua, numero, cidade, estado, frequencia_visita"
     )
     .eq("id", clienteId)
     .single()
@@ -186,13 +208,59 @@ export async function marcarStatus(
     }
   }
 
+  // Guards novos de encerrar (D-04/ENCR-02), mesma relação cortesia/
+  // backstop do resto deste arquivo — o backstop real são as CHECKs
+  // chk_encerrado_somente_etapa_final/chk_encerrado_exige_motivo e o guard
+  // novo dentro da RPC (migration 0036).
+  if (
+    novoStatus === "encerrado" &&
+    cliente.status_acompanhamento !== "ganho" &&
+    cliente.status_acompanhamento !== "encerrado"
+  ) {
+    return {
+      error: {
+        code: "encerramento_travado",
+        message: 'Só é possível encerrar um cliente que já está como "Ganho".',
+      },
+    }
+  }
+
+  if (novoStatus === "encerrado" && !motivoEncerramentoId) {
+    return {
+      error: {
+        code: "motivo_obrigatorio",
+        message: "Selecione o motivo do encerramento antes de salvar.",
+      },
+    }
+  }
+
+  // Frequência EFETIVA (D-10, Pitfall 1): parâmetro (revalidado pelo type
+  // guard) SENÃO a já gravada no cliente (também revalidada — nunca confiar
+  // cegamente num valor vindo do banco). Mesmo padrão do `cnpjEfetivo`
+  // abaixo: não bloquear aqui o que a RPC aceitaria. `reativacao` é a
+  // mesma condição do guard novo da RPC — só ela dispensa a frequência
+  // quando não há nenhuma gravada, restaurando o cliente como "ganho sem
+  // frequência" (estado normal de quem veio da importação de Ativos,
+  // migration 0027) em vez de travar um "Reativar" que não teria como ser
+  // resolvido (a ficha de um cliente encerrado não abre em lugar nenhum).
+  const frequenciaGravada = isFrequenciaVisita(cliente.frequencia_visita)
+    ? cliente.frequencia_visita
+    : null
+  const frequenciaEfetiva = isFrequenciaVisita(frequenciaVisita)
+    ? frequenciaVisita
+    : frequenciaGravada
+  const reativacao =
+    novoStatus === "ganho" && cliente.status_acompanhamento === "encerrado"
+
   // Pré-checagem apenas para uma mensagem mais amigável: o guard REAL é o
-  // do RPC `mover_card_funil` (13-01, migration 0013), que continua sendo o
-  // backstop se este caminho for contornado — mesma relação já documentada
-  // acima entre as pré-checagens e as CHECK constraints.
+  // do RPC `mover_card_funil` (13-01, migration 0013; estendido na 0036),
+  // que continua sendo o backstop se este caminho for contornado — mesma
+  // relação já documentada acima entre as pré-checagens e as CHECK
+  // constraints.
   if (
     novoStatus === "ganho" &&
-    !isFrequenciaVisita(frequenciaVisita)
+    frequenciaEfetiva === null &&
+    !reativacao
   ) {
     return {
       error: {
@@ -246,8 +314,9 @@ export async function marcarStatus(
     p_nova_etapa: cliente.etapa,
     p_novo_status: novoStatus,
     p_motivo_perda_id: novoStatus === "perdido" ? motivoPerdaId : null,
-    p_frequencia_visita: novoStatus === "ganho" ? frequenciaVisita : null,
+    p_frequencia_visita: novoStatus === "ganho" ? frequenciaEfetiva : null,
     p_cnpj: novoStatus === "ganho" ? (cnpj?.trim() || null) : null,
+    p_motivo_encerramento_id: novoStatus === "encerrado" ? motivoEncerramentoId : null,
   })
 
   if (error) {
@@ -259,7 +328,12 @@ export async function marcarStatus(
     }
   }
 
+  // Fase 29 (D-12, critério 2): encerrar/reativar tira/põe o cliente na
+  // Agenda (lista, calendário e o selo do menu, calculados no servidor) —
+  // revalidar só "/clientes" deixaria essas telas com dado velho até a
+  // próxima navegação.
   revalidatePath("/clientes")
+  revalidatePath("/agenda")
   return { data: true }
 }
 
