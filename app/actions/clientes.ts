@@ -14,6 +14,7 @@ import {
   type UpdateClienteInput,
 } from "@/lib/validations/cliente"
 import { createClient } from "@/lib/supabase/server"
+import { registrarAcessoDiario } from "@/lib/aderencia/registroDiario"
 import {
   getClienteById,
   getFrequenciasPedidoAtivas,
@@ -131,6 +132,12 @@ export async function createCliente(
     }
     return { error: { code: "generic" } }
   }
+
+  // Fase 30, D-02: cadastrar cliente conta como dia de uso, pela mesma RPC
+  // do acesso diário (o dia é carimbado pelo banco); o resultado é ignorado
+  // de propósito -- uma falha aqui nunca transforma este cadastro bem-
+  // sucedido em erro (registrarAcessoDiario nunca lança).
+  await registrarAcessoDiario(supabase)
 
   revalidatePath("/clientes")
   return { data: { id: inserted!.id } }
@@ -375,6 +382,12 @@ export async function updateCliente(
     }
   }
 
+  // Fase 30, D-02/D-05: editar cliente também conta como dia de uso, pela
+  // mesma RPC do acesso diário; o histórico do cliente (`historico`) não é
+  // tocado por isso (D-05). Resultado ignorado de propósito -- uma falha
+  // aqui nunca transforma esta edição bem-sucedida em erro.
+  await registrarAcessoDiario(supabase)
+
   revalidatePath("/clientes")
   return { data: { id: updated.id } }
 }
@@ -529,6 +542,12 @@ export async function atualizarFrequenciaVisita(
     // devolver sucesso silencioso.
     return { error: { code: "generic" } }
   }
+
+  // Fase 30, D-02/D-05: editar a frequência/dia fixo de visita também conta
+  // como dia de uso, pela mesma RPC do acesso diário. Resultado ignorado de
+  // propósito -- uma falha aqui nunca transforma esta gravação bem-sucedida
+  // em erro.
+  await registrarAcessoDiario(supabase)
 
   // Fase 24: a Agenda (plano 24-03) passa a listar quem está sem dia fixo —
   // gravar a âncora aqui muda aquela lista. Mesmo precedente da Fase 22

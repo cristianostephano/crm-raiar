@@ -141,7 +141,7 @@ describe("createCliente registra o dia de uso após o cadastro (D-02)", () => {
     rua: "Av. Paulista",
     numero: "1000",
     cidade: "São Paulo",
-    estado: "SP",
+    estado: "SP" as const,
     responsavel: "vendedor-1",
   }
 
@@ -187,7 +187,7 @@ describe("updateCliente registra o dia de uso após a edição (D-02)", () => {
     rua: "Av. Paulista",
     numero: "1000",
     cidade: "",
-    estado: "",
+    estado: "" as const,
     responsavel: "vendedor-1",
   }
 
