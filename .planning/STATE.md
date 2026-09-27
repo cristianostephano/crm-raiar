@@ -5,15 +5,15 @@ milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 30
 current_phase_name: ader-ncia-de-uso-no-dashboard
 status: executing
-stopped_at: Phase 30 context gathered
-last_updated: "2026-09-27T16:11:12.029Z"
+stopped_at: Completed 30-02-PLAN.md
+last_updated: "2026-09-27T16:31:03.537Z"
 last_activity: 2026-09-27
 last_activity_desc: Phase 30 execution started
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 20
-  completed_plans: 13
+  completed_plans: 14
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 ## Current Position
 
 Phase: 30 (ader-ncia-de-uso-no-dashboard) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-09-27 — Phase 30 execution started
 
@@ -117,6 +117,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 26 P04 | ~50min | 4 tasks | 15 files |
 | Phase 28 P04 | ~35min | 3 tasks | 9 files |
 | Phase 30 P01 | 40min | 2 tasks | 4 files |
+| Phase 30 P02 | 55min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -321,6 +322,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Policy de INSERT exige dia = hoje em Sao Paulo + vendedor ativo, alem do proprio usuario_id: impede gravacao direta com dia retroativo
 - [Phase ?]: profiles.desativado_em e reativado_em (duas colunas): uma coluna so perderia os dias antes da desativacao e trataria todo periodo desativado como dia util esperado
 - [Phase ?]: ADER-01/02/03 deixados como Pending em REQUIREMENTS.md apos o plano 30-01 (nao marcados Complete) — o source_audit do proprio plano mostra que cada requisito so fecha depois dos planos 30-02/30-03/30-04/30-05/30-06 (leitura agregada, aplicacao, registro em producao, UI); mesma convencao ja travada nas Fases 9-01/19-01/22-01
+- [Phase 30]: dashboard_aderencia_uso() e funcao separada de dashboard_comparativo_vendedor(), nunca uma extensao dela - evita regressao de VEND-01 ja em producao; a juncao dos dois resultados por responsavel acontece na camada de consulta (plano 30-05), nunca no banco
+- [Phase 30]: Testes de integracao com 7 vendedores de fixture exigiram beforeAll com Promise.all e timeout explicito de 60s - criacao sequencial de 8 membros estourava o hookTimeout padrao de 10s do Vitest
 
 ### Pending Todos
 
@@ -423,9 +426,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-27T16:09:40.209Z
-Stopped at: Phase 30 context gathered
-Resume file: .planning/phases/30-ader-ncia-de-uso-no-dashboard/30-CONTEXT.md
+Last session: 2026-09-27T16:31:03.521Z
+Stopped at: Completed 30-02-PLAN.md
+Resume file: None
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
 
