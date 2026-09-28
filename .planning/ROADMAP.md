@@ -111,7 +111,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
 
 **Milestone Goal:** Corrigir problemas reais encontrados no primeiro uso do sistema pelo time de vendas, fechar uma lacuna do ciclo de vida do cliente (perdidos e ativos que encerram), e dar ao Supervisor uma forma de medir se o time está usando a ferramenta como deveria.
 
-- [ ] **Phase 27: Correções do Primeiro Uso — Card Filtrado e Agenda** - O card do Kanban fica idêntico com ou sem filtro de vendedor, e a seção "Sem dia fixo definido" da Agenda passa a mostrar o nome do cliente junto do vendedor.
+- [x] **Phase 27: Correções do Primeiro Uso — Card Filtrado e Agenda** - O card do Kanban fica idêntico com ou sem filtro de vendedor, e a seção "Sem dia fixo definido" da Agenda passa a mostrar o nome do cliente junto do vendedor. (completed 2026-09-28)
 - [x] **Phase 28: Relatório de Perdidos** - Cliente "Perdido" sai das 7 colunas do funil e ganha uma tela própria (motivo, data, vendedor), com filtro por período, visibilidade por papel e botão "Reabrir" de um toque. (completed 2026-09-26)
 - [x] **Phase 29: Encerrar Cliente Ativo** - Vendedor encerra um cliente ativo que parou de comprar (com motivo obrigatório), o cliente sai da rotina da Agenda mantendo histórico e diário, e pode ser reativado depois. (completed 2026-09-27)
 - [x] **Phase 30: Aderência de Uso no Dashboard** - Supervisor vê, na tabela comparativa por vendedor, o % de dias úteis com uso real do sistema nas últimas 4 semanas, com o registro de uso guardando só o mínimo sobre cada pessoa. (completed 2026-09-27)
@@ -130,13 +130,13 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
   3. O card sem filtro continua exatamente como está hoje, e no card filtrado as setas de voltar/avançar etapa continuam funcionando (nenhuma regressão do que a quick task 260921-n0a entregou).
   4. Na seção "Sem dia fixo definido" da Agenda, cada linha mostra o nome do cliente junto do nome do vendedor responsável — inclusive para cliente sem razão social, que aparece pelo Nome Fantasia (mesma regra de nome exibido já usada no card e na ficha).
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 Plans:
 
 - [x] 27-01-PLAN.md — AGD-15: nome_fantasia da consulta até a linha "Sem dia fixo definido", título via nomeExibicaoCliente() (onda 1, autônomo)
 - [x] 27-02-PLAN.md — KAN-03: diagnóstico ao vivo pelo dono do projeto (checkpoint bloqueante) e registro do resultado, sem mudar código (onda 1)
-- [ ] 27-03-PLAN.md — KAN-03: correção condicional ao diagnóstico — div simples no StaticClienteCard + teste de paridade + guarda das setas (onda 2, depende do 27-02)
+- [x] 27-03-PLAN.md — KAN-03: correção condicional ao diagnóstico — div simples no StaticClienteCard + teste de paridade + guarda das setas (onda 2, depende do 27-02)
 
 **UI hint**: yes
 
@@ -226,7 +226,7 @@ Phases execute in numeric order: 27 → 28 → 29 → 30
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 27. Correções do Primeiro Uso — Card Filtrado e Agenda | v1.7 | 2/3 | In Progress|  |
+| 27. Correções do Primeiro Uso — Card Filtrado e Agenda | v1.7 | 3/3 | Complete   | 2026-09-28 |
 | 28. Relatório de Perdidos | v1.7 | 4/4 | Complete   | 2026-09-26 |
 | 29. Encerrar Cliente Ativo | v1.7 | 0/TBD | Not started | - |
 | 30. Aderência de Uso no Dashboard | v1.7 | 6/6 | Complete   | 2026-09-27 |

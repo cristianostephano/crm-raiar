@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Ajustes Pós-Teste com o Time de Vendas
 current_phase: 30
-status: completed
-stopped_at: Completed 30-04-PLAN.md
-last_updated: "2026-09-27T21:03:14.181Z"
+status: verifying
+stopped_at: Completed 27-03-PLAN.md (KAN-03 fix, backfill — Phase 27 now 3/3 complete)
+last_updated: "2026-09-28T13:40:10.341Z"
 last_activity: 2026-09-27
 last_activity_desc: Phase 30 marked complete
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 20
-  completed_plans: 18
-  percent: 75
+  completed_plans: 20
+  percent: 100
 current_phase_name: ader-ncia-de-uso-no-dashboard
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 Phase: 30 — COMPLETE
 Plan: 6 of 6
-Status: Phase 30 complete
+Status: Phase complete — ready for verification
 Last activity: 2026-09-27 — Phase 30 marked complete
 
 Progress: [░░░░░░░░░░] 0%
@@ -121,6 +121,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 30 P04 | 10min | 3 tasks | 6 files |
 | Phase 30 P05 | 20min | 2 tasks | 7 files |
 | Phase 30 P06 | ~15min | 2 tasks | 2 files |
+| Phase 27 P03 | 35min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -333,6 +334,7 @@ Recent decisions affecting current work:
 - [Phase ?]: aderenciaPct nunca e multiplicado por 100 - ja chega em pontos percentuais do banco, ao contrario de taxaConversao (razao 0-1)
 - [Phase ?]: getAderenciaUso().catch(() => null) isola a falha da metrica nova - o comparativo mantem o comportamento de erro de sempre
 - [Phase 30]: 30-06: coluna Aderencia de uso renderizada exatamente como planejado, sem checagem de papel nova (D-08 garantido por DashboardClient + RLS) — Nenhuma decisao fora do que o plano ja travava
+- [Phase 27]: KAN-03 corrigido: div simples em StaticClienteCard evita compressao do card do Kanban quando filtro/busca/aba Incompletos esta ativo (diagnostico ao vivo do 27-02 confirmou H1)
 
 ### Pending Todos
 
@@ -435,8 +437,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-27T20:52:57.898Z
-Stopped at: Completed 30-04-PLAN.md
+Last session: 2026-09-28T13:40:10.312Z
+Stopped at: Completed 27-03-PLAN.md (KAN-03 fix, backfill — Phase 27 now 3/3 complete)
 Resume file: None
 
 - Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).

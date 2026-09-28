@@ -17,7 +17,7 @@ Requisitos do marco v1.7 (Ajustes Pós-Teste com o Time de Vendas). Cada um mape
 
 ### Kanban (correção)
 
-- [ ] **KAN-03**: Card do Kanban com filtro de vendedor ativo mostra as mesmas informações (categoria, vendedor, cidade/estado, ícones) e não corta nomes — idêntico ao card sem filtro
+- [x] **KAN-03**: Card do Kanban com filtro de vendedor ativo mostra as mesmas informações (categoria, vendedor, cidade/estado, ícones) e não corta nomes — idêntico ao card sem filtro
 
 ### Agenda (correção)
 
@@ -57,7 +57,7 @@ Nenhum requisito deferido formalmente neste marco — ver `.planning/seeds/SEED-
 | PERD-03 | Phase 28 | Complete |
 | PERD-04 | Phase 28 | Complete |
 | PERD-05 | Phase 28 | Complete |
-| KAN-03 | Phase 27 | Pending |
+| KAN-03 | Phase 27 | Complete |
 | AGD-15 | Phase 27 | Complete |
 | ENCR-01 | Phase 29 | Complete |
 | ENCR-02 | Phase 29 | Complete |
