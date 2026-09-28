@@ -260,6 +260,51 @@
 
 ---
 
+## Milestone: v1.7 — Ajustes Pós-Teste com o Time de Vendas
+
+**Shipped:** 2026-09-28
+**Phases:** 4 | **Plans:** 20 | **Sessions:** ~2 sessões (a segunda retomou com resumo de contexto; primeiro marco nascido de feedback real do time de vendas usando o sistema, não de planejamento antecipado)
+
+### What Was Built
+- Fase 27: card do Kanban filtrado por vendedor deixou de perder categoria/vendedor/cidade/ícones em colunas cheias (causa raiz diagnosticada ao vivo em produção, sem tocar dado real), e a seção "Sem dia fixo definido" da Agenda passou a mostrar o nome do cliente.
+- Fase 28: cliente "Perdido" ganhou tela própria (`clientes_perdidos()`, migration 0034) com motivo/data/vendedor, filtro por período e "Reabrir" de um toque; regra única de "fora da prospecção" cresceu de 1 pra 2 valores.
+- Fase 29: novo status "Encerrado" (migrations 0035-0037) com 7ª lista editável de motivos, guard de motivo obrigatório, reativação sem frequência (nunca bloqueando pela ficha fechada), e Dashboard preservando números históricos através de encerramento/reativação.
+- Fase 30: aderência de uso por vendedor no Dashboard (migrations 0038-0047) — registro diário mínimo (`acessos_diarios`), carimbos de desativação/reativação, e `dashboard_aderencia_uso()` com proporção por admissão/lacuna.
+
+### What Worked
+- **Diagnóstico ao vivo pelo próprio agente, sem pedir trabalho técnico ao dono**: quando o dono perguntou "você não consegue ver isso?" sobre o KAN-03, o agente usou seu próprio navegador (com uma conta de Supervisor de teste descartável) pra medir CSS computado diretamente via JavaScript, em vez de pedir um roteiro manual de DevTools — evidência mais forte (números exatos) em menos tempo, e reaproveitável sempre que a ferramenta de navegador estiver disponível.
+- **Isolamento de causa raiz sem tocar dado real**, mesmo pra um bug genuinamente difícil (RLS não aplicado corretamente a um INSERT feito de dentro de função plpgsql via RPC): uma tabela de teste completamente separada, criada e apagada só pra diagnóstico, provou a causa em 3 rodadas incrementais (regra simples → captura de erro → policies live) sem nunca arriscar a tabela real.
+- **Bloqueio automático de segurança pegou uma mudança de postura real antes que ela acontecesse sem aprovação**: a primeira tentativa de escrever `SECURITY DEFINER` na função de aderência foi recusada pelo classificador do próprio ambiente — o agente parou, explicou o motivo e a mitigação ao dono, e só escreveu depois de aprovação explícita via pergunta direta. Confirma que a trava funciona como desenhada, mesmo numa sessão já avançada.
+- **Migrations de correção pós-aplicação seguiram a convenção já estabelecida** (nunca editar uma migration já aplicada, sempre nova) — usada 7 vezes seguidas (0041-0047) na Fase 30 pra isolar e corrigir o bug de RLS, sem nenhuma tentativa de atalho.
+- Requisitos ADER-01/02/03 marcados "Complete" prematuramente por um executor foram pegos e corrigidos pelo orquestrador antes de virarem inconsistência permanente — mesma disciplina de "só fecha requisito no último plano contribuinte" já confirmada em marcos anteriores.
+
+### What Was Inefficient
+- **Um agente executor sobrescreveu REQUIREMENTS.md fora da convenção do projeto** (marcou ADER-01/02/03 completos no plano 30-02, antes do plano 30-06 — a UI — sequer existir) — revertido manualmente pelo orquestrador; instrução explícita "não toque em REQUIREMENTS.md" precisou ser adicionada aos dispatches seguintes da mesma fase pra não repetir.
+- **Um arquivo de diagnóstico (migration 0042) foi colado errado no SQL Editor por um problema de autocorreção de travessão duplo (`--`) virando travessão simples** — descoberto só pelo erro de sintaxe do Postgres, corrigido trocando pra comentário em bloco (`/* */`); custou uma rodada extra de ida-e-volta com o dono.
+- **Um script de diagnóstico paralelo sobrescreveu por acidente um arquivo de migration local** quando o dono colou de volta no chat o texto "Success" que a interface atribuiu erroneamente ao arquivo em vez de à mensagem — identificado via `git diff` antes de prosseguir, restaurado do histórico do git, sem nenhum efeito no banco (a migration já tinha sido aplicada com o conteúdo correto antes da sobrescrita local).
+- **Loop de espera por deploy da Vercel usou a lógica invertida (`until` em vez de `while`) três vezes seguidas** antes de ser percebido e corrigido — o `until` parava assim que via "pending" (o oposto do que se queria), gerando relatos de conclusão falsos até a correção.
+- **Marco fechado sem o relatório formal de verificação por fase** (VERIFICATION.md) — aceito explicitamente pelo dono no checkpoint de fechamento, compensado por testes de integração verdes + confirmação manual ao vivo em produção para cada funcionalidade, mas fica como gap de processo registrado (ver STATE.md § Deferred Items).
+
+### Patterns Established
+- **Diagnóstico de bug de tela pelo próprio navegador do agente** (conta de teste descartável, medição de CSS computado/DOM via JavaScript) vira alternativa preferível ao roteiro manual de DevTools sempre que o dono não tiver ou não quiser gastar tempo técnico — mais rápido, mais preciso, zero fricção pro dono.
+- **Isolamento de causa em tabela de teste separada** (nunca a tabela real) como técnica padrão pra diagnosticar bugs de RLS/segurança sem risco — usado com sucesso na Fase 30 pra provar uma limitação genuína do ambiente antes de mudar a postura de segurança de uma função.
+- **Mudança de postura de segurança (nova exceção `SECURITY DEFINER`) sempre passa por aprovação explícita do dono, mesmo quando o agente já identificou a causa e a mitigação** — o bloqueio automático do ambiente reforça isso estruturalmente, não só por disciplina.
+- **Correção pós-aplicação de migration é sempre uma migration nova, nunca edição da já aplicada** — confirmado outra vez, inclusive em sequência longa (7 migrations de correção numa fase só).
+
+### Key Lessons
+1. Quando uma ferramenta de navegador do próprio agente está disponível, ela é preferível a pedir ao dono um roteiro técnico manual — não só por conveniência, mas porque a evidência (medição direta) é mais forte que leitura visual de print.
+2. Um bug "impossível" de RLS (regra correta, mas recusada mesmo assim) pode ser uma limitação genuína do ambiente, não um erro de lógica — vale isolar a causa numa tabela de teste totalmente separada antes de assumir que o próprio código está errado.
+3. Bloqueios automáticos de segurança do ambiente (classificador de modo automático) continuam pegando exatamente o tipo de mudança que deveriam pegar (uma nova exceção `SECURITY DEFINER`) mesmo tarde numa sessão longa — não é atrito, é a rede de segurança funcionando.
+4. Instruir um executor a "nunca tocar em REQUIREMENTS.md" precisa ser explícito em CADA dispatch da mesma fase quando o requisito só fecha no último plano contribuinte — um executor anterior já ter seguido a regra não garante que o próximo vá inferir o mesmo sem ser dito de novo.
+5. Lógica de loop `until`/`while` merece uma segunda checagem antes de rodar em produção (mesmo numa tarefa aparentemente trivial de "esperar o deploy") — o custo de uma condição invertida é silencioso (relatório de conclusão falso), não um erro óbvio.
+
+### Cost Observations
+- Model mix: planner em opus, executor/researcher em sonnet, plan-checker em haiku — mesmo padrão dos 6 marcos anteriores.
+- Fase 30 consumiu significativamente mais rodadas de ida-e-volta com o dono do que qualquer fase anterior (7 migrations de diagnóstico/correção pós-aplicação, mais a aprovação extra da mudança de postura de segurança) — custo justificado pelo tipo de bug (limitação de ambiente, não erro de código), mas vale considerar testar o padrão "INSERT de dentro de função plpgsql + RLS" antecipadamente em fases futuras que sigam o mesmo desenho.
+- Verificação de produto ao vivo (screenshots reais + medição de DOM) substituiu satisfatoriamente parte da verificação formal de fase que ficou pendente — não é substituto perfeito, mas reduziu o risco do gap aceito no fechamento do marco.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -273,6 +318,7 @@
 | v1.4 | ~1 sessão longa (2 quedas por limite recuperadas, mais uma pausa deliberada do usuário no meio de um checkpoint) | 2 | Primeiro marco a pular discuss-phase/research deliberadamente nas duas fases (escopo já resolvido em conversa + precedente forte no código, confirmado via pergunta explícita); primeiro marco pequeno o suficiente (2 fases) pra caber inteiro numa sessão só, incluindo fechamento |
 | v1.5 | ~1 sessão longa (múltiplas quedas por limite recuperadas, mais uma pausa deliberada do usuário no meio de execução) | 3 | Primeiro marco a usar um esboço jogável (`/gsd-sketch`) antes de travar o roadmap — o dono pediu pra "ver como fica" e isso virou etapa formal; primeira vez que uma pergunta direta sobre caso de borda mudou o roadmap ANTES de ser escrito (AGD-13 virou fase própria) |
 | v1.6 | ~1 sessão muito longa (múltiplas quedas por limite recuperadas em quase todas as fases) | 4 | Primeiro marco onde instabilidade de automação de navegador foi sistemática o suficiente pra virar padrão documentado (não surpresa pontual); primeira vez que verificação de checkpoint parcial (evidência combinada: testes + leitura de código + confirmação ao vivo parcial) foi aceita explicitamente como fechamento, por upload de arquivo ser categoricamente não automatizável |
+| v1.7 | ~2 sessões (retomada com resumo de contexto) | 4 | Primeiro marco nascido de feedback real de uso (não planejamento antecipado); primeira vez que o agente diagnosticou um bug de tela sozinho pelo próprio navegador (conta de teste descartável) em vez de pedir roteiro manual ao dono; primeira nova exceção `SECURITY DEFINER` desde a v1.2 (6ª do projeto), bloqueada uma vez pelo classificador automático e só aplicada após aprovação explícita; primeiro marco fechado sem verificação formal por fase (aceito explicitamente pelo dono) |
 
 ### Cumulative Quality
 
@@ -284,6 +330,7 @@
 | v1.4 | Dezenas de casos novos em `tests/clientes/cnpj-ganho.test.ts`, `tests/importacao/rls-cnpj-lote.test.ts`, `tests/importacao/annotarLinhaCnpj.test.ts`/`confirmarCnpj.test.ts` (integração contra o banco real, incluindo caso de nome ambíguo); zero regressão nos arquivos que não deveriam ser tocados (`funil-status`, `funil-constraints`, `rls-visitas`, `rls-frequencia-lote`) | Não medido formalmente | Nenhuma dependência nova — v1.4 reaproveitou toda a stack já instalada |
 | v1.5 | Centenas de casos novos across `tests/agenda/*` (calendário, item concluído, conclusão remota) e `tests/configuracoes/*` (6ª lista); zero regressão em `agenda-list.test.tsx`, `agenda_do_vendedor()`, e nos 4 arquivos de teste de conclusão pré-existentes | Não medido formalmente | Nenhuma dependência nova — grid de calendário montada à mão com `date-fns`/CSS Grid já instalados |
 | v1.6 | Centenas de casos novos across `tests/clientes/*` (guard ampliado, dia fixo, vocabulário), `tests/importacao/*` (RPC de ativos, vocabulário de prospecção, existentes/produtos-pendentes), `tests/agenda/*` (seção "sem dia fixo"); zero regressão nos guards antigos de `mover_card_funil` e em `tests/clientes/frequencia-visita.test.ts` (fallback preservado byte a byte) | Não medido formalmente | Nenhuma dependência nova — 5 migrations + módulos puros novos em cima da stack já instalada |
+| v1.7 | ~200 casos novos across `tests/dashboard/*` (perdidos, encerrados, acessos-diarios, aderencia-uso), `tests/clientes/kanban-card-filtrado.test.ts`, `tests/equipe/carimbos-desativacao.test.ts`, `tests/aderencia/*`; zero regressão em `cliente-card-setas-etapa.test.tsx` (guarda das setas) e nas 5 funções `dashboard_*` de ganho | Não medido formalmente | Nenhuma dependência nova — 9 migrations (0034-0042) + módulos puros novos em cima da stack já instalada |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -297,3 +344,5 @@
 8. Perguntar explicitamente sobre casos de borda ("o que acontece com X passado/histórico?") antes de escrever requisitos revela escopo real que pesquisa automática sozinha não captura — confirmado em v1.5 (AGD-13 nasceu de uma pergunta direta, não da pesquisa inicial).
 9. Instabilidade de automação de navegador varia bastante por tipo de widget (dnd-kit, Selects customizados, botões de alternância, uploads de arquivo) — vale ter um caminho de verificação alternativo pronto (seed de dado via service-role + leitura direta do banco) em vez de insistir em forçar o clique a cada vez; confirmado sistematicamente em v1.6, após aparições pontuais em marcos anteriores (v1.0's Fase 8).
 10. Widening de um guard existente é fácil de errar por incompletude (esquecer um campo), não por lógica errada — plan-checker pegou isso antes da execução em v1.6 (Fase 25, 7→9 campos); vale checar contagem de campos/condições mesmo em mudanças que "parecem" só mecânicas.
+11. Quando o agente tem acesso a um navegador próprio, usá-lo pra diagnosticar um bug de tela diretamente (medição de CSS/DOM computado, com uma conta de teste descartável) é preferível a pedir ao dono um roteiro manual de DevTools — mais rápido, mais preciso, e sem exigir conhecimento técnico dele; confirmado pela primeira vez na Fase 27 do v1.7, a pedido explícito do dono ("você não consegue ver isso?").
+12. Uma regra de RLS logicamente correta ainda pode ser recusada pelo Postgres num cenário específico (INSERT feito de dentro de uma função plpgsql chamada via RPC) — isso é uma limitação real do ambiente, não um erro de lógica; isolar a causa numa tabela de teste totalmente separada (nunca a tabela real) prova isso com segurança antes de mudar qualquer postura de segurança — primeira vez encontrado e documentado no v1.7 (Fase 30), motivando a 6ª exceção `SECURITY DEFINER` do projeto.
