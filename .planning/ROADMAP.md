@@ -153,7 +153,17 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.7-ROADMAP
 (e) **Contador no menu:** "Agenda 2" mostra o número de pendentes (como "Agenda") ou fica sem contador (como "Perdidos"/"Encerrados")? Os testes de menu existentes que conferem a ordem dos itens vão precisar incluir a posição nova.
 (f) **Vendedor desativado:** itens da Agenda 2 não são clientes e não entram na transferência da v1.2 — ficam com o vendedor desativado, visíveis ao Supervisor. Confirmar que está bom assim.
 (g) **Regras técnicas do projeto:** tabela nova com RLS ligada e regras de acesso explícitas no mesmo arquivo de migration; nenhuma exceção `SECURITY DEFINER` nova (o projeto continua com 6); aprovação do dono antes de aplicar a migration em produção, como nas fases anteriores; zero dependência nova.
-**Plans**: TBD
+**Plans**: 8 plans
+
+Plans:
+- [ ] 31-01-PLAN.md — Migration 0048 (tabela agenda2_itens + RLS dono-escreve/Supervisor-só-lê + carimbos) + testes estruturais e de RLS (vermelhos até o 31-03)
+- [ ] 31-02-PLAN.md — Funções puras da Lista (seções, visibilidade, filtro, duplicado) + schema Zod compartilhado (TDD)
+- [ ] 31-03-PLAN.md — [BLOCKING] Aprovação do dono (alerta LGPD) + aplicação manual da 0048 no SQL Editor + RLS verde
+- [ ] 31-04-PLAN.md — Leitura da Lista, contagem do menu e seis Server Actions (sem RPC)
+- [ ] 31-05-PLAN.md — Linha do item (riscado/editável/somente leitura) + confirmação de apagar
+- [ ] 31-06-PLAN.md — Item "Agenda 2" no menu com selo/bolinha + ajuste dos testes de ordem (D-15)
+- [ ] 31-07-PLAN.md — Formulário de criar/editar com aviso de duplicado e dica de LGPD
+- [ ] 31-08-PLAN.md — Tela /agenda-2 (Lista + visão do Supervisor) + verificação final (Agenda atual intocada)
 **UI hint**: yes
 
 ### Phase 32: Agenda 2 — Repetição Semanal e Calendário
