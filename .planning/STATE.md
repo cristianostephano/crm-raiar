@@ -5,8 +5,8 @@ milestone_name: Agenda 2
 current_phase: 31
 current_phase_name: "1 de 3 no marco v1.8: Fases 31-33"
 status: planning
-stopped_at: Phase 31 context gathered
-last_updated: "2026-09-28T19:40:38.067Z"
+stopped_at: Phase 31 UI-SPEC approved
+last_updated: "2026-09-28T20:01:42.769Z"
 last_activity: 2026-09-28
 last_activity_desc: Roadmap v1.8 criado (Fases 31-33, 9/9 requisitos mapeados)
 progress:
@@ -454,9 +454,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-28T19:40:38.027Z
-Stopped at: Phase 31 context gathered
-Resume file: .planning/phases/31-agenda-2-visitas-manuais-na-lista/31-CONTEXT.md
+Last session: 2026-09-28T20:01:42.729Z
+Stopped at: Phase 31 UI-SPEC approved
+Resume file: .planning/phases/31-agenda-2-visitas-manuais-na-lista/31-UI-SPEC.md
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
 
