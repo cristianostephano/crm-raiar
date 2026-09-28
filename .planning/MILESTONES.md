@@ -1,5 +1,33 @@
 # Milestones
 
+## v1.7 Ajustes Pós-Teste com o Time de Vendas (Shipped: 2026-09-28)
+
+**Phases completed:** 4 phases, 20 plans, 43 tasks
+
+**Key accomplishments:**
+
+- Correção do AGD-15: `getClientesSemDiaFixo()` agora lê `nome_fantasia`, e o título de cada linha da Agenda usa a mesma função única de nome exibido (`nomeExibicaoCliente`) do cartão do funil e da ficha, nunca mais ficando em branco.
+- O card do Kanban comprimido foi reproduzido ao vivo em produção e a causa foi confirmada por medição direta de CSS: a hipótese H1 (falta de um `div` de proteção no ramo de renderização usado quando algum filtro/aba está ativo) está correta. Nenhum arquivo de código foi alterado.
+- Quando um filtro de vendedor, uma busca ou a aba "Incompletos" está ligada no Kanban, o card deixa de perder categoria, vendedor, cidade/estado e ícones em colunas cheias: a correção coloca o card dentro de um `div` simples, exatamente como o card sem filtro já usa, e a coluna volta a rolar em vez de espremer os cards.
+- Nova função somente-leitura `clientes_perdidos(p_inicio, p_fim)` (migration 0034, sem elevação de privilégio) aplicada em produção e provada por 11/11 testes de integração verdes contra o banco real.
+- A regra única de `lib/funil/prospeccao.ts` passou de um status excluído ("ganho") para um conjunto de dois ("ganho" e "perdido"), via `.not("status_acompanhamento", "in", "(ganho,perdido)")` provado ao vivo contra o PostgREST real, mantendo "Exportar todos" intocado e travado por teste de regressão.
+- Módulo puro de período/busca (lib/perdidos/lista.ts), leitor paginado getClientesPerdidos e Server Action getClientesPerdidosAction sobre a RPC clientes_perdidos já em produção — 71 testes unitários (35+36) provando período, validação de entrada, busca e paginação, sem tocar o banco real.
+- Tela `/perdidos` completa: item no menu (Archive, sem contador), lista de clientes perdidos com filtro de período/busca e quatro estados vazios/erro, e botão "Reabrir" de um toque (icon-only, 44px) que devolve o cliente ao Kanban via `marcarStatus` — 32 testes de tela novos, todos no molde da Agenda já aprovado pelo UI-SPEC.
+- Migrations 0035/0036 ensinam o banco o status "Encerrado" (enum isolado, 7a lista editável de motivos, 2 CHECKs, `mover_card_funil` de 8 parâmetros que encerra e reativa, `agenda_do_vendedor` filtrando encerrado, e a leitura `clientes_encerrados` sem dado de contato) — provado por 25 casos de integração, todos RED até o push do 29-03.
+- As 3 migrations (0035/0036/0037) foram aprovadas pelo dono, aplicadas manualmente via SQL Editor da Supabase (push programático bloqueado pelo ambiente, mesma restrição da Fase 28), e os 27 testes de integração confirmaram tudo funcionando no banco de produção real.
+- Status "encerrado" ligado ao tipo do app e à exportação (D-01), excluído das 7 colunas do Kanban pela mesma fonte única de ganho/perdido (D-13), e `marcarStatus` estendido com as pré-checagens de encerrar, motivo obrigatório, frequência efetiva (destrava o "Reativar" de um toque, D-10) e revalidação da Agenda (D-12) — tudo provado por 33 testes automatizados (10 novos + 23 atualizados/reconfirmados), incluindo 2 ao vivo contra o banco de produção real.
+- Leitor paginado + Server Actions da tela Encerrados sobre a RPC `clientes_encerrados` (29-01), com módulo puro de período/validação/busca irmão do de Perdidos (Fase 28), e a 7ª lista editável (`motivos_encerramento`) registrada em Configurações.
+- 4ª opção "Encerrado" no Select de Status da ficha do cliente (bolinha cinza, desabilitada com tooltip fora de "Ganho"/"Encerrado"), diálogo irmão de motivo obrigatório (`EncerramentoMotivoDialog`), e recarga automática da Agenda depois de qualquer troca de status pela ficha — fechando o caminho de "vendedor encerra sozinho" da Fase 29.
+- 3 componentes irmãos de Perdidos (EncerradosItemRow, EncerradosPeriodoFilter, EncerradosList), a rota `/encerrados` e o item "Encerrados" no menu principal (ícone PauseCircle, sem contador), com "Reativar" de um toque reusando `marcarStatus(clienteId, "ganho")`.
+- Tabela `acessos_diarios` (2 colunas) + RLS de 3 policies + RPC `registrar_acesso_diario()` idempotente com descarte embutido de 35 dias, mais `profiles.desativado_em`/`reativado_em` carimbados pelas RPCs de equipe já existentes — e 22 testes de integração provando tudo, deliberadamente vermelhos até a aplicação manual no plano 30-03.
+- Migration 0040 cria `dashboard_aderencia_uso()` — leitura agregada read-only (SQL stable, sem elevação de privilégio) que calcula, por vendedor ativo, o percentual de dias úteis usados nos últimos 28 dias, com proporção por admissão/desativação-reativação e aviso de "coletando dados" — mais 18 testes de integração deliberadamente vermelhos até a aplicação manual no plano 30-03.
+- As migrations 0038/0039/0040 foram aprovadas e aplicadas pelo dono. Um teste de integração revelou que `registrar_acesso_diario()` rejeitava a gravação de um vendedor ativo real por um erro de RLS — diagnosticado sem tocar dado real, usando uma tabela de teste isolada, e corrigido com uma migration nova (0047) que tornou a função SECURITY DEFINER, aprovada explicitamente pelo dono após eu explicar a implicação de segurança. Os 40 testes de integração passam contra o banco de produção real.
+- Cookie-gated middleware call + três Server Actions de cliente chamando `registrar_acesso_diario()` (RPC do plano 30-01) sem nunca bloquear a requisição, cobrindo os sinais de "abriu o sistema" (D-01) e "cadastrou/editou cliente" (D-02/D-05) da aderência de uso.
+- Módulo puro `lib/aderencia/exibicao.ts` (rótulo de célula + junção por responsavel), `getAderenciaUso()` lendo `dashboard_aderencia_uso()`, e `getComparativoVendedorAction()` devolvendo o comparativo já mesclado com a aderência, tolerante a falha da métrica nova — 27 casos de teste (12+4+4+7) verdes.
+- Última coluna da tabela "Comparativo por vendedor" agora mostra, só para o Supervisor, o percentual de dias úteis usados nos últimos 28 dias (ou o aviso de coleta incompleta) — 13 casos de tela verdes, sem nenhuma mudança nas 5 colunas existentes.
+
+---
+
 ## v1.6 Importação de Clientes Ativos e Prospecção Separadas (Shipped: 2026-08-27)
 
 **Phases completed:** 4 phases, 12 plans, 36 tasks

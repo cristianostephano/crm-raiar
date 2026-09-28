@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Ajustes Pós-Teste com o Time de Vendas
-current_phase: 30
-status: verifying
+current_phase: 7
+status: Awaiting next milestone
 stopped_at: Completed 27-03-PLAN.md (KAN-03 fix, backfill — Phase 27 now 3/3 complete)
-last_updated: "2026-09-28T13:40:10.341Z"
-last_activity: 2026-09-27
-last_activity_desc: Phase 30 marked complete
+last_updated: "2026-09-28T13:55:38.123Z"
+last_activity: 2026-09-28
+last_activity_desc: Milestone v1.7 completed and archived
 progress:
   total_phases: 4
   completed_phases: 4
@@ -28,12 +28,10 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 ## Current Position
 
-Phase: 30 — COMPLETE
-Plan: 6 of 6
-Status: Phase complete — ready for verification
-Last activity: 2026-09-27 — Phase 30 marked complete
-
-Progress: [░░░░░░░░░░] 0%
+Phase: Milestone v1.7 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-09-28 — Milestone v1.7 completed and archived
 
 ## Performance Metrics
 
@@ -432,8 +430,10 @@ Items acknowledged and carried forward from previous milestone close:
 | Lint suppression | `components/clientes/ClienteDetailSheet.tsx:~227` — `react-hooks/set-state-in-effect` no efeito de reset com ~13 setters, suprimido com `eslint-disable-next-line` em vez de refatorado (o fix correto muda o timing do reset e não há cobertura de teste nesse componente). Recomendada uma quick task dedicada — as Fases 16/18/19 já mexeram neste arquivo. | Aberto — suprimido, não corrigido | 2026-08-06, quick task 260806-fln |
 | Test infra | Contas seed de teste (`vendedor.a+test`/`vendedor.b+test`) apagadas a pedido do dono (quick task 260819-l6o) — ~49 arquivos de teste falham até uma decisão (recriar como contas técnicas ou migrar testes para 2 dos 15 vendedores reais) | Aberto — decisão pendente | 2026-08-19 |
 | Filter UX | Select do filtro de vendedor na Agenda perde a seleção em qualquer recarga da tela (achado na Fase 20-05, fora de escopo) | Aberto — quick task futura | 2026-08-18 |
+| Seed | SEED-002 (link externo de indicação de clientes) — reconhecido e adiado explicitamente pelo dono para um marco futuro, sem tarefa de código nesta fase | Aberto — dormant, decisão do dono | 2026-09-28 |
+| Verification gap | Fechamento do marco v1.7 (Fases 27-30) sem o relatório formal de verificação por fase (VERIFICATION.md) — todas as fases têm testes de integração/unitários verdes e validação manual ao vivo (incluindo confirmação em produção via navegador para PERD/ENCR/ADER/KAN-03), mas o passo formal de verificação goal-backward do GSD foi pulado. Dono optou explicitamente por seguir mesmo assim no checkpoint de fechamento do marco. | Aceito — override do dono | 2026-09-28 |
 
-**SECURITY DEFINER exceptions (5 no codebase, atualizado 2026-09-14):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10), `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a), e agora `clientes_bloqueia_duplicata_razao_social_cnpj()` (migration 0030, quick task 260914-k3g) — trigger de `before insert or update of razao_social, cnpj on clientes` que substitui a antiga unique constraint simples de `razao_social` por uma checagem de razão social+CNPJ; precisa rodar com privilégio elevado porque a checagem precisa enxergar TODOS os clientes (de qualquer vendedor), não só os do vendedor autenticado sob RLS. `importar_clientes_ativos_lote`/`importar_clientes_lote` continuam não-security-definer (guard explícito de `is_supervisor()`, pré-filtram candidatos antes do INSERT, nunca dependem do trigger pra bloquear duplicata em lote — o trigger é backstop morto nesse caminho). Os 2 gatilhos de auditoria `SECURITY DEFINER` (`tarefas_before_update_historico`/`visitas_after_update_historico`) são um balde separado e já existente.
+**SECURITY DEFINER exceptions (6 no codebase, atualizado 2026-09-28):** `is_supervisor()`, `desativar_membro_equipe`/`reativar_membro_equipe` (migration 0008, Fase 10), `cidades_com_clientes_por_estado` (migration 0012, quick task 260806-h8a), `clientes_bloqueia_duplicata_razao_social_cnpj()` (migration 0030, quick task 260914-k3g) — trigger de `before insert or update of razao_social, cnpj on clientes` que substitui a antiga unique constraint simples de `razao_social` por uma checagem de razão social+CNPJ; precisa rodar com privilégio elevado porque a checagem precisa enxergar TODOS os clientes (de qualquer vendedor), não só os do vendedor autenticado sob RLS. `importar_clientes_ativos_lote`/`importar_clientes_lote` continuam não-security-definer (guard explícito de `is_supervisor()`, pré-filtram candidatos antes do INSERT, nunca dependem do trigger pra bloquear duplicata em lote — o trigger é backstop morto nesse caminho). E agora `registrar_acesso_diario()` (migration 0047, Fase 30) — aprovada explicitamente pelo dono depois de uma limitação real do ambiente ser encontrada e diagnosticada (RLS não é aplicado corretamente a um INSERT feito de dentro de uma função plpgsql chamada via RPC, mesmo com todos os valores corretos — reproduzido numa tabela de teste isolada); a função faz ela mesma a mesma verificação que a RLS fazia (só vendedor ativo grava; só Supervisor aciona a limpeza de 35 dias), e as policies de leitura/gravação direta na tabela continuam intactas e protegendo contra escrita fora da função. Os 2 gatilhos de auditoria `SECURITY DEFINER` (`tarefas_before_update_historico`/`visitas_after_update_historico`) são um balde separado e já existente.
 
 ## Session Continuity
 
@@ -445,4 +445,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Revisar e aprovar o roadmap v1.7 (Fases 27-30); depois rodar /gsd-discuss-phase 27
+- Start the next milestone with /gsd-new-milestone
