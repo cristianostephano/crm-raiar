@@ -1,10 +1,14 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.8
-milestone_name: Agenda 2 (Piloto de Visitas Manuais)
+milestone_name: Agenda 2
+current_phase: 31
+current_phase_name: "1 de 3 no marco v1.8: Fases 31-33"
 status: planning
-last_updated: "2026-09-28T19:06:15.000Z"
+stopped_at: Phase 31 context gathered
+last_updated: "2026-09-28T19:40:38.067Z"
 last_activity: 2026-09-28
+last_activity_desc: Roadmap v1.8 criado (Fases 31-33, 9/9 requisitos mapeados)
 progress:
   total_phases: 3
   completed_phases: 0
@@ -450,9 +454,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-28T19:06:15.000Z
-Stopped at: Roadmap v1.8 criado (Fases 31-33)
-Resume file: None
+Last session: 2026-09-28T19:40:38.027Z
+Stopped at: Phase 31 context gathered
+Resume file: .planning/phases/31-agenda-2-visitas-manuais-na-lista/31-CONTEXT.md
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
 
