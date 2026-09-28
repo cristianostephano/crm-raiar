@@ -11,7 +11,12 @@ import { TooltipProvider } from "@/components/ui/tooltip"
  *    position, not just presence.
  *  - contagem/zero: AGD-06's expanded badge, present when count > 0,
  *    entirely absent (no badge, no "Agenda (0)" string anywhere) at zero.
- *  - recolhido/limite: the compact-mode circular indicator, capped at "9+".
+ *  - recolhido/limite: quick 260928-ilo replaced the old numeric compact
+ *    indicator (which was cut off by the link's rounded corner) with a
+ *    plain dot anchored to the icon itself
+ *    ([data-slot="agenda-pendente-dot"]) — no number, ever, in compact
+ *    mode; the full count still only lives in the expanded badge and the
+ *    Tooltip text.
  *  - intacto: no other menu item (Clientes, Dashboard, Administração) ever
  *    gains a badge — only Agenda has dynamic content.
  *
@@ -89,25 +94,60 @@ describe("AppSidebar - item Agenda no topo do menu (14-04)", () => {
     expect(container.innerHTML).not.toContain("Agenda (0)")
   })
 
-  it("recolhido: no estado inicial (recolhido) com pendências, existe o indicador circular sobre o ícone e o rótulo textual não é exibido", () => {
+  it("recolhido com 5 pendentes: existe exatamente uma bolinha sem número, dentro do link /agenda, ancorada no ícone (não no link)", () => {
     const { container } = renderSidebar(5)
 
     expect(screen.queryByText("Agenda")).not.toBeInTheDocument()
-    expect(
-      container.querySelector(".absolute.-top-1.-right-1")
-    ).not.toBeNull()
-    expect(container.querySelector(".absolute.-top-1.-right-1")).toHaveTextContent(
-      "5"
+
+    const link = container.querySelector('a[href="/agenda"]')
+    expect(link).not.toBeNull()
+
+    const dots = container.querySelectorAll(
+      '[data-slot="agenda-pendente-dot"]'
     )
+    expect(dots).toHaveLength(1)
+
+    const dot = dots[0]
+    expect(link?.contains(dot)).toBe(true)
+    expect(dot).toHaveTextContent("")
+
+    // The dot's immediate wrapper (not the <Link>) must contain the icon's
+    // <svg> — anchored to the icon, not the corner of the whole link
+    // (quick 260928-ilo: the old link-cornered indicator was clipped by
+    // `overflow-hidden rounded-md`).
+    expect(dot.parentElement?.querySelector("svg")).not.toBeNull()
   })
 
-  it("limite: com contagem de dois dígitos e menu recolhido, o indicador exibe '9+' em vez do número cheio", () => {
+  it("recolhido com 23 pendentes (dois dígitos): a bolinha existe, sem número — nunca '9+' nem '23'", () => {
     const { container } = renderSidebar(23)
 
-    expect(
-      container.querySelector(".absolute.-top-1.-right-1")
-    ).toHaveTextContent("9+")
+    const dots = container.querySelectorAll(
+      '[data-slot="agenda-pendente-dot"]'
+    )
+    expect(dots).toHaveLength(1)
+    expect(dots[0]).toHaveTextContent("")
+    expect(container.innerHTML).not.toContain("9+")
     expect(container.innerHTML).not.toContain(">23<")
+  })
+
+  it("recolhido com 0 pendentes: nenhuma bolinha é renderizada", () => {
+    const { container } = renderSidebar(0)
+
+    expect(
+      container.querySelectorAll('[data-slot="agenda-pendente-dot"]')
+    ).toHaveLength(0)
+  })
+
+  it("expandido com 5 pendentes: nenhuma bolinha aparece, e o selo com número continua existindo", () => {
+    const { container } = renderSidebar(5)
+    expandSidebar(container)
+
+    expect(
+      container.querySelectorAll('[data-slot="agenda-pendente-dot"]')
+    ).toHaveLength(0)
+    expect(
+      screen.getByLabelText("Agenda, 5 itens pendentes")
+    ).toHaveTextContent("5")
   })
 
   it("intacto: nem Clientes nem Dashboard recebem selo — existe só um selo de contagem no menu inteiro", () => {

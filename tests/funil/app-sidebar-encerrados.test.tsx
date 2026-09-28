@@ -99,11 +99,11 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     expect(document.body.innerHTML).not.toContain("Encerrados (")
   })
 
-  it("recolhido-sem-contador: com agendaCount 5 e menu recolhido, existe exatamente um indicador circular e o link /encerrados existe", () => {
+  it("recolhido-sem-contador: com agendaCount 5 e menu recolhido, existe exatamente uma bolinha (quick 260928-ilo) e o link /encerrados existe", () => {
     const { container } = renderSidebar("vendedor", 5)
 
     expect(
-      container.querySelectorAll(".absolute.-top-1.-right-1")
+      container.querySelectorAll('[data-slot="agenda-pendente-dot"]')
     ).toHaveLength(1)
     expect(container.querySelector('a[href="/encerrados"]')).not.toBeNull()
   })

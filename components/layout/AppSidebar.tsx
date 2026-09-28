@@ -93,14 +93,6 @@ const PRINCIPAL_SECTION: NavSection = {
   ],
 }
 
-/** Caps the compact-mode circular indicator's display at "9+" so a
- * double-digit count never overflows the collapsed icon rail (AGD-06). Not
- * used by the expanded badge or the tooltip text, which show the raw
- * number. */
-function formatContagemIndicador(count: number): string {
-  return count > 9 ? "9+" : String(count)
-}
-
 const ADMIN_SECTION: NavSection = {
   label: "Administração",
   links: [
@@ -168,7 +160,13 @@ export function AppSidebar({
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       className={cn(
-        "flex h-full flex-shrink-0 flex-col bg-slate-900 text-slate-300 transition-[width] duration-200",
+        // quick 260928-ilo: the old `h-full` only ever grew to the height
+        // of the sidebar's OWN content — its parent flex row
+        // (app/(app)/layout.tsx) only guarantees a MINIMUM height
+        // (min-h-screen), so `h-full` had nothing to measure against.
+        // `sticky top-0 h-dvh` makes the sidebar always exactly the height
+        // of the viewport and pins it in place while the page scrolls.
+        "sticky top-0 flex h-dvh flex-shrink-0 flex-col bg-slate-900 text-slate-300 transition-[width] duration-200",
         compact ? "w-16" : "w-60"
       )}
     >
@@ -198,7 +196,11 @@ export function AppSidebar({
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-4">
+      {/* min-h-0 lets this flex child actually shrink below its content's
+          natural height so overflow-y-auto can kick in and scroll INSIDE
+          the sidebar on a short screen, instead of pushing the sidebar's
+          own height past the viewport (quick 260928-ilo). */}
+      <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4">
         {sections.map((section, index) => (
           <div key={section.label} className={index > 0 ? "mt-3" : undefined}>
             {!compact ? (
@@ -223,11 +225,10 @@ export function AppSidebar({
                   className={cn(
                     "flex items-center gap-3 overflow-hidden rounded-md px-3 py-2.5 text-sm text-slate-300 whitespace-nowrap transition-colors hover:bg-slate-800 hover:text-white",
                     compact && "justify-center",
-                    // The justify-between/relative additions only ever apply
-                    // to the item that actually has a badge to lay out — the
-                    // other links keep exactly today's classes.
+                    // The justify-between addition only ever applies to the
+                    // item that actually has a badge to lay out — the other
+                    // links keep exactly today's classes.
                     !compact && hasBadge && "justify-between",
-                    compact && hasBadge && "relative",
                     active && "bg-slate-700 font-medium text-white"
                   )}
                 >
@@ -235,6 +236,27 @@ export function AppSidebar({
                     <span className="flex items-center gap-3 overflow-hidden">
                       <Icon className="size-[18px] flex-shrink-0" />
                       <span className="truncate">{link.label}</span>
+                    </span>
+                  ) : compact && hasBadge ? (
+                    // quick 260928-ilo: the dot is anchored to a wrapper
+                    // around the ICON (not the corner of the whole <Link>,
+                    // where `overflow-hidden rounded-md` used to clip most
+                    // of the old circular indicator — that's why it "kept
+                    // disappearing"). bg-primary matches the expanded
+                    // badge's color so it reads as the same signal; the
+                    // ring uses the sidebar's own background color so the
+                    // dot keeps contrast even over the active item's
+                    // bg-slate-700. No number here by the project owner's
+                    // decision (quick 260928-ilo) — the full count still
+                    // lives in the expanded badge below and in this item's
+                    // compact-mode Tooltip text.
+                    <span className="relative inline-flex flex-shrink-0">
+                      <Icon className="size-[18px] flex-shrink-0" />
+                      <span
+                        aria-hidden="true"
+                        data-slot="agenda-pendente-dot"
+                        className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-primary ring-2 ring-slate-900"
+                      />
                     </span>
                   ) : (
                     <Icon className="size-[18px] flex-shrink-0" />
@@ -249,14 +271,6 @@ export function AppSidebar({
                     >
                       {badgeCount}
                     </Badge>
-                  ) : null}
-                  {compact && hasBadge ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-primary text-[9px] leading-none text-primary-foreground"
-                    >
-                      {formatContagemIndicador(badgeCount)}
-                    </span>
                   ) : null}
                 </Link>
               )
