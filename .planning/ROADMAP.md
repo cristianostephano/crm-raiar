@@ -130,12 +130,12 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.6-ROADMAP
   3. O card sem filtro continua exatamente como está hoje, e no card filtrado as setas de voltar/avançar etapa continuam funcionando (nenhuma regressão do que a quick task 260921-n0a entregou).
   4. Na seção "Sem dia fixo definido" da Agenda, cada linha mostra o nome do cliente junto do nome do vendedor responsável — inclusive para cliente sem razão social, que aparece pelo Nome Fantasia (mesma regra de nome exibido já usada no card e na ficha).
 
-**Plans**: 3 plans
+**Plans**: 2/3 plans executed
 
 Plans:
 
-- [ ] 27-01-PLAN.md — AGD-15: nome_fantasia da consulta até a linha "Sem dia fixo definido", título via nomeExibicaoCliente() (onda 1, autônomo)
-- [ ] 27-02-PLAN.md — KAN-03: diagnóstico ao vivo pelo dono do projeto (checkpoint bloqueante) e registro do resultado, sem mudar código (onda 1)
+- [x] 27-01-PLAN.md — AGD-15: nome_fantasia da consulta até a linha "Sem dia fixo definido", título via nomeExibicaoCliente() (onda 1, autônomo)
+- [x] 27-02-PLAN.md — KAN-03: diagnóstico ao vivo pelo dono do projeto (checkpoint bloqueante) e registro do resultado, sem mudar código (onda 1)
 - [ ] 27-03-PLAN.md — KAN-03: correção condicional ao diagnóstico — div simples no StaticClienteCard + teste de paridade + guarda das setas (onda 2, depende do 27-02)
 
 **UI hint**: yes
@@ -226,7 +226,7 @@ Phases execute in numeric order: 27 → 28 → 29 → 30
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 27. Correções do Primeiro Uso — Card Filtrado e Agenda | v1.7 | 0/TBD | Not started | - |
+| 27. Correções do Primeiro Uso — Card Filtrado e Agenda | v1.7 | 2/3 | In Progress|  |
 | 28. Relatório de Perdidos | v1.7 | 4/4 | Complete   | 2026-09-26 |
 | 29. Encerrar Cliente Ativo | v1.7 | 0/TBD | Not started | - |
 | 30. Aderência de Uso no Dashboard | v1.7 | 6/6 | Complete   | 2026-09-27 |
