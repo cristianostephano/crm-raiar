@@ -16,6 +16,12 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } fr
  * here — on the OUTER fixed-height container, never on the inner
  * overflow-y-auto div (research/PITFALLS.md Pitfall 12: the droppable
  * boundary rect must stay separate from the element that actually scrolls).
+ *
+ * quick 260928-ilo: the fade's starting color (`from-slate-50`) MUST match
+ * the <main> background in app/(app)/layout.tsx (also `bg-slate-50`) — the
+ * fade exists to visually "dissolve" cards into the page's background at
+ * the bottom of a Kanban column; if one changes without the other, a
+ * wrong-colored band appears at the end of every column.
  */
 export function ScrollColumnShell({
   cardCount,
@@ -60,7 +66,7 @@ export function ScrollColumnShell({
       <div
         aria-hidden="true"
         className={
-          "pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent transition-opacity duration-150 ease-out " +
+          "pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-50 to-transparent transition-opacity duration-150 ease-out " +
           (showFade ? "opacity-100" : "opacity-0")
         }
       />

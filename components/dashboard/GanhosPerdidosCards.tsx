@@ -138,7 +138,7 @@ export function GanhosPerdidosCards({ inicio, fim }: GanhosPerdidosCardsProps) {
           </p>
         </CardContent>
       </Card>
-      <Card className="border-l-4 border-l-border">
+      <Card className="border-l-4 border-l-primary">
         <CardContent className="flex flex-col gap-2 p-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
             <Percent className="size-4 text-muted-foreground" />

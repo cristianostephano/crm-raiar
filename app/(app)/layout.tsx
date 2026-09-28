@@ -68,7 +68,15 @@ export default async function AppLayout({
         initials={initials}
         agendaCount={agendaCount}
       />
-      <main className="flex flex-1 flex-col overflow-x-hidden">
+      {/* quick 260928-ilo: fundo cinza bem claro na área logada para os
+          cards brancos se destacarem (referência visual do dono do
+          projeto). slate-50 é o tom mais escuro que ainda mantém o texto
+          secundário (text-muted-foreground) em ~4,5:1 de contraste (AA) —
+          não escurecer. O degradê em
+          components/clientes/ScrollColumnShell.tsx usa a mesma cor e
+          precisa mudar junto, senão sobra uma faixa de cor errada no pé de
+          cada coluna do Kanban. */}
+      <main className="flex flex-1 flex-col overflow-x-hidden bg-slate-50">
         {children}
       </main>
     </div>

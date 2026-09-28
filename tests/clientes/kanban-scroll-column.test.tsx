@@ -52,7 +52,7 @@ describe("ScrollColumnShell", () => {
     expect(outer?.contains(fade)).toBe(true)
     expect(scrollDiv?.contains(fade)).toBe(false)
     expect(fade?.className).toContain("pointer-events-none")
-    expect(fade?.className).toContain("from-background")
+    expect(fade?.className).toContain("from-slate-50")
 
     // jsdom reports scrollHeight/clientHeight as 0 (no real layout), so
     // scrollHeight - scrollTop - clientHeight is never > 1 — the fade must
