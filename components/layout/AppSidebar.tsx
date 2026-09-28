@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -121,6 +122,18 @@ const ADMIN_SECTION: NavSection = {
  * expands to 240px labeled via the toggle in the brand row. Uses only
  * Tailwind's neutral slate scale plus the existing `--primary` token — no
  * new CSS variables or brand colors are introduced.
+ *
+ * quick 260928-ilo: the brand row now shows the real Raiar logo (over a
+ * white tile, same 28px slot the old blue "R" square used) instead of an
+ * avatar-style initial, and the menu's text/icon colors were lightened one
+ * notch (slate-300→slate-100 on links/Sair, slate-500→slate-400 on the
+ * section label/role/collapse button) to read closer to the reference
+ * panel the project owner showed. The sidebar's own background
+ * (bg-slate-900), borders (border-slate-800), hover
+ * (hover:bg-slate-800) and active item (bg-slate-700 font-medium
+ * text-white) did NOT change — they already matched the reference, and two
+ * existing tests (tests/funil/app-sidebar-perdidos.test.tsx,
+ * tests/funil/app-sidebar-encerrados.test.tsx) depend on bg-slate-700.
  */
 export function AppSidebar({
   fullName,
@@ -171,8 +184,25 @@ export function AppSidebar({
       )}
     >
       <div className="flex items-center gap-2.5 overflow-hidden border-b border-slate-800 px-4 py-4">
-        <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-          R
+        {/* quick 260928-ilo: public/raiar-logo.png is the full written
+            wordmark (there is no separate icon-only symbol to crop out) —
+            used whole, in the same 28px slot the old "R" square occupied.
+            next/image with `unoptimized` avoids both the
+            @next/next/no-img-element lint warning (would break this
+            project's --max-warnings 0 gate) and spending the Vercel free
+            tier's image-optimization quota on a 5KB PNG that doesn't need
+            it. White background because the logo's ink (rgb(37,77,105))
+            only reaches ~2:1 contrast on the sidebar's slate-900 (nearly
+            invisible) but ~9:1 on white. */}
+        <div className="flex size-7 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-white p-0.5">
+          <Image
+            src="/raiar-logo.png"
+            alt="Logo Raiar Orgânicos"
+            width={310}
+            height={130}
+            unoptimized
+            className="h-auto w-full object-contain"
+          />
         </div>
         {!compact ? (
           <span className="truncate text-lg font-bold whitespace-nowrap text-white">
@@ -184,7 +214,7 @@ export function AppSidebar({
           onClick={() => setPinned((value) => !value)}
           aria-label={compact ? "Expandir menu" : "Recolher menu"}
           className={cn(
-            "flex flex-shrink-0 items-center justify-center rounded-md p-1 text-slate-500 transition-colors hover:text-white",
+            "flex flex-shrink-0 items-center justify-center rounded-md p-1 text-slate-400 transition-colors hover:text-white",
             compact ? "mx-auto" : "ml-auto"
           )}
         >
@@ -204,7 +234,7 @@ export function AppSidebar({
         {sections.map((section, index) => (
           <div key={section.label} className={index > 0 ? "mt-3" : undefined}>
             {!compact ? (
-              <div className="px-3 py-2 text-xs font-medium tracking-wide whitespace-nowrap text-slate-500 uppercase">
+              <div className="px-3 py-2 text-xs font-medium tracking-wide whitespace-nowrap text-slate-400 uppercase">
                 {section.label}
               </div>
             ) : null}
@@ -223,7 +253,7 @@ export function AppSidebar({
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "flex items-center gap-3 overflow-hidden rounded-md px-3 py-2.5 text-sm text-slate-300 whitespace-nowrap transition-colors hover:bg-slate-800 hover:text-white",
+                    "flex items-center gap-3 overflow-hidden rounded-md px-3 py-2.5 text-sm text-slate-100 whitespace-nowrap transition-colors hover:bg-slate-800 hover:text-white",
                     compact && "justify-center",
                     // The justify-between addition only ever applies to the
                     // item that actually has a badge to lay out — the other
@@ -308,7 +338,7 @@ export function AppSidebar({
                 {fullName}
               </div>
               {roleLabel ? (
-                <div className="truncate text-xs text-slate-500">
+                <div className="truncate text-xs text-slate-400">
                   {roleLabel}
                 </div>
               ) : null}
@@ -318,7 +348,7 @@ export function AppSidebar({
         <LogoutButton
           variant="ghost"
           className={cn(
-            "w-full text-slate-300 hover:bg-slate-800 hover:text-white",
+            "w-full text-slate-100 hover:bg-slate-800 hover:text-white",
             compact
               ? "justify-center px-0"
               : "justify-start gap-2 px-2.5"
