@@ -38,22 +38,22 @@ Nenhum requisito deferido formalmente neste marco.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AGD2-01 | TBD | Pending |
-| AGD2-02 | TBD | Pending |
-| AGD2-03 | TBD | Pending |
-| AGD2-04 | TBD | Pending |
-| AGD2-05 | TBD | Pending |
-| AGD2-06 | TBD | Pending |
-| AGD2-07 | TBD | Pending |
-| AGD2-08 | TBD | Pending |
-| AGD-16 | TBD | Pending |
+| AGD2-01 | Phase 31 | Pending |
+| AGD2-02 | Phase 32 | Pending |
+| AGD2-03 | Phase 31 | Pending |
+| AGD2-04 | Phase 31 | Pending |
+| AGD2-05 | Phase 31 | Pending |
+| AGD2-06 | Phase 31 | Pending |
+| AGD2-07 | Phase 31 | Pending |
+| AGD2-08 | Phase 32 | Pending |
+| AGD-16 | Phase 33 | Pending |
 
 **Coverage:**
 
 - v1 requirements: 9 total
-- Mapped to phases: 0 (aguardando roadmap)
-- Unmapped: 9
+- Mapped to phases: 9
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-28*
-*Last updated: 2026-09-28 after milestone v1.8 kickoff*
+*Last updated: 2026-09-28 after roadmap v1.8 (Phases 31-33)*

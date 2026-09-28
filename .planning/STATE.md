@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Agenda 2 (Piloto de Visitas Manuais)
 status: planning
-last_updated: "2026-09-28T18:50:22.566Z"
+last_updated: "2026-09-28T19:06:15.000Z"
 last_activity: 2026-09-28
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-25)
+See: .planning/PROJECT.md (updated 2026-09-28)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 30 — ader-ncia-de-uso-no-dashboard
+**Current focus:** Phase 31 — Agenda 2 — Visitas Manuais na Lista (marco v1.8, Fases 31-33)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-09-28 — Milestone v1.8 started
+Phase: 31 (1 de 3 no marco v1.8: Fases 31-33) — Agenda 2 — Visitas Manuais na Lista
+Plan: — (fase ainda não planejada)
+Status: Ready to plan
+Last activity: 2026-09-28 — Roadmap v1.8 criado (Fases 31-33, 9/9 requisitos mapeados)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -124,6 +126,10 @@ Last activity: 2026-09-28 — Milestone v1.8 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- **Roadmap v1.8 (2026-09-28):** 3 fases (31 Agenda 2 — Visitas Manuais na Lista / 32 Agenda 2 — Repetição Semanal e Calendário / 33 Agenda Atual sem Visitas Automáticas de Clientes Ativos) derivadas dos 9 requisitos do marco (AGD2-01..08 + AGD-16), numeração continuando da v1.7 (última = Fase 30). 9/9 mapeados, sem órfãos nem duplicados. Granularidade "standard", mas o marco é pequeno — 3 fases, sem inflar (mesmo precedente da v1.4 com 2 fases). Fase 31 é a fatia vertical que já dá para usar (tabela + RLS + tela + menu + visibilidade por papel), sem tocar na Agenda atual; Fase 32 junta repetição e calendário ("planejar semanas à frente") e é a única do marco que mexe num componente já em produção da Agenda atual (o calendário); Fase 33 (AGD-16) fica isolada numa fase pequena própria (mexe em `agenda_do_vendedor()`, leitura crítica em produção) e é ordenada POR ÚLTIMO de propósito — se saísse antes, o time ficaria sem lugar para planejar as visitas de clientes ativos até a Agenda 2 existir (mesmo raciocínio da Fase 26/v1.6: o caminho antigo só sai depois que o substituto está provado em produção).
+- **Roadmap v1.8 — AGD-16 é maior que "tirar uma condição da consulta":** cliente ganho entra na Agenda atual por DOIS caminhos de leitura — a metade "visitas" de `agenda_do_vendedor()` (migration 0036; alimenta Lista, pendentes do Calendário e contador do menu) e a seção "Sem dia fixo definido" (`getClientesSemDiaFixo()`/`AgendaSemDiaFixo.tsx`). Além disso, `mover_card_funil` continua criando a primeira visita no ganho e `concluir_visita` a próxima (visitas invisíveis acumulariam se só a leitura mudar), e a trava de ganho ainda exige frequência de visita. Decidir no Discuss da Fase 33; nenhuma visita existente é apagada; reversível por migration nova.
+- **Roadmap v1.8 — AGD2-08 não pode usar `AgendaCalendario.tsx` como está:** o componente busca sozinho o histórico de concluídos da Agenda atual (`getAgendaConcluidosAction`) e os cartões só conhecem prospecção/visita — precisa virar configurável (histórico opcional, desenho do item trocável), com os testes de tela da Agenda atual passando sem edição (oráculo da Fase 20).
+- **Roadmap v1.8 — LGPD (Fase 31):** o item manual guarda nome livre + bairro + data + vendedor — dado pessoal do cliente (MEI/contato) e do funcionário (rotina de deslocamento). Privacidade por design: só os campos escopados, limite de tamanho, dica para usar o Nome Fantasia, dono carimbado pelo servidor, RLS dono/Supervisor (Supervisor só leitura, recomendado), sem exportação, prazo de guarda dos itens do piloto a decidir com o dono.
 - **Roadmap v1.7 (2026-09-25):** 4 fases (27 Correções do Primeiro Uso — Card Filtrado e Agenda / 28 Relatório de Perdidos / 29 Encerrar Cliente Ativo / 30 Aderência de Uso no Dashboard) derivadas dos 15 requisitos do marco (PERD/KAN/AGD/ENCR/ADER), numeração continuando da v1.6 (última = Fase 26). 15/15 mapeados, sem órfãos nem duplicados. KAN-03 e AGD-15 (duas correções pequenas e isoladas, sem arquivo em comum) ficaram juntas numa fase própria, em vez de dobradas dentro das fases de funcionalidade, para chegarem ao time primeiro — o time já esbarra nelas no uso diário. Fase 28 espelha a quick task 260915-ls7 (a regra única de `lib/funil/prospeccao.ts` passa de um status só para um conjunto; mesma armadilha de exportação resolvida lá com `escopoTudo`). Fase 29 depende levemente da 28 (mesmo formato: status que tira o cliente de uma visão de rotina + lista própria + caminho de volta, mexendo na mesma regra de status). Fase 30 por último: tecnicamente a mais nova, e conta as ações novas das Fases 28/29 (reabrir/encerrar/reativar).
 - **Roadmap v1.7 — lacuna de requisito na Fase 29 (ENCR-05):** os requisitos não dizem onde um cliente encerrado fica achável para ser reativado. Desde a quick task 260915-ls7, cliente "ganho" só é achável pela Agenda; um encerrado fora da Agenda ficaria inalcançável. Recomendado espelhar a tela de Perdidos da Fase 28 — confirmar no Discuss da Fase 29, não presumir.
 - **Roadmap v1.7 — reativar dispara as travas de ganho (Fase 29):** reativar é uma transição de volta para "ganho", e os guards de transição de `mover_card_funil` (CNPJ/razão social/endereço/frequência, migrations 0018/0025) disparam exatamente quando o status atual não é "ganho". Um cliente antigo com grandfathering seria bloqueado ao reativar. Decidir no Discuss da Fase 29.
@@ -336,7 +342,14 @@ None yet.
 
 ### Blockers/Concerns
 
-**Ativos para o v1.7:**
+**Ativos para o v1.8:**
+
+- **Fase 31 — LGPD:** confirmar no Discuss os campos mínimos do item manual, o prazo de guarda dos itens do piloto (o que acontece quando o dono escolher qual agenda fica) e se o Supervisor só lê (recomendado) — ver Decisions acima.
+- **Fase 32 — regressão do calendário da Agenda atual:** tornar `AgendaCalendario` reutilizável sem mudar nada do que a Agenda atual mostra; os testes de tela das Fases 20/21 são o oráculo e devem passar sem edição.
+- **Fase 33 — escopo real do AGD-16, a decidir com o dono (não presumir):** (a) a seção "Sem dia fixo definido" sai junto? (b) parar de criar visitas no ganho/conclusão ou só esconder a leitura? (c) a caixinha de ganho continua exigindo frequência de visita? (d) o histórico de visitas concluídas no calendário continua aparecendo?
+- **Deploy:** cada fase vai para `staging` antes de `master`; a proteção de Preview da Vercel (ver "Ativos, novos (2026-09-22)" abaixo) continua bloqueando o link de teste para quem não tem login na Vercel.
+
+**Resolvidos na v1.7 (histórico):**
 
 - **Fase 28 — reabrir perdido de vendedor desativado:** a regra da v1.2 deixa clientes perdidos com o vendedor desativado; reabrir um deles criaria um cliente "em andamento" sem dono ativo no funil. Confirmar no Discuss da Fase 28 (junto com: em qual etapa o cliente reaberto reaparece).
 - **Fase 29 — onde o encerrado fica achável para reativar** e **reativar x travas de ganho** (ver Decisions acima).
@@ -409,6 +422,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- **Marco v1.8 roteirizado (2026-09-28):** 3 fases novas (31 Agenda 2 — Visitas Manuais na Lista / 32 Agenda 2 — Repetição Semanal e Calendário / 33 Agenda Atual sem Visitas Automáticas de Clientes Ativos) derivadas dos 9 requisitos do marco (AGD2-01..08, AGD-16), numeração continuando da v1.7 (última = Fase 30). 9/9 requisitos mapeados, sem órfãos nem duplicados. Ordem: 31 (Agenda 2 usável, sem tocar na Agenda atual) → 32 (repetição + calendário reaproveitado) → 33 (Agenda atual deixa de puxar cliente ganho sozinha — por último, depois do substituto em produção). Fases 31-33 marcadas "Not started".
 - **Marco v1.7 roteirizado (2026-09-25):** 4 fases novas (27 Correções do Primeiro Uso — Card Filtrado e Agenda / 28 Relatório de Perdidos / 29 Encerrar Cliente Ativo / 30 Aderência de Uso no Dashboard) derivadas dos 15 requisitos do marco (PERD/KAN/AGD/ENCR/ADER), numeração continuando da v1.6 (última = Fase 26). 15/15 requisitos mapeados, sem órfãos nem duplicados. Ordem: 27 primeiro (correções isoladas que já afetam o time), 28 (Perdidos, padrão já provado pela quick task 260915-ls7), 29 (Encerrar, mesmo formato da 28, depende dela de forma leve), 30 por último (Aderência, a mais nova tecnicamente, conta as ações das 28/29). Fases 27-30 marcadas "Not started".
 - **Marco v1.6 roteirizado (2026-08-24):** 4 fases novas (23 Razão Social Opcional e Trava do Ganho Ampliada / 24 Dia Fixo na Recorrência de Visita / 25 Importação de Clientes Ativos / 26 Importação de Clientes em Prospecção e Limpeza de Menu) derivadas dos 17 requisitos do marco (ATIVO/PROSP/GANHO/ANCORA/AGENDA/MENU), numeração continuando da v1.5 (última = Fase 22). 17/17 requisitos mapeados, sem órfãos nem duplicados. Ordem: 23 primeiro (fundação de schema, sem dependência); 24 segundo (independente, mas maior novidade técnica — Nth-weekday-of-month é matemática de calendário nova no projeto); 25 depende de 23 (guard duplicado verbatim); 26 depende de 23 e 25 (razão social nullable + substituto provado antes da limpeza de menu). Fases 23-26 marcadas "Not started".
 - **Marco v1.5 roteirizado (2026-08-17):** 3 fases novas (20 Calendário da Agenda — Mês, Semana e Dia / 21 Calendário — O Que Já Foi Feito em Datas Passadas / 22 Conclusão Remota com Motivo) derivadas dos 12 requisitos do marco (AGD-07..AGD-14, CONC-02..CONC-05), numeração continuando da v1.4 (última = Fase 19). 12/12 requisitos mapeados, sem órfãos nem duplicados. Primeiro marco do projeto com duas frentes de arquivos disjuntos — as Fases 20/21 (calendário) e a Fase 22 (conclusão remota) não têm dependência técnica entre si; a ordem escolhida só evita mexer duas vezes na fiação do diálogo de conclusão dentro de `AgendaList.tsx`. AGD-13 (mostrar concluídos em datas passadas) foi isolado numa fase própria por ser o único requisito do calendário que exige trabalho novo de banco, e por ter chegado depois da pesquisa paralela — a Fase 20 é construída para que a Fase 21 acrescente a segunda fonte de dados num ponto só. Fases 20-22 marcadas "Not started".
@@ -436,12 +450,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-28T13:40:10.312Z
-Stopped at: Completed 27-03-PLAN.md (KAN-03 fix, backfill — Phase 27 now 3/3 complete)
+Last session: 2026-09-28T19:06:15.000Z
+Stopped at: Roadmap v1.8 criado (Fases 31-33)
 Resume file: None
 
-- Roadmap v1.7 criado (Fases 27-30). Próximo passo: `/gsd-discuss-phase 27` (ou `/gsd-plan-phase 27`).
+- Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Discuss Phase 31 with /gsd-discuss-phase 31 (revisar LGPD/privacidade por design dos itens manuais antes de planejar)
