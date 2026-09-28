@@ -68,38 +68,28 @@ function expandSidebar() {
   fireEvent.click(screen.getByRole("button", { name: "Expandir menu" }))
 }
 
-describe("AppSidebar - logo real e textos mais claros (quick 260928-ilo, Task 3)", () => {
-  it("recolhido e expandido: a logo (<img>) aparece num contêiner size-7/rounded-md/bg-white, e o quadrado com 'R' saiu", () => {
+describe("AppSidebar - logo real e textos mais claros (quick 260928-ilo/js0/js1/js2)", () => {
+  it("recolhido: a logo (transparente, tinta branca) aparece pequena, num contêiner size-10, sem fundo/moldura, e o quadrado com 'R' saiu", () => {
     renderSidebar(0)
 
     const imgRecolhido = screen.getByAltText("Logo Raiar Orgânicos")
-    expect(imgRecolhido).toHaveAttribute("src", "/raiar-logo.png")
-    expect(imgRecolhido.parentElement?.className).toContain("size-7")
-    expect(imgRecolhido.parentElement?.className).toContain("rounded-md")
-    expect(imgRecolhido.parentElement?.className).toContain("bg-white")
-    expect(screen.queryByText("R")).not.toBeInTheDocument()
-
-    expandSidebar()
-
-    const imgExpandido = screen.getByAltText("Logo Raiar Orgânicos")
-    expect(imgExpandido).toHaveAttribute("src", "/raiar-logo.png")
-    expect(imgExpandido.parentElement?.className).toContain("size-7")
-    expect(imgExpandido.parentElement?.className).toContain("rounded-md")
-    expect(imgExpandido.parentElement?.className).toContain("bg-white")
+    expect(imgRecolhido).toHaveAttribute("src", "/raiar-logo-white.png")
+    expect(imgRecolhido.parentElement?.className).toContain("size-10")
+    expect(imgRecolhido.parentElement?.className).not.toContain("bg-white")
+    expect(imgRecolhido.parentElement?.className).not.toContain("rounded-md")
     expect(screen.queryByText("R")).not.toBeInTheDocument()
   })
 
-  it("expandido: 'CRM Raiar' aparece com as mesmas classes de hoje; recolhido: não aparece", () => {
+  it("expandido: a logo aparece grande (h-14), sem o contêiner size-10 nem o texto 'CRM Raiar' (a logo já traz o nome da marca)", () => {
     renderSidebar(0)
-
-    expect(screen.queryByText("CRM Raiar")).not.toBeInTheDocument()
-
     expandSidebar()
 
-    const label = screen.getByText("CRM Raiar")
-    expect(label.className).toContain("text-lg")
-    expect(label.className).toContain("font-bold")
-    expect(label.className).toContain("text-white")
+    const imgExpandido = screen.getByAltText("Logo Raiar Orgânicos")
+    expect(imgExpandido).toHaveAttribute("src", "/raiar-logo-white.png")
+    expect(imgExpandido.className).toContain("h-14")
+    expect(imgExpandido.parentElement?.className).not.toContain("size-10")
+    expect(screen.queryByText("R")).not.toBeInTheDocument()
+    expect(screen.queryByText("CRM Raiar")).not.toBeInTheDocument()
   })
 
   it("expandido: link inativo (Dashboard) usa text-slate-100 (não text-slate-300); o link ativo (Clientes) continua bg-slate-700/text-white", () => {

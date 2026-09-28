@@ -183,39 +183,49 @@ export function AppSidebar({
         compact ? "w-16" : "w-60"
       )}
     >
-      <div className="flex items-center gap-2.5 overflow-hidden border-b border-slate-800 px-4 py-4">
-        {/* quick 260928-ilo: public/raiar-logo.png is the full written
-            wordmark (there is no separate icon-only symbol to crop out) —
-            used whole, in the same 28px slot the old "R" square occupied.
-            next/image with `unoptimized` avoids both the
-            @next/next/no-img-element lint warning (would break this
-            project's --max-warnings 0 gate) and spending the Vercel free
-            tier's image-optimization quota on a 5KB PNG that doesn't need
-            it. White background because the logo's ink (rgb(37,77,105))
-            only reaches ~2:1 contrast on the sidebar's slate-900 (nearly
-            invisible) but ~9:1 on white. */}
-        <div className="flex size-7 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-white p-0.5">
-          <Image
-            src="/raiar-logo.png"
-            alt="Logo Raiar Orgânicos"
-            width={310}
-            height={130}
-            unoptimized
-            className="h-auto w-full object-contain"
-          />
-        </div>
+      <div className="relative flex items-center justify-center overflow-hidden border-b border-slate-800 px-4 py-5">
+        {/* quick 260928-js2: dono pediu pra usar a logo transparente (não a
+            versão com retângulo navy sólido de fundo, que deixava uma
+            costura perceptível contra o slate-900 real da sidebar) com a
+            tinta convertida pra branco (public/raiar-logo-white.png,
+            gerada a partir do arquivo original enviado pelo dono via
+            scripts/ + sharp, mantendo o canal alfa — nunca um retângulo
+            de cor sólida por trás). Sem caixa/moldura nenhuma: a
+            transparência de verdade é o que garante zero costura contra
+            qualquer tom de fundo. next/image com `unoptimized` evita
+            tanto o aviso de lint @next/next/no-img-element (quebraria o
+            --max-warnings 0 deste projeto) quanto gastar a cota de
+            otimização de imagem do free tier da Vercel. */}
         {!compact ? (
-          <span className="truncate text-lg font-bold whitespace-nowrap text-white">
-            CRM Raiar
-          </span>
-        ) : null}
+          <Image
+            src="/raiar-logo-white.png"
+            alt="Logo Raiar Orgânicos"
+            width={930}
+            height={390}
+            unoptimized
+            className="h-14 w-auto"
+          />
+        ) : (
+          <div className="flex size-10 flex-shrink-0 items-center justify-center overflow-hidden">
+            <Image
+              src="/raiar-logo-white.png"
+              alt="Logo Raiar Orgânicos"
+              width={930}
+              height={390}
+              unoptimized
+              className="h-auto w-full object-contain"
+            />
+          </div>
+        )}
         <button
           type="button"
           onClick={() => setPinned((value) => !value)}
           aria-label={compact ? "Expandir menu" : "Recolher menu"}
           className={cn(
             "flex flex-shrink-0 items-center justify-center rounded-md p-1 text-slate-400 transition-colors hover:text-white",
-            compact ? "mx-auto" : "ml-auto"
+            compact
+              ? "absolute right-1 bottom-1"
+              : "absolute right-2 top-1/2 -translate-y-1/2"
           )}
         >
           {compact ? (
