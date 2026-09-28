@@ -200,6 +200,17 @@ function DraggableClienteCard({
  * silently corrupting card order. Dragging resumes once "Todos" + "Mais
  * recentes" + no active search/filters is restored (see `dragDisabled`
  * below).
+ *
+ * KAN-03 (Fase 27, plano 27-03): o `Card` raiz de `ClienteCard` tem
+ * `overflow-hidden` (components/ui/card.tsx) — ou seja, ele É um contêiner
+ * de rolagem. Antes desta correção, este componente devolvia o `ClienteCard`
+ * direto, como filho IMEDIATO da coluna flex-col de rolagem
+ * (`ScrollColumnShell`, div com `overflow-y-auto flex flex-col`) — nesse
+ * arranjo, a altura mínima automática do Card é zero, então ele encolhia até
+ * cortar o conteúdo sempre que a coluna enchia. O `div` simples abaixo dá ao
+ * card uma altura mínima igual à do seu próprio conteúdo, exatamente como o
+ * ramo com arrastar (`DraggableClienteCard`) já faz com o seu próprio `div`
+ * de wrapper.
  */
 function StaticClienteCard({
   cliente,
@@ -215,16 +226,18 @@ function StaticClienteCard({
   movendoEtapa: boolean
 }) {
   return (
-    <ClienteCard
-      cliente={toCardData(cliente)}
-      showResponsavel={showResponsavel}
-      incompleto={cliente.incompleto}
-      isOverdue={cliente.isOverdue}
-      overdueTooltip={cliente.overdue_tooltip ?? undefined}
-      onOpen={onOpen}
-      onMoverEtapa={onMoverEtapa}
-      movendoEtapa={movendoEtapa}
-    />
+    <div>
+      <ClienteCard
+        cliente={toCardData(cliente)}
+        showResponsavel={showResponsavel}
+        incompleto={cliente.incompleto}
+        isOverdue={cliente.isOverdue}
+        overdueTooltip={cliente.overdue_tooltip ?? undefined}
+        onOpen={onOpen}
+        onMoverEtapa={onMoverEtapa}
+        movendoEtapa={movendoEtapa}
+      />
+    </div>
   )
 }
 
