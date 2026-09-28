@@ -23,16 +23,26 @@ function isAusente(valor: string | null | undefined): boolean {
 }
 
 /**
- * Devolve o nome exibido de um cliente: razão social quando preenchida;
- * senão o Nome Fantasia quando preenchido; senão o rótulo único de ausência
- * (`ROTULO_SEM_NOME`). Tolera nulo/indefinido nos dois argumentos, sem
- * estourar.
+ * Devolve o nome exibido de um cliente: Nome Fantasia quando preenchido;
+ * senão a razão social quando preenchida; senão o rótulo único de ausência
+ * (`ROTULO_SEM_NOME`). Texto só com espaços conta como ausente nos dois
+ * campos. Tolera nulo/indefinido nos dois argumentos, sem estourar.
+ *
+ * Histórico: a prioridade foi invertida na quick task 260928-fqk
+ * (2026-09-28), por decisão do dono do projeto de usar o Nome Fantasia como
+ * nome principal de exibição para todos os clientes — antes, a razão social
+ * vinha primeiro.
+ *
+ * A ordem dos PARÂMETROS continua (razão social, Nome Fantasia) de
+ * propósito e não deve ser trocada — todos os call sites do código passam
+ * os argumentos por posição nessa ordem; só a ordem de PRIORIDADE (os dois
+ * `if` abaixo) muda o comportamento.
  */
 export function nomeExibicaoCliente(
   razaoSocial: string | null | undefined,
   nomeFantasia: string | null | undefined
 ): string {
-  if (!isAusente(razaoSocial)) return razaoSocial as string
   if (!isAusente(nomeFantasia)) return nomeFantasia as string
+  if (!isAusente(razaoSocial)) return razaoSocial as string
   return ROTULO_SEM_NOME
 }
