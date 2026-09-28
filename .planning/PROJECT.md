@@ -21,9 +21,17 @@ O time de vendas precisa conseguir preencher e manter o funil atualizado com o m
 
 O CRM está em uso — login/papéis, cadastro e funil kanban completos, dashboard gerencial, importação/exportação em massa de clientes, o Supervisor consegue desativar um membro da equipe com segurança (transferindo os clientes em andamento), o dashboard mostra onde o funil trava (por etapa e por vendedor), os filtros de Estado/Cidade são listas estruturadas confiáveis, o sistema cobre o pós-venda (cliente "ganho" define uma frequência de visita com dia fixo, uma Agenda única junta o que precisa ser feito e lembra o vendedor de quem ainda não tem dia fixo definido, concluir exige um resumo curto que vira diário por cliente, e o diário pode ser exportado), a Agenda tem uma segunda visualização (calendário de dia/semana/mês, incluindo o que já foi feito em datas passadas) além da lista, concluir um item aceita ser marcado como não-presencial com um motivo categorizado, e a importação em massa tem duas portas claras — "Importar Clientes Ativos" (cria cliente já ganho, dados completos) e "Importar Clientes em Prospecção" (mínimo: Nome Fantasia + Responsável) — com a trava de "ganho" exigindo razão social, endereço completo e CNPJ antes de deixar um cliente virar ativo, sempre com grandfathering dos clientes antigos. Desde o v1.7: cliente "Perdido" tem tela própria com reabertura de um toque, cliente ativo pode ser "Encerrado" (com motivo) e reativado depois, o card do Kanban filtrado por vendedor mostra sempre as mesmas informações do card sem filtro, a Agenda mostra o nome do cliente corretamente na seção "Sem dia fixo definido", e o Supervisor vê uma medida de aderência de uso por vendedor no Dashboard.
 
-## Current Milestone
+## Current Milestone: v1.8 Agenda 2 (Piloto de Visitas Manuais)
 
-Nenhum marco ativo no momento — v1.7 foi arquivado em 2026-09-28 (`.planning/milestones/v1.7-ROADMAP.md`). Próximo marco a definir via `/gsd-new-milestone`.
+**Goal:** Criar uma segunda agenda, em paralelo à atual, onde o vendedor inclui manualmente quem visitar em cada dia (só clientes ativos/ganho) — para comparar com o modelo automático de hoje (frequência + dia fixo) e decidir qual fica de verdade no sistema.
+
+**Target features:**
+- Nova tela/seção onde o vendedor adiciona um item manual: nome do cliente (texto livre, sem vincular a um cadastro) + bairro, numa data específica.
+- Opção de repetir o item criado nas próximas X semanas (mesma data da semana), de uma vez só, cada ocorrência editável/apagável separadamente.
+- Itens de prospecção continuam aparecendo automaticamente na Agenda, sem mudança.
+- Clientes "ganho" deixam de entrar sozinhos nessa agenda nova por frequência/dia fixo — isso fica só pro fluxo manual; nada é removido do cadastro do cliente ainda (frequência/dia fixo continuam existindo como campos), só ficam sem uso automático enquanto o piloto roda.
+
+**Contexto explícito do dono:** é um piloto/comparação deliberada — as duas agendas convivem até o dono decidir qual delas fica de verdade no sistema.
 
 ## Requirements
 

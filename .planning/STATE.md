@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.7
-milestone_name: Ajustes Pós-Teste com o Time de Vendas
-current_phase: 7
-status: Awaiting next milestone
-stopped_at: Completed 27-03-PLAN.md (KAN-03 fix, backfill — Phase 27 now 3/3 complete)
-last_updated: "2026-09-28T13:55:38.123Z"
+milestone: v1.8
+milestone_name: Agenda 2 (Piloto de Visitas Manuais)
+status: planning
+last_updated: "2026-09-28T18:50:22.566Z"
 last_activity: 2026-09-28
-last_activity_desc: Milestone v1.7 completed and archived
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 20
-  completed_plans: 20
-  percent: 100
-current_phase_name: ader-ncia-de-uso-no-dashboard
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-09-25)
 
 ## Current Position
 
-Phase: Milestone v1.7 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-09-28 — Completed quick task 260928-ilo: ajustes visuais e de identidade (título da aba, sidebar, logo, cores)
+Status: Defining requirements
+Last activity: 2026-09-28 — Milestone v1.8 started
 
 ## Performance Metrics
 
