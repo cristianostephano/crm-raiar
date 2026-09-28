@@ -135,9 +135,12 @@ describe("AgendaSemDiaFixo", () => {
  * cliente sem razão social apareça pelo Nome Fantasia em vez de título
  * vazio. Não duplica a cobertura de nomeExibicaoCliente() em si
  * (tests/clientes/nome-exibicao.test.ts) — só prova o uso na tela.
+ *
+ * Prioridade invertida na quick task 260928-fqk (2026-09-28): Nome Fantasia
+ * passou a vir primeiro.
  */
 describe("AgendaSemDiaFixo — nome exibido (AGD-15)", () => {
-  it("razão social preenchida: aparece pela razão social, e o title é igual", () => {
+  it("razão social e Nome Fantasia preenchidos: aparece pelo Nome Fantasia, e o title é igual", () => {
     const clientes = [
       buildCliente({
         razaoSocial: "Padaria Central Ltda",
@@ -153,9 +156,12 @@ describe("AgendaSemDiaFixo — nome exibido (AGD-15)", () => {
       />
     )
 
-    const titulo = screen.getByText("Padaria Central Ltda")
+    const titulo = screen.getByText("Padaria Central")
     expect(titulo).toBeInTheDocument()
-    expect(titulo).toHaveAttribute("title", "Padaria Central Ltda")
+    expect(titulo).toHaveAttribute("title", "Padaria Central")
+    expect(
+      screen.queryByText("Padaria Central Ltda")
+    ).not.toBeInTheDocument()
   })
 
   it("razão social nula: aparece pelo Nome Fantasia, e o title é igual", () => {
