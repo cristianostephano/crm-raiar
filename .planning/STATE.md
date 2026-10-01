@@ -4,17 +4,17 @@ milestone: v1.8
 milestone_name: Agenda 2
 current_phase: 31
 current_phase_name: agenda-2-visitas-manuais-na-lista
-status: executing
-stopped_at: Completed 31-06-PLAN.md
-last_updated: "2026-10-01T14:28:52.735Z"
+status: verifying
+stopped_at: Completed 31-08-PLAN.md — Fase 31 completa, pendente verificação humana e envio para staging
+last_updated: "2026-10-01T14:42:54.224Z"
 last_activity: 2026-10-01
 last_activity_desc: Phase 31 execution started
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 8
-  completed_plans: 7
-  percent: 0
+  completed_plans: 8
+  percent: 33
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 
 Phase: 31 (agenda-2-visitas-manuais-na-lista) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-01 — Phase 31 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -129,6 +129,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 31 P03 | ~15min | 3 tasks | 1 files |
 | Phase 31 P06 | ~6min | 3 tasks | 9 files |
 | Phase 31 P07 | ~20min | 2 tasks | 2 files |
+| Phase 31 P08 | ~20min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -359,6 +360,8 @@ Recent decisions affecting current work:
 - [Phase 31-03]: Dono aprovou o escopo de dados da Agenda 2 (LGPD) e aplicou manualmente a migration 0048 via SQL Editor; corrigido bug de fixture em nomeInventado() que gerava sequencia de digitos corridos, colidindo com a constraint chk_agenda2_nome_cliente_sem_documento, sem relaxar nenhuma asserção de segurança.
 - [Phase ?]: Aviso de duplicado (D-07) 100% derivado de estado (sem useEffect): snapshot bruto comparado campo-a-campo com useWatch - qualquer edição apaga o aviso sozinha
 - [Phase ?]: data-day do Calendar (react-day-picker) vem de Date.toLocaleDateString() sem locale explícito, não AAAA-MM-DD - testes de calendário devem usar essa mesma chamada como seletor, nunca um literal fixo
+- [Phase ?]: Agenda2Page não busca catálogos nem lista de membros da equipe — opções do filtro de vendedor vêm só dos itens já liberados pela RLS (minimização, T-31-34)
+- [Phase ?]: Agenda2ApagarDialog já mostra seu próprio erro genérico; handleConfirmarApagar só devolve o booleano do contrato
 
 ### Pending Todos
 
@@ -474,8 +477,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-01T14:28:15.899Z
-Stopped at: Completed 31-06-PLAN.md
+Last session: 2026-10-01T14:42:54.208Z
+Stopped at: Completed 31-08-PLAN.md — Fase 31 completa, pendente verificação humana e envio para staging
 Resume file: None
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
