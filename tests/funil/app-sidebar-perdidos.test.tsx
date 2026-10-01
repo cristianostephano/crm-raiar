@@ -7,7 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 
 /**
  * Item "Perdidos" no menu principal (Fase 28, Plano 28-04, Tarefa 3 —
- * D-01/D-02/D-03). Mesmos mocks de tests/agenda/app-sidebar-agenda.test.tsx:
+ * D-01/D-02/D-03). Desde a Fase 31 (31-06), o caso "ordem" também inclui
+ * "/agenda-2" (D-15). Mesmos mocks de tests/agenda/app-sidebar-agenda.test.tsx:
  * next/navigation (usePathname controlável por variável içada para o caso
  * `ativo`) e @/lib/supabase/client (o rodapé cria um cliente de navegador ao
  * sair, mockado defensivamente).
@@ -35,6 +36,7 @@ function renderSidebar(role: "vendedor" | "supervisor", agendaCount = 0) {
         role={role}
         initials="AS"
         agendaCount={agendaCount}
+        agenda2Count={0}
       />
     </TooltipProvider>
   )
@@ -65,18 +67,21 @@ describe("AppSidebar - item Perdidos no menu principal (Fase 28)", () => {
     )
   })
 
-  it("ordem: entre os links principais, a ordem no documento é /agenda, /clientes, /perdidos, /dashboard", () => {
+  it("ordem: entre os links principais, a ordem no documento é /agenda, /agenda-2, /clientes, /perdidos, /dashboard (D-15)", () => {
     renderSidebar("vendedor")
     expandSidebar()
 
     const links = screen.getAllByRole("link")
     const hrefs = links.map((link) => link.getAttribute("href"))
     const principaisNaOrdem = hrefs.filter((href) =>
-      ["/agenda", "/clientes", "/perdidos", "/dashboard"].includes(href ?? "")
+      ["/agenda", "/agenda-2", "/clientes", "/perdidos", "/dashboard"].includes(
+        href ?? ""
+      )
     )
 
     expect(principaisNaOrdem).toEqual([
       "/agenda",
+      "/agenda-2",
       "/clientes",
       "/perdidos",
       "/dashboard",

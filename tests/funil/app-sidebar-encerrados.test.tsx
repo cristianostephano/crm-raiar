@@ -8,7 +8,8 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 /**
  * Item "Encerrados" no menu principal (Fase 29, Plano 29-07, Tarefa 3 —
  * UI-SPEC §1). Cópia estrutural de tests/funil/app-sidebar-perdidos.test.tsx
- * (Fase 28), nomes trocados. Mesmos mocks de
+ * (Fase 28), nomes trocados. Desde a Fase 31 (31-06), o caso "ordem" também
+ * inclui "/agenda-2" (D-15). Mesmos mocks de
  * tests/agenda/app-sidebar-agenda.test.tsx: next/navigation (usePathname
  * controlável por variável içada para o caso `ativo`) e
  * @/lib/supabase/client (o rodapé cria um cliente de navegador ao sair,
@@ -37,6 +38,7 @@ function renderSidebar(role: "vendedor" | "supervisor", agendaCount = 0) {
         role={role}
         initials="AS"
         agendaCount={agendaCount}
+        agenda2Count={0}
       />
     </TooltipProvider>
   )
@@ -67,20 +69,26 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     )
   })
 
-  it("ordem: entre os links principais, a ordem no documento é /agenda, /clientes, /perdidos, /encerrados, /dashboard", () => {
+  it("ordem: entre os links principais, a ordem no documento é /agenda, /agenda-2, /clientes, /perdidos, /encerrados, /dashboard (D-15)", () => {
     renderSidebar("vendedor")
     expandSidebar()
 
     const links = screen.getAllByRole("link")
     const hrefs = links.map((link) => link.getAttribute("href"))
     const principaisNaOrdem = hrefs.filter((href) =>
-      ["/agenda", "/clientes", "/perdidos", "/encerrados", "/dashboard"].includes(
-        href ?? ""
-      )
+      [
+        "/agenda",
+        "/agenda-2",
+        "/clientes",
+        "/perdidos",
+        "/encerrados",
+        "/dashboard",
+      ].includes(href ?? "")
     )
 
     expect(principaisNaOrdem).toEqual([
       "/agenda",
+      "/agenda-2",
       "/clientes",
       "/perdidos",
       "/encerrados",

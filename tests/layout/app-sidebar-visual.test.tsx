@@ -38,6 +38,7 @@ function renderSidebar(agendaCount = 0) {
         role="vendedor"
         initials="AS"
         agendaCount={agendaCount}
+        agenda2Count={0}
       />
     </TooltipProvider>
   )

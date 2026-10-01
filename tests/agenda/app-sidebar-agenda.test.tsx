@@ -8,7 +8,8 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 /**
  * Render contract for the menu's Agenda entry (14-04-PLAN.md Task 2):
  *  - ordem: AGD-02's literal "Agenda acima de Clientes" — proven by DOM
- *    position, not just presence.
+ *    position, not just presence. Desde a Fase 31 (31-06), a ordem
+ *    verificada aqui inclui "Agenda 2" logo depois de "Agenda" (D-15).
  *  - contagem/zero: AGD-06's expanded badge, present when count > 0,
  *    entirely absent (no badge, no "Agenda (0)" string anywhere) at zero.
  *  - recolhido/limite: quick 260928-ilo replaced the old numeric compact
@@ -50,6 +51,7 @@ function renderSidebar(agendaCount = 0) {
         role="vendedor"
         initials="AS"
         agendaCount={agendaCount}
+        agenda2Count={0}
       />
     </TooltipProvider>
   )
@@ -61,17 +63,22 @@ function expandSidebar(container: HTMLElement) {
 }
 
 describe("AppSidebar - item Agenda no topo do menu (14-04)", () => {
-  it("ordem: Agenda aparece antes de Clientes e Dashboard no documento (AGD-02)", () => {
+  it("ordem: Agenda aparece antes de Agenda 2, Clientes e Dashboard no documento (AGD-02/D-15)", () => {
     const { container } = renderSidebar(0)
     expandSidebar(container)
 
     const links = screen.getAllByRole("link")
     const hrefs = links.map((link) => link.getAttribute("href"))
     const principaisNaOrdem = hrefs.filter((href) =>
-      ["/agenda", "/clientes", "/dashboard"].includes(href ?? "")
+      ["/agenda", "/agenda-2", "/clientes", "/dashboard"].includes(href ?? "")
     )
 
-    expect(principaisNaOrdem).toEqual(["/agenda", "/clientes", "/dashboard"])
+    expect(principaisNaOrdem).toEqual([
+      "/agenda",
+      "/agenda-2",
+      "/clientes",
+      "/dashboard",
+    ])
   })
 
   it("contagem: com 5 pendentes e menu expandido, o selo mostra 5 e o rótulo acessível anuncia a contagem (AGD-06)", () => {

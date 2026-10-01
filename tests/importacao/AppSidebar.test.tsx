@@ -37,6 +37,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         role="supervisor"
         initials="AS"
         agendaCount={0}
+        agenda2Count={0}
       />
     )
     expandSidebar(container)
@@ -57,6 +58,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         role="vendedor"
         initials="JS"
         agendaCount={0}
+        agenda2Count={0}
       />
     )
     expandSidebar(container)
@@ -74,6 +76,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         role="supervisor"
         initials="AS"
         agendaCount={0}
+        agenda2Count={0}
       />
     )
     expandSidebar(container)
@@ -93,6 +96,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         role="supervisor"
         initials="AS"
         agendaCount={0}
+        agenda2Count={0}
       />
     )
     expandSidebar(container)
@@ -110,6 +114,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         role="vendedor"
         initials="JS"
         agendaCount={0}
+        agenda2Count={0}
       />
     )
     expandSidebar(container)
@@ -133,6 +138,7 @@ describe("AppSidebar - IMP-10 menu visibility", () => {
         role="supervisor"
         initials="AS"
         agendaCount={0}
+        agenda2Count={0}
       />
     )
     expandSidebar(container)
