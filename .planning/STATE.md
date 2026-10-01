@@ -5,15 +5,15 @@ milestone_name: Agenda 2
 current_phase: 31
 current_phase_name: agenda-2-visitas-manuais-na-lista
 status: executing
-stopped_at: Completed 31-02-PLAN.md
-last_updated: "2026-10-01T12:41:24.822Z"
+stopped_at: Completed 31-04-PLAN.md
+last_updated: "2026-10-01T13:02:47.206Z"
 last_activity: 2026-10-01
 last_activity_desc: Phase 31 execution started
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 8
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 ## Current Position
 
 Phase: 31 (agenda-2-visitas-manuais-na-lista) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
 Last activity: 2026-10-01 — Phase 31 execution started
 
@@ -124,6 +124,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 27 P03 | 35min | 2 tasks | 2 files |
 | Phase 31 P01 | 11min | 2 tasks | 3 files |
 | Phase 31 P02 | 9min | 2 tasks | 4 files |
+| Phase 31 P04 | 12min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -347,6 +348,8 @@ Recent decisions affecting current work:
 - [Phase 31-02]: existeItemParecido normaliza nome com trim + colapso de espaços internos + toLocaleLowerCase('pt-BR') e compara data como texto puro — mesma imunidade a fuso que o resto de lib/agenda2/itens.ts
 - [Phase 31-02]: contemSequenciaLongaDeDigitos usa /[./\s-]/g para remover separadores antes de testar /[0-9]{8,}/, confirmado em runtime que replica a regra SQL chk_agenda2_*_sem_documento da migration 0048
 - [Phase 31-02]: agenda2ItemSchema confirma em runtime (zod v4 instalado) 3 comportamentos antes de escrever o schema: trim() roda antes de min/max e gera 1 issue só; z.object descarta chaves desconhecidas por padrão; z.uuid() existe como helper de topo
+- [Phase 31]: getAgenda2PendentesCount() filtra EXPLICITAMENTE vendedor_id + concluido=false (D-13) — diverge de getAgendaPendentesCount() da Agenda atual, que não precisa desse filtro porque sua RLS já é escopada por dono — RLS de SELECT de agenda2_itens é mais ampla (dono OU Supervisor); sem o filtro explícito o selo do menu de um Supervisor mostraria o total do time inteiro
+- [Phase 31]: Server Actions de escrita da Agenda 2 nunca incluem vendedor_id/concluido vindos da tela: insert monta só os 3 campos do parse + vendedor_id da sessão; update de edição nunca inclui concluido (D-06)
 
 ### Pending Todos
 
@@ -462,8 +465,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-01T12:41:24.791Z
-Stopped at: Completed 31-02-PLAN.md
+Last session: 2026-10-01T13:02:45.886Z
+Stopped at: Completed 31-04-PLAN.md
 Resume file: None
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).

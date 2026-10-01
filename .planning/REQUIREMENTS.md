@@ -14,7 +14,7 @@ Requisitos do marco v1.8 (Agenda 2 — Piloto de Visitas Manuais). Piloto delibe
 - [x] **AGD2-03**: Vendedor edita um item manual que ele mesmo criou (nome, bairro, data)
 - [x] **AGD2-04**: Vendedor apaga um item manual que ele mesmo criou
 - [x] **AGD2-05**: Vendedor marca um item manual como concluído; o item continua visível na lista do dia, com indicação visual de concluído (riscado)
-- [ ] **AGD2-06**: Agenda 2 aparece como item próprio no menu principal, logo abaixo do item "Agenda" já existente
+- [x] **AGD2-06**: Agenda 2 aparece como item próprio no menu principal, logo abaixo do item "Agenda" já existente
 - [x] **AGD2-07**: Supervisor vê os itens manuais de todos os vendedores, com filtro por vendedor (mesmo padrão já usado na Agenda atual); vendedor vê só os próprios itens
 - [ ] **AGD2-08**: Agenda 2 tem visão de Lista e visão de Calendário (dia/semana/mês), reaproveitando o mesmo componente de calendário já usado na Agenda atual
 
@@ -43,7 +43,7 @@ Nenhum requisito deferido formalmente neste marco.
 | AGD2-03 | Phase 31 | Complete |
 | AGD2-04 | Phase 31 | Complete |
 | AGD2-05 | Phase 31 | Complete |
-| AGD2-06 | Phase 31 | Pending |
+| AGD2-06 | Phase 31 | Complete |
 | AGD2-07 | Phase 31 | Complete |
 | AGD2-08 | Phase 32 | Pending |
 | AGD-16 | Phase 33 | Pending |
