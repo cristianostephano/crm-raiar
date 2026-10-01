@@ -2,7 +2,7 @@
 import { format } from "date-fns"
 import { fireEvent, render, screen } from "@testing-library/react"
 import type { ComponentProps } from "react"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/app/actions/agenda2", () => ({
   criarAgenda2Item: vi.fn(),
@@ -85,6 +85,11 @@ function renderForm(
 }
 
 describe("Agenda2ItemForm (AGD2-01/03, D-06/D-07/D-09)", () => {
+  beforeEach(() => {
+    mockedCriar.mockReset()
+    mockedAtualizar.mockReset()
+  })
+
   it("criar-campos: três campos, dica de LGPD, gatilho e botão corretos, nenhum campo de dono", () => {
     renderForm()
 
