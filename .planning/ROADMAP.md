@@ -153,7 +153,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.7-ROADMAP
 (e) **Contador no menu:** "Agenda 2" mostra o número de pendentes (como "Agenda") ou fica sem contador (como "Perdidos"/"Encerrados")? Os testes de menu existentes que conferem a ordem dos itens vão precisar incluir a posição nova.
 (f) **Vendedor desativado:** itens da Agenda 2 não são clientes e não entram na transferência da v1.2 — ficam com o vendedor desativado, visíveis ao Supervisor. Confirmar que está bom assim.
 (g) **Regras técnicas do projeto:** tabela nova com RLS ligada e regras de acesso explícitas no mesmo arquivo de migration; nenhuma exceção `SECURITY DEFINER` nova (o projeto continua com 6); aprovação do dono antes de aplicar a migration em produção, como nas fases anteriores; zero dependência nova.
-**Plans**: 4/8 plans executed
+**Plans**: 5/8 plans executed
 
 Plans:
 **Wave 1**
@@ -163,7 +163,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 31-03-PLAN.md — [BLOCKING] Aprovação do dono (alerta LGPD) + aplicação manual da 0048 no SQL Editor + RLS verde
+- [x] 31-03-PLAN.md — [BLOCKING] Aprovação do dono (alerta LGPD) + aplicação manual da 0048 no SQL Editor + RLS verde
 - [x] 31-04-PLAN.md — Leitura da Lista, contagem do menu e seis Server Actions (sem RPC)
 - [x] 31-05-PLAN.md — Linha do item (riscado/editável/somente leitura) + confirmação de apagar
 
@@ -230,7 +230,7 @@ Phases execute in numeric order: 31 → 32 → 33
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 4/8 | In Progress|  |
+| 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 5/8 | In Progress|  |
 | 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 0/TBD | Not started | - |
 | 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 0/TBD | Not started | - |
 
