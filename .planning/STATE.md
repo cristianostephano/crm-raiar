@@ -6,14 +6,14 @@ current_phase: 31
 current_phase_name: agenda-2-visitas-manuais-na-lista
 status: executing
 stopped_at: Completed 31-06-PLAN.md
-last_updated: "2026-10-01T14:08:07.991Z"
+last_updated: "2026-10-01T14:28:52.735Z"
 last_activity: 2026-10-01
 last_activity_desc: Phase 31 execution started
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 ## Current Position
 
 Phase: 31 (agenda-2-visitas-manuais-na-lista) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-10-01 — Phase 31 execution started
 
@@ -128,6 +128,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 31 P05 | ~7min | 2 tasks | 4 files |
 | Phase 31 P03 | ~15min | 3 tasks | 1 files |
 | Phase 31 P06 | ~6min | 3 tasks | 9 files |
+| Phase 31 P07 | ~20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -356,6 +357,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Fase 31-05] Editar/Apagar nunca condicionados a item.concluido em Agenda2ItemRow — só Concluir↔Desmarcar troca por estado (mitigação do Pitfall 5)
 - [Phase ?]: [Fase 31-05] Reset de erro/apagando em Agenda2ApagarDialog via key no componente filho (open+item.id), não useEffect
 - [Phase 31-03]: Dono aprovou o escopo de dados da Agenda 2 (LGPD) e aplicou manualmente a migration 0048 via SQL Editor; corrigido bug de fixture em nomeInventado() que gerava sequencia de digitos corridos, colidindo com a constraint chk_agenda2_nome_cliente_sem_documento, sem relaxar nenhuma asserção de segurança.
+- [Phase ?]: Aviso de duplicado (D-07) 100% derivado de estado (sem useEffect): snapshot bruto comparado campo-a-campo com useWatch - qualquer edição apaga o aviso sozinha
+- [Phase ?]: data-day do Calendar (react-day-picker) vem de Date.toLocaleDateString() sem locale explícito, não AAAA-MM-DD - testes de calendário devem usar essa mesma chamada como seletor, nunca um literal fixo
 
 ### Pending Todos
 
@@ -471,7 +474,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-01T14:08:07.930Z
+Last session: 2026-10-01T14:28:15.899Z
 Stopped at: Completed 31-06-PLAN.md
 Resume file: None
 

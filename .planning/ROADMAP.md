@@ -153,7 +153,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.7-ROADMAP
 (e) **Contador no menu:** "Agenda 2" mostra o número de pendentes (como "Agenda") ou fica sem contador (como "Perdidos"/"Encerrados")? Os testes de menu existentes que conferem a ordem dos itens vão precisar incluir a posição nova.
 (f) **Vendedor desativado:** itens da Agenda 2 não são clientes e não entram na transferência da v1.2 — ficam com o vendedor desativado, visíveis ao Supervisor. Confirmar que está bom assim.
 (g) **Regras técnicas do projeto:** tabela nova com RLS ligada e regras de acesso explícitas no mesmo arquivo de migration; nenhuma exceção `SECURITY DEFINER` nova (o projeto continua com 6); aprovação do dono antes de aplicar a migration em produção, como nas fases anteriores; zero dependência nova.
-**Plans**: 6/8 plans executed
+**Plans**: 7/8 plans executed
 
 Plans:
 **Wave 1**
@@ -170,7 +170,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 31-06-PLAN.md — Item "Agenda 2" no menu com selo/bolinha + ajuste dos testes de ordem (D-15)
-- [ ] 31-07-PLAN.md — Formulário de criar/editar com aviso de duplicado e dica de LGPD
+- [x] 31-07-PLAN.md — Formulário de criar/editar com aviso de duplicado e dica de LGPD
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -230,7 +230,7 @@ Phases execute in numeric order: 31 → 32 → 33
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 6/8 | In Progress|  |
+| 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 7/8 | In Progress|  |
 | 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 0/TBD | Not started | - |
 | 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 0/TBD | Not started | - |
 
