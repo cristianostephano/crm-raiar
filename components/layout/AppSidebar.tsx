@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  NotebookPen,
   PauseCircle,
   Settings,
   Users,
@@ -40,14 +41,19 @@ type AppSidebarProps = {
    * consulta. Zero quando a leitura falha (tratamento tolerante a falha no
    * layout), nunca undefined/null aqui. */
   agendaCount: number
+  /** AGD2-06/D-12/D-13: contagem de pendentes da Agenda 2 do PRÓPRIO
+   * usuário, lida em app/(app)/layout.tsx por `getAgenda2PendentesCount()`
+   * (filtro explícito por dono — D-13); zero quando a leitura falha; nunca
+   * somada à de `agendaCount`. */
+  agenda2Count: number
 }
 
 type NavLink = {
   href: string
   label: string
   icon: LucideIcon
-  /** Opcional porque só o item Agenda tem conteúdo dinâmico (AGD-06);
-   * nenhum outro item de menu recebe selo. */
+  /** Opcional porque só Agenda e Agenda 2 têm conteúdo dinâmico
+   * (AGD-06/AGD2-06); nenhum outro item de menu recebe selo. */
   badgeCount?: number
 }
 
@@ -71,13 +77,18 @@ type NavSection = {
  *
  * Desde a Fase 28, a ordem inclui "Perdidos" logo depois de "Clientes" —
  * o outro lado do funil de Clientes (D-01: mesmo nível de Agenda/Clientes/
- * Dashboard, nunca uma aba dentro de Clientes). Desde a Fase 29, a ordem é
- * Agenda, Clientes, Perdidos, Encerrados, Dashboard.
+ * Dashboard, nunca uma aba dentro de Clientes). Desde a Fase 31, a ordem é
+ * Agenda, Agenda 2, Clientes, Perdidos, Encerrados, Dashboard.
  */
 const PRINCIPAL_SECTION: NavSection = {
   label: "Principal",
   links: [
     { href: "/agenda", label: "Agenda", icon: ListChecks },
+    // AGD2-06/D-15: logo abaixo de Agenda, antes de Clientes. D-12 soma o
+    // selo (agenda2Count, uma contagem independente — nunca somada à de
+    // Agenda). NotebookPen = "anotado à mão", distinto dos demais ícones já
+    // usados neste menu (UI-SPEC §Menu entry).
+    { href: "/agenda-2", label: "Agenda 2", icon: NotebookPen },
     { href: "/clientes", label: "Clientes", icon: Users },
     // D-01 (mesmo nível de Agenda/Clientes/Dashboard, não uma aba de
     // Clientes); D-02 (nunca recebe contador — perdido não é pendência
@@ -141,6 +152,7 @@ export function AppSidebar({
   role,
   initials,
   agendaCount,
+  agenda2Count,
 }: AppSidebarProps) {
   const [pinned, setPinned] = useState(false)
   const [hovering, setHovering] = useState(false)
@@ -148,15 +160,19 @@ export function AppSidebar({
 
   const compact = !pinned && !hovering
 
-  // PRINCIPAL_SECTION stays the constant that defines ORDER; the count is
+  // PRINCIPAL_SECTION stays the constant that defines ORDER; the counts are
   // dynamic, so the effective section is derived here by mapping the
   // existing list — never duplicating it or turning the constant into a
-  // function with a parameter (AGD-06).
+  // function with a parameter (AGD-06/AGD2-06). Agenda and Agenda 2 each
+  // carry their own independent count — never merged into one number.
   const principalSectionComContagem: NavSection = {
     ...PRINCIPAL_SECTION,
-    links: PRINCIPAL_SECTION.links.map((link) =>
-      link.href === "/agenda" ? { ...link, badgeCount: agendaCount } : link
-    ),
+    links: PRINCIPAL_SECTION.links.map((link) => {
+      if (link.href === "/agenda") return { ...link, badgeCount: agendaCount }
+      if (link.href === "/agenda-2")
+        return { ...link, badgeCount: agenda2Count }
+      return link
+    }),
   }
 
   const sections: NavSection[] =
@@ -251,10 +267,10 @@ export function AppSidebar({
             {section.links.map((link) => {
               const active = isActive(link.href)
               const Icon = link.icon
-              // Only the Agenda entry ever carries badgeCount (AGD-06); a
-              // count of exactly 0 renders neither the expanded badge nor
-              // the compact indicator — the "{label} (0)" form must never
-              // be rendered anywhere.
+              // Only Agenda and Agenda 2 ever carry badgeCount
+              // (AGD-06/AGD2-06); a count of exactly 0 renders neither the
+              // expanded badge nor the compact indicator — the "{label} (0)"
+              // form must never be rendered anywhere.
               const badgeCount = link.badgeCount ?? 0
               const hasBadge = badgeCount > 0
 
