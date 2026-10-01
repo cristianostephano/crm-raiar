@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 
 import { AppSidebar } from "@/components/layout/AppSidebar"
 import { getAgendaPendentesCount } from "@/lib/supabase/queries/agenda"
+import { getAgenda2PendentesCount } from "@/lib/supabase/queries/agenda2"
 import { createClient } from "@/lib/supabase/server"
 
 const ROLE_LABELS: Record<string, string> = {
@@ -59,6 +60,17 @@ export default async function AppLayout({
     agendaCount = 0
   }
 
+  // AGD2-06/D-13: segundo bloco try/catch, independente do bloco acima —
+  // mesma regra: uma exceção aqui derrubaria a área logada inteira por
+  // causa de um número decorativo. Cada contagem tem seu próprio try/catch
+  // e as duas nunca são somadas (T-31-27).
+  let agenda2Count = 0
+  try {
+    agenda2Count = await getAgenda2PendentesCount()
+  } catch {
+    agenda2Count = 0
+  }
+
   return (
     <div className="flex min-h-screen flex-1">
       <AppSidebar
@@ -67,6 +79,7 @@ export default async function AppLayout({
         role={profile?.role ?? ""}
         initials={initials}
         agendaCount={agendaCount}
+        agenda2Count={agenda2Count}
       />
       {/* quick 260928-ilo: fundo cinza bem claro na área logada para os
           cards brancos se destacarem (referência visual do dono do
