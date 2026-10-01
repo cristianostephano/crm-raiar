@@ -5,15 +5,15 @@ milestone_name: Agenda 2
 current_phase: 31
 current_phase_name: agenda-2-visitas-manuais-na-lista
 status: executing
-stopped_at: Completed 31-04-PLAN.md
-last_updated: "2026-10-01T13:02:47.206Z"
+stopped_at: Completed 31-05-PLAN.md
+last_updated: "2026-10-01T13:12:14.267Z"
 last_activity: 2026-10-01
 last_activity_desc: Phase 31 execution started
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 8
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 ## Current Position
 
 Phase: 31 (agenda-2-visitas-manuais-na-lista) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Status: Ready to execute
 Last activity: 2026-10-01 — Phase 31 execution started
 
@@ -125,6 +125,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 31 P01 | 11min | 2 tasks | 3 files |
 | Phase 31 P02 | 9min | 2 tasks | 4 files |
 | Phase 31 P04 | 12min | 2 tasks | 5 files |
+| Phase 31 P05 | ~7min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -350,6 +351,8 @@ Recent decisions affecting current work:
 - [Phase 31-02]: agenda2ItemSchema confirma em runtime (zod v4 instalado) 3 comportamentos antes de escrever o schema: trim() roda antes de min/max e gera 1 issue só; z.object descarta chaves desconhecidas por padrão; z.uuid() existe como helper de topo
 - [Phase 31]: getAgenda2PendentesCount() filtra EXPLICITAMENTE vendedor_id + concluido=false (D-13) — diverge de getAgendaPendentesCount() da Agenda atual, que não precisa desse filtro porque sua RLS já é escopada por dono — RLS de SELECT de agenda2_itens é mais ampla (dono OU Supervisor); sem o filtro explícito o selo do menu de um Supervisor mostraria o total do time inteiro
 - [Phase 31]: Server Actions de escrita da Agenda 2 nunca incluem vendedor_id/concluido vindos da tela: insert monta só os 3 campos do parse + vendedor_id da sessão; update de edição nunca inclui concluido (D-06)
+- [Phase ?]: [Fase 31-05] Editar/Apagar nunca condicionados a item.concluido em Agenda2ItemRow — só Concluir↔Desmarcar troca por estado (mitigação do Pitfall 5)
+- [Phase ?]: [Fase 31-05] Reset de erro/apagando em Agenda2ApagarDialog via key no componente filho (open+item.id), não useEffect
 
 ### Pending Todos
 
@@ -465,8 +468,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-01T13:02:45.886Z
-Stopped at: Completed 31-04-PLAN.md
+Last session: 2026-10-01T13:12:14.233Z
+Stopped at: Completed 31-05-PLAN.md
 Resume file: None
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
