@@ -4,9 +4,9 @@ milestone: v1.8
 milestone_name: Agenda 2
 current_phase: 31
 current_phase_name: "1 de 3 no marco v1.8: Fases 31-33"
-status: planning
+status: executing
 stopped_at: Phase 31 UI-SPEC approved
-last_updated: "2026-09-28T20:01:42.769Z"
+last_updated: "2026-10-01T12:02:54.204Z"
 last_activity: 2026-09-28
 last_activity_desc: Roadmap v1.8 criado (Fases 31-33, 9/9 requisitos mapeados)
 progress:
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 
 Phase: 31 (1 de 3 no marco v1.8: Fases 31-33) — Agenda 2 — Visitas Manuais na Lista
 Plan: — (fase ainda não planejada)
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-09-28 — Roadmap v1.8 criado (Fases 31-33, 9/9 requisitos mapeados)
 
 Progress: [░░░░░░░░░░] 0%

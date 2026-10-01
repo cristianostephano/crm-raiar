@@ -156,14 +156,26 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.7-ROADMAP
 **Plans**: 8 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 31-01-PLAN.md — Migration 0048 (tabela agenda2_itens + RLS dono-escreve/Supervisor-só-lê + carimbos) + testes estruturais e de RLS (vermelhos até o 31-03)
 - [ ] 31-02-PLAN.md — Funções puras da Lista (seções, visibilidade, filtro, duplicado) + schema Zod compartilhado (TDD)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 31-03-PLAN.md — [BLOCKING] Aprovação do dono (alerta LGPD) + aplicação manual da 0048 no SQL Editor + RLS verde
 - [ ] 31-04-PLAN.md — Leitura da Lista, contagem do menu e seis Server Actions (sem RPC)
 - [ ] 31-05-PLAN.md — Linha do item (riscado/editável/somente leitura) + confirmação de apagar
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 31-06-PLAN.md — Item "Agenda 2" no menu com selo/bolinha + ajuste dos testes de ordem (D-15)
 - [ ] 31-07-PLAN.md — Formulário de criar/editar com aviso de duplicado e dica de LGPD
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 31-08-PLAN.md — Tela /agenda-2 (Lista + visão do Supervisor) + verificação final (Agenda atual intocada)
+
 **UI hint**: yes
 
 ### Phase 32: Agenda 2 — Repetição Semanal e Calendário
