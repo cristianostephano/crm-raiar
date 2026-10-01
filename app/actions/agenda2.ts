@@ -1,0 +1,243 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+
+import type { Agenda2Item } from "@/lib/agenda2/itens"
+import { getAgenda2 } from "@/lib/supabase/queries/agenda2"
+import { createClient } from "@/lib/supabase/server"
+import {
+  agenda2ItemIdSchema,
+  agenda2ItemSchema,
+  type Agenda2ItemInput,
+} from "@/lib/validations/agenda2"
+
+/**
+ * Seis Server Actions da Agenda 2 (Fase 31, AGD2-01/03/04/05/07, D-05, D-06,
+ * D-16; Pattern 2/4 da pesquisa, 31-RESEARCH.md). Toda escrita é um
+ * insert/update/delete DIRETO em `agenda2_itens` — sem RPC, sem privilégio
+ * elevado. Quem decide se 0 ou 1 linha é afetada é a RLS assimétrica da
+ * migration 0048 (plano 31-01): Supervisor e vendedor alheio ao item sempre
+ * afetam zero linhas (D-16), nunca uma linha de outro dono.
+ *
+ * Nenhuma checagem de papel aqui — a RLS é a fronteira (CLAUDE.md). O dono
+ * do item é SEMPRE `user.id` da sessão do servidor, nunca um valor vindo da
+ * tela (nota a do ROADMAP, T-31-18): o insert monta o objeto só com os três
+ * campos validados do schema + `vendedor_id`. A mensagem crua do banco nunca
+ * chega à tela (T-31-21) — sempre uma das mensagens fixas abaixo. Uma ação
+ * que afeta zero linhas é tratada como erro (`nao_encontrado`), nunca como
+ * sucesso falso.
+ */
+
+const MSG_SESSAO_EXPIRADA = "Sessão expirada."
+const MSG_CARREGAR_FALHOU =
+  "Não foi possível carregar sua Agenda 2. Tente novamente."
+const MSG_SALVAR_FALHOU = "Não foi possível salvar. Tente novamente."
+
+export type Agenda2ErrorCode =
+  | "unauthenticated"
+  | "validacao"
+  | "nao_encontrado"
+  | "salvar_falhou"
+  | "fetch_falhou"
+
+export type GetAgenda2Result =
+  | { data: Agenda2Item[]; error?: undefined }
+  | { data?: undefined; error: { code: Agenda2ErrorCode; message: string } }
+
+export type Agenda2MutationResult =
+  | { data: true; error?: undefined }
+  | { data?: undefined; error: { code: Agenda2ErrorCode; message: string } }
+
+/** Embrulho fino: `getAgenda2()` depende de `cookies()` via
+ * lib/supabase/server.ts, então só pode ser chamada a partir de uma Server
+ * Action/Component. */
+export async function getAgenda2Action(): Promise<GetAgenda2Result> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: MSG_SESSAO_EXPIRADA } }
+  }
+
+  try {
+    return { data: await getAgenda2() }
+  } catch {
+    return { error: { code: "fetch_falhou", message: MSG_CARREGAR_FALHOU } }
+  }
+}
+
+/**
+ * Cria um item (AGD2-01). Re-valida com `agenda2ItemSchema` no servidor —
+ * ação de servidor é endpoint público, nunca confia só na validação do
+ * navegador (CLAUDE.md). O objeto do insert é montado SÓ com os três campos
+ * do parse mais `vendedor_id: user.id` — qualquer campo extra enviado pela
+ * tela (ex.: `vendedorId`, `concluido`) é descartado (T-31-18).
+ */
+export async function criarAgenda2Item(
+  values: Agenda2ItemInput
+): Promise<Agenda2MutationResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: MSG_SESSAO_EXPIRADA } }
+  }
+
+  const parsed = agenda2ItemSchema.safeParse(values)
+  if (!parsed.success) {
+    return { error: { code: "validacao", message: MSG_SALVAR_FALHOU } }
+  }
+
+  const { error } = await supabase.from("agenda2_itens").insert({
+    nome_cliente: parsed.data.nomeCliente,
+    bairro: parsed.data.bairro,
+    data: parsed.data.data,
+    vendedor_id: user.id,
+  })
+
+  if (error) {
+    return { error: { code: "salvar_falhou", message: MSG_SALVAR_FALHOU } }
+  }
+
+  revalidatePath("/agenda-2")
+  return { data: true }
+}
+
+/**
+ * Edita um item (AGD2-03). NUNCA inclui `concluido` no update (D-06): editar
+ * um item concluído não pode desmarcá-lo por acidente. Zero linhas afetadas
+ * (RLS barrou ou item não existe) vira `nao_encontrado`, nunca sucesso
+ * falso.
+ */
+export async function atualizarAgenda2Item(
+  itemId: string,
+  values: Agenda2ItemInput
+): Promise<Agenda2MutationResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: MSG_SESSAO_EXPIRADA } }
+  }
+
+  const idParsed = agenda2ItemIdSchema.safeParse(itemId)
+  const valuesParsed = agenda2ItemSchema.safeParse(values)
+  if (!idParsed.success || !valuesParsed.success) {
+    return { error: { code: "validacao", message: MSG_SALVAR_FALHOU } }
+  }
+
+  const { data, error } = await supabase
+    .from("agenda2_itens")
+    .update({
+      nome_cliente: valuesParsed.data.nomeCliente,
+      bairro: valuesParsed.data.bairro,
+      data: valuesParsed.data.data,
+    })
+    .eq("id", idParsed.data)
+    .select("id")
+
+  if (error) {
+    return { error: { code: "salvar_falhou", message: MSG_SALVAR_FALHOU } }
+  }
+  if (!data || data.length === 0) {
+    return { error: { code: "nao_encontrado", message: MSG_SALVAR_FALHOU } }
+  }
+
+  revalidatePath("/agenda-2")
+  return { data: true }
+}
+
+/**
+ * Apaga um item (AGD2-04). Mesma forma de guarda de zero-linhas que
+ * `atualizarAgenda2Item`.
+ */
+export async function apagarAgenda2Item(
+  itemId: string
+): Promise<Agenda2MutationResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: MSG_SESSAO_EXPIRADA } }
+  }
+
+  const idParsed = agenda2ItemIdSchema.safeParse(itemId)
+  if (!idParsed.success) {
+    return { error: { code: "validacao", message: MSG_SALVAR_FALHOU } }
+  }
+
+  const { data, error } = await supabase
+    .from("agenda2_itens")
+    .delete()
+    .eq("id", idParsed.data)
+    .select("id")
+
+  if (error) {
+    return { error: { code: "salvar_falhou", message: MSG_SALVAR_FALHOU } }
+  }
+  if (!data || data.length === 0) {
+    return { error: { code: "nao_encontrado", message: MSG_SALVAR_FALHOU } }
+  }
+
+  revalidatePath("/agenda-2")
+  return { data: true }
+}
+
+/** Helper interno (não exportado) de `concluirAgenda2Item`/
+ * `desmarcarAgenda2Item` — mesma guarda de sessão/validação/zero-linhas. */
+async function definirConcluido(
+  itemId: string,
+  valor: boolean
+): Promise<Agenda2MutationResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: MSG_SESSAO_EXPIRADA } }
+  }
+
+  const idParsed = agenda2ItemIdSchema.safeParse(itemId)
+  if (!idParsed.success) {
+    return { error: { code: "validacao", message: MSG_SALVAR_FALHOU } }
+  }
+
+  const { data, error } = await supabase
+    .from("agenda2_itens")
+    .update({ concluido: valor })
+    .eq("id", idParsed.data)
+    .select("id")
+
+  if (error) {
+    return { error: { code: "salvar_falhou", message: MSG_SALVAR_FALHOU } }
+  }
+  if (!data || data.length === 0) {
+    return { error: { code: "nao_encontrado", message: MSG_SALVAR_FALHOU } }
+  }
+
+  revalidatePath("/agenda-2")
+  return { data: true }
+}
+
+/** AGD2-05: marca o item como concluído. */
+export async function concluirAgenda2Item(
+  itemId: string
+): Promise<Agenda2MutationResult> {
+  return definirConcluido(itemId, true)
+}
+
+/** D-05: desmarca um item concluído por engano. */
+export async function desmarcarAgenda2Item(
+  itemId: string
+): Promise<Agenda2MutationResult> {
+  return definirConcluido(itemId, false)
+}
