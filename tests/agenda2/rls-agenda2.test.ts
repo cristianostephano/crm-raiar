@@ -76,9 +76,20 @@ afterAll(async () => {
   await deleteTestMember(supervisor.id)
 })
 
-/** Nome inventado único — nunca o nome real de um cliente (LGPD). */
+/**
+ * Nome inventado único — nunca o nome real de um cliente (LGPD).
+ *
+ * `Date.now()` sozinho é uma sequência de 13 dígitos corridos, que a
+ * constraint `chk_agenda2_nome_cliente_sem_documento` (migration 0048)
+ * recusa de propósito (parece CPF/CNPJ/telefone/CEP). Por isso o timestamp
+ * é quebrado a cada 3 dígitos com um separador não-numérico — nunca forma
+ * uma sequência de 8+ dígitos, mas continua único o bastante para a
+ * fixture. O sufixo aleatório (6 caracteres base36) já fica abaixo do
+ * limite de 8 por construção.
+ */
 function nomeInventado(label: string): string {
-  const sufixo = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const timestampQuebrado = Date.now().toString().replace(/(\d{3})(?=\d)/g, "$1x")
+  const sufixo = `${timestampQuebrado}-${Math.random().toString(36).slice(2, 8)}`
   return `Teste Agenda2 ${label} ${sufixo}`
 }
 
