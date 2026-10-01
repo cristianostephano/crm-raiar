@@ -1,10 +1,11 @@
 ---
 phase: 31-agenda-2-visitas-manuais-na-lista
 verified: 2026-10-01T15:00:00Z
-status: human_needed
+status: passed
 score: 5/5 must-haves verified
 behavior_unverified: 0
-overrides_applied: 0
+overrides_applied: 1
+override_note: "Dono do projeto decidiu explicitamente publicar em produção sem rodar o teste manual ponta-a-ponta no navegador (sessão de 2026-10-01) — não conseguiu criar uma conta de vendedor de teste no momento. A decisão de prazo de guarda (LGPD) foi obtida e registrada (1 ano / 365 dias) em 31-UAT.md, mas o descarte automático correspondente AINDA NÃO foi implementado no código — fica como trabalho pendente separado."
 human_verification:
   - test: "Como vendedor de teste: abrir 'Agenda 2' no menu (logo abaixo de 'Agenda'), adicionar uma visita para hoje, corrigir o bairro, marcar como concluída, desmarcar, apagar (confirmando). Tentar um nome com número de telefone/CPF. Depois entrar como Supervisor e abrir 'Agenda 2'."
     expected: "Vendedor: o item aparece em 'Hoje'; a correção aparece na hora; concluído fica riscado e continua na lista; desmarcar volta ao normal; apagar pede confirmação e some; nome com telefone é recusado com a mensagem de documento; o selo do menu acompanha o número de pendentes. Supervisor: vê os itens do time com o nome do vendedor, filtro 'Vendedor' em 'Todos os vendedores', nenhum botão de adicionar/editar/apagar/concluir, selo da Agenda 2 dele sem número. A tela 'Agenda' continua exatamente como antes."
