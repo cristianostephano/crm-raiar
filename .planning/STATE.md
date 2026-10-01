@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Agenda 2
 current_phase: 31
-current_phase_name: "1 de 3 no marco v1.8: Fases 31-33"
+current_phase_name: agenda-2-visitas-manuais-na-lista
 status: executing
-stopped_at: Phase 31 UI-SPEC approved
-last_updated: "2026-10-01T12:02:54.204Z"
-last_activity: 2026-09-28
-last_activity_desc: Roadmap v1.8 criado (Fases 31-33, 9/9 requisitos mapeados)
+stopped_at: Completed 31-01-PLAN.md
+last_updated: "2026-10-01T12:30:05.338Z"
+last_activity: 2026-10-01
+last_activity_desc: Phase 31 execution started
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 8
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-28)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 31 — Agenda 2 — Visitas Manuais na Lista (marco v1.8, Fases 31-33)
+**Current focus:** Phase 31 — agenda-2-visitas-manuais-na-lista
 
 ## Current Position
 
-Phase: 31 (1 de 3 no marco v1.8: Fases 31-33) — Agenda 2 — Visitas Manuais na Lista
-Plan: — (fase ainda não planejada)
+Phase: 31 (agenda-2-visitas-manuais-na-lista) — EXECUTING
+Plan: 2 of 8
 Status: Ready to execute
-Last activity: 2026-09-28 — Roadmap v1.8 criado (Fases 31-33, 9/9 requisitos mapeados)
+Last activity: 2026-10-01 — Phase 31 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -122,6 +122,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 30 P05 | 20min | 2 tasks | 7 files |
 | Phase 30 P06 | ~15min | 2 tasks | 2 files |
 | Phase 27 P03 | 35min | 2 tasks | 2 files |
+| Phase 31 P01 | 11min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -339,6 +340,9 @@ Recent decisions affecting current work:
 - [Phase ?]: getAderenciaUso().catch(() => null) isola a falha da metrica nova - o comparativo mantem o comportamento de erro de sempre
 - [Phase 30]: 30-06: coluna Aderencia de uso renderizada exatamente como planejado, sem checagem de papel nova (D-08 garantido por DashboardClient + RLS) — Nenhuma decisao fora do que o plano ja travava
 - [Phase 27]: KAN-03 corrigido: div simples em StaticClienteCard evita compressao do card do Kanban quando filtro/busca/aba Incompletos esta ativo (diagnostico ao vivo do 27-02 confirmou H1)
+- [Phase 31]: Escrita da agenda2_itens exige vendedor ATIVO (exists com p.role='vendedor' and p.ativo=true), nao so 'not is_supervisor()' — Corrige a proposta original da pesquisa, que deixaria um vendedor desativado com sessao ainda valida continuar gravando
+- [Phase 31]: Carimbos de agenda2_itens sempre do servidor via um unico gatilho BEFORE INSERT OR UPDATE — A pesquisa so previa o gatilho de UPDATE; sem cobrir o INSERT tambem, um vendedor poderia forjar criado_em pela API e bagunçar a ordem de criacao (D-08)
+- [Phase 31]: Nenhum descarte automatico de dados implementado na migration 0048 — Prazo de guarda dos dados do piloto (LGPD) segue pendente de decisao explicita do dono do projeto
 
 ### Pending Todos
 
@@ -454,9 +458,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-28T20:01:42.729Z
-Stopped at: Phase 31 UI-SPEC approved
-Resume file: .planning/phases/31-agenda-2-visitas-manuais-na-lista/31-UI-SPEC.md
+Last session: 2026-10-01T12:30:05.302Z
+Stopped at: Completed 31-01-PLAN.md
+Resume file: None
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
 
