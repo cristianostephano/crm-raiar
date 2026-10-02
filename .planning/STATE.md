@@ -5,15 +5,15 @@ milestone_name: Agenda 2
 current_phase: 32
 current_phase_name: agenda-2-repeti-o-semanal-e-calend-rio
 status: executing
-stopped_at: Phase 32 context gathered
-last_updated: "2026-10-02T15:54:10.196Z"
+stopped_at: Completed 32-03-PLAN.md
+last_updated: "2026-10-02T16:05:52.954Z"
 last_activity: 2026-10-02
 last_activity_desc: Phase 32 execution started
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 15
-  completed_plans: 10
+  completed_plans: 11
   percent: 33
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 ## Current Position
 
 Phase: 32 (agenda-2-repeti-o-semanal-e-calend-rio) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-10-02 — Phase 32 execution started
 
@@ -132,6 +132,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 31 P08 | ~20min | 2 tasks | 3 files |
 | Phase 32 P01 | 8min | 2 tasks | 4 files |
 | Phase 32 P02 | 8min | 2 tasks | 4 files |
+| Phase 32 P03 | 12min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -367,6 +368,7 @@ Recent decisions affecting current work:
 - [Phase 32-01]: N semanas = N visitas no total (D-31); repetirSemanas optional sem default; z.literal(REPETIR_SEMANAS_VALORES) como fonte unica
 - [Phase 32-02]: intervaloVisivelAgenda2 nao apara passado nem futuro (D-28); grade de mes cabe no teto de 45 dias — a acao do 32-03 nunca recusa um periodo que a tela pede
 - [Phase 32-02]: getAgenda2Periodo separada de getAgenda2, sem filtro de dono, paginada com ordem estavel terminando em id — RLS escopa (D-30); testes da Fase 31 fixam o .or da Lista
+- [Phase 32]: 32-03: criarAgenda2Item grava o lote de repeticao num unico insert(array) tudo-ou-nada, sem RPC; getAgenda2PeriodoAction reusa validarIntervaloHistorico — Atomicidade vem do PostgREST e a autorizacao fica so na RLS da 0048 por linha (provado no banco real)
 
 ### Pending Todos
 
@@ -482,8 +484,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-02T15:53:43.930Z
-Stopped at: Phase 32 context gathered
+Last session: 2026-10-02T16:05:52.929Z
+Stopped at: Completed 32-03-PLAN.md
 Resume file: .planning/phases/32-agenda-2-repeti-o-semanal-e-calend-rio/32-CONTEXT.md
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
