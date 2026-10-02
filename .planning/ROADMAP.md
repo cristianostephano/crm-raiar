@@ -252,7 +252,7 @@ Phases execute in numeric order: 31 → 32 → 33
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 8/8 | Complete    | 2026-10-01 |
-| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 7/7 | Complete   | 2026-10-02 |
+| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 7/7 | Complete    | 2026-10-02 |
 | 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 0/TBD | Not started | - |
 
 *Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.*

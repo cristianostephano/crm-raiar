@@ -1,10 +1,11 @@
 ---
 phase: 32-agenda-2-repeti-o-semanal-e-calend-rio
 verified: 2026-10-02T14:00:00Z
-status: human_needed
+status: passed
 score: 5/5 must-haves verified
 behavior_unverified: 0
-overrides_applied: 0
+overrides_applied: 1
+override_note: "Dono do projeto escolheu explicitamente publicar direto em produção (2026-10-02, resposta 'Direto em produção'), sem a conferência visual opcional no navegador (seletor Repetir e calendário). Todos os 5 critérios automatizáveis foram verificados; só a checagem visual humana ficou de fora por decisão do dono. Descarte automático de 1 ano (LGPD) continua sem implementação."
 human_verification:
   - test: "Abrir /agenda2 no navegador (de preferencia no link de preview da staging) como Vendedor, clicar em 'Adicionar visita', escolher uma data de hoje ou futura e abrir o seletor 'Repetir'"
     expected: "Seletor mostra 'Nao repetir' (padrao), 'Por 4 semanas (4 visitas, incluindo esta)', 8 e 12; com data passada ou vazia o seletor fica desabilitado com a dica; ao salvar com 4 semanas aparecem 4 visitas no mesmo dia da semana"
