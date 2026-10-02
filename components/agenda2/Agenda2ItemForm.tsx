@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format, parseISO } from "date-fns"
 import { TriangleAlert } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 
 import {
@@ -29,12 +29,27 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { diaLocalSaoPaulo } from "@/lib/aderencia/registroDiario"
 import { existeItemParecido, type Agenda2Item } from "@/lib/agenda2/itens"
 import {
+  REPETIR_SEMANAS_VALORES,
+  repeticaoPermitida,
+  rotuloRepeticao,
+  type RepetirSemanas,
+} from "@/lib/agenda2/repeticao"
+import {
   AGENDA2_BAIRRO_MAX,
+  AGENDA2_MSG_REPETIR_PASSADO,
   AGENDA2_NOME_MAX,
-  agenda2ItemSchema,
-  type Agenda2ItemInput,
+  criarAgenda2CriarSchema,
+  type Agenda2CriarItemInput,
 } from "@/lib/validations/agenda2"
 
 /**
@@ -94,6 +109,15 @@ export function Agenda2ItemForm({
 const GENERIC_ERROR = "Não foi possível salvar. Tente novamente."
 const LGPD_HINT =
   "Use o Nome Fantasia do cliente. Evite nome completo de pessoa e documentos."
+const REPETIR_DICA_SEM_DATA = "Escolha a data primeiro."
+const REPETIR_DICA_ATIVA =
+  "Uma visita por semana, sempre no mesmo dia da semana da data escolhida."
+
+/** Opções do seletor Repetir — rótulos com o total de visitas (D-31). */
+const OPCOES_REPETICAO = REPETIR_SEMANAS_VALORES.map((n) => ({
+  value: String(n),
+  label: rotuloRepeticao(n),
+}))
 
 function textoAviso(data: string): string {
   return `Já existe um item parecido para ${format(parseISO(data), "dd/MM")}. Confirme se quer criar mesmo assim.`
@@ -103,8 +127,8 @@ function textoAviso(data: string): string {
  * contra o valor digitado, ou o aviso sumiria sozinho na hora em que
  * aparecesse. */
 function valoresIguais(
-  snapshot: Agenda2ItemInput | null,
-  atuais: Partial<Agenda2ItemInput>
+  snapshot: Agenda2CriarItemInput | null,
+  atuais: Partial<Agenda2CriarItemInput>
 ): boolean {
   if (!snapshot) return false
   return (
@@ -128,23 +152,36 @@ function Agenda2ItemFields({
   onOpenChange: (open: boolean) => void
 }) {
   const [formError, setFormError] = useState<string | null>(null)
-  const [avisoPara, setAvisoPara] = useState<Agenda2ItemInput | null>(null)
+  const [avisoPara, setAvisoPara] = useState<Agenda2CriarItemInput | null>(
+    null
+  )
   const [calendarioAberto, setCalendarioAberto] = useState(false)
+  // "hoje" calculado UMA vez por montagem, com a MESMA função da Server
+  // Action (dia de São Paulo) — tela e servidor concordam (Pitfall 2).
+  const [hoje] = useState(() => diaLocalSaoPaulo(new Date()))
+  const schema = useMemo(() => criarAgenda2CriarSchema(hoje), [hoje])
 
-  const defaultValues: Agenda2ItemInput =
+  // Criar: "Não repetir" por padrão (privacidade por padrão — nenhuma agenda
+  // futura nasce sem o vendedor pedir). Editar: só os três campos do item.
+  const defaultValues: Agenda2CriarItemInput =
     modo === "editar" && item
       ? { nomeCliente: item.nomeCliente, bairro: item.bairro, data: item.data }
-      : { nomeCliente: "", bairro: "", data: "" }
+      : { nomeCliente: "", bairro: "", data: "", repetirSemanas: 0 }
 
-  const form = useForm<Agenda2ItemInput>({
-    resolver: zodResolver(agenda2ItemSchema),
+  // UM resolver para os dois modos. Em edição o campo Repetir nunca é
+  // renderizado, então `repetirSemanas` fica indefinido e o refinamento não
+  // atua; a edição continua protegida no servidor por `agenda2ItemSchema` (D-24).
+  const form = useForm<Agenda2CriarItemInput>({
+    resolver: zodResolver(schema),
     defaultValues,
   })
 
   const valoresAtuais = useWatch({ control: form.control })
   const mostrarAviso = valoresIguais(avisoPara, valoresAtuais)
+  const dataAtual = valoresAtuais.data ?? ""
+  const repeticaoLiberada = repeticaoPermitida(dataAtual, hoje)
 
-  async function onSubmit(values: Agenda2ItemInput) {
+  async function onSubmit(values: Agenda2CriarItemInput) {
     setFormError(null)
 
     const parecido = existeItemParecido(
@@ -161,8 +198,18 @@ function Agenda2ItemFields({
     try {
       const result =
         modo === "criar"
-          ? await criarAgenda2Item(values)
-          : await atualizarAgenda2Item((item as Agenda2Item).id, values)
+          ? await criarAgenda2Item({
+              nomeCliente: values.nomeCliente,
+              bairro: values.bairro,
+              data: values.data,
+              repetirSemanas: values.repetirSemanas ?? 0,
+            })
+          : // D-24: edição NUNCA leva repetição — três campos explícitos.
+            await atualizarAgenda2Item((item as Agenda2Item).id, {
+              nomeCliente: values.nomeCliente,
+              bairro: values.bairro,
+              data: values.data,
+            })
 
       if (result.error) {
         setFormError(GENERIC_ERROR)
@@ -245,7 +292,15 @@ function Agenda2ItemFields({
                     selected={field.value ? parseISO(field.value) : undefined}
                     onSelect={(dia) => {
                       if (!dia) return
-                      field.onChange(format(dia, "yyyy-MM-dd"))
+                      const novaData = format(dia, "yyyy-MM-dd")
+                      field.onChange(novaData)
+                      // D-23: data passada desfaz a repetição já escolhida.
+                      if (
+                        modo === "criar" &&
+                        !repeticaoPermitida(novaData, hoje)
+                      ) {
+                        form.setValue("repetirSemanas", 0)
+                      }
                       setCalendarioAberto(false)
                     }}
                   />
@@ -255,6 +310,47 @@ function Agenda2ItemFields({
             </FormItem>
           )}
         />
+
+        {modo === "criar" ? (
+          <FormField
+            control={form.control}
+            name="repetirSemanas"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Repetir</FormLabel>
+                <Select
+                  value={String(field.value ?? 0)}
+                  onValueChange={(value) =>
+                    field.onChange(Number(value) as RepetirSemanas)
+                  }
+                  items={OPCOES_REPETICAO}
+                  disabled={!repeticaoLiberada}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {OPCOES_REPETICAO.map((opcao) => (
+                      <SelectItem key={opcao.value} value={opcao.value}>
+                        {opcao.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {dataAtual === ""
+                    ? REPETIR_DICA_SEM_DATA
+                    : !repeticaoLiberada
+                      ? AGENDA2_MSG_REPETIR_PASSADO
+                      : REPETIR_DICA_ATIVA}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
 
         {mostrarAviso && avisoPara ? (
           <div
