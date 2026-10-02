@@ -15,6 +15,7 @@ vi.mock("@/app/actions/agenda2", () => ({
   apagarAgenda2Item: vi.fn(),
   concluirAgenda2Item: vi.fn(),
   desmarcarAgenda2Item: vi.fn(),
+  getAgenda2PeriodoAction: vi.fn(),
 }))
 
 import {
@@ -22,6 +23,7 @@ import {
   concluirAgenda2Item,
   desmarcarAgenda2Item,
   getAgenda2Action,
+  getAgenda2PeriodoAction,
 } from "@/app/actions/agenda2"
 import type { GetAgenda2Result } from "@/app/actions/agenda2"
 
@@ -29,6 +31,7 @@ const mockedGet = vi.mocked(getAgenda2Action)
 const mockedConcluir = vi.mocked(concluirAgenda2Item)
 const mockedDesmarcar = vi.mocked(desmarcarAgenda2Item)
 const mockedApagar = vi.mocked(apagarAgenda2Item)
+const mockedPeriodo = vi.mocked(getAgenda2PeriodoAction)
 
 /** Datas relativas ao relógio real do teste (nunca literais fixas) — mesmo
  * precedente de tests/agenda/agenda-list.test.tsx. */
@@ -92,6 +95,7 @@ describe("Agenda2List", () => {
     mockedConcluir.mockReset()
     mockedDesmarcar.mockReset()
     mockedApagar.mockReset()
+    mockedPeriodo.mockReset()
   })
 
   it("carregando-e-erro: 3 Skeletons enquanto carrega; erro mostra a copy e Tentar novamente recarrega", async () => {
@@ -375,7 +379,7 @@ describe("Agenda2List", () => {
     )
   })
 
-  it("sem-busca-e-extras (D-11): não há busca, exportar nem abas de calendário", async () => {
+  it("sem-busca-e-extras (D-11) + seletor de visão (AGD2-08): sem busca nem exportar; Lista ativa, Dia/Semana/Mês presentes e nenhuma leitura de período", async () => {
     mockedGet.mockResolvedValueOnce({ data: [buildItem()] })
 
     renderList()
@@ -383,12 +387,19 @@ describe("Agenda2List", () => {
     await screen.findByText("Hoje (1)")
     expect(screen.queryByRole("searchbox")).not.toBeInTheDocument()
     expect(screen.queryByText(/Exportar/)).not.toBeInTheDocument()
+
+    expect(screen.getByRole("button", { name: "Lista" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    )
+    for (const nome of ["Dia", "Semana", "Mês"]) {
+      expect(screen.getByRole("button", { name: nome })).toBeInTheDocument()
+    }
+    // Nenhuma grade de calendário: a navegação de período só existe fora da Lista.
     expect(
-      screen.queryByRole("button", { name: "Mês" })
+      screen.queryByRole("button", { name: "Período anterior" })
     ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole("button", { name: "Semana" })
-    ).not.toBeInTheDocument()
+    expect(mockedPeriodo).not.toHaveBeenCalled()
   })
 
   it("supervisor-filtro (AGD2-07/D-17/D-18): rótulo Vendedor, Todos os vendedores, os dois itens com nome, e filtrar por Bruno Lima", async () => {
