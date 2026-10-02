@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import type { ComponentProps } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -309,5 +315,156 @@ describe("Agenda2Calendario — leitura do período visível", () => {
     expect(screen.getByText("Cliente Ana")).toBeInTheDocument()
     expect(screen.getByText("Cliente Bruno")).toBeInTheDocument()
     expect(mockedPeriodo).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("Agenda2Calendario — diálogo do dia e ações do dono", () => {
+  const item12 = buildItem({
+    id: "d12",
+    nomeCliente: "Cliente do dia 12",
+    data: "2026-08-12",
+  })
+
+  beforeEach(() => {
+    mockedPeriodo.mockReset()
+    mockedPeriodo.mockResolvedValue({ data: [item12] })
+  })
+
+  async function abrirDiaPeloMes(dia = "12 de agosto") {
+    await screen.findByText("Cliente do dia 12")
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(dia) }))
+    return screen.getByRole("dialog")
+  }
+
+  it("dialogo-pelo-mes: clicar na célula abre o diálogo do dia com o item", async () => {
+    renderCalendario({ visao: "mes" })
+
+    const dialogo = await abrirDiaPeloMes()
+
+    expect(
+      within(dialogo).getByText(rotuloDoPeriodo(new Date(2026, 7, 12), "dia"))
+    ).toBeInTheDocument()
+    expect(within(dialogo).getByText("Cliente do dia 12")).toBeInTheDocument()
+  })
+
+  it("dialogo-pelo-mes: dia sem itens mostra a mensagem de dia vazio", async () => {
+    renderCalendario({ visao: "mes" })
+
+    const dialogo = await abrirDiaPeloMes("13 de agosto")
+
+    expect(
+      within(dialogo).getByText("Nenhuma visita neste dia.")
+    ).toBeInTheDocument()
+  })
+
+  it("dialogo-pela-semana (Pitfall 9): clicar no chip abre o mesmo diálogo", async () => {
+    renderCalendario({ visao: "semana" })
+
+    const chip = (await screen.findByText("Cliente do dia 12")).closest(
+      '[role="button"]'
+    ) as HTMLElement
+    fireEvent.click(chip)
+
+    const dialogo = screen.getByRole("dialog")
+    expect(
+      within(dialogo).getByText(rotuloDoPeriodo(new Date(2026, 7, 12), "dia"))
+    ).toBeInTheDocument()
+    expect(within(dialogo).getByText("Cliente do dia 12")).toBeInTheDocument()
+  })
+
+  it("fechar-dialogo: fechar remove o diálogo", async () => {
+    renderCalendario({ visao: "mes" })
+    await abrirDiaPeloMes()
+
+    fireEvent.click(screen.getByRole("button", { name: /close/i }))
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("concluir-no-dialogo: Concluir e Desmarcar agem ali mesmo e o diálogo continua aberto", async () => {
+    const onConcluir = vi.fn()
+    const onDesmarcar = vi.fn()
+    const feito = buildItem({
+      id: "d12b",
+      nomeCliente: "Cliente Feito",
+      data: "2026-08-12",
+      concluido: true,
+    })
+    mockedPeriodo.mockResolvedValue({ data: [item12, feito] })
+    renderCalendario({ visao: "mes", onConcluir, onDesmarcar })
+
+    const dialogo = await abrirDiaPeloMes()
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Concluir" }))
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Desmarcar" }))
+
+    expect(onConcluir).toHaveBeenCalledWith(item12)
+    expect(onDesmarcar).toHaveBeenCalledWith(feito)
+    expect(screen.getByRole("dialog")).toBeInTheDocument()
+  })
+
+  it("editar-fecha-dialogo: Editar e Apagar fecham o diálogo e chamam a tela com o item", async () => {
+    const onEditar = vi.fn()
+    const onApagar = vi.fn()
+    renderCalendario({ visao: "mes", onEditar, onApagar })
+
+    let dialogo = await abrirDiaPeloMes()
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Editar" }))
+
+    expect(onEditar).toHaveBeenCalledWith(item12)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /12 de agosto/ }))
+    dialogo = screen.getByRole("dialog")
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Apagar" }))
+
+    expect(onApagar).toHaveBeenCalledWith(item12)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("supervisor-somente-leitura: sem botões de escrita, com o nome do vendedor", async () => {
+    renderCalendario({ visao: "mes", podeAlterar: false, showResponsavel: true })
+
+    const dialogo = await abrirDiaPeloMes()
+
+    for (const nome of ["Editar", "Apagar", "Concluir", "Desmarcar"]) {
+      expect(
+        within(dialogo).queryByRole("button", { name: nome })
+      ).not.toBeInTheDocument()
+    }
+    expect(within(dialogo).getByText("Ana Souza")).toBeInTheDocument()
+  })
+
+  it("supervisor-somente-leitura: a visão de dia também não mostra botões de escrita", async () => {
+    mockedPeriodo.mockResolvedValue({
+      data: [buildItem({ data: "2026-08-14", nomeCliente: "Cliente de hoje" })],
+    })
+    renderCalendario({ visao: "dia", podeAlterar: false, showResponsavel: true })
+
+    await screen.findByText("Cliente de hoje")
+
+    for (const nome of ["Editar", "Apagar", "Concluir", "Desmarcar"]) {
+      expect(
+        screen.queryByRole("button", { name: nome })
+      ).not.toBeInTheDocument()
+    }
+    expect(screen.getByText("Ana Souza")).toBeInTheDocument()
+  })
+
+  it("dia-com-acoes: na visão de dia Concluir repassa o item e salvandoId desabilita o botão", async () => {
+    const hoje = buildItem({
+      id: "h1",
+      data: "2026-08-14",
+      nomeCliente: "Cliente de hoje",
+    })
+    mockedPeriodo.mockResolvedValue({ data: [hoje] })
+    const onConcluir = vi.fn()
+    const { rerenderCom } = renderCalendario({ visao: "dia", onConcluir })
+
+    await screen.findByText("Cliente de hoje")
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+    expect(onConcluir).toHaveBeenCalledWith(hoje)
+
+    rerenderCom({ visao: "dia", onConcluir, salvandoId: "h1" })
+    expect(screen.getByRole("button", { name: "Concluir" })).toBeDisabled()
   })
 })
