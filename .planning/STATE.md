@@ -4,17 +4,17 @@ milestone: v1.8
 milestone_name: Agenda 2
 current_phase: 32
 current_phase_name: agenda-2-repeti-o-semanal-e-calend-rio
-status: executing
+status: verifying
 stopped_at: Completed 32-06-PLAN.md
-last_updated: "2026-10-02T16:30:28.696Z"
+last_updated: "2026-10-02T16:43:11.801Z"
 last_activity: 2026-10-02
 last_activity_desc: Phase 32 execution started
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 15
-  completed_plans: 14
-  percent: 33
+  completed_plans: 15
+  percent: 67
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 
 Phase: 32 (agenda-2-repeti-o-semanal-e-calend-rio) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-02 — Phase 32 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -136,6 +136,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 32 P04 | 8min | 2 tasks | 8 files |
 | Phase 32 P05 | 14min | 2 tasks | 2 files |
 | Phase 32 P06 | 15min | 2 tasks | 2 files |
+| Phase 32 P07 | 25min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -376,6 +377,7 @@ Recent decisions affecting current work:
 - [Phase 32]: 32-05: um resolver so (criarAgenda2CriarSchema) para criar e editar no Agenda2ItemForm; edicao protegida pelo payload de 3 campos e pelo servidor — Evita dois resolvers com tipos diferentes no mesmo useForm
 - [Phase 32]: 32-06: recarga do calendario da Agenda 2 mantem itens na tela (sem piscar); Skeleton so sem dado do periodo atual — evita piscar a grade a cada Concluir/Editar/Apagar
 - [Phase 32]: 32-06: Editar/Apagar a partir do dialogo do dia fecham o dialogo antes de chamar a tela — evita dois dialogos modais empilhados
+- [Phase 32]: Agenda2List mantem a leitura da Lista rodando em qualquer visao (alimenta aviso de duplicado e opcoes do filtro) — Evita segunda fonte de verdade; otimizacao desnecessaria no MVP
 
 ### Pending Todos
 
@@ -491,7 +493,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-02T16:30:28.672Z
+Last session: 2026-10-02T16:43:11.776Z
 Stopped at: Completed 32-06-PLAN.md
 Resume file: .planning/phases/32-agenda-2-repeti-o-semanal-e-calend-rio/32-CONTEXT.md
 

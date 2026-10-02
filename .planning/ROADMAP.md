@@ -127,7 +127,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.7-ROADMAP
 **Milestone Goal:** Criar uma segunda agenda, em paralelo à atual, onde o vendedor inclui manualmente quem visitar em cada dia (só clientes ativos/ganho) — para comparar com o modelo automático de hoje (frequência + dia fixo) e decidir qual fica de verdade no sistema.
 
 - [x] **Phase 31: Agenda 2 — Visitas Manuais na Lista** - Nova tela "Agenda 2" no menu, logo abaixo de "Agenda", onde o vendedor anota à mão quem vai visitar em cada dia (nome + bairro + data), corrige, apaga e marca como feito; o Supervisor vê a Agenda 2 de todo o time, com filtro por vendedor. (completed 2026-10-01)
-- [ ] **Phase 32: Agenda 2 — Repetição Semanal e Calendário** - O vendedor cria um item já repetido por 4, 8 ou 12 semanas de uma vez, e vê a Agenda 2 também em calendário de dia/semana/mês, com a mesma navegação da Agenda atual.
+- [x] **Phase 32: Agenda 2 — Repetição Semanal e Calendário** - O vendedor cria um item já repetido por 4, 8 ou 12 semanas de uma vez, e vê a Agenda 2 também em calendário de dia/semana/mês, com a mesma navegação da Agenda atual. (completed 2026-10-02)
 - [ ] **Phase 33: Agenda Atual sem Visitas Automáticas de Clientes Ativos** - Durante o piloto, a Agenda atual deixa de puxar sozinha as visitas dos clientes ativos por frequência/dia fixo — a prospecção continua igual e nenhum dado do cadastro é apagado.
 
 ## Phase Details
@@ -197,7 +197,7 @@ Plans:
 (c) **Gravação direta, não função do banco:** na v1.7 a regra de acesso (RLS) não foi aplicada corretamente a uma gravação feita de dentro de uma função chamada pela API (ver migration 0047). Uma gravação direta de várias linhas numa só chamada já é atômica e fica protegida pela RLS normal — preferir esse caminho.
 (d) **Vínculo entre ocorrências:** o dono não pediu "apagar todas as próximas" — confirmar se vale guardar um identificador de série só para uso futuro ou não guardar nada (menos dado = mais simples, e alinhado à minimização da LGPD).
 (e) **Volume:** o calendário da Agenda 2 deve buscar só o período visível, não todos os itens de todos os vendedores de uma vez (mesmo cuidado da Fase 21 com o free tier).
-**Plans**: 6/7 plans executed
+**Plans**: 7/7 plans complete
 
 Plans:
 **Wave 1**
@@ -217,7 +217,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 32-07-PLAN.md — Agenda2List com Lista + Calendário + verificação final (Agenda atual intocada por guarda git)
+- [x] 32-07-PLAN.md — Agenda2List com Lista + Calendário + verificação final (Agenda atual intocada por guarda git)
 
 **UI hint**: yes
 
@@ -252,7 +252,7 @@ Phases execute in numeric order: 31 → 32 → 33
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 8/8 | Complete    | 2026-10-01 |
-| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 6/7 | In Progress|  |
+| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 7/7 | Complete   | 2026-10-02 |
 | 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 0/TBD | Not started | - |
 
 *Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.*
