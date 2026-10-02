@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache"
 import { diaLocalSaoPaulo } from "@/lib/aderencia/registroDiario"
 import type { Agenda2Item } from "@/lib/agenda2/itens"
 import { gerarDatasSemanais } from "@/lib/agenda2/repeticao"
-import { getAgenda2 } from "@/lib/supabase/queries/agenda2"
+import { getAgenda2, getAgenda2Periodo } from "@/lib/supabase/queries/agenda2"
 import { createClient } from "@/lib/supabase/server"
+import { validarIntervaloHistorico } from "@/lib/validations/agenda"
 import {
   agenda2ItemIdSchema,
   agenda2ItemSchema,
@@ -39,6 +40,8 @@ const MSG_SESSAO_EXPIRADA = "Sessão expirada."
 const MSG_CARREGAR_FALHOU =
   "Não foi possível carregar sua Agenda 2. Tente novamente."
 const MSG_SALVAR_FALHOU = "Não foi possível salvar. Tente novamente."
+const MSG_CARREGAR_CALENDARIO_FALHOU =
+  "Não foi possível carregar o calendário deste período."
 
 export type Agenda2ErrorCode =
   | "unauthenticated"
@@ -72,6 +75,47 @@ export async function getAgenda2Action(): Promise<GetAgenda2Result> {
     return { data: await getAgenda2() }
   } catch {
     return { error: { code: "fetch_falhou", message: MSG_CARREGAR_FALHOU } }
+  }
+}
+
+/**
+ * AGD2-08/D-28: leitura do calendário — pendentes e concluídos do período
+ * visível. Molde de `getAgendaConcluidosAction` (app/actions/agenda.ts),
+ * mas com uma fonte só. Ação de servidor é endpoint público e o intervalo
+ * calculado no navegador não é fronteira: `validarIntervaloHistorico`
+ * (formato, início ≤ fim, ≤ 45 dias; a grade de mês tem no máximo 42) roda
+ * ANTES de qualquer ida ao banco. É guarda de RECURSO, não de permissão —
+ * quem escopa o resultado é só a RLS da 0048 (vendedor vê os seus,
+ * Supervisor o time); o filtro por vendedor do Supervisor é só um
+ * estreitamento na tela (D-30). Sem revalidatePath: leitura pura, chamada
+ * pelo navegador conforme a pessoa navega. Mensagem sempre fixa.
+ */
+export async function getAgenda2PeriodoAction(
+  inicio: string,
+  fim: string
+): Promise<GetAgenda2Result> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: { code: "unauthenticated", message: MSG_SESSAO_EXPIRADA } }
+  }
+
+  const validacao = validarIntervaloHistorico(inicio, fim)
+  if (!validacao.valido) {
+    return {
+      error: { code: "validacao", message: MSG_CARREGAR_CALENDARIO_FALHOU },
+    }
+  }
+
+  try {
+    return { data: await getAgenda2Periodo(validacao.inicio, validacao.fim) }
+  } catch {
+    return {
+      error: { code: "fetch_falhou", message: MSG_CARREGAR_CALENDARIO_FALHOU },
+    }
   }
 }
 
