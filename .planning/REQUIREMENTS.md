@@ -10,7 +10,7 @@ Requisitos do marco v1.8 (Agenda 2 — Piloto de Visitas Manuais). Piloto delibe
 ### Agenda 2 (nova)
 
 - [x] **AGD2-01**: Vendedor cria um item manual na Agenda 2, informando nome do cliente (texto livre, sem vínculo com cadastro), bairro e uma data
-- [ ] **AGD2-02**: Ao criar o item, o vendedor pode escolher repetir nas próximas 4, 8 ou 12 semanas (mesma data da semana), gerando uma ocorrência independente por semana (cada uma editável/apagável separadamente)
+- [x] **AGD2-02**: Ao criar o item, o vendedor pode escolher repetir nas próximas 4, 8 ou 12 semanas (mesma data da semana), gerando uma ocorrência independente por semana (cada uma editável/apagável separadamente)
 - [x] **AGD2-03**: Vendedor edita um item manual que ele mesmo criou (nome, bairro, data)
 - [x] **AGD2-04**: Vendedor apaga um item manual que ele mesmo criou
 - [x] **AGD2-05**: Vendedor marca um item manual como concluído; o item continua visível na lista do dia, com indicação visual de concluído (riscado)
@@ -39,7 +39,7 @@ Nenhum requisito deferido formalmente neste marco.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AGD2-01 | Phase 31 | Complete |
-| AGD2-02 | Phase 32 | Pending |
+| AGD2-02 | Phase 32 | Complete |
 | AGD2-03 | Phase 31 | Complete |
 | AGD2-04 | Phase 31 | Complete |
 | AGD2-05 | Phase 31 | Complete |

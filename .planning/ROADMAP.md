@@ -197,12 +197,12 @@ Plans:
 (c) **Gravação direta, não função do banco:** na v1.7 a regra de acesso (RLS) não foi aplicada corretamente a uma gravação feita de dentro de uma função chamada pela API (ver migration 0047). Uma gravação direta de várias linhas numa só chamada já é atômica e fica protegida pela RLS normal — preferir esse caminho.
 (d) **Vínculo entre ocorrências:** o dono não pediu "apagar todas as próximas" — confirmar se vale guardar um identificador de série só para uso futuro ou não guardar nada (menos dado = mais simples, e alinhado à minimização da LGPD).
 (e) **Volume:** o calendário da Agenda 2 deve buscar só o período visível, não todos os itens de todos os vendedores de uma vez (mesmo cuidado da Fase 21 com o free tier).
-**Plans**: 7 plans
+**Plans**: 1/7 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 32-01-PLAN.md — Base pura da repetição (lista 0/4/8/12, datas semanais N no total, regra "hoje em diante") + schema de criação separado da edição
+- [x] 32-01-PLAN.md — Base pura da repetição (lista 0/4/8/12, datas semanais N no total, regra "hoje em diante") + schema de criação separado da edição
 - [ ] 32-02-PLAN.md — Funções puras do calendário da Agenda 2 (cópias tipadas) + leitura por período com concluídos (getAgenda2Periodo)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -218,6 +218,7 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [ ] 32-07-PLAN.md — Agenda2List com Lista + Calendário + verificação final (Agenda atual intocada por guarda git)
+
 **UI hint**: yes
 
 ### Phase 33: Agenda Atual sem Visitas Automáticas de Clientes Ativos
@@ -251,7 +252,7 @@ Phases execute in numeric order: 31 → 32 → 33
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 8/8 | Complete    | 2026-10-01 |
-| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 0/TBD | Not started | - |
+| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 1/7 | In Progress|  |
 | 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 0/TBD | Not started | - |
 
 *Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.*
