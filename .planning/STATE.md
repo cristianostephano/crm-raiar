@@ -6,14 +6,14 @@ current_phase: 32
 current_phase_name: agenda-2-repeti-o-semanal-e-calend-rio
 status: executing
 stopped_at: Phase 32 context gathered
-last_updated: "2026-10-02T15:46:03.078Z"
+last_updated: "2026-10-02T15:54:10.196Z"
 last_activity: 2026-10-02
 last_activity_desc: Phase 32 execution started
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 15
-  completed_plans: 9
+  completed_plans: 10
   percent: 33
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 ## Current Position
 
 Phase: 32 (agenda-2-repeti-o-semanal-e-calend-rio) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-10-02 — Phase 32 execution started
 
@@ -131,6 +131,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 31 P07 | ~20min | 2 tasks | 2 files |
 | Phase 31 P08 | ~20min | 2 tasks | 3 files |
 | Phase 32 P01 | 8min | 2 tasks | 4 files |
+| Phase 32 P02 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -364,6 +365,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Agenda2Page não busca catálogos nem lista de membros da equipe — opções do filtro de vendedor vêm só dos itens já liberados pela RLS (minimização, T-31-34)
 - [Phase ?]: Agenda2ApagarDialog já mostra seu próprio erro genérico; handleConfirmarApagar só devolve o booleano do contrato
 - [Phase 32-01]: N semanas = N visitas no total (D-31); repetirSemanas optional sem default; z.literal(REPETIR_SEMANAS_VALORES) como fonte unica
+- [Phase 32-02]: intervaloVisivelAgenda2 nao apara passado nem futuro (D-28); grade de mes cabe no teto de 45 dias — a acao do 32-03 nunca recusa um periodo que a tela pede
+- [Phase 32-02]: getAgenda2Periodo separada de getAgenda2, sem filtro de dono, paginada com ordem estavel terminando em id — RLS escopa (D-30); testes da Fase 31 fixam o .or da Lista
 
 ### Pending Todos
 
@@ -479,7 +482,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-02T15:45:51.850Z
+Last session: 2026-10-02T15:53:43.930Z
 Stopped at: Phase 32 context gathered
 Resume file: .planning/phases/32-agenda-2-repeti-o-semanal-e-calend-rio/32-CONTEXT.md
 
