@@ -16,6 +16,8 @@ const {
   fromSpy,
   selectLeituraSpy,
   orSpy,
+  gteSpy,
+  lteSpy,
   orderSpy,
   rangeSpy,
   insertSpy,
@@ -30,6 +32,8 @@ const {
   fromSpy: vi.fn(),
   selectLeituraSpy: vi.fn(),
   orSpy: vi.fn(),
+  gteSpy: vi.fn(),
+  lteSpy: vi.fn(),
   orderSpy: vi.fn(),
   rangeSpy: vi.fn(),
   insertSpy: vi.fn(),
@@ -57,6 +61,14 @@ vi.mock("@/lib/supabase/server", () => ({
           const builder = {
             or: (filtro: string) => {
               orSpy(filtro)
+              return builder
+            },
+            gte: (coluna: string, valor: string) => {
+              gteSpy(coluna, valor)
+              return builder
+            },
+            lte: (coluna: string, valor: string) => {
+              lteSpy(coluna, valor)
               return builder
             },
             order: (...args: unknown[]) => {
@@ -98,6 +110,7 @@ import {
   criarAgenda2Item,
   desmarcarAgenda2Item,
   getAgenda2Action,
+  getAgenda2PeriodoAction,
 } from "@/app/actions/agenda2"
 import type {
   Agenda2CriarItemInput,
@@ -119,6 +132,8 @@ function resetTodosOsSpies() {
   fromSpy.mockReset()
   selectLeituraSpy.mockReset()
   orSpy.mockReset()
+  gteSpy.mockReset()
+  lteSpy.mockReset()
   orderSpy.mockReset()
   rangeSpy.mockReset()
   insertSpy.mockReset()
@@ -134,12 +149,13 @@ beforeEach(() => {
   resetTodosOsSpies()
 })
 
-describe("sem sessão — todas as seis ações", () => {
-  it("sem-sessao: sem usuário devolve unauthenticated e 'from' nunca é chamado, para as seis ações", async () => {
+describe("sem sessão — todas as sete ações", () => {
+  it("sem-sessao: sem usuário devolve unauthenticated e 'from' nunca é chamado, para as sete ações", async () => {
     getUserSpy.mockResolvedValue({ data: { user: null } })
 
     const acoes: Array<() => Promise<{ error?: { code: string; message: string } }>> = [
       () => getAgenda2Action(),
+      () => getAgenda2PeriodoAction("2026-08-01", "2026-08-31"),
       () => criarAgenda2Item(valoresValidos),
       () => atualizarAgenda2Item(ITEM_ID, valoresValidos),
       () => apagarAgenda2Item(ITEM_ID),
@@ -210,6 +226,90 @@ describe("getAgenda2Action", () => {
         message: "Não foi possível carregar sua Agenda 2. Tente novamente.",
       },
     })
+  })
+})
+
+describe("getAgenda2PeriodoAction (Fase 32, AGD2-08/D-28)", () => {
+  const MSG_CALENDARIO = "Não foi possível carregar o calendário deste período."
+
+  beforeEach(() => {
+    getUserSpy.mockResolvedValue({ data: { user: { id: "u1" } } })
+  })
+
+  it("periodo-ok: devolve os itens do período (inclusive concluídos) sem usar .or", async () => {
+    rangeSpy.mockResolvedValueOnce({
+      data: [
+        {
+          id: "item-9",
+          vendedor_id: "u1",
+          nome_cliente: "Mercado Bom Preço",
+          bairro: "Centro",
+          data: "2026-08-03",
+          concluido: true,
+          atualizado_em: "2026-08-03T10:00:00+00:00",
+          profiles: { nome: "Ana", sobrenome: "Souza" },
+        },
+      ],
+      error: null,
+    })
+
+    const resultado = await getAgenda2PeriodoAction("2026-07-27", "2026-09-06")
+
+    expect(resultado).toEqual({
+      data: [
+        {
+          id: "item-9",
+          nomeCliente: "Mercado Bom Preço",
+          bairro: "Centro",
+          data: "2026-08-03",
+          concluido: true,
+          atualizadoEm: "2026-08-03T10:00:00+00:00",
+          responsavel: "u1",
+          responsavelNome: "Ana Souza",
+        },
+      ],
+    })
+    expect(gteSpy).toHaveBeenCalledWith("data", "2026-07-27")
+    expect(lteSpy).toHaveBeenCalledWith("data", "2026-09-06")
+    expect(orSpy).not.toHaveBeenCalled()
+  })
+
+  it("periodo-intervalo-invalido (T-32-05): formato, ordem e mais de 45 dias são recusados antes de qualquer leitura", async () => {
+    const intervalos: Array<[string, string]> = [
+      ["2026-09-10", "2026-08-01"],
+      ["2026-01-01", "2026-03-01"],
+      ["ontem", "2026-08-01"],
+    ]
+
+    for (const [inicio, fim] of intervalos) {
+      const resultado = await getAgenda2PeriodoAction(inicio, fim)
+      expect(resultado).toEqual({
+        error: { code: "validacao", message: MSG_CALENDARIO },
+      })
+    }
+    expect(fromSpy).not.toHaveBeenCalled()
+  })
+
+  it("periodo-falha (T-32-06): erro de leitura devolve fetch_falhou com a mensagem fixa", async () => {
+    rangeSpy.mockResolvedValueOnce({
+      data: null,
+      error: { message: "detalhe interno" },
+    })
+
+    const resultado = await getAgenda2PeriodoAction("2026-08-01", "2026-08-31")
+
+    expect(resultado).toEqual({
+      error: { code: "fetch_falhou", message: MSG_CALENDARIO },
+    })
+  })
+
+  it("periodo-nao-revalida: leitura nunca chama revalidatePath", async () => {
+    rangeSpy.mockResolvedValueOnce({ data: [], error: null })
+
+    const resultado = await getAgenda2PeriodoAction("2026-08-01", "2026-08-31")
+
+    expect(resultado).toEqual({ data: [] })
+    expect(revalidateSpy).not.toHaveBeenCalled()
   })
 })
 
@@ -553,13 +653,14 @@ describe("concluirAgenda2Item / desmarcarAgenda2Item", () => {
 })
 
 describe("sem-rpc", () => {
-  it("sem-rpc: nenhuma das seis ações chama rpc do cliente mockado", async () => {
+  it("sem-rpc: nenhuma das sete ações chama rpc do cliente mockado", async () => {
     getUserSpy.mockResolvedValue({ data: { user: { id: "u1" } } })
     insertSpy.mockResolvedValue({ error: null })
     selectEscritaSpy.mockResolvedValue({ data: [{ id: ITEM_ID }], error: null })
     rangeSpy.mockResolvedValue({ data: [], error: null })
 
     await getAgenda2Action()
+    await getAgenda2PeriodoAction("2026-08-01", "2026-08-31")
     await criarAgenda2Item(valoresValidos)
     await atualizarAgenda2Item(ITEM_ID, valoresValidos)
     await apagarAgenda2Item(ITEM_ID)
