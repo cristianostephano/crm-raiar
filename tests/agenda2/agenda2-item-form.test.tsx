@@ -2,7 +2,7 @@
 import { format } from "date-fns"
 import { fireEvent, render, screen } from "@testing-library/react"
 import type { ComponentProps } from "react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/app/actions/agenda2", () => ({
   criarAgenda2Item: vi.fn(),
@@ -145,7 +145,7 @@ describe("Agenda2ItemForm (AGD2-01/03, D-06/D-07/D-09)", () => {
     expect(mockedCriar).not.toHaveBeenCalled()
   })
 
-  it("criar-ok (AGD2-01): preenchimento válido chama criarAgenda2Item com exatamente os 3 campos, depois onSalvo e fecha", async () => {
+  it("criar-ok (AGD2-01): preenchimento válido chama criarAgenda2Item com os 3 campos e repetirSemanas 0 (Não repetir por padrão), depois onSalvo e fecha", async () => {
     mockedCriar.mockResolvedValueOnce({ data: true })
     const { onSalvo, onOpenChange } = renderForm()
 
@@ -165,6 +165,7 @@ describe("Agenda2ItemForm (AGD2-01/03, D-06/D-07/D-09)", () => {
       nomeCliente: "Mercado Bom Preço",
       bairro: "Centro",
       data: hoje,
+      repetirSemanas: 0,
     })
     await vi.waitFor(() => {
       expect(onSalvo).toHaveBeenCalledTimes(1)
@@ -359,5 +360,160 @@ describe("Agenda2ItemForm (AGD2-01/03, D-06/D-07/D-09)", () => {
     expect(botaoSalvando).toBeDisabled()
 
     resolver({ data: true })
+  })
+})
+
+/**
+ * Fase 32 (AGD2-02) — campo "Repetir". Relógio falso SÓ para Date: 12:00 de
+ * 07/10/2026 em São Paulo. O calendário abre em outubro/2026 e "hoje" para a
+ * regra D-23 é 2026-10-07.
+ */
+const HOJE_FIXO = new Date(2026, 9, 7)
+const PASSADO_FIXO = new Date(2026, 9, 5)
+const ROTULO_4 = "Por 4 semanas (4 visitas, incluindo esta)"
+const ROTULO_8 = "Por 8 semanas (8 visitas, incluindo esta)"
+const ROTULO_12 = "Por 12 semanas (12 visitas, incluindo esta)"
+
+/** Mesmo precedente do Select da Agenda2List: clicar no combobox, depois
+ * pointerDown + click na opção. */
+async function escolherRepeticao(rotulo: string) {
+  fireEvent.click(screen.getByRole("combobox", { name: "Repetir" }))
+  const opcao = await screen.findByRole("option", { name: rotulo })
+  fireEvent.pointerDown(opcao)
+  fireEvent.click(opcao)
+}
+
+function preencherNomeEBairro(
+  nome = "Mercado Bom Preço",
+  bairro = "Centro"
+) {
+  fireEvent.change(screen.getByLabelText("Nome do cliente"), {
+    target: { value: nome },
+  })
+  fireEvent.change(screen.getByLabelText("Bairro"), {
+    target: { value: bairro },
+  })
+}
+
+describe("Agenda2ItemForm — campo Repetir (AGD2-02, D-23/D-24/D-25/D-31)", () => {
+  beforeEach(() => {
+    mockedCriar.mockReset()
+    mockedAtualizar.mockReset()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-07T15:00:00Z"))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("repetir-so-ao-criar (D-24): criar mostra o campo com 'Não repetir'; editar não tem o texto 'Repetir'", () => {
+    const { unmount } = renderForm()
+
+    expect(screen.getByText("Repetir")).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Repetir" })).toHaveTextContent(
+      "Não repetir"
+    )
+    unmount()
+
+    renderForm({ modo: "editar", item: buildItem(), itensExistentes: [] })
+    expect(screen.queryByText(/Repetir/)).not.toBeInTheDocument()
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
+  })
+
+  it("repetir-desabilitado-sem-data (D-23): sem data o combobox fica desabilitado e explica", () => {
+    renderForm()
+
+    expect(screen.getByRole("combobox", { name: "Repetir" })).toBeDisabled()
+    expect(screen.getByText("Escolha a data primeiro.")).toBeInTheDocument()
+  })
+
+  it("opcoes-com-total (D-31): as opções dizem o total de visitas", async () => {
+    renderForm()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Repetir" }))
+
+    expect(
+      await screen.findByRole("option", { name: "Não repetir" })
+    ).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: ROTULO_4 })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: ROTULO_8 })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: ROTULO_12 })).toBeInTheDocument()
+  })
+
+  it("repetir-envia-4 (AGD2-02/D-31): 4 semanas envia repetirSemanas 4 com a data de hoje", async () => {
+    mockedCriar.mockResolvedValueOnce({ data: true })
+    renderForm()
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    await escolherRepeticao(ROTULO_4)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    await vi.waitFor(() => {
+      expect(mockedCriar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedCriar).toHaveBeenCalledWith({
+      nomeCliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-10-07",
+      repetirSemanas: 4,
+    })
+  })
+
+  it("repetir-zera-no-passado (D-23): trocar para data passada volta a 'Não repetir', desabilita e explica; envia 0", async () => {
+    mockedCriar.mockResolvedValueOnce({ data: true })
+    renderForm()
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    await escolherRepeticao(ROTULO_8)
+    expect(screen.getByRole("combobox", { name: "Repetir" })).toHaveTextContent(
+      ROTULO_8
+    )
+
+    selecionarDataNoCalendario("07/10/2026", PASSADO_FIXO)
+
+    const combo = screen.getByRole("combobox", { name: "Repetir" })
+    expect(combo).toHaveTextContent("Não repetir")
+    expect(combo).toBeDisabled()
+    expect(
+      screen.getByText("A repetição só vale para hoje ou datas futuras.")
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+    await vi.waitFor(() => {
+      expect(mockedCriar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedCriar).toHaveBeenCalledWith({
+      nomeCliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-10-05",
+      repetirSemanas: 0,
+    })
+  })
+
+  it("editar-nunca-repete (D-24): editar envia exatamente nome, bairro e data e nunca cria", async () => {
+    mockedAtualizar.mockResolvedValueOnce({ data: true })
+    const item = buildItem({ concluido: true })
+    renderForm({ modo: "editar", item, itensExistentes: [] })
+
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }))
+
+    await vi.waitFor(() => {
+      expect(mockedAtualizar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedAtualizar).toHaveBeenCalledWith("i1", {
+      nomeCliente: "Padaria Central",
+      bairro: "Vila Nova",
+      data: "2026-10-05",
+    })
+    expect(Object.keys(mockedAtualizar.mock.calls[0][1])).toEqual([
+      "nomeCliente",
+      "bairro",
+      "data",
+    ])
+    expect(mockedCriar).not.toHaveBeenCalled()
   })
 })
