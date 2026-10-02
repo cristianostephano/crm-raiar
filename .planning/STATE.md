@@ -6,7 +6,7 @@ current_phase: 32
 current_phase_name: agenda-2-repeti-o-semanal-e-calend-rio
 status: executing
 stopped_at: Phase 32 context gathered
-last_updated: "2026-10-02T15:45:51.918Z"
+last_updated: "2026-10-02T15:46:03.078Z"
 last_activity: 2026-10-02
 last_activity_desc: Phase 32 execution started
 progress:
@@ -130,6 +130,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 31 P06 | ~6min | 3 tasks | 9 files |
 | Phase 31 P07 | ~20min | 2 tasks | 2 files |
 | Phase 31 P08 | ~20min | 2 tasks | 3 files |
+| Phase 32 P01 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -362,6 +363,7 @@ Recent decisions affecting current work:
 - [Phase ?]: data-day do Calendar (react-day-picker) vem de Date.toLocaleDateString() sem locale explícito, não AAAA-MM-DD - testes de calendário devem usar essa mesma chamada como seletor, nunca um literal fixo
 - [Phase ?]: Agenda2Page não busca catálogos nem lista de membros da equipe — opções do filtro de vendedor vêm só dos itens já liberados pela RLS (minimização, T-31-34)
 - [Phase ?]: Agenda2ApagarDialog já mostra seu próprio erro genérico; handleConfirmarApagar só devolve o booleano do contrato
+- [Phase 32-01]: N semanas = N visitas no total (D-31); repetirSemanas optional sem default; z.literal(REPETIR_SEMANAS_VALORES) como fonte unica
 
 ### Pending Todos
 
