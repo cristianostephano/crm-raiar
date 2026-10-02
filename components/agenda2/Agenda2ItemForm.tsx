@@ -65,6 +65,21 @@ import {
  * (lista já carregada pela Lista), sem nenhuma ida extra ao banco. A dica de
  * LGPD abaixo do nome é orientação, nunca trava — quem recusa números de
  * documento é o próprio schema compartilhado (`agenda2ItemSchema`, 31-02).
+ *
+ * Fase 32 (repetição semanal, AGD2-02):
+ * - O campo "Repetir" existe SÓ ao criar (D-24); a edição nunca repete e seu
+ *   payload leva exatamente nome, bairro e data.
+ * - Padrão "Não repetir" (privacidade por padrão): nenhuma agenda futura de
+ *   deslocamento nasce sem o vendedor pedir. As opções dizem o total de
+ *   visitas (D-31).
+ * - Repetir só vale de hoje em diante, com "hoje" de São Paulo, o mesmo da
+ *   Server Action (D-23): sem data ou com data passada o seletor fica
+ *   desabilitado e volta a "Não repetir". A tela só espelha — o servidor decide.
+ * - O aviso de duplicado roda UMA vez, só contra a data ORIGINAL; as datas
+ *   futuras geradas nunca são checadas (D-25).
+ * - Se a CRIAÇÃO falhar, o formulário segue aberto e `onRecarregar` pede à
+ *   tela que recarregue a lista: se o banco gravou o lote apesar do erro, o
+ *   aviso de duplicado pega o reenvio em vez de criar 2xN visitas (Pitfall 8).
  */
 export function Agenda2ItemForm({
   open,
@@ -73,6 +88,7 @@ export function Agenda2ItemForm({
   item,
   itensExistentes,
   onSalvo,
+  onRecarregar,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -80,6 +96,8 @@ export function Agenda2ItemForm({
   item: Agenda2Item | null
   itensExistentes: Agenda2Item[]
   onSalvo: () => void
+  /** Chamado quando a CRIAÇÃO falha — a tela só recarrega a lista, sem fechar o formulário. */
+  onRecarregar?: () => void
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -100,6 +118,7 @@ export function Agenda2ItemForm({
           itensExistentes={itensExistentes}
           onSalvo={onSalvo}
           onOpenChange={onOpenChange}
+          onRecarregar={onRecarregar}
         />
       </DialogContent>
     </Dialog>
@@ -144,12 +163,14 @@ function Agenda2ItemFields({
   itensExistentes,
   onSalvo,
   onOpenChange,
+  onRecarregar,
 }: {
   modo: "criar" | "editar"
   item: Agenda2Item | null
   itensExistentes: Agenda2Item[]
   onSalvo: () => void
   onOpenChange: (open: boolean) => void
+  onRecarregar?: () => void
 }) {
   const [formError, setFormError] = useState<string | null>(null)
   const [avisoPara, setAvisoPara] = useState<Agenda2CriarItemInput | null>(
@@ -213,6 +234,9 @@ function Agenda2ItemFields({
 
       if (result.error) {
         setFormError(GENERIC_ERROR)
+        // Pitfall 8: o lote pode ter sido gravado apesar do erro — a tela
+        // recarrega a lista para o aviso de duplicado pegar o reenvio.
+        if (modo === "criar") onRecarregar?.()
         return
       }
 
@@ -220,6 +244,7 @@ function Agenda2ItemFields({
       onOpenChange(false)
     } catch {
       setFormError(GENERIC_ERROR)
+      if (modo === "criar") onRecarregar?.()
     }
   }
 
