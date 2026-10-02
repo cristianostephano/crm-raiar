@@ -1,6 +1,11 @@
 import { format, isValid, parseISO } from "date-fns"
 import { z } from "zod"
 
+import {
+  REPETIR_SEMANAS_VALORES,
+  repeticaoPermitida,
+} from "@/lib/agenda2/repeticao"
+
 /**
  * Schema compartilhado do item da Agenda 2 (AGD2-01/03, Fase 31) — a FONTE
  * ÚNICA destes números e desta regra no código de aplicação. Espelha, lado
@@ -18,6 +23,14 @@ import { z } from "zod"
  * formulário (navegador, Plano 31-07, via zodResolver) quanto pela Server
  * Action (Plano 31-04, que nunca pode confiar só na validação do
  * navegador). Mesmo molde de `lib/validations/agenda.ts`/`cliente.ts`.
+ *
+ * Fase 32 (repetição semanal): `agenda2ItemSchema` NÃO muda — ele também
+ * valida a EDIÇÃO, que nunca gera repetição (D-24). A CRIAÇÃO usa
+ * `criarAgenda2CriarSchema(hoje)`, que acrescenta `repetirSemanas` (lista
+ * fechada 0/4/8/12) e recusa repetir com data passada (D-23). O `hoje`
+ * (AAAA-MM-DD de São Paulo) chega por parâmetro — o schema nunca lê o
+ * relógio. Nenhum campo de série existe (D-22): chaves extras são
+ * descartadas.
  */
 
 /** FONTE ÚNICA — espelha `chk_agenda2_nome_cliente_tamanho` (migration 0048). */
@@ -41,6 +54,10 @@ export const AGENDA2_MSG_BAIRRO_DOCUMENTO =
   "Informe só o nome do bairro, sem CEP ou outros números longos."
 export const AGENDA2_MSG_DATA_VAZIA = "Informe a data."
 export const AGENDA2_MSG_DATA_INVALIDA = "Data inválida."
+export const AGENDA2_MSG_REPETIR_INVALIDO =
+  "Escolha uma opção de repetição válida."
+export const AGENDA2_MSG_REPETIR_PASSADO =
+  "A repetição só vale para hoje ou datas futuras."
 
 /**
  * Mesma regra de `chk_agenda2_nome_cliente_sem_documento`/
@@ -104,6 +121,40 @@ export const agenda2ItemSchema = z.object({
 })
 
 export type Agenda2ItemInput = z.infer<typeof agenda2ItemSchema>
+
+/**
+ * Schema de CRIAÇÃO (Fase 32): os campos de `agenda2ItemSchema` mais
+ * `repetirSemanas`. `.optional()` e não `.default(0)` — default faz entrada
+ * e saída divergirem e quebra a tipagem do zodResolver; quem trata ausente
+ * como 0 é a Server Action. A lista fechada vem direto de
+ * `REPETIR_SEMANAS_VALORES` (T-32-01: teto de 12 linhas por envio).
+ */
+export function criarAgenda2CriarSchema(hoje: string) {
+  return agenda2ItemSchema
+    .extend({
+      repetirSemanas: z
+        .literal(REPETIR_SEMANAS_VALORES, {
+          error: AGENDA2_MSG_REPETIR_INVALIDO,
+        })
+        .optional(),
+    })
+    .superRefine((valor, ctx) => {
+      if (
+        (valor.repetirSemanas ?? 0) > 0 &&
+        !repeticaoPermitida(valor.data, hoje)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["repetirSemanas"],
+          message: AGENDA2_MSG_REPETIR_PASSADO,
+        })
+      }
+    })
+}
+
+export type Agenda2CriarItemInput = z.input<
+  ReturnType<typeof criarAgenda2CriarSchema>
+>
 
 /**
  * Valida o `id` de um item existente (edição/conclusão/exclusão) — a
