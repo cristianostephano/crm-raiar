@@ -517,3 +517,161 @@ describe("Agenda2ItemForm — campo Repetir (AGD2-02, D-23/D-24/D-25/D-31)", () 
     expect(mockedCriar).not.toHaveBeenCalled()
   })
 })
+
+describe("Agenda2ItemForm — duplicado só na data original e recarga em falha (D-25, Pitfall 8)", () => {
+  beforeEach(() => {
+    mockedCriar.mockReset()
+    mockedAtualizar.mockReset()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-07T15:00:00Z"))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("duplicado-so-na-data-original (D-25): aviso uma vez contra a data escolhida; segundo envio cria com repetirSemanas 4", async () => {
+    mockedCriar.mockResolvedValueOnce({ data: true })
+    const itensExistentes: Agenda2Item[] = [
+      buildItem({
+        id: "existing",
+        nomeCliente: "Mercado Bom Preço",
+        data: "2026-10-07",
+        concluido: false,
+      }),
+    ]
+    renderForm({ itensExistentes })
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    await escolherRepeticao(ROTULO_4)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    await screen.findByRole("status")
+    expect(screen.getAllByRole("status")).toHaveLength(1)
+    expect(screen.getByRole("status")).toHaveTextContent("07/10")
+    expect(mockedCriar).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole("button", { name: "Criar mesmo assim" }))
+
+    await vi.waitFor(() => {
+      expect(mockedCriar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedCriar).toHaveBeenCalledWith({
+      nomeCliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-10-07",
+      repetirSemanas: 4,
+    })
+  })
+
+  it("duplicado-ignora-datas-futuras (D-25): item parecido só numa data futura gerada não gera aviso", async () => {
+    mockedCriar.mockResolvedValueOnce({ data: true })
+    const itensExistentes: Agenda2Item[] = [
+      buildItem({
+        id: "existing",
+        nomeCliente: "Mercado Bom Preço",
+        data: "2026-10-14",
+        concluido: false,
+      }),
+    ]
+    renderForm({ itensExistentes })
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    await escolherRepeticao(ROTULO_4)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    await vi.waitFor(() => {
+      expect(mockedCriar).toHaveBeenCalledTimes(1)
+    })
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+  })
+
+  it("trocar-repeticao-mantem-aviso: trocar de 4 para 8 semanas não esconde o aviso", async () => {
+    const itensExistentes: Agenda2Item[] = [
+      buildItem({
+        id: "existing",
+        nomeCliente: "Mercado Bom Preço",
+        data: "2026-10-07",
+        concluido: false,
+      }),
+    ]
+    renderForm({ itensExistentes })
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    await escolherRepeticao(ROTULO_4)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+    await screen.findByRole("status")
+
+    await escolherRepeticao(ROTULO_8)
+
+    expect(screen.getByRole("status")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Criar mesmo assim" })
+    ).toBeInTheDocument()
+  })
+
+  it("falha-recarrega (Pitfall 8): erro na criação mostra o alerta, pede recarga da lista e mantém a janela aberta", async () => {
+    mockedCriar.mockResolvedValueOnce({
+      error: { code: "salvar_falhou", message: "x" },
+    })
+    const onRecarregar = vi.fn()
+    const { onSalvo, onOpenChange } = renderForm({ onRecarregar })
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    await escolherRepeticao(ROTULO_4)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_ERROR)
+    expect(onRecarregar).toHaveBeenCalledTimes(1)
+    expect(onSalvo).not.toHaveBeenCalled()
+    expect(onOpenChange).not.toHaveBeenCalledWith(false)
+  })
+
+  it("falha-lanca-recarrega (Pitfall 8): exceção na criação também pede recarga", async () => {
+    mockedCriar.mockRejectedValueOnce(new Error("rede"))
+    const onRecarregar = vi.fn()
+    renderForm({ onRecarregar })
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_ERROR)
+    expect(onRecarregar).toHaveBeenCalledTimes(1)
+  })
+
+  it("falha-sem-onRecarregar: sem a prop a falha só mostra o alerta", async () => {
+    mockedCriar.mockResolvedValueOnce({
+      error: { code: "salvar_falhou", message: "x" },
+    })
+    renderForm()
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_ERROR)
+  })
+
+  it("editar-falha-nao-recarrega: erro na edição não chama onRecarregar", async () => {
+    mockedAtualizar.mockResolvedValueOnce({
+      error: { code: "salvar_falhou", message: "x" },
+    })
+    const onRecarregar = vi.fn()
+    renderForm({
+      modo: "editar",
+      item: buildItem(),
+      itensExistentes: [],
+      onRecarregar,
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_ERROR)
+    expect(onRecarregar).not.toHaveBeenCalled()
+  })
+})
