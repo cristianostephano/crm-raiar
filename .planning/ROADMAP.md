@@ -197,7 +197,27 @@ Plans:
 (c) **Gravação direta, não função do banco:** na v1.7 a regra de acesso (RLS) não foi aplicada corretamente a uma gravação feita de dentro de uma função chamada pela API (ver migration 0047). Uma gravação direta de várias linhas numa só chamada já é atômica e fica protegida pela RLS normal — preferir esse caminho.
 (d) **Vínculo entre ocorrências:** o dono não pediu "apagar todas as próximas" — confirmar se vale guardar um identificador de série só para uso futuro ou não guardar nada (menos dado = mais simples, e alinhado à minimização da LGPD).
 (e) **Volume:** o calendário da Agenda 2 deve buscar só o período visível, não todos os itens de todos os vendedores de uma vez (mesmo cuidado da Fase 21 com o free tier).
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 32-01-PLAN.md — Base pura da repetição (lista 0/4/8/12, datas semanais N no total, regra "hoje em diante") + schema de criação separado da edição
+- [ ] 32-02-PLAN.md — Funções puras do calendário da Agenda 2 (cópias tipadas) + leitura por período com concluídos (getAgenda2Periodo)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 32-03-PLAN.md — Server Actions: criar em lote único tudo-ou-nada + getAgenda2PeriodoAction + teste de integração real (atomicidade, RLS por linha, independência)
+- [ ] 32-04-PLAN.md — Barra, Dia, Mês e Semana copiados para a Agenda 2 (riscado, sem ícone de repetição)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 32-05-PLAN.md — Campo "Repetir" no formulário (só ao criar, padrão "Não repetir", D-23/D-25) + recarga em falha
+- [ ] 32-06-PLAN.md — Contêiner Agenda2Calendario (período visível, recarga sem piscar, filtro do Supervisor, diálogo do dia com ações)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 32-07-PLAN.md — Agenda2List com Lista + Calendário + verificação final (Agenda atual intocada por guarda git)
 **UI hint**: yes
 
 ### Phase 33: Agenda Atual sem Visitas Automáticas de Clientes Ativos

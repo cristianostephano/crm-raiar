@@ -30,17 +30,20 @@ created: 2026-10-02
 
 ## Per-Task Verification Map
 
-| Requirement | Behavior | Test Type | Automated Command | File Exists | Status |
-|-------------|----------|-----------|-------------------|-------------|--------|
-| AGD2-02 | Datas semanais (mesmo dia da semana, N visitas no total, D-31) | unit | `npx vitest run tests/agenda2/repeticao.test.ts` | ❌ W0 | ⬜ pending |
-| AGD2-02 | Schema de criação 0/4/8/12 + regra "hoje em diante" (D-23) | unit | `npx vitest run tests/agenda2/validacao-agenda2.test.ts` | ⚠️ estender | ⬜ pending |
-| AGD2-02 | Server Action: um único insert em lote, dono da sessão | unit (mock) | `npx vitest run tests/agenda2/agenda2-actions.test.ts` | ⚠️ estender | ⬜ pending |
-| AGD2-02 | Lote real no banco: tudo-ou-nada, RLS por linha | integration | `npx vitest run tests/agenda2/rls-agenda2-repeticao.test.ts` | ❌ W0 | ⬜ pending |
-| AGD2-02 | Formulário: seletor só ao criar, padrão "Não repetir" | component | `npx vitest run tests/agenda2/agenda2-item-form.test.tsx` | ⚠️ estender | ⬜ pending |
-| AGD2-08 | Funções puras do calendário | unit | `npx vitest run tests/agenda2/itens.test.ts` | ⚠️ estender | ⬜ pending |
-| AGD2-08 | Query por período | unit (mock) | `npx vitest run tests/agenda2/agenda2-periodo-query.test.ts` | ❌ W0 | ⬜ pending |
-| AGD2-08 | Calendário (container, mês, semana, dia, toolbar, integração) | component | `npx vitest run tests/agenda2/agenda2-calendario*.test.tsx tests/agenda2/agenda2-list.test.tsx` | ❌ W0 | ⬜ pending |
-| Critério 5 | Agenda atual sem nenhuma mudança | structural | `git diff --stat <base>..HEAD -- components/agenda lib/agenda app/actions/agenda.ts lib/supabase/queries/agenda.ts tests/agenda supabase/migrations` (vazio) | ❌ W0 | ⬜ pending |
+| Requirement | Behavior | Test Type | Automated Command | File Exists | Plan/Task (Wave) | Status |
+|-------------|----------|-----------|-------------------|-------------|------------------|--------|
+| AGD2-02 | Datas semanais (mesmo dia da semana, N visitas no total, D-31) | unit | `npx vitest run tests/agenda2/repeticao.test.ts` | ❌ W0 | 32-01 T1 (W1) | ⬜ pending |
+| AGD2-02 | Schema de criação 0/4/8/12 + regra "hoje em diante" (D-23) | unit | `npx vitest run tests/agenda2/validacao-agenda2.test.ts` | ⚠️ estender | 32-01 T2 (W1) | ⬜ pending |
+| AGD2-02 | Server Action: um único insert em lote, dono da sessão | unit (mock) | `npx vitest run tests/agenda2/agenda2-actions.test.ts` | ⚠️ estender | 32-03 T1 (W2) | ⬜ pending |
+| AGD2-02 | Lote real no banco: tudo-ou-nada, RLS por linha | integration | `npx vitest run tests/agenda2/rls-agenda2-repeticao.test.ts` | ❌ W0 | 32-03 T3 (W2) | ⬜ pending |
+| AGD2-02 | Formulário: seletor só ao criar, padrão "Não repetir" | component | `npx vitest run tests/agenda2/agenda2-item-form.test.tsx` | ⚠️ estender | 32-05 T1-T2 (W3) | ⬜ pending |
+| AGD2-08 | Funções puras do calendário | unit | `npx vitest run tests/agenda2/itens.test.ts` | ⚠️ estender | 32-02 T1 (W1) | ⬜ pending |
+| AGD2-08 | Query por período | unit (mock) | `npx vitest run tests/agenda2/agenda2-periodo-query.test.ts` | ❌ W0 | 32-02 T2 (W1) | ⬜ pending |
+| AGD2-08 | Ação por período (intervalo validado) | unit (mock) | `npx vitest run tests/agenda2/agenda2-actions.test.ts` | ⚠️ estender | 32-03 T2 (W2) | ⬜ pending |
+| AGD2-08 | Toolbar, dia, mês, semana | component | `npx vitest run tests/agenda2/agenda2-calendario-toolbar.test.tsx tests/agenda2/agenda2-calendario-dia.test.tsx tests/agenda2/agenda2-calendario-mes.test.tsx tests/agenda2/agenda2-calendario-semana.test.tsx` | ❌ W0 | 32-04 T1-T2 (W2) | ⬜ pending |
+| AGD2-08 | Contêiner do calendário | component | `npx vitest run tests/agenda2/agenda2-calendario.test.tsx` | ❌ W0 | 32-06 T1-T2 (W3) | ⬜ pending |
+| AGD2-08 | Integração Lista ↔ Calendário | component | `npx vitest run tests/agenda2/agenda2-calendario-integracao.test.tsx tests/agenda2/agenda2-list.test.tsx` | ❌ W0 / ⚠️ estender | 32-07 T1 (W4) | ⬜ pending |
+| Critério 5 | Agenda atual sem nenhuma mudança | structural | guarda git em node do 32-07 T2 (base = pai do 1º commit `tipo(32-0N)` = HEAD no início da execução; diff + status vazios em components/agenda, lib/agenda, lib/validations/agenda.ts, app/actions/agenda.ts, lib/supabase/queries/agenda.ts, app/(app)/agenda, tests/agenda, supabase/migrations) | — | 32-07 T2 (W4) | ⬜ pending |
 
 ## Wave 0 Requirements
 
