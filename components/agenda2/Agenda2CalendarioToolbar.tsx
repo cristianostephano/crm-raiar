@@ -1,0 +1,120 @@
+"use client"
+
+import { ChevronLeft, ChevronRight } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import type { AgendaVisao } from "@/lib/agenda/itens"
+
+/**
+ * Barra de ferramentas do calendário da Agenda 2 (AGD2-08, D-27).
+ *
+ * CÓPIA de `components/agenda/AgendaCalendarioToolbar.tsx` — o original não é
+ * editado nem importado (só o tipo `AgendaVisao` de `lib/agenda/itens.ts`).
+ * Nada desta pasta importa componentes nem ações da Agenda atual.
+ *
+ * Única mudança em relação ao original: a legenda tem três itens (Pendente,
+ * Atrasado, Concluído). A Agenda 2 não tem origem prospecção/visita, então
+ * "Prospecção" e "Visita" saíram.
+ *
+ * A barra continua montada na visão de Lista: quando `rotulo` é `null`, só o
+ * seletor de visão aparece (sem navegação nem legenda) — é o único caminho de
+ * volta ao Calendário. Componente apresentacional puro: não guarda data.
+ */
+
+const OPCOES_DE_VISAO: { valor: AgendaVisao; rotulo: string }[] = [
+  { valor: "lista", rotulo: "Lista" },
+  { valor: "dia", rotulo: "Dia" },
+  { valor: "semana", rotulo: "Semana" },
+  { valor: "mes", rotulo: "Mês" },
+]
+
+export function Agenda2CalendarioToolbar({
+  visao,
+  onVisaoChange,
+  rotulo,
+  onAnterior,
+  onProximo,
+  onHoje,
+}: {
+  visao: AgendaVisao
+  onVisaoChange: (visao: AgendaVisao) => void
+  rotulo: string | null
+  onAnterior: () => void
+  onProximo: () => void
+  onHoje: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {rotulo !== null ? (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label="Período anterior"
+              onClick={onAnterior}
+            >
+              <ChevronLeft />
+            </Button>
+            <span className="min-w-[190px] text-center text-sm font-semibold">
+              {rotulo}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label="Próximo período"
+              onClick={onProximo}
+            >
+              <ChevronRight />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onHoje}
+            >
+              Hoje
+            </Button>
+          </div>
+        ) : null}
+
+        <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-card p-1">
+          {OPCOES_DE_VISAO.map((opcao) => {
+            const ativo = opcao.valor === visao
+            return (
+              <Button
+                key={opcao.valor}
+                type="button"
+                variant={ativo ? "default" : "ghost"}
+                size="sm"
+                aria-pressed={ativo}
+                onClick={() => onVisaoChange(opcao.valor)}
+              >
+                {opcao.rotulo}
+              </Button>
+            )
+          })}
+        </div>
+      </div>
+
+      {rotulo !== null ? (
+        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-primary" />
+            Pendente
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-destructive" />
+            Atrasado
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-emerald-600" />
+            Concluído
+          </span>
+        </div>
+      ) : null}
+    </div>
+  )
+}
