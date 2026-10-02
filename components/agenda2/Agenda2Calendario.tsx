@@ -8,6 +8,12 @@ import { Agenda2CalendarioMes } from "@/components/agenda2/Agenda2CalendarioMes"
 import { Agenda2CalendarioSemana } from "@/components/agenda2/Agenda2CalendarioSemana"
 import { Agenda2CalendarioToolbar } from "@/components/agenda2/Agenda2CalendarioToolbar"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   agruparPorDataAgenda2,
@@ -95,6 +101,7 @@ export function Agenda2Calendario({
   } | null>(null)
   const [falhouChave, setFalhouChave] = useState<string | null>(null)
   const [tentativa, setTentativa] = useState(0)
+  const [diaDialogo, setDiaDialogo] = useState<Date | null>(null)
 
   const modo: CalendarioModo | null = visao === "lista" ? null : visao
   const rotulo = modo === null ? null : rotuloDoPeriodo(referencia, modo)
@@ -163,6 +170,21 @@ export function Agenda2Calendario({
     setReferencia(now)
   }
 
+  // Editar/Apagar PRIMEIRO fecham o diálogo do dia e só então chamam a tela:
+  // o formulário e a confirmação de apagar moram na tela (montados uma vez) e
+  // não podem ficar empilhados sobre outro diálogo modal. Concluir/Desmarcar
+  // são repassados direto — o diálogo continua aberto e a linha se atualiza
+  // quando a recarga (`reloadKey`) chega, sem piscar.
+  function handleEditarDoDialogo(item: Agenda2Item) {
+    setDiaDialogo(null)
+    onEditar(item)
+  }
+
+  function handleApagarDoDialogo(item: Agenda2Item) {
+    setDiaDialogo(null)
+    onApagar(item)
+  }
+
   function renderCorpo() {
     if (modo === null) return null
 
@@ -192,7 +214,7 @@ export function Agenda2Calendario({
         <Agenda2CalendarioMes
           referencia={referencia}
           porData={porData}
-          onSelecionarDia={() => {}}
+          onSelecionarDia={setDiaDialogo}
           now={now}
         />
       )
@@ -203,7 +225,7 @@ export function Agenda2Calendario({
         <Agenda2CalendarioSemana
           referencia={referencia}
           porData={porData}
-          onSelecionarDia={() => {}}
+          onSelecionarDia={setDiaDialogo}
           now={now}
         />
       )
@@ -240,6 +262,34 @@ export function Agenda2Calendario({
       />
 
       {renderCorpo()}
+
+      {diaDialogo ? (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setDiaDialogo(null)
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{rotuloDoPeriodo(diaDialogo, "dia")}</DialogTitle>
+            </DialogHeader>
+            {/* MESMO componente da visão de dia: um segundo jeito de listar
+                item aqui divergiria do cartão da Lista. */}
+            <Agenda2CalendarioDia
+              itens={itensDoDiaAgenda2(porData, diaDialogo)}
+              showResponsavel={showResponsavel}
+              podeAlterar={podeAlterar}
+              salvandoId={salvandoId}
+              onEditar={handleEditarDoDialogo}
+              onApagar={handleApagarDoDialogo}
+              onConcluir={onConcluir}
+              onDesmarcar={onDesmarcar}
+              now={now}
+            />
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </div>
   )
 }
