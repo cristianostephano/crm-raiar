@@ -10,6 +10,7 @@ import {
   getAgenda2Action,
 } from "@/app/actions/agenda2"
 import { Agenda2ApagarDialog } from "@/components/agenda2/Agenda2ApagarDialog"
+import { Agenda2Calendario } from "@/components/agenda2/Agenda2Calendario"
 import { Agenda2ItemForm } from "@/components/agenda2/Agenda2ItemForm"
 import { Agenda2ItemRow } from "@/components/agenda2/Agenda2ItemRow"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,11 @@ import {
   vendedoresDaAgenda2,
   type Agenda2Item,
 } from "@/lib/agenda2/itens"
-import { filtrarPorVendedor, type AgendaBucket } from "@/lib/agenda/itens"
+import {
+  filtrarPorVendedor,
+  type AgendaBucket,
+  type AgendaVisao,
+} from "@/lib/agenda/itens"
 
 /** Sentinel Select value para "sem filtro" — mesma convenção de AgendaList.tsx
  * ("" é reservado pelo Select da base-ui para o estado de placeholder). */
@@ -52,18 +57,29 @@ type FetchState =
   | { status: "pronto"; itens: Agenda2Item[] }
 
 /**
- * Agenda2List (AGD2-01/03/04/05/07, D-01/02/04/05/06/08/10/11/16/17/18,
- * correção 7 do 31-01-PLAN.md) — irmão novo de
+ * Agenda2List (AGD2-01/02/03/04/05/07/08, D-01/02/04/05/06/08/10/11/16/17/18,
+ * D-27/D-28/D-30, correção 7 do 31-01-PLAN.md) — irmão novo de
  * `components/agenda/AgendaList.tsx` (sibling module, não abstração
  * compartilhada — mesmo precedente já usado entre Perdidos/Encerrados). A
  * Agenda atual não é tocada por este componente.
  *
+ * A tela tem DUAS VISÕES sobre a mesma fonte, escolhidas pelo seletor da barra
+ * do calendário (Lista é a padrão): a Lista, com a regra de visibilidade da
+ * Fase 31 (`itensDaListaAgenda2`), e o Calendário Dia/Semana/Mês
+ * (`Agenda2Calendario`), com regra própria (D-28: concluído de dia passado
+ * aparece riscado na célula do seu dia). O calendário é uma cópia própria da
+ * Agenda atual (D-27), não um componente compartilhado. Esta tela continua a
+ * ÚNICA dona das escritas, do formulário, da confirmação de apagar e do
+ * filtro de vendedor — o calendário só recebe os handlers e o `reloadKey`, e
+ * qualquer ação, de qualquer visão, recarrega as duas.
+ *
  * Mesmo esqueleto de leitura de AgendaList: `FetchState` em união
  * discriminada, `useEffect` com `setState` síncrono no corpo, guarda
  * `cancelled`, `reloadKey` bumpado por "Tentar novamente" e por qualquer ação
- * de escrita bem-sucedida. Sem tudo o que não é desta fase (D-11): sem
- * exportação, sem calendário, sem "Sem dia fixo", sem ficha de cliente, sem
- * busca.
+ * de escrita bem-sucedida. A leitura da Lista roda em qualquer visão: ela
+ * alimenta o aviso de duplicado do formulário e as opções do filtro do
+ * Supervisor. Sem tudo o que não é desta fase (D-11): sem exportação, sem
+ * "Sem dia fixo", sem ficha de cliente, sem busca.
  *
  * Nenhuma decisão de negócio é duplicada aqui: visibilidade dos concluídos e
  * seções vêm de `lib/agenda2/itens.ts`; o estreitamento por vendedor reusa
@@ -78,6 +94,8 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
   // Bumped por "Tentar novamente" e por qualquer ação de escrita que afete o
   // que a Lista mostra (concluir, desmarcar, apagar, criar, editar).
   const [reloadKey, setReloadKey] = useState(0)
+  // Lista é a visão padrão, como na Agenda atual (AGD2-08).
+  const [visao, setVisao] = useState<AgendaVisao>("lista")
   const [vendedorFiltroId, setVendedorFiltroId] = useState<string | null>(
     null
   )
@@ -254,7 +272,25 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
         </div>
       ) : null}
 
-      {state.status === "carregando" ? (
+      {/* Sempre montado: a barra com o seletor Lista/Dia/Semana/Mês é o único
+          caminho de volta, então não pode sumir junto com a Lista. O calendário
+          lê o próprio período (getAgenda2PeriodoAction) e só mostra a grade
+          fora da Lista. */}
+      <Agenda2Calendario
+        visao={visao}
+        onVisaoChange={setVisao}
+        reloadKey={reloadKey}
+        vendedorFiltroId={vendedorFiltroId}
+        showResponsavel={showResponsavel}
+        podeAlterar={!isSupervisor}
+        salvandoId={salvandoId}
+        onEditar={handleEditar}
+        onApagar={handleAbrirApagar}
+        onConcluir={(item) => handleConcluir(item.id)}
+        onDesmarcar={(item) => handleDesmarcar(item.id)}
+      />
+
+      {visao !== "lista" ? null : state.status === "carregando" ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />
@@ -347,6 +383,7 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
             item={formItem}
             itensExistentes={itens}
             onSalvo={handleRecarregar}
+            onRecarregar={handleRecarregar}
           />
           <Agenda2ApagarDialog
             open={apagarAberto}
