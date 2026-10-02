@@ -15,6 +15,7 @@ O vendedor cria um item da Agenda 2 já repetido por 4, 8 ou 12 semanas de uma v
 
 ### Repetição
 - **D-20:** Ao criar um item, o vendedor escolhe não repetir ou repetir por 4, 8 ou 12 semanas — gera uma ocorrência por semana, sempre no mesmo dia da semana da data escolhida. Gravação em uma única operação, tudo-ou-nada (nunca metade das semanas criada por falha no meio) — já travado no ROADMAP, não é mais gray area.
+- **D-31:** "Repetir por N semanas" gera N visitas NO TOTAL — a data escolhida conta como a primeira (4 semanas = 4 visitas; 12 semanas = 12 visitas, nunca 13). Decidido pelo dono em 2026-10-02.
 - **D-21:** Cada ocorrência é independente desde a criação — editar, concluir ou apagar uma não muda nenhuma das outras (requisito AGD2-02, já travado).
 - **D-22:** Nenhum identificador de série é guardado ligando as ocorrências geradas. Menos dado numa tabela já sob escrutínio de LGPD (`agenda2_itens`), mais simples, e nada no produto precisa disso hoje.
 - **D-23:** Repetição só fica disponível quando a data escolhida é hoje ou futura — diferente da regra de criação avulsa (D-09 da Fase 31, que aceita qualquer data), porque o caso de uso de repetir é planejar visitas futuras, não registrar o passado.
