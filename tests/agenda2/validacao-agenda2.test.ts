@@ -11,10 +11,13 @@ import {
   AGENDA2_MSG_NOME_DOCUMENTO,
   AGENDA2_MSG_NOME_LONGO,
   AGENDA2_MSG_NOME_VAZIO,
+  AGENDA2_MSG_REPETIR_INVALIDO,
+  AGENDA2_MSG_REPETIR_PASSADO,
   AGENDA2_NOME_MAX,
   agenda2ItemIdSchema,
   agenda2ItemSchema,
   contemSequenciaLongaDeDigitos,
+  criarAgenda2CriarSchema,
 } from "../../lib/validations/agenda2"
 
 /**
@@ -241,5 +244,139 @@ describe("constantes", () => {
     expect(AGENDA2_NOME_MAX).toBe(120)
     expect(AGENDA2_BAIRRO_MAX).toBe(60)
     expect(AGENDA2_DIGITOS_SEGUIDOS_MAX).toBe(7)
+  })
+})
+
+/**
+ * Schema de CRIAÇÃO com repetição semanal (32-01 Tarefa 2). `hoje` é sempre
+ * injetado (nunca o relógio). A edição continua com `agenda2ItemSchema` (D-24).
+ */
+describe("criarAgenda2CriarSchema", () => {
+  const HOJE = "2026-10-02"
+  const schema = criarAgenda2CriarSchema(HOJE)
+  const base = { nomeCliente: NOME_VALIDO, bairro: BAIRRO_VALIDO }
+
+  it("aceita-lista-fechada", () => {
+    for (const repetirSemanas of [0, 4, 8, 12]) {
+      const result = schema.safeParse({
+        ...base,
+        data: "2026-10-05",
+        repetirSemanas,
+      })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.repetirSemanas).toBe(repetirSemanas)
+      }
+    }
+  })
+
+  it("aceita-sem-campo", () => {
+    const result = schema.safeParse({ ...base, data: "2025-01-10" })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("recusa-fora-da-lista", () => {
+    for (const repetirSemanas of [5, "4", 1000, -4, null]) {
+      const result = schema.safeParse({
+        ...base,
+        data: "2026-10-05",
+        repetirSemanas,
+      })
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const issue = result.error.issues.find(
+          (i) => i.path[0] === "repetirSemanas"
+        )
+        expect(issue?.path).toEqual(["repetirSemanas"])
+        expect(issue?.message).toBe(AGENDA2_MSG_REPETIR_INVALIDO)
+      }
+    }
+  })
+
+  it("recusa-repetir-no-passado", () => {
+    const result = schema.safeParse({
+      ...base,
+      data: "2026-10-01",
+      repetirSemanas: 4,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const issue = result.error.issues.find(
+        (i) => i.path[0] === "repetirSemanas"
+      )
+      expect(issue?.path).toEqual(["repetirSemanas"])
+      expect(issue?.message).toBe(AGENDA2_MSG_REPETIR_PASSADO)
+    }
+  })
+
+  it("aceita-repetir-hoje", () => {
+    const result = schema.safeParse({
+      ...base,
+      data: "2026-10-02",
+      repetirSemanas: 4,
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("aceita-zero-no-passado", () => {
+    const result = schema.safeParse({
+      ...base,
+      data: "2026-10-01",
+      repetirSemanas: 0,
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("descarta-extras", () => {
+    const result = schema.safeParse({
+      ...base,
+      data: "2026-10-05",
+      repetirSemanas: 4,
+      vendedorId: "vendedor-a",
+      concluido: true,
+      serieId: "serie-1",
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(Object.keys(result.data).sort()).toEqual([
+        "bairro",
+        "data",
+        "nomeCliente",
+        "repetirSemanas",
+      ])
+    }
+  })
+
+  it("mantem-regras-da-fase-31", () => {
+    const result = schema.safeParse({
+      nomeCliente: "Cliente 123.456.789-09",
+      bairro: BAIRRO_VALIDO,
+      data: "2026-10-05",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(AGENDA2_MSG_NOME_DOCUMENTO)
+    }
+  })
+
+  it("edicao-sem-repeticao", () => {
+    const result = agenda2ItemSchema.safeParse({
+      ...base,
+      data: "2026-10-05",
+      repetirSemanas: 4,
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect("repetirSemanas" in result.data).toBe(false)
+    }
   })
 })
