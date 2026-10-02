@@ -197,7 +197,7 @@ Plans:
 (c) **Gravação direta, não função do banco:** na v1.7 a regra de acesso (RLS) não foi aplicada corretamente a uma gravação feita de dentro de uma função chamada pela API (ver migration 0047). Uma gravação direta de várias linhas numa só chamada já é atômica e fica protegida pela RLS normal — preferir esse caminho.
 (d) **Vínculo entre ocorrências:** o dono não pediu "apagar todas as próximas" — confirmar se vale guardar um identificador de série só para uso futuro ou não guardar nada (menos dado = mais simples, e alinhado à minimização da LGPD).
 (e) **Volume:** o calendário da Agenda 2 deve buscar só o período visível, não todos os itens de todos os vendedores de uma vez (mesmo cuidado da Fase 21 com o free tier).
-**Plans**: 5/7 plans executed
+**Plans**: 6/7 plans executed
 
 Plans:
 **Wave 1**
@@ -213,7 +213,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 32-05-PLAN.md — Campo "Repetir" no formulário (só ao criar, padrão "Não repetir", D-23/D-25) + recarga em falha
-- [ ] 32-06-PLAN.md — Contêiner Agenda2Calendario (período visível, recarga sem piscar, filtro do Supervisor, diálogo do dia com ações)
+- [x] 32-06-PLAN.md — Contêiner Agenda2Calendario (período visível, recarga sem piscar, filtro do Supervisor, diálogo do dia com ações)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -252,7 +252,7 @@ Phases execute in numeric order: 31 → 32 → 33
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 8/8 | Complete    | 2026-10-01 |
-| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 5/7 | In Progress|  |
+| 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 6/7 | In Progress|  |
 | 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 0/TBD | Not started | - |
 
 *Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.*
