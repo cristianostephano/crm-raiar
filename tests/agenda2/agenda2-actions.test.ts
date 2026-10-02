@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 /**
  * Testes das seis Server Actions da Agenda 2 (Fase 31 Plano 4, Tarefa 2) —
@@ -67,7 +67,7 @@ vi.mock("@/lib/supabase/server", () => ({
           }
           return builder
         },
-        insert: (valores: Record<string, unknown>) => insertSpy(valores),
+        insert: (valores: Array<Record<string, unknown>>) => insertSpy(valores),
         update: (valores: Record<string, unknown>) => {
           updateSpy(valores)
           return {
@@ -99,7 +99,10 @@ import {
   desmarcarAgenda2Item,
   getAgenda2Action,
 } from "@/app/actions/agenda2"
-import type { Agenda2ItemInput } from "@/lib/validations/agenda2"
+import type {
+  Agenda2CriarItemInput,
+  Agenda2ItemInput,
+} from "@/lib/validations/agenda2"
 
 const ITEM_ID = "11111111-1111-4111-8111-111111111111"
 const SESSAO_EXPIRADA = "Sessão expirada."
@@ -244,12 +247,15 @@ describe("criarAgenda2Item", () => {
 
     expect(resultado).toEqual({ data: true })
     expect(insertSpy).toHaveBeenCalledTimes(1)
-    expect(insertSpy).toHaveBeenCalledWith({
-      nome_cliente: "Mercado Bom Preço",
-      bairro: "Centro",
-      data: "2026-09-28",
-      vendedor_id: "u1",
-    })
+    // Fase 32: o insert é SEMPRE um array (1 linha quando não repete).
+    expect(insertSpy).toHaveBeenCalledWith([
+      {
+        nome_cliente: "Mercado Bom Preço",
+        bairro: "Centro",
+        data: "2026-09-28",
+        vendedor_id: "u1",
+      },
+    ])
   })
 
   it("criar-aparado: nome com espaços nas pontas é gravado aparado", async () => {
@@ -261,9 +267,9 @@ describe("criarAgenda2Item", () => {
       data: "2026-09-28",
     })
 
-    expect(insertSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ nome_cliente: "Mercado" })
-    )
+    expect(insertSpy).toHaveBeenCalledWith([
+      expect.objectContaining({ nome_cliente: "Mercado" }),
+    ])
   })
 
   it("criar-falha: erro do banco devolve salvar_falhou com mensagem genérica (nunca a crua)", async () => {
@@ -287,6 +293,158 @@ describe("criarAgenda2Item", () => {
   })
 })
 
+/** Datas (AAAA-MM-DD) das linhas do único insert feito. */
+function datasDoInsert(): string[] {
+  const linhas = insertSpy.mock.calls[0][0] as Array<{ data: string }>
+  return linhas.map((linha) => linha.data)
+}
+
+describe("criarAgenda2Item — repetição semanal em lote (Fase 32)", () => {
+  beforeEach(() => {
+    getUserSpy.mockResolvedValue({ data: { user: { id: "u1" } } })
+    // Só o relógio é falso: promises e microtasks continuam reais.
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-02T15:00:00Z"))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("criar-sem-repeticao: sem repetirSemanas e com repetirSemanas 0 gravam uma linha só (data passada continua aceita — D-09)", async () => {
+    insertSpy.mockResolvedValue({ error: null })
+
+    const semCampo = await criarAgenda2Item(valoresValidos)
+    expect(semCampo).toEqual({ data: true })
+    expect(insertSpy).toHaveBeenCalledTimes(1)
+    expect(insertSpy.mock.calls[0][0]).toHaveLength(1)
+    expect(datasDoInsert()).toEqual(["2026-09-28"])
+
+    insertSpy.mockClear()
+    const comZero = await criarAgenda2Item({
+      ...valoresValidos,
+      repetirSemanas: 0,
+    })
+    expect(comZero).toEqual({ data: true })
+    expect(insertSpy).toHaveBeenCalledTimes(1)
+    expect(insertSpy.mock.calls[0][0]).toHaveLength(1)
+    expect(datasDoInsert()).toEqual(["2026-09-28"])
+  })
+
+  it("criar-repete-4 (D-20/D-31/D-22): UM insert com 4 linhas semanais, todas do dono da sessão e só com as 4 colunas", async () => {
+    insertSpy.mockResolvedValueOnce({ error: null })
+
+    const valores = {
+      nomeCliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-10-05",
+      repetirSemanas: 4,
+      vendedorId: "outro",
+    } as unknown as Agenda2CriarItemInput
+
+    const resultado = await criarAgenda2Item(valores)
+
+    expect(resultado).toEqual({ data: true })
+    expect(insertSpy).toHaveBeenCalledTimes(1)
+    expect(datasDoInsert()).toEqual([
+      "2026-10-05",
+      "2026-10-12",
+      "2026-10-19",
+      "2026-10-26",
+    ])
+
+    const linhas = insertSpy.mock.calls[0][0] as Array<Record<string, unknown>>
+    for (const linha of linhas) {
+      expect(linha.vendedor_id).toBe("u1")
+      expect(Object.keys(linha).sort()).toEqual([
+        "bairro",
+        "data",
+        "nome_cliente",
+        "vendedor_id",
+      ])
+    }
+    expect(revalidateSpy).toHaveBeenCalledWith("/agenda-2")
+  })
+
+  it("criar-repete-12: grava 12 linhas, a última em 2026-12-21, nunca 13", async () => {
+    insertSpy.mockResolvedValueOnce({ error: null })
+
+    const resultado = await criarAgenda2Item({
+      ...valoresValidos,
+      data: "2026-10-05",
+      repetirSemanas: 12,
+    })
+
+    expect(resultado).toEqual({ data: true })
+    expect(insertSpy).toHaveBeenCalledTimes(1)
+    const datas = datasDoInsert()
+    expect(datas).toHaveLength(12)
+    expect(datas[0]).toBe("2026-10-05")
+    expect(datas[11]).toBe("2026-12-21")
+  })
+
+  it("criar-repete-passado-recusa (D-23): repetir com data anterior a hoje devolve validacao e não grava", async () => {
+    const resultado = await criarAgenda2Item({
+      ...valoresValidos,
+      data: "2026-10-01",
+      repetirSemanas: 4,
+    })
+
+    expect(resultado).toEqual({
+      error: { code: "validacao", message: SALVAR_FALHOU_MSG },
+    })
+    expect(insertSpy).not.toHaveBeenCalled()
+  })
+
+  it("criar-repete-hoje-a-noite (Pitfall 2): às 22:30 de Brasília ainda é hoje, mesmo com UTC já no dia seguinte", async () => {
+    vi.setSystemTime(new Date("2026-10-03T01:30:00Z"))
+    insertSpy.mockResolvedValueOnce({ error: null })
+
+    const resultado = await criarAgenda2Item({
+      ...valoresValidos,
+      data: "2026-10-02",
+      repetirSemanas: 4,
+    })
+
+    expect(resultado).toEqual({ data: true })
+    expect(insertSpy).toHaveBeenCalledTimes(1)
+    const datas = datasDoInsert()
+    expect(datas).toHaveLength(4)
+    expect(datas[0]).toBe("2026-10-02")
+  })
+
+  it("criar-repete-invalido (T-32-01): repetirSemanas 5, '4' e 1000 devolvem validacao e não gravam", async () => {
+    for (const invalido of [5, "4", 1000]) {
+      const resultado = await criarAgenda2Item({
+        ...valoresValidos,
+        data: "2026-10-05",
+        repetirSemanas: invalido,
+      } as unknown as Agenda2CriarItemInput)
+
+      expect(resultado).toEqual({
+        error: { code: "validacao", message: SALVAR_FALHOU_MSG },
+      })
+    }
+    expect(insertSpy).not.toHaveBeenCalled()
+  })
+
+  it("criar-lote-falha: erro do banco no lote devolve salvar_falhou com a mensagem fixa e não revalida", async () => {
+    insertSpy.mockResolvedValueOnce({ error: { message: "detalhe interno" } })
+
+    const resultado = await criarAgenda2Item({
+      ...valoresValidos,
+      data: "2026-10-05",
+      repetirSemanas: 8,
+    })
+
+    expect(resultado).toEqual({
+      error: { code: "salvar_falhou", message: SALVAR_FALHOU_MSG },
+    })
+    expect(insertSpy).toHaveBeenCalledTimes(1)
+    expect(revalidateSpy).not.toHaveBeenCalled()
+  })
+})
+
 describe("atualizarAgenda2Item", () => {
   beforeEach(() => {
     getUserSpy.mockResolvedValue({ data: { user: { id: "u1" } } })
@@ -305,6 +463,23 @@ describe("atualizarAgenda2Item", () => {
     })
     expect(eqSpy).toHaveBeenCalledWith("id", ITEM_ID)
     expect(selectEscritaSpy).toHaveBeenCalledWith("id")
+  })
+
+  it("atualizar-ignora-repeticao (D-24/Pitfall 7/T-32-12): repetirSemanas na edição é descartado e nenhuma linha é inserida", async () => {
+    selectEscritaSpy.mockResolvedValueOnce({ data: [{ id: ITEM_ID }], error: null })
+
+    const resultado = await atualizarAgenda2Item(ITEM_ID, {
+      ...valoresValidos,
+      repetirSemanas: 4,
+    } as unknown as Agenda2ItemInput)
+
+    expect(resultado).toEqual({ data: true })
+    expect(updateSpy).toHaveBeenCalledWith({
+      nome_cliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-09-28",
+    })
+    expect(insertSpy).not.toHaveBeenCalled()
   })
 
   it("atualizar-zero-linhas: select devolve [] vira nao_encontrado", async () => {
