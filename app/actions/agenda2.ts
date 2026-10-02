@@ -2,26 +2,33 @@
 
 import { revalidatePath } from "next/cache"
 
+import { diaLocalSaoPaulo } from "@/lib/aderencia/registroDiario"
 import type { Agenda2Item } from "@/lib/agenda2/itens"
+import { gerarDatasSemanais } from "@/lib/agenda2/repeticao"
 import { getAgenda2 } from "@/lib/supabase/queries/agenda2"
 import { createClient } from "@/lib/supabase/server"
 import {
   agenda2ItemIdSchema,
   agenda2ItemSchema,
+  criarAgenda2CriarSchema,
+  type Agenda2CriarItemInput,
   type Agenda2ItemInput,
 } from "@/lib/validations/agenda2"
 
 /**
- * Seis Server Actions da Agenda 2 (Fase 31, AGD2-01/03/04/05/07, D-05, D-06,
- * D-16; Pattern 2/4 da pesquisa, 31-RESEARCH.md). Toda escrita é um
- * insert/update/delete DIRETO em `agenda2_itens` — sem RPC, sem privilégio
- * elevado. Quem decide se 0 ou 1 linha é afetada é a RLS assimétrica da
- * migration 0048 (plano 31-01): Supervisor e vendedor alheio ao item sempre
- * afetam zero linhas (D-16), nunca uma linha de outro dono.
+ * Sete Server Actions da Agenda 2 (Fase 31, AGD2-01/03/04/05/07, D-05, D-06,
+ * D-16; Pattern 2/4 da pesquisa, 31-RESEARCH.md; Fase 32 acrescenta a
+ * leitura do calendário, AGD2-08). Toda escrita é um insert/update/delete
+ * DIRETO em `agenda2_itens` — sem RPC, sem privilégio elevado. Quem decide
+ * se 0 ou 1 linha é afetada é a RLS assimétrica da migration 0048 (plano
+ * 31-01): Supervisor e vendedor alheio ao item sempre afetam zero linhas
+ * (D-16), nunca uma linha de outro dono. Criar grava de 1 a 12 linhas num
+ * único insert tudo-ou-nada (D-20), com a RLS avaliada linha a linha e sem
+ * identificador de série (D-22).
  *
  * Nenhuma checagem de papel aqui — a RLS é a fronteira (CLAUDE.md). O dono
  * do item é SEMPRE `user.id` da sessão do servidor, nunca um valor vindo da
- * tela (nota a do ROADMAP, T-31-18): o insert monta o objeto só com os três
+ * tela (nota a do ROADMAP, T-31-18): o insert monta cada linha só com os três
  * campos validados do schema + `vendedor_id`. A mensagem crua do banco nunca
  * chega à tela (T-31-21) — sempre uma das mensagens fixas abaixo. Uma ação
  * que afeta zero linhas é tratada como erro (`nao_encontrado`), nunca como
@@ -69,14 +76,24 @@ export async function getAgenda2Action(): Promise<GetAgenda2Result> {
 }
 
 /**
- * Cria um item (AGD2-01). Re-valida com `agenda2ItemSchema` no servidor —
- * ação de servidor é endpoint público, nunca confia só na validação do
- * navegador (CLAUDE.md). O objeto do insert é montado SÓ com os três campos
- * do parse mais `vendedor_id: user.id` — qualquer campo extra enviado pela
- * tela (ex.: `vendedorId`, `concluido`) é descartado (T-31-18).
+ * Cria um item (AGD2-01) com repetição semanal opcional (AGD2-02, Fase 32).
+ * Grava de 1 a 12 linhas num ÚNICO insert tudo-ou-nada (D-20, D-31): o
+ * PostgREST transforma `.insert(array)` em um só INSERT, então uma falha no
+ * meio (RLS, constraint, rede) não deixa metade das semanas gravada. Nunca
+ * há laço nem várias chamadas, e sempre é array, inclusive para 1 linha.
+ *
+ * Re-valida com `criarAgenda2CriarSchema(hoje)` no servidor — ação de
+ * servidor é endpoint público, nunca confia só na validação do navegador
+ * (CLAUDE.md). O "hoje" da regra D-23 é o dia de São Paulo calculado AQUI
+ * (a Vercel roda em UTC; às 22:30 de Brasília o UTC já virou o dia). Cada
+ * linha é montada SÓ com os três campos do parse mais `vendedor_id: user.id`
+ * — qualquer campo extra enviado pela tela (ex.: `vendedorId`, `concluido`)
+ * é descartado (T-31-18), e nenhum identificador de série existe (D-22).
+ * Quem autoriza é só a RLS da 0048, avaliada linha a linha: uma única linha
+ * recusada derruba o lote inteiro.
  */
 export async function criarAgenda2Item(
-  values: Agenda2ItemInput
+  values: Agenda2CriarItemInput
 ): Promise<Agenda2MutationResult> {
   const supabase = await createClient()
   const {
@@ -87,17 +104,25 @@ export async function criarAgenda2Item(
     return { error: { code: "unauthenticated", message: MSG_SESSAO_EXPIRADA } }
   }
 
-  const parsed = agenda2ItemSchema.safeParse(values)
+  const hoje = diaLocalSaoPaulo(new Date())
+  const parsed = criarAgenda2CriarSchema(hoje).safeParse(values)
   if (!parsed.success) {
     return { error: { code: "validacao", message: MSG_SALVAR_FALHOU } }
   }
 
-  const { error } = await supabase.from("agenda2_itens").insert({
+  const datas = gerarDatasSemanais(
+    parsed.data.data,
+    parsed.data.repetirSemanas ?? 0
+  )
+  const linhas = datas.map((data) => ({
     nome_cliente: parsed.data.nomeCliente,
     bairro: parsed.data.bairro,
-    data: parsed.data.data,
+    data,
     vendedor_id: user.id,
-  })
+  }))
+
+  // Sem .select(): menos tráfego de volta e nada a ler do lote gravado.
+  const { error } = await supabase.from("agenda2_itens").insert(linhas)
 
   if (error) {
     return { error: { code: "salvar_falhou", message: MSG_SALVAR_FALHOU } }
