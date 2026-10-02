@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server"
 
 /**
  * Leitura direta de tabela (sem RPC — Pattern 2 da pesquisa, 31-RESEARCH.md)
- * da Agenda 2 (Fase 31, AGD2-01/03/05/07). Duas funções:
+ * da Agenda 2 (Fase 31, AGD2-01/03/05/07; Fase 32, AGD2-08). Três funções:
  *
  * - `getAgenda2()`: lê a Lista. NENHUM filtro de dono aqui — a RLS da
  *   migration 0048 já escopa o resultado (vendedor vê os próprios itens,
@@ -29,8 +29,18 @@ import { createClient } from "@/lib/supabase/server"
  * `criado_em` não é lido em `getAgenda2()` — minimização (LGPD): a tela não
  * usa esse campo, só o SQL (para desempate de ordenação).
  *
- * Nenhuma checagem de papel em nenhuma das duas funções, e nenhum `.rpc(`
+ * - `getAgenda2Periodo(inicio, fim)` (Fase 32, AGD2-08): lê o CALENDÁRIO.
+ *   Separada de `getAgenda2` porque a regra de visibilidade é outra (D-28):
+ *   o calendário mostra também os concluídos de dias passados (a Lista
+ *   esconde), então não há o corte `.or(...)` — só o período visível, via
+ *   `.gte/.lte` em `data`, para não baixar o histórico inteiro (custo/egress,
+ *   free tier). A validação do intervalo pedido pelo navegador fica na Server
+ *   Action (32-03), não aqui. Mesmo select mínimo da Lista, sem `criado_em`.
+ *
+ * Nenhuma checagem de papel em nenhuma das três funções, e nenhuma chamada de função do banco (RPC)
  * neste arquivo — a RLS é a única fronteira de autorização (CLAUDE.md).
+ * Em `getAgenda2Periodo` também não há filtro de dono: vendedor vê só os
+ * seus, Supervisor vê o time, tudo decidido pela RLS da 0048 (D-30).
  */
 
 type Agenda2Row = {
@@ -118,4 +128,41 @@ export async function getAgenda2PendentesCount(): Promise<number> {
   }
 
   return count ?? 0
+}
+
+/**
+ * AGD2-08/D-28: leitura do calendário — pendentes E concluídos entre
+ * `inicio` e `fim` (AAAA-MM-DD, inclusive nas duas pontas). Paginada com
+ * ordem estável terminando em `id` (nunca devolve lista truncada em 1000
+ * linhas). NÃO filtra por dono e NÃO checa papel — a RLS da 0048 escopa.
+ */
+export async function getAgenda2Periodo(
+  inicio: string,
+  fim: string
+): Promise<Agenda2Item[]> {
+  const supabase = await createClient()
+
+  const rows = await buscarPaginado<Agenda2Row>(async (de, ate) => {
+    const { data, error } = await supabase
+      .from("agenda2_itens")
+      .select(
+        "id, vendedor_id, nome_cliente, bairro, data, concluido, atualizado_em, profiles(nome, sobrenome)"
+      )
+      .gte("data", inicio)
+      .lte("data", fim)
+      .order("data", { ascending: true })
+      .order("criado_em", { ascending: true })
+      .order("id", { ascending: true })
+      .range(de, ate)
+
+    return { data: data as unknown as Agenda2Row[] | null, error }
+  })
+
+  if (rows === null) {
+    throw new Error(
+      "Falha ao carregar o calendário da Agenda 2: leitura paginada incompleta"
+    )
+  }
+
+  return rows.map((row) => mapRow(row))
 }
