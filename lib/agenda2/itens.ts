@@ -1,4 +1,12 @@
-import { bucketDoItem, type AgendaBucket } from "@/lib/agenda/itens"
+import {
+  bucketDoItem,
+  chaveDoDia,
+  diasDaGradeDoMes,
+  diasDaSemana,
+  MAX_ITENS_NA_CELULA,
+  type AgendaBucket,
+  type CalendarioModo,
+} from "@/lib/agenda/itens"
 
 /**
  * Funções puras da Lista da Agenda 2 (Fase 31, AGD2-01/03/05/07) — uma
@@ -153,4 +161,99 @@ export function existeItemParecido(
       item.data === candidato.data
     )
   })
+}
+
+// ---------------------------------------------------------------------------
+// Calendário da Agenda 2 (Fase 32, AGD2-08)
+//
+// Cópias tipadas para `Agenda2Item` das funções de calendário de
+// `lib/agenda/itens.ts` (D-27): a Agenda atual não é editada nem
+// generalizada, só importada (bucketDoItem, chaveDoDia, diasDaGradeDoMes,
+// diasDaSemana). Continua tudo puro — sem Next, sem cliente de banco.
+// ---------------------------------------------------------------------------
+
+/**
+ * Cópia de `estaAtrasado` (lib/agenda/itens.ts) tipada para Agenda2Item. A
+ * decisão de dia continua em `bucketDoItem` (nenhuma comparação nova de
+ * data). Mudança: concluído nunca é atrasado — fica riscado, sem vermelho
+ * (D-29).
+ */
+export function estaAtrasadoAgenda2(
+  item: Agenda2Item,
+  now: Date = new Date()
+): boolean {
+  return !item.concluido && bucketDoItem(item.data, now) === "atrasado"
+}
+
+/**
+ * Cópia de `agruparPorData` (lib/agenda/itens.ts) tipada para Agenda2Item.
+ * A chave é `item.data` verbatim (texto com texto, nunca convertido para
+ * data) e a ordem de entrada é preservada dentro de cada dia (D-08).
+ */
+export function agruparPorDataAgenda2(
+  itens: Agenda2Item[]
+): Map<string, Agenda2Item[]> {
+  const porData = new Map<string, Agenda2Item[]>()
+
+  for (const item of itens) {
+    const doDia = porData.get(item.data)
+    if (doDia) {
+      doDia.push(item)
+    } else {
+      porData.set(item.data, [item])
+    }
+  }
+
+  return porData
+}
+
+/**
+ * Cópia de `itensDoDia` (lib/agenda/itens.ts) tipada para Agenda2Item. Dia
+ * sem itens devolve lista vazia, nunca undefined.
+ */
+export function itensDoDiaAgenda2(
+  porData: Map<string, Agenda2Item[]>,
+  dia: Date
+): Agenda2Item[] {
+  return porData.get(chaveDoDia(dia)) ?? []
+}
+
+/**
+ * Cópia de `dividirCelula` (lib/agenda/itens.ts) tipada para Agenda2Item.
+ * Os itens visíveis e o excedente saem do mesmo arranjo, então nunca
+ * discordam entre si.
+ */
+export function dividirCelulaAgenda2(
+  itens: Agenda2Item[],
+  maxVisiveis: number = MAX_ITENS_NA_CELULA
+): { visiveis: Agenda2Item[]; excedente: number } {
+  const visiveis = itens.slice(0, maxVisiveis)
+
+  return { visiveis, excedente: itens.length - visiveis.length }
+}
+
+/**
+ * Primeiro e último dia VISÍVEIS do calendário (grade do mês, 7 dias de
+ * segunda a domingo, ou o dia). Substitui `intervaloDeHistorico` da Agenda
+ * atual com uma diferença deliberada: NÃO apara em "ontem" e nunca devolve
+ * null — a Agenda 2 tem uma fonte só e o calendário mostra passado, hoje e
+ * futuro do período visível (D-28). Toda grade de mês tem no máximo 41 dias
+ * de distância entre as pontas, dentro do teto de 45 da validação do
+ * intervalo.
+ */
+export function intervaloVisivelAgenda2(
+  referencia: Date,
+  modo: CalendarioModo
+): { inicio: string; fim: string } {
+  const dias =
+    modo === "mes"
+      ? diasDaGradeDoMes(referencia)
+      : modo === "semana"
+        ? diasDaSemana(referencia)
+        : [referencia]
+
+  return {
+    inicio: chaveDoDia(dias[0]),
+    fim: chaveDoDia(dias[dias.length - 1]),
+  }
 }
