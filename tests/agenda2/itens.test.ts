@@ -3,15 +3,23 @@ import path from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { filtrarPorVendedor } from "../../lib/agenda/itens"
+import { differenceInCalendarDays, parseISO } from "date-fns"
+
+import { chaveDoDia, filtrarPorVendedor } from "../../lib/agenda/itens"
 import {
   agruparAgenda2,
+  agruparPorDataAgenda2,
+  dividirCelulaAgenda2,
+  estaAtrasadoAgenda2,
   existeItemParecido,
+  intervaloVisivelAgenda2,
   itensDaListaAgenda2,
+  itensDoDiaAgenda2,
   vendedoresDaAgenda2,
   visivelNaListaAgenda2,
   type Agenda2Item,
 } from "../../lib/agenda2/itens"
+import { INTERVALO_HISTORICO_MAX_DIAS } from "../../lib/validations/agenda"
 
 /**
  * Unit tests for the pure Lista layer of Agenda 2 (31-02 Tarefa 1). Puro,
@@ -237,5 +245,165 @@ describe("fonte-sem-data-propria", () => {
     // vendedoresDaAgenda2, para as opcoes do filtro).
     const chamadasDeSort = fonte.match(/\.sort\(/g) ?? []
     expect(chamadasDeSort.length).toBeLessThanOrEqual(1)
+  })
+})
+
+/**
+ * Calendario da Agenda 2 (32-02 Tarefa 1, AGD2-08) — copias tipadas das
+ * funcoes de calendario da Agenda atual (D-27). Relogio fixado em
+ * 14/08/2026 (sexta-feira), 10:00 local, com o construtor numerico.
+ */
+const NOW_CAL = new Date(2026, 7, 14, 10, 0)
+
+describe("estaAtrasadoAgenda2", () => {
+  it("pendente-de-ontem-e-atrasado", () => {
+    expect(
+      estaAtrasadoAgenda2(item({ data: "2026-08-13", concluido: false }), NOW_CAL)
+    ).toBe(true)
+  })
+
+  it("concluido-nunca-e-atrasado (D-29)", () => {
+    expect(
+      estaAtrasadoAgenda2(item({ data: "2026-08-13", concluido: true }), NOW_CAL)
+    ).toBe(false)
+  })
+
+  it("pendente-de-hoje-e-do-futuro-nao-e-atrasado", () => {
+    expect(
+      estaAtrasadoAgenda2(item({ data: "2026-08-14", concluido: false }), NOW_CAL)
+    ).toBe(false)
+    expect(
+      estaAtrasadoAgenda2(item({ data: "2026-08-20", concluido: false }), NOW_CAL)
+    ).toBe(false)
+  })
+})
+
+describe("agruparPorDataAgenda2", () => {
+  it("chave-e-a-data-verbatim-e-ordem-preservada", () => {
+    const itens = [
+      item({ id: "zeta", nomeCliente: "Zeta", data: "2026-08-14" }),
+      item({ id: "alfa", nomeCliente: "Alfa", data: "2026-08-14" }),
+      item({ id: "beta", nomeCliente: "Beta", data: "2026-08-14" }),
+    ]
+
+    const porData = agruparPorDataAgenda2(itens)
+
+    expect(Array.from(porData.keys())).toEqual(["2026-08-14"])
+    expect(porData.get("2026-08-14")?.map((i) => i.id)).toEqual([
+      "zeta",
+      "alfa",
+      "beta",
+    ])
+  })
+
+  it("soma-dos-tamanhos-igual-a-entrada", () => {
+    const itens = [
+      item({ id: "1", data: "2026-08-14" }),
+      item({ id: "2", data: "2026-08-15" }),
+      item({ id: "3", data: "2026-08-14" }),
+    ]
+
+    const porData = agruparPorDataAgenda2(itens)
+    const total = Array.from(porData.values()).reduce((s, l) => s + l.length, 0)
+
+    expect(total).toBe(itens.length)
+  })
+
+  it("lista-vazia-gera-mapa-vazio", () => {
+    expect(agruparPorDataAgenda2([]).size).toBe(0)
+  })
+})
+
+describe("itensDoDiaAgenda2", () => {
+  it("dia-sem-itens-devolve-lista-vazia", () => {
+    const porData = agruparPorDataAgenda2([item({ data: "2026-08-14" })])
+
+    expect(itensDoDiaAgenda2(porData, new Date(2026, 7, 15))).toEqual([])
+  })
+
+  it("dia-com-itens-devolve-a-lista-do-mapa", () => {
+    const itens = [item({ id: "a", data: "2026-08-14" })]
+    const porData = agruparPorDataAgenda2(itens)
+    const dia = new Date(2026, 7, 14)
+
+    expect(itensDoDiaAgenda2(porData, dia)).toBe(porData.get(chaveDoDia(dia)))
+  })
+})
+
+describe("dividirCelulaAgenda2", () => {
+  const cinco = ["1", "2", "3", "4", "5"].map((id) => item({ id }))
+
+  it("padrao-tres-visiveis-e-excedente", () => {
+    const { visiveis, excedente } = dividirCelulaAgenda2(cinco)
+
+    expect(visiveis).toHaveLength(3)
+    expect(excedente).toBe(2)
+  })
+
+  it("tres-itens-nao-tem-excedente", () => {
+    const { visiveis, excedente } = dividirCelulaAgenda2(cinco.slice(0, 3))
+
+    expect(visiveis).toHaveLength(3)
+    expect(excedente).toBe(0)
+  })
+
+  it("maximo-explicito", () => {
+    const { visiveis, excedente } = dividirCelulaAgenda2(cinco, 1)
+
+    expect(visiveis).toHaveLength(1)
+    expect(excedente).toBe(4)
+  })
+})
+
+describe("intervaloVisivelAgenda2", () => {
+  it("mes-agosto-2026", () => {
+    expect(intervaloVisivelAgenda2(new Date(2026, 7, 14), "mes")).toEqual({
+      inicio: "2026-07-27",
+      fim: "2026-09-06",
+    })
+  })
+
+  it("mes-setembro-2026", () => {
+    expect(intervaloVisivelAgenda2(new Date(2026, 8, 10), "mes")).toEqual({
+      inicio: "2026-08-31",
+      fim: "2026-10-04",
+    })
+  })
+
+  it("semana-de-segunda-a-domingo", () => {
+    const esperado = { inicio: "2026-08-10", fim: "2026-08-16" }
+
+    expect(intervaloVisivelAgenda2(new Date(2026, 7, 14), "semana")).toEqual(
+      esperado
+    )
+    // Domingo 16/08 continua na mesma semana (segunda 10 a domingo 16).
+    expect(intervaloVisivelAgenda2(new Date(2026, 7, 16), "semana")).toEqual(
+      esperado
+    )
+  })
+
+  it("dia-e-um-so-dia", () => {
+    expect(intervaloVisivelAgenda2(new Date(2026, 7, 14), "dia")).toEqual({
+      inicio: "2026-08-14",
+      fim: "2026-08-14",
+    })
+  })
+
+  it("futuro-nao-e-aparado", () => {
+    const { inicio, fim } = intervaloVisivelAgenda2(new Date(2026, 11, 10), "mes")
+
+    expect(inicio).toBe("2026-11-30")
+    expect(fim).toBe("2027-01-03")
+  })
+
+  it("grade-cabe-no-teto", () => {
+    for (let ano = 2026; ano <= 2027; ano++) {
+      for (let mes = 0; mes < 12; mes++) {
+        const { inicio, fim } = intervaloVisivelAgenda2(new Date(ano, mes, 1), "mes")
+        const dias = differenceInCalendarDays(parseISO(fim), parseISO(inicio))
+
+        expect(dias).toBeLessThanOrEqual(INTERVALO_HISTORICO_MAX_DIAS)
+      }
+    }
   })
 })
