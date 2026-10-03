@@ -59,6 +59,24 @@ Baseline verificado nesta pesquisa (2026-10-03): 10 arquivos / 161 testes VERDES
 - [ ] `tests/agenda/agenda-sem-visitas-automaticas.test.ts` — ao vivo (L1-L5), 1 login, 1 fixture, nomes inventados SEM sequência de 8+ dígitos corridos (precaução herdada da Fase 31; clientes aceitam, mas manter a disciplina), nunca imprimir leitura, limpar clientes antes de `deleteTestMember`.
 - [ ] Framework: nenhuma instalação.
 
+Os dois arquivos de Wave 0 são criados no plano 33-01 (Tarefas 1 e 2), na primeira onda.
+
+### Per-Task Verification Map (planner, 2026-10-03)
+
+| Plano / Tarefa | Onda | Requisito / Decisão | Comando automático | Estado esperado ao fim da tarefa |
+|----------------|------|---------------------|--------------------|----------------------------------|
+| 33-01 T1 | 1 | AGD-16 crit. 1/2, D-34, D-36, nota (f) | `npx vitest run tests/agenda/agenda-sem-visitas-migracao.test.ts tests/agenda2/migracao-agenda2.test.ts` | verde (RED antes da 0049 existir) |
+| 33-01 T2 | 1 | AGD-16 crit. 1/2/4/5, D-33, D-34, D-36, D-37 | `npx tsc --noEmit && npx eslint tests/agenda/agenda-sem-visitas-automaticas.test.ts` + checagem estrutural (node) | compila; casos ao vivo VERMELHOS até o 33-04 |
+| 33-02 T1 | 1 | nota (g), D-34, D-35 | `npx tsc --noEmit && npx eslint ...` + comparação bloco a bloco com o HEAD | compila; casos editados VERMELHOS até o 33-04; demais casos idênticos |
+| 33-02 T2 | 1 | nota (g) | `npx tsc --noEmit && npx eslint ...` + comparação bloco a bloco com o HEAD | compila; não executável (contas semente) |
+| 33-03 T1 | 1 | AGD-16 crit. 3, D-32 | `npx vitest run tests/agenda/agenda-list.test.tsx tests/agenda/agenda-calendario-integracao.test.tsx tests/agenda/sem-dia-fixo.test.tsx tests/agenda/clientes-sem-dia-fixo-query.test.ts` + tsc/eslint + checagem de fiação (node) | verde (RED dos 2 casos novos antes do componente) |
+| 33-03 T2 | 1 | textos (decisão 1 do orquestrador) | `npx vitest run tests/importacao/ativo-import-summary.test.tsx` + tsc/eslint + checagem de textos e "só comentário" (node) | verde |
+| 33-04 T1 | 2 | aprovação do dono (CLAUDE.md), LGPD | checkpoint:decision | resposta "aplicar" registrada |
+| 33-04 T2 | 2 | aplicação manual da 0049 | checkpoint:human-action (pré-condição: feat(33-03) contido em origin/staging) | "Success" do dono |
+| 33-04 T3 | 2 | AGD-16 crit. 1-5, D-32..D-37, regressão | guarda de escopo (node) + phase gate (vitest da lista abaixo) + `npx tsc --noEmit && npm run lint && npm run build`; human-check no Preview da staging | tudo verde; Preview conferido antes de master |
+
+Phase gate (33-04 T3): `agenda-sem-visitas-automaticas`, `encerrados-rpc`, `dia-fixo-visita`, `agenda-sem-visitas-migracao`, `agenda2/migracao-agenda2`, `agenda-list`, `sem-dia-fixo`, `itens`, `clientes-sem-dia-fixo-query`, `ativo-import-summary`, `app-sidebar-agenda`, `agenda2/app-layout-contagem`, os 7 `agenda-calendario*`, `agenda-item-row`, `concluir-item-dialog`, `clientes/ganho-frequencia-dialog` (8 desses fora do baseline da pesquisa foram confirmados verdes pelo planner em 2026-10-03: 94 testes).
+
 ## Validation Sign-Off
 
 - [ ] Todas as tarefas têm verificação automática ou dependência de Wave 0
