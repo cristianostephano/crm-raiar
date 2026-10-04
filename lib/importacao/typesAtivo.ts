@@ -52,9 +52,10 @@ import type { SystemField, SystemFieldDefinition } from "@/lib/importacao/types"
  *   a aridade da RPC.
  * - Frequência de visita e dia fixo NÃO aparecem neste vocabulário, por
  *   decisão travada — são definidos depois, individualmente, pela ficha/
- *   Agenda da Fase 24. Um cliente importado por aqui nasce sem frequência e
- *   por isso aparece na seção "Sem dia fixo definido" da Agenda; isso é o
- *   comportamento esperado, não uma pendência.
+ *   Agenda da Fase 24. Um cliente importado por aqui nasce sem frequência.
+ *   Durante o piloto (Fase 33, D-32), a Agenda atual não lista ativos por
+ *   falta de frequência/dia fixo — os campos são definidos depois na ficha do
+ *   cliente; isso é o comportamento esperado, não uma pendência.
  * - Esta lista é a AUTORIDADE ÚNICA de obrigatoriedade deste fluxo: não
  *   existe um esquema de validação paralelo mantido à mão. Isso fecha um
  *   risco registrado na STATE.md (duas fontes de obrigatoriedade

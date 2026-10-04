@@ -78,8 +78,9 @@ describe("AtivoImportSummary", () => {
       screen.getByText(/não define a frequência de visita/i)
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/Sem dia fixo definido/i)
-    ).toBeInTheDocument()
+      screen.queryByText(/Sem dia fixo definido/i)
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/na ficha do cliente/i)).toBeInTheDocument()
   })
 
   it("conclusaobotoes: os dois botoes de acao disparam os retornos recebidos por propriedade", () => {

@@ -16,7 +16,7 @@ type AtivoImportSummaryProps = {
 const integerFormatter = new Intl.NumberFormat("pt-BR")
 
 const FREQUENCIA_AVISO =
-  "Esta planilha não define a frequência de visita. Os clientes importados entram como ativos, sem recorrência definida, e vão aparecer na seção \"Sem dia fixo definido\" da Agenda até alguém definir uma frequência para cada um."
+  "Esta planilha não define a frequência de visita. Os clientes importados entram como ativos, sem recorrência definida. A frequência e o dia fixo de cada um podem ser definidos depois, na ficha do cliente."
 
 /**
  * Tela de conclusão do assistente "Importar clientes ativos" (Fase 25 Plano
@@ -30,8 +30,9 @@ const FREQUENCIA_AVISO =
  * prospecção), o cabeçalho fala em importação de clientes ativos concluída,
  * e um bloco de aviso FIXO — sempre visível, nunca condicional — explica em
  * linguagem simples que esta planilha não define a frequência de visita.
- * Este aviso é o elo declarado entre esta fase e a Fase 24 (Agenda) e não
- * pode ser omitido.
+ * Este aviso continua fixo e não pode ser omitido; desde a Fase 33 (D-32)
+ * ele orienta a definir a frequência na ficha do cliente, porque a Agenda
+ * atual não lista mais ativos sem dia fixo durante o piloto.
  */
 export function AtivoImportSummary({
   importadosCount,

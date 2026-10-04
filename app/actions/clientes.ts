@@ -549,10 +549,10 @@ export async function atualizarFrequenciaVisita(
   // em erro.
   await registrarAcessoDiario(supabase)
 
-  // Fase 24: a Agenda (plano 24-03) passa a listar quem está sem dia fixo —
-  // gravar a âncora aqui muda aquela lista. Mesmo precedente da Fase 22
-  // (revalidação acrescentada quando a Agenda passou a consumir uma lista
-  // editável).
+  // Fase 24: esta revalidação foi ligada à seção de clientes sem dia fixo da
+  // Agenda. Durante o piloto (Fase 33, D-32) essa seção está desligada na
+  // tela, mas a revalidação fica: é inofensiva e já está pronta se a seção
+  // voltar.
   revalidatePath("/clientes")
   revalidatePath("/agenda")
   return { data: { id: updated.id } }
