@@ -349,9 +349,9 @@ describe("AgendaList", () => {
     )
   })
 
-  it("aviso de dia fixo (AGENDA-01): a seção aparece na Lista quando a ação devolve clientes, e não aparece na visão de Calendário", async () => {
+  it("sem dia fixo (Fase 33, D-32): a seção não aparece na Lista nem no Calendário e a ação da seção nunca é chamada", async () => {
     mockedAction.mockResolvedValueOnce({ data: [] })
-    mockedSemDiaFixo.mockResolvedValueOnce({
+    mockedSemDiaFixo.mockResolvedValue({
       data: [
         {
           clienteId: "cliente-sem-frequencia",
@@ -366,18 +366,25 @@ describe("AgendaList", () => {
 
     renderList()
 
-    expect(
-      await screen.findByText("Sem dia fixo definido (1)")
-    ).toBeInTheDocument()
-    expect(screen.getByText("Padaria Sem Frequência")).toBeInTheDocument()
+    expect(await screen.findByText("Sua agenda está em dia")).toBeInTheDocument()
+    expect(screen.queryByText(/Sem dia fixo definido/)).not.toBeInTheDocument()
+    expect(screen.queryByText("Padaria Sem Frequência")).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Mês" }))
 
+    expect(screen.queryByText(/Sem dia fixo definido/)).not.toBeInTheDocument()
+    expect(screen.queryByText("Padaria Sem Frequência")).not.toBeInTheDocument()
+    expect(mockedSemDiaFixo).not.toHaveBeenCalled()
+  })
+
+  it("vazio (texto): o subtítulo fala só de prospecção e o título continua", async () => {
+    mockedAction.mockResolvedValueOnce({ data: [] })
+
+    renderList()
+
+    expect(await screen.findByText("Sua agenda está em dia")).toBeInTheDocument()
     expect(
-      screen.queryByText("Sem dia fixo definido (1)")
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByText("Padaria Sem Frequência")
-    ).not.toBeInTheDocument()
+      screen.getByText("Nenhuma tarefa de prospecção pendente no momento.")
+    ).toBeInTheDocument()
   })
 })
