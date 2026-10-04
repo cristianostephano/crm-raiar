@@ -33,6 +33,10 @@ import {
  * Fica VERMELHO (valor de enum/tabela/função inexistentes no banco) até o
  * plano 29-03 aplicar as migrations 0035/0036 no projeto hospedado — mesmo
  * padrão de tests/funil/perdidos-rpc.test.ts (Fase 28).
+ *
+ * Na Fase 33 (AGD-16) os casos agenda-some e reativar-mantem-visita-guardada
+ * mudaram de propósito porque agenda_do_vendedor não devolve mais visitas
+ * (migration 0049); ficam vermelhos até o plano 33-04 aplicar a 0049.
  */
 
 type EncerradoRow = {
@@ -498,21 +502,24 @@ describe("mover_card_funil — encerrar (ENCR-01/02/04, D-03/D-04)", () => {
 })
 
 describe("agenda_do_vendedor filtra encerrado (D-12, ENCR-03)", () => {
-  it("agenda-some: encerrar tira o cliente da Lista, do Calendário pendente e do contador do menu", async () => {
+  it("agenda-some: encerrar tira a tarefa de prospecção do cliente da Lista, do Calendário pendente e do contador do menu; a visita pendente do cliente ativo já não aparece (Fase 33, AGD-16)", async () => {
     const { id } = await seedGanho(vendedorA.id, "agenda-some")
-    await seedVisitaPendente(id, vendedorA.id)
-    await seedTarefaAberta(id)
+    const visitaId = await seedVisitaPendente(id, vendedorA.id)
+    const tarefaId = await seedTarefaAberta(id)
 
     const antes = await clientA.rpc("agenda_do_vendedor")
     expect(antes.error).toBeNull()
     const linhasAntes = ((antes.data ?? []) as AgendaRow[]).filter((r) => r.cliente_id === id)
-    expect(linhasAntes.length).toBe(2)
+    expect(linhasAntes.length).toBe(1)
+    expect(linhasAntes[0].origem).toBe("prospeccao")
+    expect(linhasAntes[0].item_id).toBe(tarefaId)
+    expect(linhasAntes.some((r) => r.item_id === visitaId)).toBe(false)
 
     const contagemAntes = await clientA.rpc("agenda_do_vendedor", undefined, {
       count: "exact",
       head: true,
     })
-    expect(contagemAntes.count).toBe(2)
+    expect(contagemAntes.count).toBe(1)
 
     const { error } = await encerrarComo(clientA, id, motivoEncerramentoId)
     expect(error).toBeNull()
@@ -740,7 +747,7 @@ describe("mover_card_funil — reativar (D-10/D-11, ENCR-05)", () => {
     expect(depois.status_acompanhamento).toBe("em_andamento")
   })
 
-  it("reativar-volta-agenda: reativar traz de volta a mesma visita pendente que já existia (idempotência)", async () => {
+  it("reativar-mantem-visita-guardada: reativar mantém a MESMA visita pendente guardada (idempotência), sem ela aparecer na Agenda atual (Fase 33, D-34)", async () => {
     const { id } = await seedGanho(vendedorA.id, "reativar-volta-agenda", { frequencia_visita: "semanal" })
     const visitaId = await seedVisitaPendente(id, vendedorA.id)
 
@@ -753,14 +760,13 @@ describe("mover_card_funil — reativar (D-10/D-11, ENCR-05)", () => {
 
     const { data, error: agendaError } = await clientA.rpc("agenda_do_vendedor")
     expect(agendaError).toBeNull()
-    const linhasVisita = ((data ?? []) as AgendaRow[]).filter(
-      (r) => r.cliente_id === id && r.origem === "visita"
-    )
-    expect(linhasVisita.length).toBe(1)
-    expect(linhasVisita[0].item_id).toBe(visitaId)
+    const linhasDoCliente = ((data ?? []) as AgendaRow[]).filter((r) => r.cliente_id === id)
+    expect(linhasDoCliente.some((r) => r.origem === "visita")).toBe(false)
+    expect(linhasDoCliente.length).toBe(0)
 
     const pendentes = await visitasPendentesDoCliente(id)
     expect(pendentes.length).toBe(1)
+    expect(pendentes[0].id).toBe(visitaId)
   })
 
   it("reativar-semeia-visita: reativar sem visita pendente anterior semeia uma nova", async () => {

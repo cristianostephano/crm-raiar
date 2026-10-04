@@ -31,6 +31,11 @@ import { ETAPA_FINAL } from "../../lib/funil/etapas"
  *
  * `tests/clientes/frequencia-visita.test.ts` (o oráculo de regressão do
  * caminho antigo) NÃO é editado por este arquivo — nem uma linha.
+ *
+ * Fase 33 (AGD-16): o caso "Bloco F - agenda_do_vendedor ..." mudou de
+ * propósito porque agenda_do_vendedor não devolve mais visitas (migration
+ * 0049); fica vermelho até o plano 33-04 aplicar a 0049. Os demais casos
+ * não mudaram.
  */
 
 function uniqueRazaoSocial(label: string): string {
@@ -365,7 +370,7 @@ describe("clientes.dia_semana_visita / semana_do_mes_visita e os dois chamadores
     expect(data?.semana_do_mes_visita).toBe("ultima")
   })
 
-  it("Bloco F - agenda_do_vendedor mira o dia fixo do cliente na coluna de sugestão", async () => {
+  it("Bloco F - agenda_do_vendedor não mostra mais a visita pendente do cliente ativo (Fase 33, D-34)", async () => {
     const admin = serviceClient()
     const responsavelId = await getResponsavelId()
     const fields = clienteCompletoFields(uniqueRazaoSocial("agenda"), responsavelId, {
@@ -376,33 +381,37 @@ describe("clientes.dia_semana_visita / semana_do_mes_visita e os dois chamadores
     })
     const inserted = await inserirCliente(fields)
 
-    // Visita pendente — condição necessária para o cliente aparecer na
-    // metade "visita" da união de agenda_do_vendedor. A coluna de autoria
-    // (criado_por) aceita valor ausente, então a semeadura por service
-    // role funciona sem precisar de um vendedor autenticado.
-    const { error: visitaError } = await admin
+    // A regra do dia fixo continua provada pelos Blocos A-E
+    // (proxima_data_visita) e pelo caso de mover_card_funil logo abaixo,
+    // que não mudam. Aqui só se prova o que a Fase 33 mudou: a visita
+    // pendente continua guardada na tabela visitas, mas
+    // agenda_do_vendedor não a devolve mais.
+    // A coluna de autoria (criado_por) aceita valor ausente, então a
+    // semeadura por service role funciona sem vendedor autenticado.
+    const { data: visita, error: visitaError } = await admin
       .from("visitas")
       .insert({ cliente_id: inserted.id, data_prevista: "2026-08-27" })
+      .select("id")
+      .single()
     expect(visitaError).toBeNull()
+    expect(visita?.id).toBeDefined()
 
-    const { data: linhas, error } = await admin.rpc("agenda_do_vendedor")
+    // Filtra pelo cliente de teste — nunca baixa a agenda real inteira
+    // pelo cliente de serviço (LGPD).
+    const { data: linhas, error } = await admin
+      .rpc("agenda_do_vendedor")
+      .eq("cliente_id", inserted.id)
     expect(error).toBeNull()
+    expect(linhas ?? []).toHaveLength(0)
 
-    const linha = (linhas as { cliente_id: string; proxima_data_sugerida: string | null }[]).find(
-      (item) => item.cliente_id === inserted.id
-    )
-    expect(linha).toBeDefined()
-    expect(linha?.proxima_data_sugerida).not.toBeNull()
-    const sugerida = linha!.proxima_data_sugerida as string
-
-    // Afirma a PROPRIEDADE (dia da semana certo, estritamente futuro),
-    // nunca reproduz a conta — a autoridade do cálculo é uma só no
-    // projeto, e este teste não pode virar uma segunda implementação dela.
-    expect(diaDaSemanaDe(sugerida)).toBe(4) // quinta = dow 4
-    const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-      new Date()
-    )
-    expect(sugerida > hoje).toBe(true)
+    const { data: guardada, error: guardadaError } = await admin
+      .from("visitas")
+      .select("id, data_realizada")
+      .eq("id", visita!.id)
+      .single()
+    expect(guardadaError).toBeNull()
+    expect(guardada?.id).toBe(visita!.id)
+    expect(guardada?.data_realizada).toBeNull()
   })
 
   it("Bloco F - mover_card_funil semeia a primeira visita no dia fixo já gravado (caso de re-ganho)", async () => {
