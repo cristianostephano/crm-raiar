@@ -6,14 +6,14 @@ current_phase: 33
 current_phase_name: agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos
 status: executing
 stopped_at: Completed 33-02-PLAN.md
-last_updated: "2026-10-04T20:25:45.737Z"
+last_updated: "2026-10-04T20:31:52.566Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 33 execution started
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
   percent: 67
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 ## Current Position
 
 Phase: 33 (agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-10-04 — Phase 33 execution started
 
@@ -139,6 +139,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 32 P07 | 25min | 2 tasks | 3 files |
 | Phase 33 P01 | 9min | 2 tasks | 4 files |
 | Phase 33 P02 | 3min | 2 tasks | 4 files |
+| Phase 33 P03 | 5min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -382,6 +383,7 @@ Recent decisions affecting current work:
 - [Phase 32]: Agenda2List mantem a leitura da Lista rodando em qualquer visao (alimenta aviso de duplicado e opcoes do filtro) — Evita segunda fonte de verdade; otimizacao desnecessaria no MVP
 - [Phase 33]: 0049 e migration nova com mesma assinatura; metade de prospeccao copiada da 0036; arquivo de volta em supabase/rollbacks fora do CLI — Reversivel, sem sobrecarga ambigua no PostgREST, nunca aplicado automaticamente
 - [Phase 33]: Bloco F de dia-fixo-visita filtra a leitura da agenda por cliente_id do cliente de teste (LGPD) — Antes baixava a agenda real inteira pelo cliente de servico
+- [Phase 33]: Plano 33-03: AgendaList perde so a fiacao da secao de dia fixo; pecas dormentes intactas (reverter commit 0db2139 para voltar) — D-32 reversivel: volta atras simples sem apagar nenhuma peca
 
 ### Pending Todos
 
@@ -497,7 +499,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-04T20:25:45.690Z
+Last session: 2026-10-04T20:31:52.519Z
 Stopped at: Completed 33-02-PLAN.md
 Resume file: .planning/phases/33-agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos/33-CONTEXT.md
 
