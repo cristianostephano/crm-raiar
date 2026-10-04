@@ -128,7 +128,7 @@ Full phase details, decisions, and tech debt: `.planning/milestones/v1.7-ROADMAP
 
 - [x] **Phase 31: Agenda 2 — Visitas Manuais na Lista** - Nova tela "Agenda 2" no menu, logo abaixo de "Agenda", onde o vendedor anota à mão quem vai visitar em cada dia (nome + bairro + data), corrige, apaga e marca como feito; o Supervisor vê a Agenda 2 de todo o time, com filtro por vendedor. (completed 2026-10-01)
 - [x] **Phase 32: Agenda 2 — Repetição Semanal e Calendário** - O vendedor cria um item já repetido por 4, 8 ou 12 semanas de uma vez, e vê a Agenda 2 também em calendário de dia/semana/mês, com a mesma navegação da Agenda atual. (completed 2026-10-02)
-- [ ] **Phase 33: Agenda Atual sem Visitas Automáticas de Clientes Ativos** - Durante o piloto, a Agenda atual deixa de puxar sozinha as visitas dos clientes ativos por frequência/dia fixo — a prospecção continua igual e nenhum dado do cadastro é apagado.
+- [x] **Phase 33: Agenda Atual sem Visitas Automáticas de Clientes Ativos** - Durante o piloto, a Agenda atual deixa de puxar sozinha as visitas dos clientes ativos por frequência/dia fixo — a prospecção continua igual e nenhum dado do cadastro é apagado. (completed 2026-10-04)
 
 ## Phase Details
 
@@ -242,7 +242,7 @@ Plans:
 (e) **Tarefas de prospecção de cliente já ganho:** a metade de prospecção de `agenda_do_vendedor()` não muda (requisito explícito), então uma tarefa pendente de um cliente ganho continua aparecendo.
 (f) **Reversível e sem sobrecarga:** mudança numa migration nova (nunca editando uma antiga), com as mesmas colunas de retorno de `agenda_do_vendedor()` (só o corpo muda, sem criar sobrecarga ambígua) e o corpo original registrado para uma migration de volta, caso o dono escolha a Agenda atual.
 (g) **Testes:** os testes existentes que esperam visitas na Agenda atual vão mudar de propósito — separá-los dos testes de prospecção, que devem passar sem edição (oráculo de regressão).
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 **Wave 1**
@@ -253,7 +253,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 33-04-PLAN.md — [BLOCKING] Aprovação do dono (LGPD, impacto imediato) + tela no staging + aplicação manual da 0049 no SQL Editor + testes ao vivo verdes + verificação final
+- [x] 33-04-PLAN.md — [BLOCKING] Aprovação do dono (LGPD, impacto imediato) + tela no staging + aplicação manual da 0049 no SQL Editor + testes ao vivo verdes + verificação final
 
 ## Progress
 
@@ -264,6 +264,6 @@ Phases execute in numeric order: 31 → 32 → 33
 |-------|-----------|----------------|--------|-----------|
 | 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 8/8 | Complete    | 2026-10-01 |
 | 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 7/7 | Complete    | 2026-10-02 |
-| 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 3/4 | In Progress|  |
+| 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 4/4 | Complete   | 2026-10-04 |
 
 *Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.*

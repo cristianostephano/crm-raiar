@@ -20,7 +20,7 @@ Requisitos do marco v1.8 (Agenda 2 — Piloto de Visitas Manuais). Piloto delibe
 
 ### Ajuste na Agenda atual
 
-- [ ] **AGD-16**: Cliente "ganho" (ativo) para de entrar automaticamente na Agenda atual por frequência de visita/dia fixo — os campos de frequência/dia fixo continuam existindo no cadastro do cliente, só ficam sem uso automático enquanto o piloto roda. Itens de prospecção continuam entrando automaticamente na Agenda atual, sem nenhuma mudança.
+- [x] **AGD-16**: Cliente "ganho" (ativo) para de entrar automaticamente na Agenda atual por frequência de visita/dia fixo — os campos de frequência/dia fixo continuam existindo no cadastro do cliente, só ficam sem uso automático enquanto o piloto roda. Itens de prospecção continuam entrando automaticamente na Agenda atual, sem nenhuma mudança.
 
 ## v2 Requirements
 
@@ -46,7 +46,7 @@ Nenhum requisito deferido formalmente neste marco.
 | AGD2-06 | Phase 31 | Complete |
 | AGD2-07 | Phase 31 | Complete |
 | AGD2-08 | Phase 32 | Complete |
-| AGD-16 | Phase 33 | Pending |
+| AGD-16 | Phase 33 | Complete |
 
 **Coverage:**
 

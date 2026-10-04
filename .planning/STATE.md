@@ -4,17 +4,17 @@ milestone: v1.8
 milestone_name: Agenda 2
 current_phase: 33
 current_phase_name: agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos
-status: executing
-stopped_at: Completed 33-02-PLAN.md
-last_updated: "2026-10-04T20:31:52.566Z"
+status: verifying
+stopped_at: Completed 33-04-PLAN.md (aguardando conferencia do Preview staging antes de master)
+last_updated: "2026-10-04T21:06:06.675Z"
 last_activity: 2026-10-04
 last_activity_desc: Phase 33 execution started
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
-  completed_plans: 18
-  percent: 67
+  completed_plans: 19
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-28)
 
 Phase: 33 (agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-04 — Phase 33 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -140,6 +140,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 33 P01 | 9min | 2 tasks | 4 files |
 | Phase 33 P02 | 3min | 2 tasks | 4 files |
 | Phase 33 P03 | 5min | 2 tasks | 7 files |
+| Phase 33 P04 | sessao em 3 partes | 3 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -384,6 +385,8 @@ Recent decisions affecting current work:
 - [Phase 33]: 0049 e migration nova com mesma assinatura; metade de prospeccao copiada da 0036; arquivo de volta em supabase/rollbacks fora do CLI — Reversivel, sem sobrecarga ambigua no PostgREST, nunca aplicado automaticamente
 - [Phase 33]: Bloco F de dia-fixo-visita filtra a leitura da agenda por cliente_id do cliente de teste (LGPD) — Antes baixava a agenda real inteira pelo cliente de servico
 - [Phase 33]: Plano 33-03: AgendaList perde so a fiacao da secao de dia fixo; pecas dormentes intactas (reverter commit 0db2139 para voltar) — D-32 reversivel: volta atras simples sem apagar nenhuma peca
+- [Phase 33]: 0049 aplicada pelo dono no SQL Editor; testes ao vivo verdes sem correcao; nenhuma 0050 necessaria — Agenda atual so com prospeccao, provado contra o banco real (AGD-16)
+- [Phase 33]: Pendencias do dono: prazo de guarda das visitas escondidas (LGPD), texto de apoio do dia fixo no ClienteDetailSheet (~linha 1318), limpeza do conjunto dormente, decisao sobre contas semente — Itens adiados registrados no 33-04-SUMMARY
 
 ### Pending Todos
 
@@ -499,8 +502,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-04T20:31:52.519Z
-Stopped at: Completed 33-02-PLAN.md
+Last session: 2026-10-04T21:06:06.607Z
+Stopped at: Completed 33-04-PLAN.md (aguardando conferencia do Preview staging antes de master)
 Resume file: .planning/phases/33-agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos/33-CONTEXT.md
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
