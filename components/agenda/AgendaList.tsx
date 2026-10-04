@@ -7,11 +7,9 @@ import {
   concluirTarefaProspeccao,
   concluirVisita,
   getAgendaAction,
-  getClientesSemDiaFixoAction,
 } from "@/app/actions/agenda"
 import { AgendaCalendario } from "@/components/agenda/AgendaCalendario"
 import { AgendaItemRow } from "@/components/agenda/AgendaItemRow"
-import { AgendaSemDiaFixo } from "@/components/agenda/AgendaSemDiaFixo"
 import { ConcluirItemDialog } from "@/components/agenda/ConcluirItemDialog"
 import { ClienteDetailSheet } from "@/components/clientes/ClienteDetailSheet"
 import { Button } from "@/components/ui/button"
@@ -31,7 +29,6 @@ import {
   type AgendaBucket,
   type AgendaItem,
   type AgendaVisao,
-  type ClienteSemDiaFixo,
 } from "@/lib/agenda/itens"
 
 /** Sentinel Select value para "sem filtro" — mesma convenção que
@@ -91,16 +88,18 @@ type FetchState =
  * conforme a `origem` do item — nunca só uma (mesmo risco travado do
  * plano: a janela é uma só, mas as ações são duas).
  *
- * A partir da Fase 24 (AGENDA-01), este componente também é dono de uma
- * SEGUNDA leitura (`clientesSemDiaFixo`, via `getClientesSemDiaFixoAction`),
- * disjunta da leitura de itens de agenda — clientes ativos que ainda não têm
- * dia fixo de visita definido. O efeito que a busca depende do MESMO
- * `reloadKey` do efeito original, para reagir à mesma recarga (salvar pela
- * ficha, "Tentar novamente"). Falha em silêncio (lista vazia): este aviso é
- * auxiliar e nunca pode impedir a Agenda de carregar. Estreitada pelo MESMO
- * `filtrarPorVendedor` que a Lista já usa — nunca um segundo filtro — e
- * renderizada só na visão de Lista (`AgendaSemDiaFixo.tsx`), ANTES do corte
- * de "agenda vazia", para aparecer mesmo num dia sem pendências.
+ * Fase 33 (AGD-16, D-32): durante o piloto, esta tela deixou de fazer a
+ * segunda leitura e de mostrar a seção de clientes ativos sem dia fixo
+ * (adicionada na Fase 24, AGENDA-01). O componente `AgendaSemDiaFixo.tsx`, a
+ * consulta `getClientesSemDiaFixo` (lib/supabase/queries/agenda.ts), a ação
+ * `getClientesSemDiaFixoAction` (app/actions/agenda.ts), os tipos/rótulos em
+ * lib/agenda/itens.ts e seus testes ficam no repositório sem edição,
+ * dormentes. Para voltar: recolocar aqui o estado, o efeito ligado ao MESMO
+ * `reloadKey`, o MESMO `filtrarPorVendedor` e o JSX acima das seções — ou
+ * reverter o commit desta mudança. Com a migration 0049,
+ * `agenda_do_vendedor` não devolve mais visitas pendentes, mas o ramo de
+ * visita da conclusão continua: o histórico concluído do calendário ainda usa
+ * a origem "visita" (D-33).
  */
 export function AgendaList({
   isSupervisor,
@@ -134,10 +133,6 @@ export function AgendaList({
   const [concluirDialogOpen, setConcluirDialogOpen] = useState(false)
   const [isExportingDiario, setIsExportingDiario] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
-  // AGENDA-01 (Fase 24): clientes ativos sem dia fixo, começando vazio.
-  const [clientesSemDiaFixo, setClientesSemDiaFixo] = useState<
-    ClienteSemDiaFixo[]
-  >([])
 
   useEffect(() => {
     let cancelled = false
@@ -163,43 +158,10 @@ export function AgendaList({
     }
   }, [reloadKey])
 
-  // AGENDA-01 (Fase 24): segunda leitura, disjunta da agenda de itens
-  // pendentes, dependente do MESMO `reloadKey` — é isso que faz a seção
-  // reagir à mesma recarga que a Lista já reage (salvar pela ficha aberta a
-  // partir da própria Agenda, ou clicar em "Tentar novamente"). Sem
-  // `setState` síncrono no corpo deste efeito (a seção não tem esqueleto de
-  // carregamento próprio, ela simplesmente aparece quando os dados chegam) —
-  // por isso nenhuma supressão de lint nova é necessária aqui. Erro é
-  // silencioso: este aviso é auxiliar e nunca pode impedir a Agenda de
-  // carregar.
-  useEffect(() => {
-    let cancelled = false
-
-    getClientesSemDiaFixoAction().then((result) => {
-      if (cancelled) return
-      if (result.error) {
-        setClientesSemDiaFixo([])
-        return
-      }
-      setClientesSemDiaFixo(result.data)
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [reloadKey])
-
   const itens = state.status === "pronto" ? state.itens : []
   const vendedorOpcoesDoFiltro = vendedoresDaAgenda(itens)
   const itensFiltrados = filtrarPorVendedor(itens, vendedorFiltroId)
   const secoes = agruparAgenda(itensFiltrados)
-  // AGENDA-01 (Fase 24): MESMO estreitamento por vendedor que a Lista já
-  // aplica acima, generalizado em lib/agenda/itens.ts — nunca um segundo
-  // filtro escrito aqui.
-  const clientesSemDiaFixoFiltrados = filtrarPorVendedor(
-    clientesSemDiaFixo,
-    vendedorFiltroId
-  )
   // O nome do vendedor só aparece na linha para o Supervisor vendo todos —
   // escolhido um vendedor específico, repetir o nome em toda linha é ruído.
   const showResponsavel = isSupervisor && vendedorFiltroId === null
@@ -425,16 +387,6 @@ export function AgendaList({
           />
           {visao === "lista" ? (
             <>
-              {/* AGENDA-01 (Fase 24) — sempre acima das três seções de
-                  trabalho, e sempre visível mesmo com a agenda vazia: é um
-                  lembrete de configuração, não um item de trabalho com data.
-                  O próprio componente devolve nada quando a lista está
-                  vazia. */}
-              <AgendaSemDiaFixo
-                clientes={clientesSemDiaFixoFiltrados}
-                showResponsavel={showResponsavel}
-                onOpenCliente={handleOpenCliente}
-              />
               {totalItens === 0 ? (
                 vendedorFiltroId !== null ? (
                   <div className="flex flex-col items-center gap-1 py-16 text-center">
@@ -448,7 +400,7 @@ export function AgendaList({
                       Sua agenda está em dia
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Nenhuma tarefa de prospecção ou visita pendente no momento.
+                      Nenhuma tarefa de prospecção pendente no momento.
                     </p>
                   </div>
                 )
