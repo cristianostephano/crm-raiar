@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Agenda 2
 current_phase: 33
-current_phase_name: Agenda Atual sem Visitas Automáticas de Clientes Ativos
+current_phase_name: agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos
 status: executing
-stopped_at: Phase 33 context gathered
-last_updated: "2026-10-03T15:21:14.847Z"
-last_activity: 2026-10-02
-last_activity_desc: Phase 32 complete, transitioned to Phase 33
+stopped_at: Completed 33-01-PLAN.md
+last_updated: "2026-10-04T20:21:51.411Z"
+last_activity: 2026-10-04
+last_activity_desc: Phase 33 execution started
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 19
+  completed_plans: 16
   percent: 67
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-28)
 
 **Core value:** O time de vendas precisa conseguir preencher e manter o funil atualizado com o mínimo de fricção possível — cadastro rápido, poucos campos obrigatórios, e visibilidade clara do que está parado ou atrasado.
-**Current focus:** Phase 32 — agenda-2-repeti-o-semanal-e-calend-rio
+**Current focus:** Phase 33 — agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos
 
 ## Current Position
 
-Phase: 33 — Agenda Atual sem Visitas Automáticas de Clientes Ativos
-Plan: Not started
+Phase: 33 (agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-10-02 — Phase 32 complete, transitioned to Phase 33
+Last activity: 2026-10-04 — Phase 33 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -137,6 +137,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 32 P05 | 14min | 2 tasks | 2 files |
 | Phase 32 P06 | 15min | 2 tasks | 2 files |
 | Phase 32 P07 | 25min | 2 tasks | 3 files |
+| Phase 33 P01 | 9min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -378,6 +379,7 @@ Recent decisions affecting current work:
 - [Phase 32]: 32-06: recarga do calendario da Agenda 2 mantem itens na tela (sem piscar); Skeleton so sem dado do periodo atual — evita piscar a grade a cada Concluir/Editar/Apagar
 - [Phase 32]: 32-06: Editar/Apagar a partir do dialogo do dia fecham o dialogo antes de chamar a tela — evita dois dialogos modais empilhados
 - [Phase 32]: Agenda2List mantem a leitura da Lista rodando em qualquer visao (alimenta aviso de duplicado e opcoes do filtro) — Evita segunda fonte de verdade; otimizacao desnecessaria no MVP
+- [Phase 33]: 0049 e migration nova com mesma assinatura; metade de prospeccao copiada da 0036; arquivo de volta em supabase/rollbacks fora do CLI — Reversivel, sem sobrecarga ambigua no PostgREST, nunca aplicado automaticamente
 
 ### Pending Todos
 
@@ -493,8 +495,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-03T12:43:36.662Z
-Stopped at: Phase 33 context gathered
+Last session: 2026-10-04T20:21:51.360Z
+Stopped at: Completed 33-01-PLAN.md
 Resume file: .planning/phases/33-agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos/33-CONTEXT.md
 
 - Roadmap v1.8 criado (Fases 31-33). Próximo passo: `/gsd-discuss-phase 31` (Discuss obrigatório antes do Plan — inclui o alerta de LGPD da Fase 31).
