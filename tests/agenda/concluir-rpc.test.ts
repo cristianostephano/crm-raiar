@@ -1,6 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { addMonths, format, parseISO } from "date-fns"
 
 import { SEED_ACCOUNTS } from "../auth/rls-roles.test"
 import { serviceClient, signInAs } from "../helpers/supabase-test-clients"
@@ -18,6 +17,11 @@ import { ETAPA_FINAL } from "../../lib/funil/etapas"
  * e limpar (nunca para afirmar comportamento de RLS). Vendedor A e logado
  * UMA vez neste arquivo (rate limit documentado em STATE.md) e reusado em
  * todos os casos abaixo.
+ *
+ * Fase 33 (AGD-16): os casos visita e sugerida foram editados de proposito
+ * porque agenda_do_vendedor nao devolve mais visitas (migration 0049). Este
+ * arquivo continua nao executavel (depende das contas semente apagadas em
+ * 2026-08-19) ate a decisao sobre essas contas.
  */
 
 function uniqueRazaoSocial(label: string): string {
@@ -34,13 +38,6 @@ function baseClienteFields(razaoSocial: string, responsavelId: string) {
     estado: "SP",
     responsavel: responsavelId,
   }
-}
-
-/** Hoje no fuso de São Paulo, em YYYY-MM-DD — nunca a partir de string ISO crua (Pitfall 1). */
-function hojeSaoPaulo(): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-  }).format(new Date())
 }
 
 const createdClienteIds: string[] = []
@@ -336,7 +333,7 @@ describe("historico: resumo grava exatamente com autor e data (CONC-01 criterio 
 })
 
 describe("concluir_visita: fecha a atual e cria a proxima com a data confirmada (VIS-03)", () => {
-  it("visita: cliente mensal fecha a visita, grava resumo, cria exatamente 1 proxima visita com a data enviada (nao a sugerida)", async () => {
+  it("visita: cliente mensal fecha a visita, grava resumo, cria exatamente 1 proxima visita com a data enviada (nao a sugerida); a proxima visita fica guardada sem aparecer na Agenda (Fase 33)", async () => {
     const { visitaId, clienteId } = await seedClienteGanho(
       vendedorAId,
       "visita",
@@ -373,7 +370,9 @@ describe("concluir_visita: fecha a atual e cria a proxima com a data confirmada 
       .filter((r) => r.cliente_id === clienteId)
       .map((r) => r.item_id)
     expect(idsDoCliente).not.toContain(visitaId)
-    expect(idsDoCliente).toContain(pendentes?.[0]?.id)
+    // Fase 33 (D-34): a proxima visita continua sendo criada e guardada em
+    // visitas, mas a Agenda atual nao a devolve mais.
+    expect(idsDoCliente).not.toContain(pendentes?.[0]?.id)
   })
 })
 
@@ -448,7 +447,7 @@ describe("concluir_visita: falta de data confirmada com frequencia real falha al
 })
 
 describe("agenda_do_vendedor: colunas de sugestao coerentes (Pitfall 1)", () => {
-  it("sugerida: cada linha de visita traz frequencia e uma data sugerida coerente; prospeccao vem sempre vazia", async () => {
+  it("sugerida: a linha de visita nao existe mais na agenda (Fase 33) e a prospeccao continua com as colunas de sugestao vazias", async () => {
     const { clienteId: clienteVisitaId } = await seedClienteGanho(
       vendedorAId,
       "sugerida-visita",
@@ -470,18 +469,10 @@ describe("agenda_do_vendedor: colunas de sugestao coerentes (Pitfall 1)", () => 
       proxima_data_sugerida: string | null
     }[]
 
-    const linhaVisita = rows.find(
-      (r) => r.cliente_id === clienteVisitaId && r.origem === "visita"
-    )
-    expect(linhaVisita).toBeDefined()
-    expect(linhaVisita?.frequencia_visita).toBe("mensal")
-    expect(linhaVisita?.proxima_data_sugerida).not.toBeNull()
-
-    const esperado = format(
-      addMonths(parseISO(hojeSaoPaulo()), 1),
-      "yyyy-MM-dd"
-    )
-    expect(linhaVisita?.proxima_data_sugerida).toBe(esperado)
+    // Fase 33: o cliente ativo (ganho) tem visita pendente guardada, mas
+    // nenhuma linha dele aparece na agenda.
+    const linhaVisita = rows.find((r) => r.cliente_id === clienteVisitaId)
+    expect(linhaVisita).toBeUndefined()
 
     const linhaTarefa = rows.find((r) => r.item_id === tarefaId)
     expect(linhaTarefa).toBeDefined()

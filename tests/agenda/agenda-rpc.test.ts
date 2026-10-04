@@ -18,6 +18,11 @@ import { serviceClient, signInAs } from "../helpers/supabase-test-clients"
  * belongs to rls-agenda.test.ts). Vendedor A's identity is signed in ONCE
  * per file (rate-limit constraint documented in STATE.md) and reused
  * across every case below — never call signInAs inside an it().
+ *
+ * Fase 33 (AGD-16): os casos origem, cliente e ordem foram editados de
+ * proposito porque agenda_do_vendedor nao devolve mais visitas (migration
+ * 0049). Este arquivo continua nao executavel (depende das contas semente
+ * apagadas em 2026-08-19) ate a decisao sobre essas contas.
  */
 
 function uniqueRazaoSocial(label: string): string {
@@ -108,7 +113,7 @@ beforeAll(async () => {
 })
 
 describe("agenda_do_vendedor: origem e titulo de cada frente", () => {
-  it("origem: tarefa e visita aparecem com origem e titulo corretos", async () => {
+  it("origem: a tarefa aparece com origem e titulo corretos e a visita pendente nao aparece mais (Fase 33)", async () => {
     const tipoTarefa = await getActiveTipoTarefa()
     const clienteId = await createTestCliente(vendedorA, vendedorAId, "origem")
 
@@ -139,14 +144,14 @@ describe("agenda_do_vendedor: origem e titulo de cada frente", () => {
     expect(tarefaRow).toBeDefined()
     expect(tarefaRow?.origem).toBe("prospeccao")
     expect(tarefaRow?.titulo).toBe(tipoTarefa.nome)
-    expect(visitaRow).toBeDefined()
-    expect(visitaRow?.origem).toBe("visita")
-    expect(visitaRow?.titulo).toBe("Visita")
+    // Fase 33: a visita continua guardada em visitas, mas a Agenda atual
+    // nao a devolve mais.
+    expect(visitaRow).toBeUndefined()
   })
 })
 
 describe("agenda_do_vendedor: identificacao do cliente e do responsavel", () => {
-  it("cliente: cada linha traz cliente_id, razao_social e responsavel corretos", async () => {
+  it("cliente: cada linha (so a tarefa, sem visita — Fase 33) traz cliente_id, razao_social e responsavel corretos", async () => {
     const tipoTarefa = await getActiveTipoTarefa()
     const razaoSocial = uniqueRazaoSocial("cliente")
     const { data: clienteInserted, error: clienteError } = await vendedorA
@@ -174,7 +179,8 @@ describe("agenda_do_vendedor: identificacao do cliente e do responsavel", () => 
     const rows = ((data ?? []) as AgendaRow[]).filter(
       (r) => r.cliente_id === clienteId
     )
-    expect(rows).toHaveLength(2)
+    // Fase 33: so a tarefa de prospeccao aparece; a visita pendente nao.
+    expect(rows).toHaveLength(1)
     for (const row of rows) {
       expect(row.razao_social).toBe(razaoSocial)
       expect(row.responsavel).toBe(vendedorAId)
@@ -184,7 +190,7 @@ describe("agenda_do_vendedor: identificacao do cliente e do responsavel", () => 
 })
 
 describe("agenda_do_vendedor: ordem por data crescente", () => {
-  it("ordem: tres itens fora de ordem voltam da data mais antiga para a mais recente", async () => {
+  it("ordem: tres tarefas de prospeccao fora de ordem voltam da data mais antiga para a mais recente", async () => {
     const tipoTarefa = await getActiveTipoTarefa()
     const clienteId = await createTestCliente(vendedorA, vendedorAId, "ordem")
 
@@ -202,9 +208,13 @@ describe("agenda_do_vendedor: ordem por data crescente", () => {
       })
       .select("id")
       .single()
-    const { data: ontemVisita } = await vendedorA
-      .from("visitas")
-      .insert({ cliente_id: clienteId, data_prevista: toISODate(ontem) })
+    const { data: ontemTarefa } = await vendedorA
+      .from("tarefas")
+      .insert({
+        cliente_id: clienteId,
+        tipo_tarefa_id: tipoTarefa.id,
+        data_conclusao: toISODate(ontem),
+      })
       .select("id")
       .single()
     const { data: hojeTarefa } = await vendedorA
@@ -222,7 +232,7 @@ describe("agenda_do_vendedor: ordem por data crescente", () => {
     const rows = (data ?? []) as AgendaRow[]
     // NAO reordenar aqui antes de comparar — e justamente a ordenacao do
     // SQL que este caso prova.
-    const idsEsperados = [ontemVisita!.id, hojeTarefa!.id, futuraTarefa!.id]
+    const idsEsperados = [ontemTarefa!.id, hojeTarefa!.id, futuraTarefa!.id]
     const ordemRecebida = rows
       .filter((r) => idsEsperados.includes(r.item_id))
       .map((r) => r.item_id)
