@@ -242,13 +242,13 @@ Plans:
 (e) **Tarefas de prospecção de cliente já ganho:** a metade de prospecção de `agenda_do_vendedor()` não muda (requisito explícito), então uma tarefa pendente de um cliente ganho continua aparecendo.
 (f) **Reversível e sem sobrecarga:** mudança numa migration nova (nunca editando uma antiga), com as mesmas colunas de retorno de `agenda_do_vendedor()` (só o corpo muda, sem criar sobrecarga ambígua) e o corpo original registrado para uma migration de volta, caso o dono escolha a Agenda atual.
 (g) **Testes:** os testes existentes que esperam visitas na Agenda atual vão mudar de propósito — separá-los dos testes de prospecção, que devem passar sem edição (oráculo de regressão).
-**Plans**: 1/4 plans executed
+**Plans**: 2/4 plans executed
 
 Plans:
 **Wave 1**
 
 - [x] 33-01-PLAN.md — Migration 0049 (agenda_do_vendedor só com prospecção, mesma assinatura) + arquivo de volta em supabase/rollbacks + teste estrutural (verde) + teste ao vivo L1-L6 (vermelho até o 33-04)
-- [ ] 33-02-PLAN.md — Testes que esperavam visita na Agenda atual, editados de propósito (encerrados-rpc, dia-fixo-visita, agenda-rpc, concluir-rpc), demais casos intactos
+- [x] 33-02-PLAN.md — Testes que esperavam visita na Agenda atual, editados de propósito (encerrados-rpc, dia-fixo-visita, agenda-rpc, concluir-rpc), demais casos intactos
 - [ ] 33-03-PLAN.md — Tela: sai a seção "Sem dia fixo definido" da Agenda (peças dormentes mantidas) + textos que ficariam falsos
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -264,6 +264,6 @@ Phases execute in numeric order: 31 → 32 → 33
 |-------|-----------|----------------|--------|-----------|
 | 31. Agenda 2 — Visitas Manuais na Lista | v1.8 | 8/8 | Complete    | 2026-10-01 |
 | 32. Agenda 2 — Repetição Semanal e Calendário | v1.8 | 7/7 | Complete    | 2026-10-02 |
-| 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 1/4 | In Progress|  |
+| 33. Agenda Atual sem Visitas Automáticas de Clientes Ativos | v1.8 | 2/4 | In Progress|  |
 
 *Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.*
