@@ -49,7 +49,7 @@ function tituloSecao(bucket: AgendaBucket, count: number): string {
 
 const MSG_SALVAR_FALHOU = "Não foi possível salvar. Tente novamente."
 const MSG_CARREGAR_FALHOU =
-  "Não foi possível carregar sua Agenda 2. Tente novamente."
+  "Não foi possível carregar sua Agenda. Tente novamente."
 
 type FetchState =
   | { status: "carregando" }
@@ -227,7 +227,7 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
   return (
     <div className="flex flex-1 flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="text-xl font-semibold">Agenda 2</h1>
+        <h1 className="text-xl font-semibold">Agenda</h1>
         {isSupervisor ? (
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="agenda2-filtro-vendedor">Vendedor</Label>
@@ -316,7 +316,7 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
           ) : (
             <div className="flex flex-col items-center gap-1 py-16 text-center">
               <p className="text-base font-semibold">
-                Nenhum item na Agenda 2 do time
+                Nenhum item na Agenda do time
               </p>
               <p className="text-sm text-muted-foreground">
                 Quando os vendedores anotarem visitas, elas aparecem aqui.
@@ -326,7 +326,7 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
         ) : (
           <div className="flex flex-col items-center gap-1 py-16 text-center">
             <p className="text-base font-semibold">
-              Sua Agenda 2 está vazia
+              Sua Agenda está vazia
             </p>
             <p className="text-sm text-muted-foreground">
               Anote aqui quem você vai visitar em cada dia — nome do cliente,

@@ -114,7 +114,7 @@ describe("Agenda2List", () => {
 
     expect(
       await screen.findByText(
-        "Não foi possível carregar sua Agenda 2. Tente novamente."
+        "Não foi possível carregar sua Agenda. Tente novamente."
       )
     ).toBeInTheDocument()
 
@@ -122,17 +122,20 @@ describe("Agenda2List", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }))
 
     expect(
-      await screen.findByText("Sua Agenda 2 está vazia")
+      await screen.findByText("Sua Agenda está vazia")
     ).toBeInTheDocument()
     expect(mockedGet).toHaveBeenCalledTimes(2)
   })
 
-  it("titulo: aparece o título Agenda 2", async () => {
+  it("titulo: aparece o título Agenda, sem o número", async () => {
     mockedGet.mockResolvedValueOnce({ data: [] })
 
     renderList()
 
-    expect(await screen.findByText("Agenda 2")).toBeInTheDocument()
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Agenda" })
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Agenda 2/)).toBeNull()
   })
 
   it("agrupa-secoes (D-01): ontem/hoje/amanhã viram Atrasado (1)/Hoje (1)/Próximos dias (1) nessa ordem", async () => {
@@ -225,7 +228,7 @@ describe("Agenda2List", () => {
 
     renderList()
 
-    await screen.findByText("Sua Agenda 2 está vazia")
+    await screen.findByText("Sua Agenda está vazia")
     expect(screen.queryByText("Sumido")).not.toBeInTheDocument()
   })
 
@@ -235,7 +238,7 @@ describe("Agenda2List", () => {
     renderList()
 
     expect(
-      await screen.findByText("Sua Agenda 2 está vazia")
+      await screen.findByText("Sua Agenda está vazia")
     ).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -470,7 +473,7 @@ describe("Agenda2List", () => {
     renderList({ isSupervisor: true })
 
     expect(
-      await screen.findByText("Nenhum item na Agenda 2 do time")
+      await screen.findByText("Nenhum item na Agenda do time")
     ).toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: "Adicionar visita" })

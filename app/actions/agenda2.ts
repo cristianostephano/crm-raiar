@@ -38,7 +38,7 @@ import {
 
 const MSG_SESSAO_EXPIRADA = "Sessão expirada."
 const MSG_CARREGAR_FALHOU =
-  "Não foi possível carregar sua Agenda 2. Tente novamente."
+  "Não foi possível carregar sua Agenda. Tente novamente."
 const MSG_SALVAR_FALHOU = "Não foi possível salvar. Tente novamente."
 const MSG_CARREGAR_CALENDARIO_FALHOU =
   "Não foi possível carregar o calendário deste período."

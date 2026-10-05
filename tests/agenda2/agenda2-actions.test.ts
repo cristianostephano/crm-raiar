@@ -223,7 +223,7 @@ describe("getAgenda2Action", () => {
     expect(resultado).toEqual({
       error: {
         code: "fetch_falhou",
-        message: "Não foi possível carregar sua Agenda 2. Tente novamente.",
+        message: "Não foi possível carregar sua Agenda. Tente novamente.",
       },
     })
   })

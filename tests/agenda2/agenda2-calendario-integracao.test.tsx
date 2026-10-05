@@ -131,7 +131,7 @@ describe("Agenda2List + Agenda2Calendario (integração, plano 32-07)", () => {
 
     renderList()
 
-    await screen.findByText("Sua Agenda 2 está vazia")
+    await screen.findByText("Sua Agenda está vazia")
     expect(screen.queryByText("Padaria do Passado")).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Mês" }))
