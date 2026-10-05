@@ -86,6 +86,7 @@ describe("AppLayout - um único selo da Agenda no menu (Fase 31 + quick 261005-e
     expect(
       screen.queryByLabelText("Agenda, 2 itens pendentes")
     ).not.toBeInTheDocument()
+    expect(getAgendaPendentesCountMock).not.toHaveBeenCalled()
   })
 
   it("falha-contagem-nao-derruba: contagem nova falha, o conteúdo filho e o menu continuam, sem selo", async () => {
@@ -100,7 +101,7 @@ describe("AppLayout - um único selo da Agenda no menu (Fase 31 + quick 261005-e
     expect(screen.queryAllByLabelText(/itens pendentes/)).toHaveLength(0)
   })
 
-  it("contagem-antiga-nao-afeta: contagem antiga falha, a nova continua mostrando o selo 'Agenda, 3 itens pendentes'", async () => {
+  it("contagem-antiga-nao-lida: o mock antigo rejeita, o selo 'Agenda, 3 itens pendentes' aparece e a função antiga não é chamada", async () => {
     getAgendaPendentesCountMock.mockRejectedValue(new Error("falhou"))
     getAgenda2PendentesCountMock.mockResolvedValue(3)
 
@@ -110,5 +111,6 @@ describe("AppLayout - um único selo da Agenda no menu (Fase 31 + quick 261005-e
     expect(
       screen.getByLabelText("Agenda, 3 itens pendentes")
     ).toBeInTheDocument()
+    expect(getAgendaPendentesCountMock).not.toHaveBeenCalled()
   })
 })

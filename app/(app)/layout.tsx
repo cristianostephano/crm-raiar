@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 
 import { AppSidebar } from "@/components/layout/AppSidebar"
-import { getAgendaPendentesCount } from "@/lib/supabase/queries/agenda"
 import { getAgenda2PendentesCount } from "@/lib/supabase/queries/agenda2"
 import { createClient } from "@/lib/supabase/server"
 
@@ -48,22 +47,12 @@ export default async function AppLayout({
     ? `${profile.nome.charAt(0)}${profile.sobrenome.charAt(0)}`.toUpperCase()
     : (user.email?.charAt(0) ?? "").toUpperCase()
 
-  // AGD-06: this layout wraps EVERY authenticated screen (Clientes,
-  // Dashboard, Equipe, Configurações, Agenda), so a single unhandled
-  // exception here would take the entire logged-in area down for the sake
-  // of a decorative sidebar number. Zero is the deliberate fallback — the
-  // menu still renders normally, just without a badge (T-14-21).
-  let agendaCount = 0
-  try {
-    agendaCount = await getAgendaPendentesCount()
-  } catch {
-    agendaCount = 0
-  }
-
-  // AGD2-06/D-13: segundo bloco try/catch, independente do bloco acima —
-  // mesma regra: uma exceção aqui derrubaria a área logada inteira por
-  // causa de um número decorativo. Cada contagem tem seu próprio try/catch
-  // e as duas nunca são somadas (T-31-27).
+  // AGD-06/AGD2-06/D-13: this layout wraps EVERY authenticated screen
+  // (Clientes, Dashboard, Equipe, Configurações, Agenda), so a single
+  // unhandled exception here would take the entire logged-in area down for
+  // the sake of a decorative sidebar number. Zero is the deliberate
+  // fallback — the menu still renders normally, just without a badge
+  // (T-14-21, T-31-27).
   let agenda2Count = 0
   try {
     agenda2Count = await getAgenda2PendentesCount()
@@ -71,6 +60,9 @@ export default async function AppLayout({
     agenda2Count = 0
   }
 
+  // Desde a quick 261005-ei4 a contagem da Agenda antiga não é mais lida,
+  // porque o item saiu do menu (uma consulta a menos por página); a prop
+  // agendaCount segue opcional no AppSidebar só para facilitar a volta.
   return (
     <div className="flex min-h-screen flex-1">
       <AppSidebar
@@ -78,7 +70,6 @@ export default async function AppLayout({
         roleLabel={roleLabel}
         role={profile?.role ?? ""}
         initials={initials}
-        agendaCount={agendaCount}
         agenda2Count={agenda2Count}
       />
       {/* quick 260928-ilo: fundo cinza bem claro na área logada para os
