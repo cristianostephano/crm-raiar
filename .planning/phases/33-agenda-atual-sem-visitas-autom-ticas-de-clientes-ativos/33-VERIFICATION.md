@@ -1,10 +1,11 @@
 ---
 phase: 33-agenda-atual-sem-visitas-autom-ticas-de-clientes-ativos
 verified: 2026-10-04T21:15:00Z
-status: human_needed
+status: passed
 score: 5/5 must-haves verified
 behavior_unverified: 0
-overrides_applied: 0
+overrides_applied: 1
+override_note: "Dono do projeto escolheu publicar em produção agora (2026-10-04, resposta 'Publicar em produção agora'), sem a conferência visual opcional no link de teste. Os 5 critérios automatizáveis e os testes contra o banco real foram verificados; só a checagem visual humana ficou de fora por decisão do dono. Pendências registradas: prazo de guarda das visitas escondidas (LGPD), texto da ficha do cliente sobre próxima visita sugerida, limpeza do código dormente, decisão sobre contas semente de teste."
 re_verification: false
 human_verification:
   - test: "Abrir o Preview da Vercel da branch staging e entrar como Vendedor. Conferir a Agenda (Lista e Calendario em Mes)."
