@@ -6,12 +6,15 @@ import { AppSidebar } from "@/components/layout/AppSidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 /**
- * Item "Agenda 2" no menu principal (Fase 31, Plano 31-06 — AGD2-06,
- * D-12/D-13/D-14/D-15). Mesmos mocks de
+ * Item da tela nova de agenda (rota /agenda-2) no menu principal (Fase 31,
+ * Plano 31-06 — AGD2-06, D-12/D-13/D-14/D-15). Desde a quick 261005-ei4, o
+ * item aparece no menu com o rótulo "Agenda" no topo, e o link para a
+ * Agenda antiga (/agenda) fica fora do menu (interruptor
+ * MOSTRAR_AGENDA_ANTIGA_NO_MENU em AppSidebar.tsx). Mesmos mocks de
  * tests/funil/app-sidebar-encerrados.test.tsx: next/navigation
- * (usePathname controlável por variável içada para o caso `ativo-sem-
- * confusao`) e @/lib/supabase/client (o rodapé cria um cliente de
- * navegador ao sair, mockado defensivamente).
+ * (usePathname controlável por variável içada para os casos de rota ativa)
+ * e @/lib/supabase/client (o rodapé cria um cliente de navegador ao sair,
+ * mockado defensivamente).
  */
 const { mockUsePathname } = vi.hoisted(() => ({
   mockUsePathname: vi.fn(() => "/clientes"),
@@ -50,8 +53,8 @@ function expandSidebar() {
   fireEvent.click(screen.getByRole("button", { name: "Expandir menu" }))
 }
 
-describe("AppSidebar - item Agenda 2 no menu principal (Fase 31)", () => {
-  it("ordem-d15: Vendedor e Supervisor veem Agenda, Agenda 2, Clientes, Perdidos, Encerrados, Dashboard nessa ordem", () => {
+describe("AppSidebar - item Agenda (tela nova /agenda-2) no menu principal (Fase 31 + quick 261005-ei4)", () => {
+  it("ordem-d15: Vendedor e Supervisor veem Agenda (/agenda-2), Clientes, Perdidos, Encerrados, Dashboard nessa ordem, sem /agenda", () => {
     for (const role of ["vendedor", "supervisor"] as const) {
       const { unmount } = renderSidebar(role)
       expandSidebar()
@@ -70,7 +73,6 @@ describe("AppSidebar - item Agenda 2 no menu principal (Fase 31)", () => {
       )
 
       expect(principaisNaOrdem).toEqual([
-        "/agenda",
         "/agenda-2",
         "/clientes",
         "/perdidos",
@@ -82,53 +84,55 @@ describe("AppSidebar - item Agenda 2 no menu principal (Fase 31)", () => {
     }
   })
 
-  it("link: o link com nome acessível 'Agenda 2' tem href /agenda-2", () => {
+  it("link: existe exatamente um link com nome acessível 'Agenda', ele tem href /agenda-2 e o rótulo antigo da tela nova não existe", () => {
     renderSidebar("vendedor")
     expandSidebar()
 
-    expect(screen.getByRole("link", { name: "Agenda 2" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Agenda" })).toHaveAttribute(
       "href",
       "/agenda-2"
     )
+    expect(screen.getAllByRole("link", { name: "Agenda" })).toHaveLength(1)
+    expect(
+      screen.queryByRole("link", { name: "Agenda 2" })
+    ).not.toBeInTheDocument()
   })
 
-  it("contagem (D-12): agenda2Count 3 expandido mostra o selo 'Agenda 2, 3 itens pendentes' com o texto 3", () => {
+  it("contagem (D-12): agenda2Count 3 expandido mostra o selo 'Agenda, 3 itens pendentes' com o texto 3", () => {
     renderSidebar("vendedor", 0, 3)
     expandSidebar()
 
     expect(
-      screen.getByLabelText("Agenda 2, 3 itens pendentes")
+      screen.getByLabelText("Agenda, 3 itens pendentes")
     ).toBeInTheDocument()
     expect(
-      screen.getByLabelText("Agenda 2, 3 itens pendentes")
+      screen.getByLabelText("Agenda, 3 itens pendentes")
     ).toHaveTextContent("3")
   })
 
-  it("contagens-independentes: agendaCount 5 e agenda2Count 3 coexistem, exatamente 2 selos no menu", () => {
+  it("contagem-antiga-ignorada: agendaCount 5 junto com agenda2Count 3 mostra um único selo, o da contagem nova", () => {
     renderSidebar("vendedor", 5, 3)
     expandSidebar()
 
+    expect(screen.getAllByLabelText(/itens pendentes/)).toHaveLength(1)
     expect(
-      screen.getByLabelText("Agenda, 5 itens pendentes")
+      screen.getByLabelText("Agenda, 3 itens pendentes")
     ).toBeInTheDocument()
     expect(
-      screen.getByLabelText("Agenda 2, 3 itens pendentes")
-    ).toBeInTheDocument()
-    expect(screen.getAllByLabelText(/itens pendentes/)).toHaveLength(2)
+      screen.queryByLabelText("Agenda, 5 itens pendentes")
+    ).not.toBeInTheDocument()
   })
 
-  it("zero: agenda2Count 0 não renderiza selo nem a forma 'Agenda 2 (0)'", () => {
+  it("zero: agenda2Count 0 não renderiza selo nem a forma 'Agenda (0)'", () => {
     renderSidebar("vendedor", 0, 0)
     expandSidebar()
 
-    expect(
-      screen.queryByLabelText(/^Agenda 2,/)
-    ).not.toBeInTheDocument()
-    expect(document.body.innerHTML).not.toContain("Agenda 2 (0)")
+    expect(screen.queryByLabelText(/^Agenda,/)).not.toBeInTheDocument()
+    expect(document.body.innerHTML).not.toContain("Agenda (0)")
   })
 
-  it("recolhido-bolinha (D-14): agendaCount 0 e agenda2Count 3 no menu recolhido mostram exatamente uma bolinha dentro de /agenda-2", () => {
-    const { container } = renderSidebar("vendedor", 0, 3)
+  it("recolhido-bolinha (D-14): agendaCount 5 e agenda2Count 3 no menu recolhido mostram exatamente uma bolinha dentro de /agenda-2", () => {
+    const { container } = renderSidebar("vendedor", 5, 3)
 
     const dots = container.querySelectorAll(
       '[data-slot="agenda-pendente-dot"]'
@@ -142,31 +146,38 @@ describe("AppSidebar - item Agenda 2 no menu principal (Fase 31)", () => {
     expect(dots[0].parentElement?.querySelector("svg")).not.toBeNull()
   })
 
-  it("ativo-sem-confusao: na rota /agenda-2, o link Agenda 2 fica ativo e o link Agenda não", () => {
+  it("ativo-sem-confusao: na rota /agenda-2, o link Agenda fica ativo e não existe link para /agenda", () => {
     mockUsePathname.mockReturnValue("/agenda-2")
-    renderSidebar("vendedor")
+    const { container } = renderSidebar("vendedor")
     expandSidebar()
 
-    expect(
-      screen.getByRole("link", { name: "Agenda 2" }).className
-    ).toContain("bg-slate-700")
-    expect(
-      screen.getByRole("link", { name: "Agenda" }).className
-    ).not.toContain("bg-slate-700")
+    expect(screen.getByRole("link", { name: "Agenda" }).className).toContain(
+      "bg-slate-700"
+    )
+    expect(container.querySelector('a[href="/agenda"]')).toBeNull()
 
     mockUsePathname.mockReturnValue("/clientes")
   })
 
-  it("icone-distinto: o svg de /agenda-2 usa lucide-notebook-pen e o de /agenda não", () => {
+  it("rota-antiga-digitada: com a rota /agenda digitada na barra, nenhum link do menu fica ativo", () => {
+    mockUsePathname.mockReturnValue("/agenda")
+    renderSidebar("vendedor")
+    expandSidebar()
+
+    for (const link of screen.getAllByRole("link")) {
+      expect(link.className).not.toContain("bg-slate-700")
+    }
+
+    mockUsePathname.mockReturnValue("/clientes")
+  })
+
+  it("icone-distinto: o svg de /agenda-2 usa lucide-notebook-pen e não existe link /agenda", () => {
     const { container } = renderSidebar("vendedor")
     expandSidebar()
 
     const agenda2Svg = container.querySelector('a[href="/agenda-2"] svg')
-    const agendaSvg = container.querySelector('a[href="/agenda"] svg')
 
     expect(agenda2Svg?.getAttribute("class")).toContain("lucide-notebook-pen")
-    expect(agendaSvg?.getAttribute("class")).not.toContain(
-      "lucide-notebook-pen"
-    )
+    expect(container.querySelector('a[href="/agenda"]')).toBeNull()
   })
 })

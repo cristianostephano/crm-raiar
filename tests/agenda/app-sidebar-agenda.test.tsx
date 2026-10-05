@@ -8,8 +8,9 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 /**
  * Render contract for the menu's Agenda entry (14-04-PLAN.md Task 2):
  *  - ordem: AGD-02's literal "Agenda acima de Clientes" — proven by DOM
- *    position, not just presence. Desde a Fase 31 (31-06), a ordem
- *    verificada aqui inclui "Agenda 2" logo depois de "Agenda" (D-15).
+ *    position, not just presence. Desde a quick 261005-ei4, o item "Agenda"
+ *    do menu abre /agenda-2 (a tela nova) e o link para /agenda (antiga) não
+ *    aparece mais; selo e bolinha vêm só de `agenda2Count`.
  *  - contagem/zero: AGD-06's expanded badge, present when count > 0,
  *    entirely absent (no badge, no "Agenda (0)" string anywhere) at zero.
  *  - recolhido/limite: quick 260928-ilo replaced the old numeric compact
@@ -42,7 +43,7 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }))
 
-function renderSidebar(agendaCount = 0) {
+function renderSidebar(count = 0) {
   return render(
     <TooltipProvider>
       <AppSidebar
@@ -50,8 +51,7 @@ function renderSidebar(agendaCount = 0) {
         roleLabel="Vendedor"
         role="vendedor"
         initials="AS"
-        agendaCount={agendaCount}
-        agenda2Count={0}
+        agenda2Count={count}
       />
     </TooltipProvider>
   )
@@ -63,7 +63,7 @@ function expandSidebar(container: HTMLElement) {
 }
 
 describe("AppSidebar - item Agenda no topo do menu (14-04)", () => {
-  it("ordem: Agenda aparece antes de Agenda 2, Clientes e Dashboard no documento (AGD-02/D-15)", () => {
+  it("ordem: o item Agenda (/agenda-2) vem antes de Clientes e Dashboard e não existe link para /agenda (AGD-02, quick 261005-ei4)", () => {
     const { container } = renderSidebar(0)
     expandSidebar(container)
 
@@ -73,12 +73,7 @@ describe("AppSidebar - item Agenda no topo do menu (14-04)", () => {
       ["/agenda", "/agenda-2", "/clientes", "/dashboard"].includes(href ?? "")
     )
 
-    expect(principaisNaOrdem).toEqual([
-      "/agenda",
-      "/agenda-2",
-      "/clientes",
-      "/dashboard",
-    ])
+    expect(principaisNaOrdem).toEqual(["/agenda-2", "/clientes", "/dashboard"])
   })
 
   it("contagem: com 5 pendentes e menu expandido, o selo mostra 5 e o rótulo acessível anuncia a contagem (AGD-06)", () => {
@@ -101,13 +96,14 @@ describe("AppSidebar - item Agenda no topo do menu (14-04)", () => {
     expect(container.innerHTML).not.toContain("Agenda (0)")
   })
 
-  it("recolhido com 5 pendentes: existe exatamente uma bolinha sem número, dentro do link /agenda, ancorada no ícone (não no link)", () => {
+  it("recolhido com 5 pendentes: existe exatamente uma bolinha sem número, dentro do link /agenda-2, ancorada no ícone (não no link)", () => {
     const { container } = renderSidebar(5)
 
     expect(screen.queryByText("Agenda")).not.toBeInTheDocument()
 
-    const link = container.querySelector('a[href="/agenda"]')
+    const link = container.querySelector('a[href="/agenda-2"]')
     expect(link).not.toBeNull()
+    expect(container.querySelector('a[href="/agenda"]')).toBeNull()
 
     const dots = container.querySelectorAll(
       '[data-slot="agenda-pendente-dot"]'
@@ -165,5 +161,33 @@ describe("AppSidebar - item Agenda no topo do menu (14-04)", () => {
     // Agenda; Clientes/Dashboard render with no comparable element.
     const selos = screen.getAllByLabelText(/itens pendentes/)
     expect(selos).toHaveLength(1)
+  })
+
+  it("antiga-oculta: a contagem da Agenda antiga nunca gera bolinha, selo nem link /agenda, para Vendedor e Supervisor (quick 261005-ei4)", () => {
+    for (const role of ["vendedor", "supervisor"] as const) {
+      const { container, unmount } = render(
+        <TooltipProvider>
+          <AppSidebar
+            fullName="Ana Souza"
+            roleLabel={role === "supervisor" ? "Supervisor" : "Vendedor"}
+            role={role}
+            initials="AS"
+            agendaCount={7}
+            agenda2Count={0}
+          />
+        </TooltipProvider>
+      )
+
+      expect(
+        container.querySelectorAll('[data-slot="agenda-pendente-dot"]')
+      ).toHaveLength(0)
+
+      expandSidebar(container)
+
+      expect(container.querySelector('a[href="/agenda"]')).toBeNull()
+      expect(screen.queryByLabelText(/itens pendentes/)).not.toBeInTheDocument()
+
+      unmount()
+    }
   })
 })

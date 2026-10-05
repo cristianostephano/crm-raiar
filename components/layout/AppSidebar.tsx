@@ -35,12 +35,11 @@ type AppSidebarProps = {
   roleLabel: string | null
   role: string
   initials: string
-  /** AGD-06: contagem de itens pendentes da Agenda, lida uma vez por
-   * carregamento de página em app/(app)/layout.tsx a partir da MESMA fonte
-   * (`getAgendaPendentesCount()`) que alimenta a tela — nunca uma segunda
-   * consulta. Zero quando a leitura falha (tratamento tolerante a falha no
-   * layout), nunca undefined/null aqui. */
-  agendaCount: number
+  /** Opcional desde a quick 261005-ei4: o item da Agenda antiga (/agenda)
+   * saiu do menu e o layout deixou de ler essa contagem. A prop continua
+   * aceita só para a volta (MOSTRAR_AGENDA_ANTIGA_NO_MENU = true) ser
+   * simples; com a flag desligada ela é ignorada. */
+  agendaCount?: number
   /** AGD2-06/D-12/D-13: contagem de pendentes da Agenda 2 do PRÓPRIO
    * usuário, lida em app/(app)/layout.tsx por `getAgenda2PendentesCount()`
    * (filtro explícito por dono — D-13); zero quando a leitura falha; nunca
@@ -63,6 +62,19 @@ type NavSection = {
 }
 
 /**
+ * Piloto do dono (quick 261005-ei4). `false` tira a Agenda antiga (/agenda)
+ * do menu de todos os papéis e deixa a tela nova (/agenda-2) com o rótulo
+ * "Agenda". A rota, a página, os componentes e os testes da Agenda antiga
+ * continuam no projeto, e a tela abre digitando /agenda. Trocar para `true`
+ * devolve o item antigo ao topo e o rótulo antigo ("Agenda 2") ao item novo.
+ * Para o número do selo antigo voltar também, o layout precisa voltar a ler
+ * essa contagem (ver app/(app)/layout.tsx) — ou basta reverter o commit
+ * desta quick. Declarada ACIMA de PRINCIPAL_SECTION de propósito: o objeto
+ * abaixo é avaliado na carga do módulo e lê esta flag.
+ */
+const MOSTRAR_AGENDA_ANTIGA_NO_MENU: boolean = false
+
+/**
  * Nav model as a typed array so the Administração role gate lives in one
  * place. The `role === "supervisor"` check below MUST stay semantically
  * identical to the previous inline `profile?.role === "supervisor"` checks
@@ -78,17 +90,25 @@ type NavSection = {
  * Desde a Fase 28, a ordem inclui "Perdidos" logo depois de "Clientes" —
  * o outro lado do funil de Clientes (D-01: mesmo nível de Agenda/Clientes/
  * Dashboard, nunca uma aba dentro de Clientes). Desde a Fase 31, a ordem é
- * Agenda, Agenda 2, Clientes, Perdidos, Encerrados, Dashboard.
+ * Agenda, Agenda 2, Clientes, Perdidos, Encerrados, Dashboard. Desde a quick
+ * 261005-ei4 a ordem VISÍVEL é Agenda (/agenda-2), Clientes, Perdidos,
+ * Encerrados, Dashboard — a Agenda antiga (/agenda) fica fora do menu pela
+ * flag MOSTRAR_AGENDA_ANTIGA_NO_MENU.
  */
 const PRINCIPAL_SECTION: NavSection = {
   label: "Principal",
   links: [
     { href: "/agenda", label: "Agenda", icon: ListChecks },
     // AGD2-06/D-15: logo abaixo de Agenda, antes de Clientes. D-12 soma o
-    // selo (agenda2Count, uma contagem independente — nunca somada à de
-    // Agenda). NotebookPen = "anotado à mão", distinto dos demais ícones já
-    // usados neste menu (UI-SPEC §Menu entry).
-    { href: "/agenda-2", label: "Agenda 2", icon: NotebookPen },
+    // selo (agenda2Count). Desde a quick 261005-ei4 esta é a "Agenda"
+    // visível do menu (a antiga é filtrada pela flag abaixo), então ela vira
+    // o primeiro item. NotebookPen = "anotado à mão", distinto dos demais
+    // ícones já usados neste menu (UI-SPEC §Menu entry).
+    {
+      href: "/agenda-2",
+      label: MOSTRAR_AGENDA_ANTIGA_NO_MENU ? "Agenda 2" : "Agenda",
+      icon: NotebookPen,
+    },
     { href: "/clientes", label: "Clientes", icon: Users },
     // D-01 (mesmo nível de Agenda/Clientes/Dashboard, não uma aba de
     // Clientes); D-02 (nunca recebe contador — perdido não é pendência
@@ -151,7 +171,7 @@ export function AppSidebar({
   roleLabel,
   role,
   initials,
-  agendaCount,
+  agendaCount = 0,
   agenda2Count,
 }: AppSidebarProps) {
   const [pinned, setPinned] = useState(false)
@@ -165,14 +185,21 @@ export function AppSidebar({
   // existing list — never duplicating it or turning the constant into a
   // function with a parameter (AGD-06/AGD2-06). Agenda and Agenda 2 each
   // carry their own independent count — never merged into one number.
+  // quick 261005-ei4: o filter ANTES do map remove o link /agenda quando
+  // MOSTRAR_AGENDA_ANTIGA_NO_MENU é false; o ramo do map que entrega
+  // agendaCount a /agenda fica parado (é o que torna a volta uma linha).
   const principalSectionComContagem: NavSection = {
     ...PRINCIPAL_SECTION,
-    links: PRINCIPAL_SECTION.links.map((link) => {
-      if (link.href === "/agenda") return { ...link, badgeCount: agendaCount }
-      if (link.href === "/agenda-2")
-        return { ...link, badgeCount: agenda2Count }
-      return link
-    }),
+    links: PRINCIPAL_SECTION.links
+      .filter(
+        (link) => MOSTRAR_AGENDA_ANTIGA_NO_MENU || link.href !== "/agenda"
+      )
+      .map((link) => {
+        if (link.href === "/agenda") return { ...link, badgeCount: agendaCount }
+        if (link.href === "/agenda-2")
+          return { ...link, badgeCount: agenda2Count }
+        return link
+      }),
   }
 
   const sections: NavSection[] =

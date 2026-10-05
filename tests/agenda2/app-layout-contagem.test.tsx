@@ -6,13 +6,14 @@ import AppLayout from "@/app/(app)/layout"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 /**
- * Segunda contagem no layout, isolada e tolerante a falha (Fase 31, Plano
- * 31-06 — D-12/D-13, T-31-27). `AppLayout` é um Server Component async: o
- * teste chama `await AppLayout({ children })` diretamente (sem framework de
- * rota), renderiza o JSX devolvido dentro de `TooltipProvider` e expande o
- * menu — mesmo padrão dos testes de AppSidebar, mas exercitando o layout
- * inteiro para provar que as duas contagens (Agenda/Agenda 2) têm try/catch
- * próprios e nunca se derrubam.
+ * Contagem da Agenda no layout, isolada e tolerante a falha (Fase 31, Plano
+ * 31-06 — D-12/D-13, T-31-27; quick 261005-ei4). `AppLayout` é um Server
+ * Component async: o teste chama `await AppLayout({ children })`
+ * diretamente (sem framework de rota), renderiza o JSX devolvido dentro de
+ * `TooltipProvider` e expande o menu — mesmo padrão dos testes de
+ * AppSidebar, mas exercitando o layout inteiro para provar que existe um
+ * único selo da Agenda no menu (o da tela nova) e que uma falha na
+ * contagem nunca derruba a área logada.
  */
 const { getAgendaPendentesCountMock, getAgenda2PendentesCountMock } =
   vi.hoisted(() => ({
@@ -70,23 +71,24 @@ beforeEach(() => {
   getAgenda2PendentesCountMock.mockReset()
 })
 
-describe("AppLayout - contagem independente da Agenda 2 (Fase 31)", () => {
-  it("contagens-separadas: Agenda=2 e Agenda 2=3 aparecem com selos próprios", async () => {
+describe("AppLayout - um único selo da Agenda no menu (Fase 31 + quick 261005-ei4)", () => {
+  it("selo-unico: contagem antiga 2 e nova 3 mostram só o selo 'Agenda, 3 itens pendentes'", async () => {
     getAgendaPendentesCountMock.mockResolvedValue(2)
     getAgenda2PendentesCountMock.mockResolvedValue(3)
 
     await renderLayout()
     expandSidebar()
 
+    expect(screen.getAllByLabelText(/itens pendentes/)).toHaveLength(1)
     expect(
-      screen.getByLabelText("Agenda, 2 itens pendentes")
+      screen.getByLabelText("Agenda, 3 itens pendentes")
     ).toBeInTheDocument()
     expect(
-      screen.getByLabelText("Agenda 2, 3 itens pendentes")
-    ).toBeInTheDocument()
+      screen.queryByLabelText("Agenda, 2 itens pendentes")
+    ).not.toBeInTheDocument()
   })
 
-  it("falha-agenda2-nao-derruba: contagem da Agenda 2 falha, o conteúdo filho e o menu continuam, sem selo da Agenda 2", async () => {
+  it("falha-contagem-nao-derruba: contagem nova falha, o conteúdo filho e o menu continuam, sem selo", async () => {
     getAgendaPendentesCountMock.mockResolvedValue(2)
     getAgenda2PendentesCountMock.mockRejectedValue(new Error("falhou"))
 
@@ -94,13 +96,11 @@ describe("AppLayout - contagem independente da Agenda 2 (Fase 31)", () => {
     expandSidebar()
 
     expect(screen.getByText("conteúdo da página")).toBeInTheDocument()
-    expect(
-      screen.getByLabelText("Agenda, 2 itens pendentes")
-    ).toBeInTheDocument()
-    expect(screen.queryByLabelText(/^Agenda 2,/)).not.toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Clientes" })).toBeInTheDocument()
+    expect(screen.queryAllByLabelText(/itens pendentes/)).toHaveLength(0)
   })
 
-  it("falha-agenda-nao-afeta-agenda2: contagem da Agenda falha, Agenda 2 continua mostrando o selo", async () => {
+  it("contagem-antiga-nao-afeta: contagem antiga falha, a nova continua mostrando o selo 'Agenda, 3 itens pendentes'", async () => {
     getAgendaPendentesCountMock.mockRejectedValue(new Error("falhou"))
     getAgenda2PendentesCountMock.mockResolvedValue(3)
 
@@ -108,7 +108,7 @@ describe("AppLayout - contagem independente da Agenda 2 (Fase 31)", () => {
     expandSidebar()
 
     expect(
-      screen.getByLabelText("Agenda 2, 3 itens pendentes")
+      screen.getByLabelText("Agenda, 3 itens pendentes")
     ).toBeInTheDocument()
   })
 })

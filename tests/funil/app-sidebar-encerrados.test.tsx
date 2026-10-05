@@ -29,7 +29,7 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }))
 
-function renderSidebar(role: "vendedor" | "supervisor", agendaCount = 0) {
+function renderSidebar(role: "vendedor" | "supervisor", count = 0) {
   return render(
     <TooltipProvider>
       <AppSidebar
@@ -37,8 +37,7 @@ function renderSidebar(role: "vendedor" | "supervisor", agendaCount = 0) {
         roleLabel={role === "supervisor" ? "Supervisor" : "Vendedor"}
         role={role}
         initials="AS"
-        agendaCount={agendaCount}
-        agenda2Count={0}
+        agenda2Count={count}
       />
     </TooltipProvider>
   )
@@ -69,7 +68,7 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     )
   })
 
-  it("ordem: entre os links principais, a ordem no documento é /agenda, /agenda-2, /clientes, /perdidos, /encerrados, /dashboard (D-15)", () => {
+  it("ordem: entre os links principais, a ordem no documento é /agenda-2, /clientes, /perdidos, /encerrados, /dashboard, sem /agenda (quick 261005-ei4)", () => {
     renderSidebar("vendedor")
     expandSidebar()
 
@@ -87,7 +86,6 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     )
 
     expect(principaisNaOrdem).toEqual([
-      "/agenda",
       "/agenda-2",
       "/clientes",
       "/perdidos",
@@ -96,7 +94,7 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     ])
   })
 
-  it("sem-contador: com agendaCount 5 e menu expandido, só existe o selo da Agenda; o link Encerrados não tem contador", () => {
+  it("sem-contador: com contagem 5 na Agenda e menu expandido, só existe o selo da Agenda; o link Encerrados não tem contador", () => {
     renderSidebar("vendedor", 5)
     expandSidebar()
 
@@ -107,7 +105,7 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     expect(document.body.innerHTML).not.toContain("Encerrados (")
   })
 
-  it("recolhido-sem-contador: com agendaCount 5 e menu recolhido, existe exatamente uma bolinha (quick 260928-ilo) e o link /encerrados existe", () => {
+  it("recolhido-sem-contador: com contagem 5 na Agenda e menu recolhido, existe exatamente uma bolinha (quick 260928-ilo) e o link /encerrados existe", () => {
     const { container } = renderSidebar("vendedor", 5)
 
     expect(
