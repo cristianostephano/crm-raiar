@@ -208,6 +208,7 @@ describe("rls-agenda2: migration 0048 contra o banco real", () => {
       .eq("id", item.id)
       .single()
 
+    // 10 colunas: as 8 da 0048 + o_que_fazer e o_que_foi_feito da 0051 (decisao do dono de 2026-10-06, quick 261006-ncy).
     expect(Object.keys(linha as object).sort()).toEqual([
       "atualizado_em",
       "bairro",
@@ -216,6 +217,8 @@ describe("rls-agenda2: migration 0048 contra o banco real", () => {
       "data",
       "id",
       "nome_cliente",
+      "o_que_fazer",
+      "o_que_foi_feito",
       "vendedor_id",
     ])
   })
