@@ -59,6 +59,9 @@ const MSG_CARREGAR_CALENDARIO =
  * - D-30: `filtrarPorVendedor` é um ESTREITAMENTO LOCAL sobre o que a RLS já
  *   liberou, nunca uma checagem de permissão. `podeAlterar` esconde botões do
  *   Supervisor só como reflexo visual; a fronteira é a RLS da migration 0048.
+ * - `showResponsavel` (Supervisor vendo todos, calculado em Agenda2List) vai
+ *   também para Semana e Mês, que mostram o nome do vendedor no chip (quick
+ *   261006-fjt); é reflexo visual, a fronteira continua sendo a RLS.
  *
  * Recarga SEM PISCAR: quando `reloadKey` muda (a tela concluiu/editou/apagou),
  * os itens do período atual continuam na tela até a resposta nova chegar. O
@@ -216,6 +219,7 @@ export function Agenda2Calendario({
           porData={porData}
           onSelecionarDia={setDiaDialogo}
           now={now}
+          showResponsavel={showResponsavel}
         />
       )
     }
@@ -227,6 +231,7 @@ export function Agenda2Calendario({
           porData={porData}
           onSelecionarDia={setDiaDialogo}
           now={now}
+          showResponsavel={showResponsavel}
         />
       )
     }

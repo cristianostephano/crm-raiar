@@ -191,6 +191,29 @@ describe("Agenda2ItemRow", () => {
     expect(screen.getByText("Ana Souza")).toBeInTheDocument()
   })
 
+  it("responsavel-ausente: nome null ou vazio com showResponsavel não cria parágrafo extra nem escreve 'null'", () => {
+    const base = renderRow({
+      showResponsavel: false,
+      item: buildItem({ responsavelNome: "Ana Souza" }),
+    })
+    const quantidade = base.container.querySelectorAll("p").length
+    base.unmount()
+
+    const comNull = renderRow({
+      showResponsavel: true,
+      item: buildItem({ responsavelNome: null }),
+    })
+    expect(comNull.container.querySelectorAll("p")).toHaveLength(quantidade)
+    expect(screen.queryByText("null")).not.toBeInTheDocument()
+    comNull.unmount()
+
+    const vazio = renderRow({
+      showResponsavel: true,
+      item: buildItem({ responsavelNome: "" }),
+    })
+    expect(vazio.container.querySelectorAll("p")).toHaveLength(quantidade)
+  })
+
   it("salvando: os botões existentes ficam desabilitados", () => {
     renderRow({ salvando: true })
 

@@ -450,6 +450,39 @@ describe("Agenda2Calendario — diálogo do dia e ações do dono", () => {
     expect(screen.getByText("Ana Souza")).toBeInTheDocument()
   })
 
+  it("responsavel-nas-grades-semana: com showResponsavel, a Semana mostra o vendedor sem abrir o diálogo", async () => {
+    renderCalendario({ visao: "semana", showResponsavel: true })
+
+    await screen.findByText("Cliente do dia 12")
+
+    expect(screen.getByText("Ana Souza")).toBeInTheDocument()
+  })
+
+  it("responsavel-nas-grades-mes: com showResponsavel, o Mês mostra o vendedor sem abrir o diálogo", async () => {
+    renderCalendario({ visao: "mes", showResponsavel: true })
+
+    await screen.findByText("Cliente do dia 12")
+
+    expect(screen.getByText("Ana Souza")).toBeInTheDocument()
+  })
+
+  it("responsavel-nas-grades-desligado: com showResponsavel false, Semana e Mês não mostram o vendedor", async () => {
+    const semana = renderCalendario({ visao: "semana", showResponsavel: false })
+    await screen.findByText("Cliente do dia 12")
+    expect(screen.queryByText("Ana Souza")).not.toBeInTheDocument()
+    expect(
+      semana.container.querySelector('[data-slot="agenda2-responsavel"]')
+    ).toBeNull()
+    semana.unmount()
+
+    const mes = renderCalendario({ visao: "mes", showResponsavel: false })
+    await screen.findByText("Cliente do dia 12")
+    expect(screen.queryByText("Ana Souza")).not.toBeInTheDocument()
+    expect(
+      mes.container.querySelector('[data-slot="agenda2-responsavel"]')
+    ).toBeNull()
+  })
+
   it("dia-com-acoes: na visão de dia Concluir repassa o item e salvandoId desabilita o botão", async () => {
     const hoje = buildItem({
       id: "h1",

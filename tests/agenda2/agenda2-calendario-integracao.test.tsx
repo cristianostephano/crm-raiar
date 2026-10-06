@@ -177,6 +177,68 @@ describe("Agenda2List + Agenda2Calendario (integração, plano 32-07)", () => {
     expect(screen.queryByText("Cliente da Ana")).not.toBeInTheDocument()
   })
 
+  it("nome-do-vendedor-nas-grades-supervisor: Semana e Mês mostram o vendedor de cada visita; com filtro a linha some", async () => {
+    simularLeituras([
+      buildItem({
+        nomeCliente: "Cliente da Ana",
+        responsavel: "v-ana",
+        responsavelNome: "Ana Souza",
+      }),
+      buildItem({
+        nomeCliente: "Cliente do Bruno",
+        responsavel: "v-bruno",
+        responsavelNome: "Bruno Lima",
+      }),
+    ])
+
+    renderList({ isSupervisor: true })
+    await screen.findByText("Hoje (2)")
+
+    const nomesDoVendedor = () =>
+      Array.from(
+        document.querySelectorAll('[data-slot="agenda2-responsavel"]')
+      )
+        .map((el) => el.textContent)
+        .sort()
+
+    fireEvent.click(screen.getByRole("button", { name: "Semana" }))
+    expect(await screen.findByText("Cliente da Ana")).toBeInTheDocument()
+    expect(nomesDoVendedor()).toEqual(["Ana Souza", "Bruno Lima"])
+
+    fireEvent.click(screen.getByRole("button", { name: "Mês" }))
+    expect(await screen.findByText("Cliente da Ana")).toBeInTheDocument()
+    expect(nomesDoVendedor()).toEqual(["Ana Souza", "Bruno Lima"])
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Vendedor" }))
+    const opcao = await screen.findByRole("option", { name: "Bruno Lima" })
+    fireEvent.pointerDown(opcao)
+    fireEvent.click(opcao)
+
+    expect(screen.getByText("Cliente do Bruno")).toBeInTheDocument()
+    expect(nomesDoVendedor()).toEqual([])
+  })
+
+  it("nome-do-vendedor-nunca-para-vendedor: Semana e Mês não mostram a linha do vendedor", async () => {
+    simularLeituras([buildItem({ nomeCliente: "Cliente Solo" })])
+
+    renderList()
+    await screen.findByText("Hoje (1)")
+
+    fireEvent.click(screen.getByRole("button", { name: "Semana" }))
+    expect(await screen.findByText("Cliente Solo")).toBeInTheDocument()
+    expect(
+      document.querySelectorAll('[data-slot="agenda2-responsavel"]')
+    ).toHaveLength(0)
+    expect(screen.queryByText("Vendedor Um")).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Mês" }))
+    expect(await screen.findByText("Cliente Solo")).toBeInTheDocument()
+    expect(
+      document.querySelectorAll('[data-slot="agenda2-responsavel"]')
+    ).toHaveLength(0)
+    expect(screen.queryByText("Vendedor Um")).not.toBeInTheDocument()
+  })
+
   it("concluir-no-calendario-recarrega: Concluir no diálogo do dia chama a ação uma vez e relê Lista e período (reloadKey)", async () => {
     simularLeituras([buildItem({ nomeCliente: "Padaria Central" })])
     mockedConcluir.mockResolvedValue({ data: true })
