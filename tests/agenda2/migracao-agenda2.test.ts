@@ -13,11 +13,32 @@ import { describe, expect, it } from "vitest"
  *
  * Fica VERDE sem precisar do banco de produção — a aplicação real da
  * migration acontece no plano 31-03, depois da aprovação do dono.
+ *
+ * Quick 261006-ncy (2026-10-06): a migration 0051 acrescenta, por decisão do
+ * dono, duas colunas de texto opcionais; arquivo-unico passa a aceitar
+ * exatamente 0048 e 0051 como os únicos arquivos que citam a tabela, e
+ * colunas-minimas confere 8 colunas da 0048 + 2 da 0051 = 10.
  */
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "supabase", "migrations")
 const MIGRATION_FILE = "0048_agenda2_itens.sql"
 const MIGRATION_PATH = path.join(MIGRATIONS_DIR, MIGRATION_FILE)
+const MIGRATION_0051_FILE = "0051_agenda2_observacoes.sql"
+const MIGRATION_0051_PATH = path.join(MIGRATIONS_DIR, MIGRATION_0051_FILE)
+
+/** As 10 colunas da tabela: 8 da 0048 + 2 da 0051 (quick 261006-ncy). */
+const COLUNAS_TOTAIS = [
+  "id",
+  "vendedor_id",
+  "nome_cliente",
+  "bairro",
+  "data",
+  "concluido",
+  "criado_em",
+  "atualizado_em",
+  "o_que_fazer",
+  "o_que_foi_feito",
+] as const
 
 /** Inventário (bloco <interfaces> do 31-01-PLAN.md) das funções cuja ÚLTIMA
  * definição, hoje, tem cláusula de elevação de privilégio — em ordem
@@ -139,11 +160,13 @@ describe("migracao-agenda2: 0048_agenda2_itens.sql (estrutural, sem banco)", () 
     const comPrefixo0048 = arquivos.filter((nome) => nome.startsWith("0048"))
     expect(comPrefixo0048).toEqual([MIGRATION_FILE])
 
-    for (const arquivo of arquivos) {
-      if (arquivo === MIGRATION_FILE) continue
-      const conteudo = readMigrationRaw(path.join(MIGRATIONS_DIR, arquivo)).toLowerCase()
-      expect(conteudo).not.toContain("agenda2_itens")
-    }
+    // Quick 261006-ncy: a 0051 cita a tabela de proposito (acrescenta colunas).
+    const citamATabela = arquivos.filter((arquivo) =>
+      readMigrationRaw(path.join(MIGRATIONS_DIR, arquivo))
+        .toLowerCase()
+        .includes("agenda2_itens")
+    )
+    expect(citamATabela).toEqual([MIGRATION_FILE, MIGRATION_0051_FILE])
   })
 
   it("colunas-minimas", () => {
@@ -177,6 +200,21 @@ describe("migracao-agenda2: 0048_agenda2_itens.sql (estrutural, sem banco)", () 
     ]
     for (const palavra of palavrasProibidas) {
       expect(bloco).not.toContain(palavra)
+    }
+
+    // Quick 261006-ncy: a 0051 acrescenta exatamente 2 colunas (total 10).
+    // A 0051 comenta em bloco barra-asterisco, entao tira esses blocos antes.
+    const sql0051 = readMigrationLower(MIGRATION_0051_PATH).replace(/\/\*[\s\S]*?\*\//g, "")
+    const novas = [...sql0051.matchAll(/add column if not exists\s+([a-z0-9_]+)/g)].map(
+      (m) => m[1]
+    )
+    expect(novas).toEqual(["o_que_fazer", "o_que_foi_feito"])
+    expect(COLUNAS_TOTAIS).toHaveLength(10)
+    expect([...colunasEsperadas, ...novas]).toEqual([...COLUNAS_TOTAIS])
+    for (const nova of novas) {
+      for (const palavra of palavrasProibidas) {
+        expect(nova).not.toContain(palavra)
+      }
     }
   })
 
