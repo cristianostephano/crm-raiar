@@ -33,17 +33,25 @@ import { cn } from "@/lib/utils"
  * `opacity-60` (o item concluído continua acionável); sem ícone de origem nem
  * de repetição (D-26); e `onSelecionarDia` substitui `onOpenItem` — não existe
  * ficha de cliente para abrir (Pitfall 9), então o chip leva ao dia.
+ *
+ * Quick 261006-fjt: para o Supervisor vendo todos os vendedores
+ * (`showResponsavel`), o chip ganha uma 3ª linha discreta com o nome do
+ * vendedor dono da visita. O Vendedor nunca vê essa linha. A prop é opcional e
+ * começa DESLIGADA (privacidade por padrão); é só reflexo visual — a fronteira
+ * de quem vê o quê continua sendo a RLS do Supabase.
  */
 export function Agenda2CalendarioSemana({
   referencia,
   porData,
   onSelecionarDia,
   now = new Date(),
+  showResponsavel = false,
 }: {
   referencia: Date
   porData: Map<string, Agenda2Item[]>
   onSelecionarDia: (dia: Date) => void
   now?: Date
+  showResponsavel?: boolean
 }) {
   const dias = diasDaSemana(referencia)
   const rotulos = rotulosDosDiasDaSemana()
@@ -91,6 +99,7 @@ export function Agenda2CalendarioSemana({
                     key={item.id}
                     item={item}
                     atrasado={estaAtrasadoAgenda2(item, now)}
+                    showResponsavel={showResponsavel}
                     onAbrirDia={() => onSelecionarDia(dia)}
                   />
                 ))
@@ -111,16 +120,25 @@ export function Agenda2CalendarioSemana({
  * A cor da borda lateral: primária por padrão; vermelha se atrasado; verde se
  * concluído (nunca os dois, `estaAtrasadoAgenda2` garante). As classes de
  * estado vêm por último no `cn`, que mantém a última em caso de conflito.
+ *
+ * Com `showResponsavel` e nome não vazio, uma 3ª linha pequena e apagada mostra
+ * o vendedor (sem risco, mesmo concluído: D-29 risca só o nome do cliente).
  */
 function WeekItemChip({
   item,
   atrasado,
+  showResponsavel,
   onAbrirDia,
 }: {
   item: Agenda2Item
   atrasado: boolean
+  showResponsavel: boolean
   onAbrirDia: () => void
 }) {
+  const nomeResponsavel = showResponsavel
+    ? (item.responsavelNome ?? "").trim()
+    : ""
+
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault()
@@ -156,6 +174,15 @@ function WeekItemChip({
       <span className="truncate text-xs text-muted-foreground">
         {item.bairro}
       </span>
+      {nomeResponsavel ? (
+        <span
+          data-slot="agenda2-responsavel"
+          title={nomeResponsavel}
+          className="truncate text-[11px] leading-tight text-muted-foreground"
+        >
+          {nomeResponsavel}
+        </span>
+      ) : null}
     </div>
   )
 }

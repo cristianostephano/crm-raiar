@@ -133,6 +133,80 @@ describe("Agenda2CalendarioMes", () => {
     }
   })
 
+  it("responsavel-supervisor: com showResponsavel, 2ª linha cortável com o vendedor, no mesmo chip", () => {
+    renderMes([buildItem({ nomeCliente: "Mercado Bom Preço" })], {
+      showResponsavel: true,
+    })
+
+    const nome = screen.getByText("Mercado Bom Preço")
+    const vendedor = screen.getByText("Ana Souza")
+    expect(vendedor).toHaveAttribute("data-slot", "agenda2-responsavel")
+    expect(vendedor).toHaveClass("truncate")
+    expect(
+      nome.compareDocumentPosition(vendedor) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(nome.closest("div")).toBe(vendedor.closest("div"))
+  })
+
+  it("responsavel-vendedor: sem a prop (padrão) ou com false, o nome do vendedor não aparece", () => {
+    const { container, unmount } = renderMes([buildItem()])
+    expect(screen.queryByText("Ana Souza")).toBeNull()
+    expect(container.querySelector('[data-slot="agenda2-responsavel"]')).toBeNull()
+    unmount()
+
+    const segundo = renderMes([buildItem()], { showResponsavel: false })
+    expect(screen.queryByText("Ana Souza")).toBeNull()
+    expect(
+      segundo.container.querySelector('[data-slot="agenda2-responsavel"]')
+    ).toBeNull()
+  })
+
+  it("responsavel-ausente: nome null, vazio ou só espaços não cria linha nem escreve 'null'", () => {
+    const { container } = renderMes(
+      [
+        buildItem({ id: "a", nomeCliente: "Cliente A", responsavelNome: null }),
+        buildItem({ id: "b", nomeCliente: "Cliente B", responsavelNome: "" }),
+        buildItem({ id: "c", nomeCliente: "Cliente C", responsavelNome: "   " }),
+      ],
+      { showResponsavel: true }
+    )
+
+    expect(container.querySelectorAll('[data-slot="agenda2-responsavel"]')).toHaveLength(0)
+    expect(screen.queryByText("null")).toBeNull()
+    for (const texto of ["Cliente A", "Cliente B", "Cliente C"]) {
+      expect(screen.getByText(texto)).toBeInTheDocument()
+    }
+  })
+
+  it("responsavel-mais-n-e-rotulo: continua 3 chips + '+4 mais' e o rótulo da célula não cita o vendedor", () => {
+    const itens = Array.from({ length: 7 }, (_, i) =>
+      buildItem({ id: `i${i}`, nomeCliente: `Cliente ${i}` })
+    )
+    const { container } = renderMes(itens, { showResponsavel: true })
+
+    expect(screen.getByText("+4 mais")).toBeInTheDocument()
+    expect(
+      container.querySelectorAll('[data-slot="agenda2-responsavel"]')
+    ).toHaveLength(3)
+    const rotulo = celulaDoDia(container, "14 de agosto").getAttribute(
+      "aria-label"
+    )
+    expect(rotulo).toMatch(/7 visitas$/)
+    expect(rotulo).not.toContain("Ana Souza")
+  })
+
+  it("responsavel-concluido: o chip mantém a borda verde e a linha do vendedor não é riscada", () => {
+    renderMes(
+      [buildItem({ nomeCliente: "Feito", data: "2026-08-10", concluido: true })],
+      { showResponsavel: true }
+    )
+
+    expect(screen.getByText("Feito").closest("div")).toHaveClass(
+      "border-l-emerald-600"
+    )
+    expect(screen.getByText("Ana Souza")).not.toHaveClass("line-through")
+  })
+
   it("sem-icone-de-repeticao (D-26): nenhum ícone de repetição nem de origem", () => {
     const { container } = renderMes([
       buildItem({ id: "a" }),

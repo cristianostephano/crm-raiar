@@ -39,6 +39,11 @@ import { cn } from "@/lib/utils"
  * de origem e sem ícone de repetição (D-26); e o concluído aparece RISCADO
  * (D-29) em vez de apenas esmaecido.
  *
+ * Quick 261006-fjt: para o Supervisor vendo todos os vendedores
+ * (`showResponsavel`), o chip ganha uma 2ª linha pequena e apagada com o nome
+ * do vendedor. O Vendedor nunca vê. A prop é opcional e começa DESLIGADA
+ * (privacidade por padrão). O rótulo acessível da célula não cita nomes.
+ *
  * Componente apresentacional: recebe `porData` já agrupado, não busca nem
  * filtra dado.
  */
@@ -47,11 +52,13 @@ export function Agenda2CalendarioMes({
   porData,
   onSelecionarDia,
   now = new Date(),
+  showResponsavel = false,
 }: {
   referencia: Date
   porData: Map<string, Agenda2Item[]>
   onSelecionarDia: (dia: Date) => void
   now?: Date
+  showResponsavel?: boolean
 }) {
   const dias = diasDaGradeDoMes(referencia)
   const rotulos = rotulosDosDiasDaSemana()
@@ -78,6 +85,7 @@ export function Agenda2CalendarioMes({
             ultimaColuna={(idx + 1) % 7 === 0}
             itens={itensDoDiaAgenda2(porData, dia)}
             now={now}
+            showResponsavel={showResponsavel}
             onSelecionar={onSelecionarDia}
           />
         ))}
@@ -99,6 +107,7 @@ function MonthDayCell({
   ultimaColuna,
   itens,
   now,
+  showResponsavel,
   onSelecionar,
 }: {
   dia: Date
@@ -107,6 +116,7 @@ function MonthDayCell({
   ultimaColuna: boolean
   itens: Agenda2Item[]
   now: Date
+  showResponsavel: boolean
   onSelecionar: (dia: Date) => void
 }) {
   function handleClick() {
@@ -157,6 +167,7 @@ function MonthDayCell({
               key={item.id}
               item={item}
               atrasado={estaAtrasadoAgenda2(item, now)}
+              showResponsavel={showResponsavel}
             />
           ))}
           {excedente > 0 ? (
@@ -176,14 +187,24 @@ function MonthDayCell({
  * concluído: cinza com borda verde, ícone de conferido e nome riscado (D-29),
  * nunca com o acento de atraso (`estaAtrasadoAgenda2` já garante isso). Sem
  * ícone de origem nem de repetição (D-26).
+ *
+ * Com `showResponsavel` e nome não vazio, uma 2ª linha pequena (cortada com
+ * reticências) mostra o vendedor. As duas linhas ficam num ENVOLTÓRIO `span`,
+ * nunca `div`: os testes (e o `closest("div")`) esperam que a `div` mais
+ * próxima do nome do cliente seja o próprio chip.
  */
 function MonthItemChip({
   item,
   atrasado,
+  showResponsavel,
 }: {
   item: Agenda2Item
   atrasado: boolean
+  showResponsavel: boolean
 }) {
+  const nomeResponsavel = showResponsavel
+    ? (item.responsavelNome ?? "").trim()
+    : ""
   return (
     <div
       className={cn(
@@ -197,13 +218,19 @@ function MonthItemChip({
       {item.concluido ? (
         <CheckCircle2 className="size-3 shrink-0 text-emerald-600" />
       ) : null}
-      <span
-        className={cn(
-          "min-w-0 flex-1 truncate",
-          item.concluido && "line-through"
-        )}
-      >
-        {item.nomeCliente}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className={cn("truncate", item.concluido && "line-through")}>
+          {item.nomeCliente}
+        </span>
+        {nomeResponsavel ? (
+          <span
+            data-slot="agenda2-responsavel"
+            title={nomeResponsavel}
+            className="truncate text-[11px] leading-tight text-muted-foreground"
+          >
+            {nomeResponsavel}
+          </span>
+        ) : null}
       </span>
     </div>
   )

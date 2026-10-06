@@ -119,6 +119,94 @@ describe("Agenda2CalendarioSemana", () => {
     }
   })
 
+  it("responsavel-supervisor: com showResponsavel, 3ª linha com o vendedor depois do bairro, no mesmo chip", () => {
+    renderSemana(
+      [
+        buildItem({
+          nomeCliente: "Mercado Bom",
+          bairro: "Jardins",
+          responsavelNome: "Ana Souza",
+        }),
+      ],
+      { showResponsavel: true }
+    )
+
+    const vendedor = screen.getByText("Ana Souza")
+    expect(vendedor).toHaveAttribute("data-slot", "agenda2-responsavel")
+    const bairro = screen.getByText("Jardins")
+    expect(
+      bairro.compareDocumentPosition(vendedor) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(vendedor.closest('[role="button"]')).toBe(
+      screen.getByText("Mercado Bom").closest('[role="button"]')
+    )
+  })
+
+  it("responsavel-vendedor: sem a prop (padrão) ou com false, o nome do vendedor não aparece", () => {
+    const { container, unmount } = renderSemana([buildItem()])
+    expect(screen.queryByText("Ana Souza")).toBeNull()
+    expect(container.querySelector('[data-slot="agenda2-responsavel"]')).toBeNull()
+    unmount()
+
+    const segundo = renderSemana([buildItem()], { showResponsavel: false })
+    expect(screen.queryByText("Ana Souza")).toBeNull()
+    expect(
+      segundo.container.querySelector('[data-slot="agenda2-responsavel"]')
+    ).toBeNull()
+  })
+
+  it("responsavel-ausente: nome null, vazio ou só espaços não cria linha nem escreve 'null'", () => {
+    const { container } = renderSemana(
+      [
+        buildItem({
+          id: "a",
+          nomeCliente: "Cliente A",
+          bairro: "Bairro A",
+          data: "2026-08-10",
+          responsavelNome: null,
+        }),
+        buildItem({
+          id: "b",
+          nomeCliente: "Cliente B",
+          bairro: "Bairro B",
+          data: "2026-08-11",
+          responsavelNome: "",
+        }),
+        buildItem({
+          id: "c",
+          nomeCliente: "Cliente C",
+          bairro: "Bairro C",
+          data: "2026-08-12",
+          responsavelNome: "   ",
+        }),
+      ],
+      { showResponsavel: true }
+    )
+
+    expect(container.querySelectorAll('[data-slot="agenda2-responsavel"]')).toHaveLength(0)
+    expect(screen.queryByText("null")).toBeNull()
+    for (const texto of [
+      "Cliente A",
+      "Cliente B",
+      "Cliente C",
+      "Bairro A",
+      "Bairro B",
+      "Bairro C",
+    ]) {
+      expect(screen.getByText(texto)).toBeInTheDocument()
+    }
+  })
+
+  it("responsavel-concluido: o nome do cliente fica riscado, a linha do vendedor não", () => {
+    renderSemana(
+      [buildItem({ nomeCliente: "Feito", concluido: true })],
+      { showResponsavel: true }
+    )
+
+    expect(screen.getByText("Feito")).toHaveClass("line-through")
+    expect(screen.getByText("Ana Souza")).not.toHaveClass("line-through")
+  })
+
   it("sem-icone-de-repeticao (D-26): nenhum ícone de repetição nem de origem", () => {
     const { container } = renderSemana([
       buildItem({ id: "a" }),
