@@ -92,6 +92,7 @@ function renderBoard() {
     <KanbanBoard
       grouped={grouped}
       callerRole="supervisor"
+      currentUserId="supervisor-1"
       categoriaOptions={[]}
       produtoOptions={[]}
     />

@@ -110,6 +110,10 @@ const SUCCESS_MESSAGE = "Cliente salvo com sucesso."
 const LOAD_ERROR =
   "Não foi possível carregar os dados do cliente. Tente novamente."
 const DELETE_GENERIC_ERROR = "Não foi possível apagar o cliente. Tente novamente."
+// Quick task 261006-gvo: zero linhas apagadas (a regra do banco recusou, ou
+// outra pessoa já tinha apagado o cliente).
+const DELETE_FORBIDDEN_ERROR =
+  "Você não tem permissão para apagar este cliente, ou ele já foi apagado."
 const GANHO_TOOLTIP = 'Disponível somente na etapa "1ª venda concluída".'
 // Fase 29 (D-04): mesmo formato de GANHO_TOOLTIP, para a 4ª opção do Select
 // de Status — "Encerrado" só é alcançável a partir de "Ganho".
@@ -212,6 +216,7 @@ export function ClienteDetailSheet({
   open,
   onOpenChange,
   isSupervisor,
+  currentUserId,
   categoriaOptions,
   produtoOptions,
   vendedorOptions,
@@ -223,6 +228,10 @@ export function ClienteDetailSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
   isSupervisor: boolean
+  /** Id do usuário logado, passado só pela aba Clientes. Sem ele, quem não é
+   * Supervisor nunca vê o botão de apagar (padrão seguro). É só conforto de
+   * tela — quem decide é a RLS da migration 0050. */
+  currentUserId?: string
   categoriaOptions: { id: string; nome: string }[]
   produtoOptions: { id: string; nome: string }[]
   vendedorOptions: { id: string; nome: string }[]
@@ -713,7 +722,9 @@ export function ClienteDetailSheet({
       const result = await deleteCliente(cliente.id)
 
       if (result.error) {
-        setDeleteError(DELETE_GENERIC_ERROR)
+        setDeleteError(
+          result.error.code === "forbidden" ? DELETE_FORBIDDEN_ERROR : DELETE_GENERIC_ERROR
+        )
         setIsDeleting(false)
         return
       }
@@ -730,6 +741,15 @@ export function ClienteDetailSheet({
 
   const produtoIds = useWatch({ control: form.control, name: "produtoIds" }) ?? []
 
+  // Quick task 261006-gvo (D-06): Supervisor sempre; Vendedor só no cliente
+  // dele que ainda está em andamento. Só conforto de tela: a RLS decide.
+  const podeApagar =
+    cliente !== null &&
+    (isSupervisor ||
+      (currentUserId !== undefined &&
+        cliente.responsavel === currentUserId &&
+        cliente.statusAcompanhamento === "em_andamento"))
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -743,7 +763,7 @@ export function ClienteDetailSheet({
                 ? nomeExibicaoCliente(cliente.razaoSocial, cliente.nomeFantasia)
                 : "Cliente"}
             </SheetTitle>
-            {isSupervisor && cliente ? (
+            {podeApagar ? (
               <Button
                 type="button"
                 variant="ghost"

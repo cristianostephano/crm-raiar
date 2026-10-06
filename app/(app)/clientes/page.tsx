@@ -90,6 +90,7 @@ export default async function ClientesPage() {
         <KanbanBoard
           grouped={grouped}
           callerRole={isSupervisor ? "supervisor" : "vendedor"}
+          currentUserId={user.id}
           categoriaOptions={categoriaOptions}
           produtoOptions={produtoOptions}
         />

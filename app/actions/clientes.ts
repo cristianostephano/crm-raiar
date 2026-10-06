@@ -399,12 +399,15 @@ export type DeleteClienteResult =
   | { data?: undefined; error: { code: DeleteClienteErrorCode } }
 
 /**
- * Deletes a cliente (CLI-05/CLI-06). Supervisor-only: a non-Supervisor
- * caller is rejected here, before the DELETE is even attempted, but this
- * app-layer check is UX only — clientes' DELETE RLS policy from 02-01
- * (`using (is_supervisor())`) is the real boundary (T-02-18); a Vendedor
- * calling this Server Action directly (bypassing the hidden UI button)
- * would still be a no-op even if this check were somehow skipped.
+ * Deletes a cliente (CLI-05/CLI-06, amended by quick task 261006-gvo).
+ *
+ * The DELETE policy on `clientes` from migration 0050 is the ONLY authority:
+ * an active Vendedor may delete their own cliente while it is "em andamento",
+ * and a Supervisor may delete any cliente. This action decides nothing about
+ * roles (it never reads `profiles`) — it just tries the DELETE under RLS.
+ * Zero rows deleted becomes "forbidden" (RLS refused it, or the cliente was
+ * already deleted by someone else). Hiding the button in the UI is comfort
+ * only, never the security boundary.
  */
 export async function deleteCliente(id: string): Promise<DeleteClienteResult> {
   const supabase = await createClient()
@@ -415,18 +418,6 @@ export async function deleteCliente(id: string): Promise<DeleteClienteResult> {
 
   if (!user) {
     return { error: { code: "unauthenticated" } }
-  }
-
-  const { data: callerProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-
-  const isSupervisor = callerProfile?.role === "supervisor"
-
-  if (!isSupervisor) {
-    return { error: { code: "forbidden" } }
   }
 
   const { data: deleted, error } = await supabase
@@ -441,7 +432,7 @@ export async function deleteCliente(id: string): Promise<DeleteClienteResult> {
   }
 
   if (!deleted) {
-    return { error: { code: "generic" } }
+    return { error: { code: "forbidden" } }
   }
 
   revalidatePath("/clientes")

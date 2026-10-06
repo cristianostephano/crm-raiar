@@ -264,11 +264,15 @@ function DroppableColumn({
 export function KanbanBoard({
   grouped: initialGrouped,
   callerRole,
+  currentUserId,
   categoriaOptions,
   produtoOptions,
 }: {
   grouped: ClientesAgrupadosPorEtapa
   callerRole: "supervisor" | "vendedor"
+  /** Id do usuário logado; repassado à ficha do cliente só para decidir se o
+   * botão "Apagar cliente" aparece (conforto de tela — a RLS decide). */
+  currentUserId: string
   /** Full active categorias/produtos_consumidos catalogs (bugfix, real
    * lookup-table queries — see getCategoriasAtivas/getProdutosAtivos), NOT
    * derived from the already-loaded card set: a brand-new cliente (or any
@@ -887,6 +891,7 @@ export function KanbanBoard({
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         isSupervisor={showResponsavel}
+        currentUserId={currentUserId}
         categoriaOptions={categoriaOptions}
         produtoOptions={produtoOptions}
         vendedorOptions={vendedorOptions}
