@@ -341,6 +341,7 @@ describe("criarAgenda2Item", () => {
       vendedorId: "outro",
       vendedor_id: "outro",
       concluido: true,
+      oQueFoiFeito: "Teste tentativa",
     } as unknown as Agenda2ItemInput
 
     const resultado = await criarAgenda2Item(valoresComExtras)
@@ -353,6 +354,7 @@ describe("criarAgenda2Item", () => {
         nome_cliente: "Mercado Bom Preço",
         bairro: "Centro",
         data: "2026-09-28",
+        o_que_fazer: null,
         vendedor_id: "u1",
       },
     ])
@@ -390,6 +392,39 @@ describe("criarAgenda2Item", () => {
     insertSpy.mockResolvedValueOnce({ error: null })
     await criarAgenda2Item(valoresValidos)
     expect(revalidateSpy).toHaveBeenCalledWith("/agenda-2")
+  })
+
+  it("criar-plano-aparado-e-vazio: plano com espaços é gravado aparado; só espaços e ausente gravam null", async () => {
+    insertSpy.mockResolvedValue({ error: null })
+
+    await criarAgenda2Item({ ...valoresValidos, oQueFazer: "  Levar catálogo  " })
+    expect(insertSpy.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ o_que_fazer: "Levar catálogo" }),
+    ])
+
+    insertSpy.mockClear()
+    await criarAgenda2Item({ ...valoresValidos, oQueFazer: "   " })
+    expect(insertSpy.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ o_que_fazer: null }),
+    ])
+
+    insertSpy.mockClear()
+    await criarAgenda2Item(valoresValidos)
+    expect(insertSpy.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ o_que_fazer: null }),
+    ])
+  })
+
+  it("criar-plano-longo: 501 caracteres devolve validacao e nunca chama insert", async () => {
+    const resultado = await criarAgenda2Item({
+      ...valoresValidos,
+      oQueFazer: "a".repeat(501),
+    })
+
+    expect(resultado).toEqual({
+      error: { code: "validacao", message: SALVAR_FALHOU_MSG },
+    })
+    expect(insertSpy).not.toHaveBeenCalled()
   })
 })
 
@@ -431,7 +466,7 @@ describe("criarAgenda2Item — repetição semanal em lote (Fase 32)", () => {
     expect(datasDoInsert()).toEqual(["2026-09-28"])
   })
 
-  it("criar-repete-4 (D-20/D-31/D-22): UM insert com 4 linhas semanais, todas do dono da sessão e só com as 4 colunas", async () => {
+  it("criar-repete-4 (D-20/D-31/D-22/D-03): UM insert com 4 linhas semanais, todas do dono da sessão, com o mesmo plano e só com as 5 colunas (o resultado nunca entra)", async () => {
     insertSpy.mockResolvedValueOnce({ error: null })
 
     const valores = {
@@ -440,6 +475,8 @@ describe("criarAgenda2Item — repetição semanal em lote (Fase 32)", () => {
       data: "2026-10-05",
       repetirSemanas: 4,
       vendedorId: "outro",
+      oQueFazer: "Levar amostras",
+      oQueFoiFeito: "Teste tentativa",
     } as unknown as Agenda2CriarItemInput
 
     const resultado = await criarAgenda2Item(valores)
@@ -456,13 +493,16 @@ describe("criarAgenda2Item — repetição semanal em lote (Fase 32)", () => {
     const linhas = insertSpy.mock.calls[0][0] as Array<Record<string, unknown>>
     for (const linha of linhas) {
       expect(linha.vendedor_id).toBe("u1")
+      expect(linha.o_que_fazer).toBe("Levar amostras")
       expect(Object.keys(linha).sort()).toEqual([
         "bairro",
         "data",
         "nome_cliente",
+        "o_que_fazer",
         "vendedor_id",
       ])
     }
+    expect(linhas).toHaveLength(4)
     expect(revalidateSpy).toHaveBeenCalledWith("/agenda-2")
   })
 
@@ -582,6 +622,48 @@ describe("atualizarAgenda2Item", () => {
     expect(insertSpy).not.toHaveBeenCalled()
   })
 
+  it("atualizar-com-textos: os dois textos enviados entram no update, aparados; só espaços vira null", async () => {
+    selectEscritaSpy.mockResolvedValue({ data: [{ id: ITEM_ID }], error: null })
+
+    await atualizarAgenda2Item(ITEM_ID, {
+      ...valoresValidos,
+      oQueFazer: "  Levar amostras ",
+      oQueFoiFeito: "Pedido combinado",
+    })
+    expect(updateSpy).toHaveBeenLastCalledWith({
+      nome_cliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-09-28",
+      o_que_fazer: "Levar amostras",
+      o_que_foi_feito: "Pedido combinado",
+    })
+
+    await atualizarAgenda2Item(ITEM_ID, {
+      ...valoresValidos,
+      oQueFazer: "   ",
+      oQueFoiFeito: null,
+    })
+    expect(updateSpy).toHaveBeenLastCalledWith({
+      nome_cliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-09-28",
+      o_que_fazer: null,
+      o_que_foi_feito: null,
+    })
+  })
+
+  it("atualizar-texto-longo: 501 caracteres devolve validacao e nunca chama update", async () => {
+    const resultado = await atualizarAgenda2Item(ITEM_ID, {
+      ...valoresValidos,
+      oQueFoiFeito: "a".repeat(501),
+    })
+
+    expect(resultado).toEqual({
+      error: { code: "validacao", message: SALVAR_FALHOU_MSG },
+    })
+    expect(updateSpy).not.toHaveBeenCalled()
+  })
+
   it("atualizar-zero-linhas: select devolve [] vira nao_encontrado", async () => {
     selectEscritaSpy.mockResolvedValueOnce({ data: [], error: null })
 
@@ -640,6 +722,42 @@ describe("concluirAgenda2Item / desmarcarAgenda2Item", () => {
 
     expect(resultado).toEqual({ data: true })
     expect(updateSpy).toHaveBeenCalledWith({ concluido: true })
+  })
+
+  it("concluir-com-resultado: update exatamente { concluido: true, o_que_foi_feito } com o texto aparado", async () => {
+    selectEscritaSpy.mockResolvedValueOnce({ data: [{ id: ITEM_ID }], error: null })
+
+    const resultado = await concluirAgenda2Item(ITEM_ID, "  Pedido fechado  ")
+
+    expect(resultado).toEqual({ data: true })
+    expect(updateSpy).toHaveBeenCalledWith({
+      concluido: true,
+      o_que_foi_feito: "Pedido fechado",
+    })
+  })
+
+  it("concluir-sem-texto: vazio e só espaços concluem gravando o_que_foi_feito null", async () => {
+    selectEscritaSpy.mockResolvedValue({ data: [{ id: ITEM_ID }], error: null })
+
+    for (const vazio of ["", "   "]) {
+      updateSpy.mockClear()
+      const resultado = await concluirAgenda2Item(ITEM_ID, vazio)
+
+      expect(resultado).toEqual({ data: true })
+      expect(updateSpy).toHaveBeenCalledWith({
+        concluido: true,
+        o_que_foi_feito: null,
+      })
+    }
+  })
+
+  it("concluir-resultado-longo: 501 caracteres devolve validacao e nunca chama update", async () => {
+    const resultado = await concluirAgenda2Item(ITEM_ID, "a".repeat(501))
+
+    expect(resultado).toEqual({
+      error: { code: "validacao", message: SALVAR_FALHOU_MSG },
+    })
+    expect(updateSpy).not.toHaveBeenCalled()
   })
 
   it("desmarcar-ok (D-05): update com exatamente { concluido: false }", async () => {

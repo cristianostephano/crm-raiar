@@ -13,9 +13,12 @@ import {
   AGENDA2_MSG_NOME_VAZIO,
   AGENDA2_MSG_REPETIR_INVALIDO,
   AGENDA2_MSG_REPETIR_PASSADO,
+  AGENDA2_MSG_TEXTO_VISITA_LONGO,
   AGENDA2_NOME_MAX,
+  AGENDA2_TEXTO_VISITA_MAX,
   agenda2ItemIdSchema,
   agenda2ItemSchema,
+  agenda2TextoVisitaSchema,
   contemSequenciaLongaDeDigitos,
   criarAgenda2CriarSchema,
 } from "../../lib/validations/agenda2"
@@ -377,6 +380,73 @@ describe("criarAgenda2CriarSchema", () => {
     expect(result.success).toBe(true)
     if (result.success) {
       expect("repetirSemanas" in result.data).toBe(false)
+    }
+  })
+})
+
+describe("agenda2TextoVisitaSchema (quick 261006-ncy)", () => {
+  it("ausente-fica-ausente", () => {
+    const result = agenda2TextoVisitaSchema.safeParse(undefined)
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data).toBeUndefined()
+  })
+
+  it("null-fica-null", () => {
+    const result = agenda2TextoVisitaSchema.safeParse(null)
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data).toBeNull()
+  })
+
+  it("vazio-e-so-espacos-viram-null", () => {
+    for (const entrada of ["", "   "]) {
+      const result = agenda2TextoVisitaSchema.safeParse(entrada)
+      expect(result.success).toBe(true)
+      if (result.success) expect(result.data).toBeNull()
+    }
+  })
+
+  it("apara-o-texto", () => {
+    const result = agenda2TextoVisitaSchema.safeParse("  Levar catálogo  ")
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data).toBe("Levar catálogo")
+  })
+
+  it("limite-500", () => {
+    const noLimite = agenda2TextoVisitaSchema.safeParse("a".repeat(AGENDA2_TEXTO_VISITA_MAX))
+    expect(noLimite.success).toBe(true)
+
+    const acima = agenda2TextoVisitaSchema.safeParse("a".repeat(AGENDA2_TEXTO_VISITA_MAX + 1))
+    expect(acima.success).toBe(false)
+    if (!acima.success) {
+      expect(acima.error.issues[0]?.message).toBe(AGENDA2_MSG_TEXTO_VISITA_LONGO)
+    }
+  })
+
+  it("aceita-sequencia-longa-de-digitos (D-04: sem trava de numeros)", () => {
+    const result = agenda2TextoVisitaSchema.safeParse(`Ligar depois ${"7".repeat(11)}`)
+    expect(result.success).toBe(true)
+  })
+
+  it("agenda2ItemSchema-e-criar-aceitam-os-dois-textos", () => {
+    const entrada = {
+      nomeCliente: NOME_VALIDO,
+      bairro: BAIRRO_VALIDO,
+      data: DATA_VALIDA,
+      oQueFazer: "  Levar amostras ",
+      oQueFoiFeito: "Pedido combinado",
+    }
+
+    const edicao = agenda2ItemSchema.safeParse(entrada)
+    expect(edicao.success).toBe(true)
+    if (edicao.success) {
+      expect(edicao.data.oQueFazer).toBe("Levar amostras")
+      expect(edicao.data.oQueFoiFeito).toBe("Pedido combinado")
+    }
+
+    const criacao = criarAgenda2CriarSchema("2026-10-01").safeParse(entrada)
+    expect(criacao.success).toBe(true)
+    if (criacao.success) {
+      expect(criacao.data.oQueFazer).toBe("Levar amostras")
     }
   })
 })

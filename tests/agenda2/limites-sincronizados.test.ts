@@ -6,6 +6,8 @@ import {
   AGENDA2_BAIRRO_MAX,
   AGENDA2_DIGITOS_SEGUIDOS_MAX,
   AGENDA2_NOME_MAX,
+  AGENDA2_TEXTO_VISITA_MAX,
+  agenda2TextoVisitaSchema,
   contemSequenciaLongaDeDigitos,
 } from "@/lib/validations/agenda2"
 
@@ -16,6 +18,9 @@ import {
  * um lado sem mudar o outro quebra o build, em vez de divergir em silêncio.
  * Lê a migration com fs (sem banco), mesmo molde de
  * tests/agenda2/migracao-agenda2.test.ts.
+ *
+ * Quick 261006-ncy: o mesmo vale para a migration 0051 (os dois textos
+ * opcionais da visita, limite de AGENDA2_TEXTO_VISITA_MAX caracteres).
  */
 
 const MIGRATION_PATH = path.join(
@@ -23,6 +28,13 @@ const MIGRATION_PATH = path.join(
   "supabase",
   "migrations",
   "0048_agenda2_itens.sql"
+)
+
+const MIGRATION_0051_PATH = path.join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "0051_agenda2_observacoes.sql"
 )
 
 function migrationLower(): string {
@@ -59,5 +71,23 @@ describe("limites sincronizados entre a migration 0048 e lib/validations/agenda2
     const umAMais = "1".repeat(AGENDA2_DIGITOS_SEGUIDOS_MAX + 1)
     expect(contemSequenciaLongaDeDigitos(limiteExato)).toBe(false)
     expect(contemSequenciaLongaDeDigitos(umAMais)).toBe(true)
+  })
+
+  it("textos-sincronizados: a 0051 limita os dois textos a '<= ' + AGENDA2_TEXTO_VISITA_MAX e o schema acompanha", () => {
+    const sql = fs.readFileSync(MIGRATION_0051_PATH, "utf8").toLowerCase()
+    expect(sql).toContain(
+      `chk_agenda2_o_que_fazer_tamanho check (char_length(btrim(o_que_fazer)) <= ${AGENDA2_TEXTO_VISITA_MAX})`
+    )
+    expect(sql).toContain(
+      `chk_agenda2_o_que_foi_feito_tamanho check (char_length(btrim(o_que_foi_feito)) <= ${AGENDA2_TEXTO_VISITA_MAX})`
+    )
+
+    // Lado da aplicacao: aceita exatamente o limite, recusa um caractere a mais.
+    expect(
+      agenda2TextoVisitaSchema.safeParse("a".repeat(AGENDA2_TEXTO_VISITA_MAX)).success
+    ).toBe(true)
+    expect(
+      agenda2TextoVisitaSchema.safeParse("a".repeat(AGENDA2_TEXTO_VISITA_MAX + 1)).success
+    ).toBe(false)
   })
 })

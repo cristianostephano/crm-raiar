@@ -19,6 +19,8 @@ function buildItem(partial: Partial<Agenda2Item> = {}): Agenda2Item {
     atualizadoEm: "2026-08-14T12:00:00.000Z",
     responsavel: "v1",
     responsavelNome: "Ana Souza",
+    oQueFazer: null,
+    oQueFoiFeito: null,
     ...partial,
   }
 }

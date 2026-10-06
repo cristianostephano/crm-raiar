@@ -44,6 +44,8 @@ function item(overrides: Partial<Agenda2Item> = {}): Agenda2Item {
     atualizadoEm: "2026-09-28T13:00:00+00:00",
     responsavel: "vendedor-a",
     responsavelNome: "Ana Vendedora",
+    oQueFazer: null,
+    oQueFoiFeito: null,
     ...overrides,
   }
 }

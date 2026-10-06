@@ -88,6 +88,8 @@ function fakeRow(overrides: Record<string, unknown> = {}) {
     data: "2026-09-28",
     concluido: false,
     atualizado_em: "2026-09-28T10:00:00+00:00",
+    o_que_fazer: null,
+    o_que_foi_feito: null,
     profiles: { nome: "Ana", sobrenome: "Souza" },
     ...overrides,
   }
@@ -117,6 +119,8 @@ describe("getAgenda2", () => {
     expect(colunas).toContain("data")
     expect(colunas).toContain("concluido")
     expect(colunas).toContain("atualizado_em")
+    expect(colunas).toContain("o_que_fazer")
+    expect(colunas).toContain("o_que_foi_feito")
     expect(colunas).toContain("profiles(nome, sobrenome)")
     expect(colunas).not.toContain("criado_em")
   })
@@ -170,6 +174,8 @@ describe("getAgenda2", () => {
         data: "2026-09-28",
         concluido: false,
         atualizadoEm: "2026-09-28T10:00:00+00:00",
+        oQueFazer: null,
+        oQueFoiFeito: null,
         responsavel: "v1",
         responsavelNome: "Ana Souza",
       },
@@ -180,10 +186,29 @@ describe("getAgenda2", () => {
         data: "2026-09-28",
         concluido: false,
         atualizadoEm: "2026-09-28T10:00:00+00:00",
+        oQueFazer: null,
+        oQueFoiFeito: null,
         responsavel: "v2",
         responsavelNome: null,
       },
     ])
+  })
+
+  it("leitura-mapeamento-textos: os dois textos preenchidos viram oQueFazer e oQueFoiFeito", async () => {
+    rangeSpy.mockResolvedValueOnce({
+      data: [
+        fakeRow({
+          o_que_fazer: "Levar amostras",
+          o_que_foi_feito: "Pedido combinado",
+        }),
+      ],
+      error: null,
+    })
+
+    const resultado = await getAgenda2(now)
+
+    expect(resultado[0].oQueFazer).toBe("Levar amostras")
+    expect(resultado[0].oQueFoiFeito).toBe("Pedido combinado")
   })
 
   it("leitura-paginada: 1000 + 5 linhas viram 1005 itens; o segundo recorte é (1000, 1999)", async () => {

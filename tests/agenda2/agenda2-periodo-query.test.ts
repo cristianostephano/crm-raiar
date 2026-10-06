@@ -69,6 +69,8 @@ function fakeRow(overrides: Record<string, unknown> = {}) {
     data: "2026-08-14",
     concluido: false,
     atualizado_em: "2026-08-14T10:00:00+00:00",
+    o_que_fazer: null,
+    o_que_foi_feito: null,
     profiles: { nome: "Ana", sobrenome: "Souza" },
     ...overrides,
   }
@@ -93,7 +95,7 @@ describe("getAgenda2Periodo", () => {
 
     expect(fromSpy).toHaveBeenCalledWith("agenda2_itens")
     expect(selectSpy).toHaveBeenCalledWith(
-      "id, vendedor_id, nome_cliente, bairro, data, concluido, atualizado_em, profiles(nome, sobrenome)"
+      "id, vendedor_id, nome_cliente, bairro, data, concluido, atualizado_em, o_que_fazer, o_que_foi_feito, profiles(nome, sobrenome)"
     )
     expect(gteSpy).toHaveBeenCalledWith("data", "2026-07-27")
     expect(lteSpy).toHaveBeenCalledWith("data", "2026-09-06")
@@ -126,6 +128,25 @@ describe("getAgenda2Periodo", () => {
       responsavelNome: "Ana Souza",
     })
     expect(itens[1].responsavelNome).toBeNull()
+    expect(itens[0].oQueFazer).toBeNull()
+    expect(itens[0].oQueFoiFeito).toBeNull()
+  })
+
+  it("periodo-mapeia-textos: os dois textos preenchidos viram oQueFazer e oQueFoiFeito", async () => {
+    rangeSpy.mockResolvedValueOnce({
+      data: [
+        fakeRow({
+          o_que_fazer: "Levar amostras",
+          o_que_foi_feito: "Pedido combinado",
+        }),
+      ],
+      error: null,
+    })
+
+    const itens = await getAgenda2Periodo("2026-07-27", "2026-09-06")
+
+    expect(itens[0].oQueFazer).toBe("Levar amostras")
+    expect(itens[0].oQueFoiFeito).toBe("Pedido combinado")
   })
 
   it("periodo-pagina (Pitfall 4): junta paginas, nunca devolve lista truncada", async () => {

@@ -59,6 +59,8 @@ function buildItem(partial: Partial<Agenda2Item> = {}): Agenda2Item {
     atualizadoEm: hoje(),
     responsavel: "vendedor-1",
     responsavelNome: "Vendedor Um",
+    oQueFazer: null,
+    oQueFoiFeito: null,
     ...partial,
   }
 }
