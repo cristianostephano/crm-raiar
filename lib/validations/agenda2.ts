@@ -24,6 +24,14 @@ import {
  * Action (Plano 31-04, que nunca pode confiar só na validação do
  * navegador). Mesmo molde de `lib/validations/agenda.ts`/`cliente.ts`.
  *
+ * Quick 261006-ncy (migration 0051): a visita ganha dois textos livres
+ * OPCIONAIS, `oQueFazer` ("Motivo da visita") e `oQueFoiFeito` ("O que foi
+ * feito"), com o mesmo limite de `chk_agenda2_o_que_fazer_tamanho` e
+ * `chk_agenda2_o_que_foi_feito_tamanho` (`AGENDA2_TEXTO_VISITA_MAX`). Por
+ * decisão do dono (2026-10-06) esses dois campos NÃO recusam sequência de
+ * dígitos e NÃO mostram dica de privacidade na tela — diferente de nome e
+ * bairro, cuja regra continua igual.
+ *
  * Fase 32 (repetição semanal): `agenda2ItemSchema` NÃO muda — ele também
  * valida a EDIÇÃO, que nunca gera repetição (D-24). A CRIAÇÃO usa
  * `criarAgenda2CriarSchema(hoje)`, que acrescenta `repetirSemanas` (lista
@@ -42,6 +50,13 @@ export const AGENDA2_BAIRRO_MAX = 60
  * `chk_agenda2_bairro_sem_documento` (migration 0048). */
 export const AGENDA2_DIGITOS_SEGUIDOS_MAX = 7
 
+/**
+ * FONTE ÚNICA — espelha `chk_agenda2_o_que_fazer_tamanho` e
+ * `chk_agenda2_o_que_foi_feito_tamanho` (migration 0051): máximo de
+ * caracteres depois de aparar espaços.
+ */
+export const AGENDA2_TEXTO_VISITA_MAX = 500
+
 export const AGENDA2_MSG_NOME_VAZIO = "Informe o nome do cliente."
 export const AGENDA2_MSG_NOME_LONGO =
   "O nome pode ter no máximo 120 caracteres."
@@ -52,6 +67,7 @@ export const AGENDA2_MSG_BAIRRO_LONGO =
   "O bairro pode ter no máximo 60 caracteres."
 export const AGENDA2_MSG_BAIRRO_DOCUMENTO =
   "Informe só o nome do bairro, sem CEP ou outros números longos."
+export const AGENDA2_MSG_TEXTO_VISITA_LONGO = "Use no máximo 500 caracteres."
 export const AGENDA2_MSG_DATA_VAZIA = "Informe a data."
 export const AGENDA2_MSG_DATA_INVALIDA = "Data inválida."
 export const AGENDA2_MSG_REPETIR_INVALIDO =
@@ -95,6 +111,23 @@ function ehDataValida(valor: string): boolean {
   return format(data, "yyyy-MM-dd") === valor
 }
 
+/**
+ * Texto livre opcional da visita (`oQueFazer`/`oQueFoiFeito`). Ordem das
+ * etapas: string, trim, máximo, transform (vazio vira null), nullable,
+ * optional — assim AUSENTE continua ausente (`optional` curto-circuita antes
+ * do transform) e `null` continua `null`. Semântica nas Server Actions:
+ * AUSENTE = a ação não mexe na coluna; vazio, só espaços ou null = grava NULL;
+ * texto = grava aparado. SEM recusa de sequência de dígitos e SEM dica na
+ * tela, por decisão do dono de 2026-10-06 (diferente de nome e bairro).
+ */
+export const agenda2TextoVisitaSchema = z
+  .string()
+  .trim()
+  .max(AGENDA2_TEXTO_VISITA_MAX, AGENDA2_MSG_TEXTO_VISITA_LONGO)
+  .transform((valor) => (valor === "" ? null : valor))
+  .nullable()
+  .optional()
+
 export const agenda2ItemSchema = z.object({
   nomeCliente: z
     .string()
@@ -118,6 +151,8 @@ export const agenda2ItemSchema = z.object({
     .refine((valor) => ehDataValida(valor), {
       message: AGENDA2_MSG_DATA_INVALIDA,
     }),
+  oQueFazer: agenda2TextoVisitaSchema,
+  oQueFoiFeito: agenda2TextoVisitaSchema,
 })
 
 export type Agenda2ItemInput = z.infer<typeof agenda2ItemSchema>

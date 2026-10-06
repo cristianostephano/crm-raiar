@@ -11,6 +11,7 @@ import { validarIntervaloHistorico } from "@/lib/validations/agenda"
 import {
   agenda2ItemIdSchema,
   agenda2ItemSchema,
+  agenda2TextoVisitaSchema,
   criarAgenda2CriarSchema,
   type Agenda2CriarItemInput,
   type Agenda2ItemInput,
@@ -34,6 +35,13 @@ import {
  * chega à tela (T-31-21) — sempre uma das mensagens fixas abaixo. Uma ação
  * que afeta zero linhas é tratada como erro (`nao_encontrado`), nunca como
  * sucesso falso.
+ *
+ * Quick 261006-ncy (migration 0051): dois textos livres opcionais por visita.
+ * `oQueFazer` ("Motivo da visita") é copiado para TODAS as linhas de uma
+ * repetição; `oQueFoiFeito` ("O que foi feito") nasce vazio na criação e só é
+ * gravado ao editar ou ao concluir. Semântica: campo AUSENTE = a ação não mexe
+ * na coluna; vazio, só espaços ou null = grava NULL; texto = grava aparado.
+ * Desmarcar nunca mexe nos textos.
  */
 
 const MSG_SESSAO_EXPIRADA = "Sessão expirada."
@@ -130,7 +138,9 @@ export async function getAgenda2PeriodoAction(
  * servidor é endpoint público, nunca confia só na validação do navegador
  * (CLAUDE.md). O "hoje" da regra D-23 é o dia de São Paulo calculado AQUI
  * (a Vercel roda em UTC; às 22:30 de Brasília o UTC já virou o dia). Cada
- * linha é montada SÓ com os três campos do parse mais `vendedor_id: user.id`
+ * linha é montada SÓ com os campos do parse (nome, bairro, data e o plano
+ * `oQueFazer`, igual em todas as linhas do lote; o resultado
+ * `oQueFoiFeito` NUNCA entra na criação) mais `vendedor_id: user.id`
  * — qualquer campo extra enviado pela tela (ex.: `vendedorId`, `concluido`)
  * é descartado (T-31-18), e nenhum identificador de série existe (D-22).
  * Quem autoriza é só a RLS da 0048, avaliada linha a linha: uma única linha
@@ -162,6 +172,7 @@ export async function criarAgenda2Item(
     nome_cliente: parsed.data.nomeCliente,
     bairro: parsed.data.bairro,
     data,
+    o_que_fazer: parsed.data.oQueFazer ?? null,
     vendedor_id: user.id,
   }))
 
@@ -178,7 +189,9 @@ export async function criarAgenda2Item(
 
 /**
  * Edita um item (AGD2-03). NUNCA inclui `concluido` no update (D-06): editar
- * um item concluído não pode desmarcá-lo por acidente. Zero linhas afetadas
+ * um item concluído não pode desmarcá-lo por acidente. Os dois textos só
+ * entram no update quando enviados (a tela de editar sempre envia os dois);
+ * vazio/só espaços/null grava NULL. Zero linhas afetadas
  * (RLS barrou ou item não existe) vira `nao_encontrado`, nunca sucesso
  * falso.
  */
@@ -207,6 +220,12 @@ export async function atualizarAgenda2Item(
       nome_cliente: valuesParsed.data.nomeCliente,
       bairro: valuesParsed.data.bairro,
       data: valuesParsed.data.data,
+      ...(valuesParsed.data.oQueFazer !== undefined && {
+        o_que_fazer: valuesParsed.data.oQueFazer,
+      }),
+      ...(valuesParsed.data.oQueFoiFeito !== undefined && {
+        o_que_foi_feito: valuesParsed.data.oQueFoiFeito,
+      }),
     })
     .eq("id", idParsed.data)
     .select("id")
@@ -261,10 +280,13 @@ export async function apagarAgenda2Item(
 }
 
 /** Helper interno (não exportado) de `concluirAgenda2Item`/
- * `desmarcarAgenda2Item` — mesma guarda de sessão/validação/zero-linhas. */
+ * `desmarcarAgenda2Item` — mesma guarda de sessão/validação/zero-linhas.
+ * `extras` (opcional) são colunas gravadas no MESMO update (o resultado da
+ * visita ao concluir). */
 async function definirConcluido(
   itemId: string,
-  valor: boolean
+  valor: boolean,
+  extras: { o_que_foi_feito?: string | null } = {}
 ): Promise<Agenda2MutationResult> {
   const supabase = await createClient()
   const {
@@ -282,7 +304,7 @@ async function definirConcluido(
 
   const { data, error } = await supabase
     .from("agenda2_itens")
-    .update({ concluido: valor })
+    .update({ concluido: valor, ...extras })
     .eq("id", idParsed.data)
     .select("id")
 
@@ -297,14 +319,32 @@ async function definirConcluido(
   return { data: true }
 }
 
-/** AGD2-05: marca o item como concluído. */
+/**
+ * AGD2-05: marca o item como concluído. Sem o segundo argumento faz
+ * exatamente o que sempre fez (só `concluido: true`). Com `resultado` (o
+ * texto da janela "Concluir visita", opcional) grava também "O que foi feito":
+ * aparado, e vazio/só espaços vira NULL. Texto acima do limite devolve
+ * `validacao` sem gravar nada.
+ */
 export async function concluirAgenda2Item(
-  itemId: string
+  itemId: string,
+  resultado?: string | null
 ): Promise<Agenda2MutationResult> {
-  return definirConcluido(itemId, true)
+  if (resultado === undefined) {
+    return definirConcluido(itemId, true)
+  }
+
+  const resultadoParsed = agenda2TextoVisitaSchema.safeParse(resultado)
+  if (!resultadoParsed.success) {
+    return { error: { code: "validacao", message: MSG_SALVAR_FALHOU } }
+  }
+
+  return definirConcluido(itemId, true, {
+    o_que_foi_feito: resultadoParsed.data ?? null,
+  })
 }
 
-/** D-05: desmarca um item concluído por engano. */
+/** D-05: desmarca um item concluído por engano. NÃO apaga os textos. */
 export async function desmarcarAgenda2Item(
   itemId: string
 ): Promise<Agenda2MutationResult> {

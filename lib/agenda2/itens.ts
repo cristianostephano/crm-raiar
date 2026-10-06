@@ -49,6 +49,10 @@ export type Agenda2Item = {
   concluido: boolean
   /** timestamptz ISO completo vindo do banco. */
   atualizadoEm: string
+  /** "Motivo da visita" (coluna o_que_fazer): o que o vendedor pretende fazer; null quando vazio. */
+  oQueFazer: string | null
+  /** "O que foi feito" (coluna o_que_foi_feito): o resultado ou o combinado; null quando vazio. */
+  oQueFoiFeito: string | null
   /** = vendedor_id — nome escolhido para reusar `filtrarPorVendedor` sem
    * alteração (D-17). */
   responsavel: string | null

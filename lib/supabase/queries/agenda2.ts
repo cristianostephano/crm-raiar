@@ -27,7 +27,10 @@ import { createClient } from "@/lib/supabase/server"
  *   time inteiro em vez de zero (Pitfall 2 da pesquisa, D-13).
  *
  * `criado_em` não é lido em `getAgenda2()` — minimização (LGPD): a tela não
- * usa esse campo, só o SQL (para desempate de ordenação).
+ * usa esse campo, só o SQL (para desempate de ordenação). As duas colunas de
+ * texto livre (`o_que_fazer` e `o_que_foi_feito`) vêm da migration 0051
+ * (quick 261006-ncy) e PRECISAM existir no banco antes de publicar esta
+ * leitura — sem elas a Agenda não carrega.
  *
  * - `getAgenda2Periodo(inicio, fim)` (Fase 32, AGD2-08): lê o CALENDÁRIO.
  *   Separada de `getAgenda2` porque a regra de visibilidade é outra (D-28):
@@ -51,6 +54,8 @@ type Agenda2Row = {
   data: string
   concluido: boolean
   atualizado_em: string
+  o_que_fazer: string | null
+  o_que_foi_feito: string | null
   profiles: { nome: string; sobrenome: string } | null
 }
 
@@ -62,6 +67,8 @@ function mapRow(row: Agenda2Row): Agenda2Item {
     data: row.data,
     concluido: row.concluido,
     atualizadoEm: row.atualizado_em,
+    oQueFazer: row.o_que_fazer ?? null,
+    oQueFoiFeito: row.o_que_foi_feito ?? null,
     responsavel: row.vendedor_id,
     responsavelNome: row.profiles
       ? `${row.profiles.nome} ${row.profiles.sobrenome}`
@@ -86,7 +93,7 @@ export async function getAgenda2(now: Date = new Date()): Promise<Agenda2Item[]>
     const { data, error } = await supabase
       .from("agenda2_itens")
       .select(
-        "id, vendedor_id, nome_cliente, bairro, data, concluido, atualizado_em, profiles(nome, sobrenome)"
+        "id, vendedor_id, nome_cliente, bairro, data, concluido, atualizado_em, o_que_fazer, o_que_foi_feito, profiles(nome, sobrenome)"
       )
       .or(filtroRecente)
       .order("data", { ascending: true })
@@ -146,7 +153,7 @@ export async function getAgenda2Periodo(
     const { data, error } = await supabase
       .from("agenda2_itens")
       .select(
-        "id, vendedor_id, nome_cliente, bairro, data, concluido, atualizado_em, profiles(nome, sobrenome)"
+        "id, vendedor_id, nome_cliente, bairro, data, concluido, atualizado_em, o_que_fazer, o_que_foi_feito, profiles(nome, sobrenome)"
       )
       .gte("data", inicio)
       .lte("data", fim)
