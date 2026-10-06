@@ -137,8 +137,11 @@ describe("RLS: clientes UPDATE WITH CHECK blocks responsavel reassignment", () =
   })
 })
 
-describe("RLS: clientes DELETE is Supervisor-only (CLI-06)", () => {
-  it("Vendedor A cannot delete their own cliente (0 rows affected)", async () => {
+describe("RLS: clientes DELETE (0050: vendedor ativo apaga os proprios em prospeccao; supervisor apaga todos; emenda do CLI-06)", () => {
+  // Regra nova da migration 0050 (quick task 261006-gvo). A prova completa
+  // (cliente de outro, ganho/perdido/encerrado, desativado, anonimo, cascata)
+  // fica em tests/clientes/rls-apagar-cliente-prospeccao.test.ts.
+  it("Vendedor A CAN delete their own em_andamento cliente (0050)", async () => {
     const vendedorA = await signInAs(
       SEED_ACCOUNTS.vendedorA.email,
       SEED_ACCOUNTS.vendedorA.password
@@ -162,7 +165,7 @@ describe("RLS: clientes DELETE is Supervisor-only (CLI-06)", () => {
       .select("id")
 
     expect(deleteError).toBeNull()
-    expect(deleteResult ?? []).toHaveLength(0)
+    expect(deleteResult ?? []).toHaveLength(1)
   })
 
   it("Supervisor CAN delete any cliente row", async () => {

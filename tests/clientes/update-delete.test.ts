@@ -189,8 +189,10 @@ describe("updateCliente's underlying guarantee: Vendedor A can edit their own cl
   })
 })
 
-describe("deleteCliente's underlying guarantee: Supervisor-only (CLI-05/CLI-06)", () => {
-  it("Vendedor A cannot DELETE their own cliente (0 rows affected — deleteCliente's forbidden path never needs to be reached for RLS to already fail closed)", async () => {
+describe("deleteCliente's underlying guarantee (0050: vendedor ativo apaga os proprios em prospeccao; supervisor apaga todos)", () => {
+  // Regra nova da migration 0050 (quick task 261006-gvo); a prova completa
+  // esta em tests/clientes/rls-apagar-cliente-prospeccao.test.ts.
+  it("Vendedor A CAN DELETE their own em_andamento cliente (0050 — 1 row affected; the RLS policy alone decides)", async () => {
     const vendedorA = await signInAs(
       SEED_ACCOUNTS.vendedorA.email,
       SEED_ACCOUNTS.vendedorA.password
@@ -217,7 +219,7 @@ describe("deleteCliente's underlying guarantee: Supervisor-only (CLI-05/CLI-06)"
       .select("id")
 
     expect(deleteError).toBeNull()
-    expect(deleteResult ?? []).toHaveLength(0)
+    expect(deleteResult ?? []).toHaveLength(1)
   })
 
   it("Supervisor CAN delete a cliente", async () => {
