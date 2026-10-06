@@ -383,7 +383,7 @@ describe("Agenda2Calendario — diálogo do dia e ações do dono", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
-  it("concluir-no-dialogo: Concluir e Desmarcar agem ali mesmo e o diálogo continua aberto", async () => {
+  it("concluir-fecha-dialogo-desmarcar-fica (P-04): Desmarcar age ali mesmo e o diálogo continua aberto; Concluir fecha o diálogo do dia e chama a tela com o item", async () => {
     const onConcluir = vi.fn()
     const onDesmarcar = vi.fn()
     const feito = buildItem({
@@ -396,12 +396,16 @@ describe("Agenda2Calendario — diálogo do dia e ações do dono", () => {
     renderCalendario({ visao: "mes", onConcluir, onDesmarcar })
 
     const dialogo = await abrirDiaPeloMes()
-    fireEvent.click(within(dialogo).getByRole("button", { name: "Concluir" }))
+    // Desmarcar ANTES de Concluir: Concluir fecha o diálogo do dia.
     fireEvent.click(within(dialogo).getByRole("button", { name: "Desmarcar" }))
 
-    expect(onConcluir).toHaveBeenCalledWith(item12)
     expect(onDesmarcar).toHaveBeenCalledWith(feito)
     expect(screen.getByRole("dialog")).toBeInTheDocument()
+
+    fireEvent.click(within(dialogo).getByRole("button", { name: "Concluir" }))
+
+    expect(onConcluir).toHaveBeenCalledWith(item12)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
   it("editar-fecha-dialogo: Editar e Apagar fecham o diálogo e chamam a tela com o item", async () => {

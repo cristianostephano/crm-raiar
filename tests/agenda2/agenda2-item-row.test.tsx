@@ -224,3 +224,67 @@ describe("Agenda2ItemRow", () => {
     expect(screen.getByRole("button", { name: "Concluir" })).toBeDisabled()
   })
 })
+
+describe("Agenda2ItemRow — textos opcionais da visita (quick 261006-ncy)", () => {
+  it("mostra-os-textos: 'Motivo da visita:' e 'O que foi feito:' com os textos, discretos e no máximo 3 linhas", () => {
+    const { container } = renderRow({
+      item: buildItem({
+        oQueFazer: "Levar amostras",
+        oQueFoiFeito: "Pedido combinado",
+      }),
+    })
+
+    const motivo = container.querySelector('[data-slot="agenda2-o-que-fazer"]')
+    const feito = container.querySelector('[data-slot="agenda2-o-que-foi-feito"]')
+    expect(motivo).not.toBeNull()
+    expect(feito).not.toBeNull()
+    expect(motivo).toHaveTextContent("Motivo da visita:")
+    expect(motivo).toHaveTextContent("Levar amostras")
+    expect(feito).toHaveTextContent("O que foi feito:")
+    expect(feito).toHaveTextContent("Pedido combinado")
+    expect(motivo).toHaveClass("line-clamp-3")
+    expect(feito).toHaveClass("line-clamp-3")
+  })
+
+  it("so-um-texto: mostra só o que existe", () => {
+    const { container } = renderRow({
+      item: buildItem({ oQueFazer: "Levar amostras" }),
+    })
+
+    expect(container.querySelector('[data-slot="agenda2-o-que-fazer"]')).not.toBeNull()
+    expect(container.querySelector('[data-slot="agenda2-o-que-foi-feito"]')).toBeNull()
+    expect(screen.queryByText(/O que foi feito/)).not.toBeInTheDocument()
+  })
+
+  it("sem-texto-sem-linha: com os dois nulos não existe nenhum elemento nem rótulo desses campos", () => {
+    const { container } = renderRow()
+
+    expect(container.querySelector('[data-slot="agenda2-o-que-fazer"]')).toBeNull()
+    expect(container.querySelector('[data-slot="agenda2-o-que-foi-feito"]')).toBeNull()
+    expect(screen.queryByText(/Motivo da visita/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/O que foi feito/)).not.toBeInTheDocument()
+  })
+
+  it("supervisor-ve-textos: podeAlterar false mostra os textos e nenhum botão", () => {
+    const { container } = renderRow({
+      podeAlterar: false,
+      item: buildItem({
+        oQueFazer: "Levar amostras",
+        oQueFoiFeito: "Pedido combinado",
+      }),
+    })
+
+    expect(container.querySelector('[data-slot="agenda2-o-que-fazer"]')).not.toBeNull()
+    expect(container.querySelector('[data-slot="agenda2-o-que-foi-feito"]')).not.toBeNull()
+    expect(screen.queryByRole("button")).not.toBeInTheDocument()
+  })
+
+  it("texto-puro: o texto é mostrado como texto, nunca como HTML", () => {
+    const { container } = renderRow({
+      item: buildItem({ oQueFazer: "<b>negrito</b>" }),
+    })
+
+    expect(container.querySelector("b")).toBeNull()
+    expect(screen.getByText(/<b>negrito<\/b>/)).toBeInTheDocument()
+  })
+})

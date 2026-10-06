@@ -267,9 +267,9 @@ describe("Agenda2List", () => {
     expect(await screen.findByLabelText("Nome do cliente")).toBeInTheDocument()
   })
 
-  it("concluir-recarrega (AGD2-05): Concluir chama concluirAgenda2Item uma vez e recarrega", async () => {
+  it("concluir-recarrega (AGD2-05): Concluir no cartão abre a janela; Concluir na janela chama concluirAgenda2Item(id, '') uma vez e recarrega", async () => {
     mockedGet.mockResolvedValueOnce({
-      data: [buildItem({ nomeCliente: "Padaria Central" })],
+      data: [buildItem({ id: "item-padaria", nomeCliente: "Padaria Central" })],
     })
     mockedConcluir.mockResolvedValueOnce({ data: true })
     mockedGet.mockResolvedValueOnce({ data: [] })
@@ -279,12 +279,59 @@ describe("Agenda2List", () => {
     await screen.findByText("Padaria Central")
     fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
 
+    const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).getByText("Concluir visita")).toBeInTheDocument()
+    expect(mockedConcluir).not.toHaveBeenCalled()
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Concluir" }))
+
     await vi.waitFor(() => {
       expect(mockedConcluir).toHaveBeenCalledTimes(1)
     })
+    expect(mockedConcluir).toHaveBeenCalledWith("item-padaria", "")
     await vi.waitFor(() => {
       expect(mockedGet).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it("concluir-com-resultado: digitar 'O que foi feito' na janela e confirmar chama concluirAgenda2Item(id, texto)", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: [buildItem({ id: "item-resultado", nomeCliente: "Padaria Resultado" })],
+    })
+    mockedConcluir.mockResolvedValueOnce({ data: true })
+    mockedGet.mockResolvedValueOnce({ data: [] })
+
+    renderList()
+
+    await screen.findByText("Padaria Resultado")
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+
+    const dialog = await screen.findByRole("dialog")
+    fireEvent.change(within(dialog).getByLabelText("O que foi feito"), {
+      target: { value: "Pedido fechado" },
+    })
+    fireEvent.click(within(dialog).getByRole("button", { name: "Concluir" }))
+
+    await vi.waitFor(() => {
+      expect(mockedConcluir).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedConcluir).toHaveBeenCalledWith("item-resultado", "Pedido fechado")
+  })
+
+  it("concluir-cancelar: Cancelar na janela não chama a ação", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: [buildItem({ nomeCliente: "Padaria Cancelar" })],
+    })
+
+    renderList()
+
+    await screen.findByText("Padaria Cancelar")
+    fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
+
+    const dialog = await screen.findByRole("dialog")
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }))
+
+    expect(mockedConcluir).not.toHaveBeenCalled()
   })
 
   it("desmarcar-recarrega (D-05): em concluído de hoje, Desmarcar chama desmarcarAgenda2Item e recarrega", async () => {
@@ -379,7 +426,10 @@ describe("Agenda2List", () => {
     await screen.findByText("Padaria Falha")
     fireEvent.click(screen.getByRole("button", { name: "Concluir" }))
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
+    const dialog = await screen.findByRole("dialog")
+    fireEvent.click(within(dialog).getByRole("button", { name: "Concluir" }))
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
       "Não foi possível salvar. Tente novamente."
     )
   })

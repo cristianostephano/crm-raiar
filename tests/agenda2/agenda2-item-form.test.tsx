@@ -168,6 +168,7 @@ describe("Agenda2ItemForm (AGD2-01/03, D-06/D-07/D-09)", () => {
       bairro: "Centro",
       data: hoje,
       repetirSemanas: 0,
+      oQueFazer: null,
     })
     await vi.waitFor(() => {
       expect(onSalvo).toHaveBeenCalledTimes(1)
@@ -269,6 +270,8 @@ describe("Agenda2ItemForm (AGD2-01/03, D-06/D-07/D-09)", () => {
       nomeCliente: "Padaria Central",
       bairro: "Vila Nova",
       data: "2026-10-05",
+      oQueFazer: null,
+      oQueFoiFeito: null,
     })
   })
 
@@ -461,6 +464,7 @@ describe("Agenda2ItemForm — campo Repetir (AGD2-02, D-23/D-24/D-25/D-31)", () 
       bairro: "Centro",
       data: "2026-10-07",
       repetirSemanas: 4,
+      oQueFazer: null,
     })
   })
 
@@ -493,10 +497,11 @@ describe("Agenda2ItemForm — campo Repetir (AGD2-02, D-23/D-24/D-25/D-31)", () 
       bairro: "Centro",
       data: "2026-10-05",
       repetirSemanas: 0,
+      oQueFazer: null,
     })
   })
 
-  it("editar-nunca-repete (D-24): editar envia exatamente nome, bairro e data e nunca cria", async () => {
+  it("editar-nunca-repete (D-24): editar envia exatamente nome, bairro, data e os dois textos, e nunca cria", async () => {
     mockedAtualizar.mockResolvedValueOnce({ data: true })
     const item = buildItem({ concluido: true })
     renderForm({ modo: "editar", item, itensExistentes: [] })
@@ -510,11 +515,15 @@ describe("Agenda2ItemForm — campo Repetir (AGD2-02, D-23/D-24/D-25/D-31)", () 
       nomeCliente: "Padaria Central",
       bairro: "Vila Nova",
       data: "2026-10-05",
+      oQueFazer: null,
+      oQueFoiFeito: null,
     })
     expect(Object.keys(mockedAtualizar.mock.calls[0][1])).toEqual([
       "nomeCliente",
       "bairro",
       "data",
+      "oQueFazer",
+      "oQueFoiFeito",
     ])
     expect(mockedCriar).not.toHaveBeenCalled()
   })
@@ -564,6 +573,7 @@ describe("Agenda2ItemForm — duplicado só na data original e recarga em falha 
       bairro: "Centro",
       data: "2026-10-07",
       repetirSemanas: 4,
+      oQueFazer: null,
     })
   })
 
@@ -675,5 +685,165 @@ describe("Agenda2ItemForm — duplicado só na data original e recarga em falha 
 
     expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_ERROR)
     expect(onRecarregar).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * Quick 261006-ncy — os dois textos opcionais da visita ("Motivo da visita" e
+ * "O que foi feito"). Rótulos exatos; nenhuma dica nem aviso sobre números ou
+ * dados pessoais nesses campos (decisão do dono de 2026-10-06).
+ */
+describe("Agenda2ItemForm — textos opcionais da visita (quick 261006-ncy)", () => {
+  beforeEach(() => {
+    mockedCriar.mockReset()
+    mockedAtualizar.mockReset()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-07T15:00:00Z"))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("criar-so-o-motivo: tem 'Motivo da visita' e NÃO tem 'O que foi feito'", () => {
+    renderForm()
+
+    expect(screen.getByLabelText("Motivo da visita")).toHaveValue("")
+    expect(screen.queryByLabelText("O que foi feito")).not.toBeInTheDocument()
+    expect(screen.queryByText("O que foi feito")).not.toBeInTheDocument()
+  })
+
+  it("criar-sem-texto: enviar sem o motivo manda oQueFazer null", async () => {
+    mockedCriar.mockResolvedValueOnce({ data: true })
+    renderForm()
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    await vi.waitFor(() => {
+      expect(mockedCriar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedCriar).toHaveBeenCalledWith({
+      nomeCliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-10-07",
+      repetirSemanas: 0,
+      oQueFazer: null,
+    })
+  })
+
+  it("criar-com-motivo-e-repeticao: o motivo vai junto com repetirSemanas", async () => {
+    mockedCriar.mockResolvedValueOnce({ data: true })
+    renderForm()
+
+    preencherNomeEBairro()
+    fireEvent.change(screen.getByLabelText("Motivo da visita"), {
+      target: { value: "Levar catálogo" },
+    })
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    await escolherRepeticao(ROTULO_4)
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    await vi.waitFor(() => {
+      expect(mockedCriar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedCriar).toHaveBeenCalledWith({
+      nomeCliente: "Mercado Bom Preço",
+      bairro: "Centro",
+      data: "2026-10-07",
+      repetirSemanas: 4,
+      oQueFazer: "Levar catálogo",
+    })
+  })
+
+  it("editar-mostra-os-dois-preenchidos: as duas caixas abrem com o texto salvo e o payload leva as 5 chaves", async () => {
+    mockedAtualizar.mockResolvedValueOnce({ data: true })
+    const item = buildItem({
+      concluido: false,
+      oQueFazer: "Levar amostras",
+      oQueFoiFeito: "Pedido combinado",
+    })
+    renderForm({ modo: "editar", item, itensExistentes: [] })
+
+    expect(screen.getByLabelText("Motivo da visita")).toHaveValue("Levar amostras")
+    expect(screen.getByLabelText("O que foi feito")).toHaveValue("Pedido combinado")
+
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }))
+
+    await vi.waitFor(() => {
+      expect(mockedAtualizar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedAtualizar).toHaveBeenCalledWith("i1", {
+      nomeCliente: "Padaria Central",
+      bairro: "Vila Nova",
+      data: "2026-10-05",
+      oQueFazer: "Levar amostras",
+      oQueFoiFeito: "Pedido combinado",
+    })
+  })
+
+  it("editar-apagar-o-texto: esvaziar uma caixa manda null", async () => {
+    mockedAtualizar.mockResolvedValueOnce({ data: true })
+    const item = buildItem({
+      concluido: false,
+      oQueFazer: "Levar amostras",
+      oQueFoiFeito: "Pedido combinado",
+    })
+    renderForm({ modo: "editar", item, itensExistentes: [] })
+
+    fireEvent.change(screen.getByLabelText("O que foi feito"), {
+      target: { value: "" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }))
+
+    await vi.waitFor(() => {
+      expect(mockedAtualizar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedAtualizar).toHaveBeenCalledWith(
+      "i1",
+      expect.objectContaining({
+        oQueFazer: "Levar amostras",
+        oQueFoiFeito: null,
+      })
+    )
+  })
+
+  it("limite: 501 caracteres em 'Motivo da visita' mostra o aviso e não chama a ação", async () => {
+    renderForm()
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    // A caixa tem maxLength; o teste força o valor direto para provar a regra do schema.
+    const caixa = screen.getByLabelText("Motivo da visita")
+    caixa.removeAttribute("maxlength")
+    fireEvent.change(caixa, { target: { value: "a".repeat(501) } })
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    expect(
+      await screen.findByText("Use no máximo 500 caracteres.")
+    ).toBeInTheDocument()
+    expect(mockedCriar).not.toHaveBeenCalled()
+  })
+
+  it("sem-aviso-de-numeros (D-04): 11 dígitos seguidos em 'Motivo da visita' enviam e nada na tela fala de números", async () => {
+    mockedCriar.mockResolvedValueOnce({ data: true })
+    renderForm()
+
+    preencherNomeEBairro()
+    selecionarDataNoCalendario("Selecionar data", HOJE_FIXO)
+    const onzeDigitos = "7".repeat(11)
+    fireEvent.change(screen.getByLabelText("Motivo da visita"), {
+      target: { value: `Ligar depois ${onzeDigitos}` },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar visita" }))
+
+    await vi.waitFor(() => {
+      expect(mockedCriar).toHaveBeenCalledTimes(1)
+    })
+    expect(mockedCriar).toHaveBeenCalledWith(
+      expect.objectContaining({ oQueFazer: `Ligar depois ${onzeDigitos}` })
+    )
+    expect(screen.queryByText(/n[úu]mero/i)).not.toBeInTheDocument()
   })
 })

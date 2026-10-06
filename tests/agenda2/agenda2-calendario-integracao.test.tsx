@@ -254,8 +254,16 @@ describe("Agenda2List + Agenda2Calendario (integração, plano 32-07)", () => {
     const dialogo = await abrirDia("14 de agosto")
     fireEvent.click(within(dialogo).getByRole("button", { name: "Concluir" }))
 
+    // O diálogo do dia fecha e abre a janela "Concluir visita" (P-04).
+    const janela = await screen.findByText("Concluir visita")
+    expect(janela).toBeInTheDocument()
+    expect(mockedConcluir).not.toHaveBeenCalled()
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Concluir" })
+    )
+
     await waitFor(() => expect(mockedConcluir).toHaveBeenCalledTimes(1))
-    expect(mockedConcluir).toHaveBeenCalledWith(expect.stringMatching(/^item-/))
+    expect(mockedConcluir).toHaveBeenCalledWith(expect.stringMatching(/^item-/), "")
     await waitFor(() => expect(mockedGet).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(mockedPeriodo).toHaveBeenCalledTimes(2))
   })
