@@ -43,6 +43,11 @@ import { cn } from "@/lib/utils"
  * 3. O cartão não é clicável (sem `role="button"`/`tabIndex`): não existe
  *    ficha de cliente para abrir — `nomeCliente` é texto livre, não uma
  *    referência a `clientes`.
+ *
+ * Quick 261006-ncy: mostra, discretos e com no máximo 3 linhas, os dois
+ * textos livres opcionais ("Motivo da visita:" e "O que foi feito:") quando
+ * existem — nunca uma linha vazia. O Supervisor lê os textos e não ganha
+ * nenhum botão novo.
  */
 export function Agenda2ItemRow({
   item,
@@ -121,6 +126,28 @@ export function Agenda2ItemRow({
         {showResponsavel && item.responsavelNome ? (
           <p className="truncate text-sm text-muted-foreground">
             {item.responsavelNome}
+          </p>
+        ) : null}
+        {/* Textos livres opcionais (quick 261006-ncy): só aparecem quando
+         * existem — nenhum elemento vazio. Sempre renderizados como texto
+         * React (nunca HTML cru). O Supervisor também os lê (podeAlterar não
+         * interfere aqui). */}
+        {item.oQueFazer ? (
+          <p
+            data-slot="agenda2-o-que-fazer"
+            className="line-clamp-3 text-sm break-words whitespace-pre-line text-muted-foreground"
+          >
+            <span className="font-medium">Motivo da visita:</span>{" "}
+            {item.oQueFazer}
+          </p>
+        ) : null}
+        {item.oQueFoiFeito ? (
+          <p
+            data-slot="agenda2-o-que-foi-feito"
+            className="line-clamp-3 text-sm break-words whitespace-pre-line text-muted-foreground"
+          >
+            <span className="font-medium">O que foi feito:</span>{" "}
+            {item.oQueFoiFeito}
           </p>
         ) : null}
         {podeAlterar ? (

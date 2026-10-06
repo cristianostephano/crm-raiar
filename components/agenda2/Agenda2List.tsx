@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/agenda2"
 import { Agenda2ApagarDialog } from "@/components/agenda2/Agenda2ApagarDialog"
 import { Agenda2Calendario } from "@/components/agenda2/Agenda2Calendario"
+import { Agenda2ConcluirDialog } from "@/components/agenda2/Agenda2ConcluirDialog"
 import { Agenda2ItemForm } from "@/components/agenda2/Agenda2ItemForm"
 import { Agenda2ItemRow } from "@/components/agenda2/Agenda2ItemRow"
 import { Button } from "@/components/ui/button"
@@ -73,6 +74,12 @@ type FetchState =
  * filtro de vendedor — o calendário só recebe os handlers e o `reloadKey`, e
  * qualquer ação, de qualquer visão, recarrega as duas.
  *
+ * Quick 261006-ncy: todo "Concluir" (cartão da Lista, visão Dia e diálogo do dia
+ * do calendário) abre a janela pequena `Agenda2ConcluirDialog` ("Concluir
+ * visita", com "O que foi feito" opcional); só ela chama
+ * `concluirAgenda2Item(id, texto)`. "Desmarcar" continua direto e não apaga
+ * nenhum texto.
+ *
  * Mesmo esqueleto de leitura de AgendaList: `FetchState` em união
  * discriminada, `useEffect` com `setState` síncrono no corpo, guarda
  * `cancelled`, `reloadKey` bumpado por "Tentar novamente" e por qualquer ação
@@ -104,6 +111,8 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
   const [formItem, setFormItem] = useState<Agenda2Item | null>(null)
   const [apagarItem, setApagarItem] = useState<Agenda2Item | null>(null)
   const [apagarAberto, setApagarAberto] = useState(false)
+  const [concluirItem, setConcluirItem] = useState<Agenda2Item | null>(null)
+  const [concluirAberto, setConcluirAberto] = useState(false)
   const [salvandoId, setSalvandoId] = useState<string | null>(null)
   const [erroAcao, setErroAcao] = useState<string | null>(null)
 
@@ -175,18 +184,26 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
     setApagarAberto(true)
   }
 
-  async function handleConcluir(id: string) {
+  function handleAbrirConcluir(item: Agenda2Item) {
+    setConcluirItem(item)
+    setConcluirAberto(true)
+  }
+
+  // Contrato de `Agenda2ConcluirDialog.onConfirmar`: Promise<boolean> (true =
+  // concluiu; false = falhou) — a janela mostra o erro genérico sozinha
+  // quando devolvemos false, não precisamos setar `erroAcao` aqui.
+  async function handleConfirmarConcluir(resultado: string): Promise<boolean> {
+    if (!concluirItem) return false
+    const id = concluirItem.id
     setSalvandoId(id)
     setErroAcao(null)
     try {
-      const result = await concluirAgenda2Item(id)
-      if (result.error) {
-        setErroAcao(MSG_SALVAR_FALHOU)
-        return
-      }
+      const result = await concluirAgenda2Item(id, resultado)
+      if (result.error) return false
       handleRecarregar()
+      return true
     } catch {
-      setErroAcao(MSG_SALVAR_FALHOU)
+      return false
     } finally {
       setSalvandoId(null)
     }
@@ -286,7 +303,7 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
         salvandoId={salvandoId}
         onEditar={handleEditar}
         onApagar={handleAbrirApagar}
-        onConcluir={(item) => handleConcluir(item.id)}
+        onConcluir={handleAbrirConcluir}
         onDesmarcar={(item) => handleDesmarcar(item.id)}
       />
 
@@ -360,7 +377,7 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
                       salvando={salvandoId === item.id}
                       onEditar={() => handleEditar(item)}
                       onApagar={() => handleAbrirApagar(item)}
-                      onConcluir={() => handleConcluir(item.id)}
+                      onConcluir={() => handleAbrirConcluir(item)}
                       onDesmarcar={() => handleDesmarcar(item.id)}
                     />
                   ))}
@@ -371,7 +388,7 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
         </div>
       )}
 
-      {/* D-16: o formulário e a confirmação de apagar nem são renderizados
+      {/* D-16: o formulário e as janelas de apagar/concluir nem são renderizados
           para o Supervisor — a RLS já barra a escrita de qualquer forma
           (31-03), isto é só o reflexo visual de "somente leitura". */}
       {!isSupervisor ? (
@@ -390,6 +407,12 @@ export function Agenda2List({ isSupervisor }: { isSupervisor: boolean }) {
             onOpenChange={setApagarAberto}
             item={apagarItem}
             onConfirmar={handleConfirmarApagar}
+          />
+          <Agenda2ConcluirDialog
+            open={concluirAberto}
+            onOpenChange={setConcluirAberto}
+            item={concluirItem}
+            onConfirmar={handleConfirmarConcluir}
           />
         </>
       ) : null}

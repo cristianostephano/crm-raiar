@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { diaLocalSaoPaulo } from "@/lib/aderencia/registroDiario"
 import { existeItemParecido, type Agenda2Item } from "@/lib/agenda2/itens"
 import {
@@ -48,6 +49,7 @@ import {
   AGENDA2_BAIRRO_MAX,
   AGENDA2_MSG_REPETIR_PASSADO,
   AGENDA2_NOME_MAX,
+  AGENDA2_TEXTO_VISITA_MAX,
   criarAgenda2CriarSchema,
   type Agenda2CriarItemInput,
 } from "@/lib/validations/agenda2"
@@ -80,6 +82,17 @@ import {
  * - Se a CRIAÇÃO falhar, o formulário segue aberto e `onRecarregar` pede à
  *   tela que recarregue a lista: se o banco gravou o lote apesar do erro, o
  *   aviso de duplicado pega o reenvio em vez de criar 2xN visitas (Pitfall 8).
+ *
+ * Quick 261006-ncy (dois textos livres OPCIONAIS):
+ * - "Motivo da visita" aparece ao criar e ao editar; o servidor copia esse
+ *   texto para TODAS as visitas de uma repetição.
+ * - "O que foi feito" aparece SÓ ao editar (ao criar, o resultado ainda não
+ *   existe; ao concluir, quem pergunta é a janela "Concluir visita").
+ * - O payload de editar leva sempre os dois textos (vazio vira null), nesta
+ *   ordem: nome, bairro, data, oQueFazer, oQueFoiFeito.
+ * - Por decisão do dono (2026-10-06), nenhuma dica nem aviso sobre números ou
+ *   dados pessoais nesses dois campos (a dica do nome continua igual).
+ * - A janela tem altura máxima com rolagem, para caber em tela de celular.
  */
 export function Agenda2ItemForm({
   open,
@@ -101,7 +114,7 @@ export function Agenda2ItemForm({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>
             {modo === "criar" ? "Adicionar visita" : "Editar item"}
@@ -183,11 +196,24 @@ function Agenda2ItemFields({
   const schema = useMemo(() => criarAgenda2CriarSchema(hoje), [hoje])
 
   // Criar: "Não repetir" por padrão (privacidade por padrão — nenhuma agenda
-  // futura nasce sem o vendedor pedir). Editar: só os três campos do item.
+  // futura nasce sem o vendedor pedir). Editar: os campos do item, inclusive
+  // os dois textos opcionais já salvos.
   const defaultValues: Agenda2CriarItemInput =
     modo === "editar" && item
-      ? { nomeCliente: item.nomeCliente, bairro: item.bairro, data: item.data }
-      : { nomeCliente: "", bairro: "", data: "", repetirSemanas: 0 }
+      ? {
+          nomeCliente: item.nomeCliente,
+          bairro: item.bairro,
+          data: item.data,
+          oQueFazer: item.oQueFazer ?? "",
+          oQueFoiFeito: item.oQueFoiFeito ?? "",
+        }
+      : {
+          nomeCliente: "",
+          bairro: "",
+          data: "",
+          repetirSemanas: 0,
+          oQueFazer: "",
+        }
 
   // UM resolver para os dois modos. Em edição o campo Repetir nunca é
   // renderizado, então `repetirSemanas` fica indefinido e o refinamento não
@@ -224,12 +250,16 @@ function Agenda2ItemFields({
               bairro: values.bairro,
               data: values.data,
               repetirSemanas: values.repetirSemanas ?? 0,
+              oQueFazer: values.oQueFazer || null,
             })
-          : // D-24: edição NUNCA leva repetição — três campos explícitos.
+          : // D-24: edição NUNCA leva repetição — campos explícitos (os dois
+            // textos sempre vão; vazio vira null).
             await atualizarAgenda2Item((item as Agenda2Item).id, {
               nomeCliente: values.nomeCliente,
               bairro: values.bairro,
               data: values.data,
+              oQueFazer: values.oQueFazer || null,
+              oQueFoiFeito: values.oQueFoiFeito || null,
             })
 
       if (result.error) {
@@ -371,6 +401,48 @@ function Agenda2ItemFields({
                       ? AGENDA2_MSG_REPETIR_PASSADO
                       : REPETIR_DICA_ATIVA}
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
+
+        <FormField
+          control={form.control}
+          name="oQueFazer"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Motivo da visita</FormLabel>
+              <FormControl>
+                <Textarea
+                  rows={3}
+                  autoComplete="off"
+                  maxLength={AGENDA2_TEXTO_VISITA_MAX}
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {modo === "editar" ? (
+          <FormField
+            control={form.control}
+            name="oQueFoiFeito"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>O que foi feito</FormLabel>
+                <FormControl>
+                  <Textarea
+                    rows={3}
+                    autoComplete="off"
+                    maxLength={AGENDA2_TEXTO_VISITA_MAX}
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

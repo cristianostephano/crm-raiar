@@ -173,11 +173,12 @@ export function Agenda2Calendario({
     setReferencia(now)
   }
 
-  // Editar/Apagar PRIMEIRO fecham o diálogo do dia e só então chamam a tela:
-  // o formulário e a confirmação de apagar moram na tela (montados uma vez) e
-  // não podem ficar empilhados sobre outro diálogo modal. Concluir/Desmarcar
-  // são repassados direto — o diálogo continua aberto e a linha se atualiza
-  // quando a recarga (`reloadKey`) chega, sem piscar.
+  // Editar/Apagar/Concluir PRIMEIRO fecham o diálogo do dia e só então chamam
+  // a tela: o formulário, a confirmação de apagar e a janela "Concluir visita"
+  // moram na tela (montados uma vez) e não podem ficar empilhados sobre outro
+  // diálogo modal. Desmarcar é repassado direto — age ali mesmo, o diálogo
+  // continua aberto e a linha se atualiza quando a recarga (`reloadKey`)
+  // chega, sem piscar.
   function handleEditarDoDialogo(item: Agenda2Item) {
     setDiaDialogo(null)
     onEditar(item)
@@ -186,6 +187,11 @@ export function Agenda2Calendario({
   function handleApagarDoDialogo(item: Agenda2Item) {
     setDiaDialogo(null)
     onApagar(item)
+  }
+
+  function handleConcluirDoDialogo(item: Agenda2Item) {
+    setDiaDialogo(null)
+    onConcluir(item)
   }
 
   function renderCorpo() {
@@ -288,7 +294,7 @@ export function Agenda2Calendario({
               salvandoId={salvandoId}
               onEditar={handleEditarDoDialogo}
               onApagar={handleApagarDoDialogo}
-              onConcluir={onConcluir}
+              onConcluir={handleConcluirDoDialogo}
               onDesmarcar={onDesmarcar}
               now={now}
             />
