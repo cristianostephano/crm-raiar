@@ -281,7 +281,9 @@ export function Agenda2Calendario({
             if (!open) setDiaDialogo(null)
           }}
         >
-          <DialogContent>
+          {/* Rolagem própria: com os textos da visita os cartões ficam altos e o
+              diálogo passava da tela sem dar para rolar. */}
+          <DialogContent className="max-h-[90dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{rotuloDoPeriodo(diaDialogo, "dia")}</DialogTitle>
             </DialogHeader>

@@ -349,6 +349,15 @@ describe("Agenda2Calendario — diálogo do dia e ações do dono", () => {
     expect(within(dialogo).getByText("Cliente do dia 12")).toBeInTheDocument()
   })
 
+  it("dialogo-pelo-mes: o diálogo do dia rola quando o conteúdo é alto", async () => {
+    renderCalendario({ visao: "mes" })
+
+    const dialogo = await abrirDiaPeloMes()
+
+    expect(dialogo.className).toContain("overflow-y-auto")
+    expect(dialogo.className).toContain("max-h-[90dvh]")
+  })
+
   it("dialogo-pelo-mes: dia sem itens mostra a mensagem de dia vazio", async () => {
     renderCalendario({ visao: "mes" })
 
