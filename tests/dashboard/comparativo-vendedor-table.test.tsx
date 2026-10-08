@@ -227,15 +227,16 @@ describe("ComparativoVendedorTable", () => {
     expect(cells[5].textContent).toContain("17 de 20 dias úteis")
   })
 
-  it("aderencia-coletando: mostra 'Coletando dados desde DD/MM/AAAA' e não mostra percentual", async () => {
+  // Quick 261008-mrf: durante a coleta, com dias úteis contados, a célula mostra o percentual parcial.
+  it("aderencia-parcial: mostra '90,0% (parcial)' e '9 de 10 dias úteis desde 28/09' e não mostra o aviso de coleta", async () => {
     mockedAction.mockResolvedValueOnce({
       data: [
         buildRow({
           aderencia: aderencia({
-            aderenciaPct: 40,
-            diasUsados: 8,
-            diasUteis: 20,
-            coletandoDesde: "2026-09-27",
+            aderenciaPct: 90,
+            diasUsados: 9,
+            diasUteis: 10,
+            coletandoDesde: "2026-09-28",
           }),
         }),
       ],
@@ -246,7 +247,31 @@ describe("ComparativoVendedorTable", () => {
     const table = await screen.findByRole("table")
     const rows = within(table).getAllByRole("row").slice(1)
     const cells = within(rows[0]).getAllByRole("cell")
-    expect(cells[5].textContent).toContain("Coletando dados desde 27/09/2026")
+    expect(cells[5].textContent).toContain("90,0% (parcial)")
+    expect(cells[5].textContent).toContain("9 de 10 dias úteis desde 28/09")
+    expect(cells[5].textContent).not.toContain("Coletando")
+  })
+
+  it("aderencia-coletando-sem-dias-uteis: sem dia útil contado mostra 'Coletando dados desde DD/MM/AAAA' e nenhum percentual", async () => {
+    mockedAction.mockResolvedValueOnce({
+      data: [
+        buildRow({
+          aderencia: aderencia({
+            aderenciaPct: null,
+            diasUsados: 0,
+            diasUteis: 0,
+            coletandoDesde: "2026-09-28",
+          }),
+        }),
+      ],
+    })
+
+    renderTable()
+
+    const table = await screen.findByRole("table")
+    const rows = within(table).getAllByRole("row").slice(1)
+    const cells = within(rows[0]).getAllByRole("cell")
+    expect(cells[5].textContent).toContain("Coletando dados desde 28/09/2026")
     expect(cells[5].textContent).not.toContain("%")
   })
 
