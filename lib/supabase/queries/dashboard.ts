@@ -280,14 +280,19 @@ export type AderenciaUsoRow = {
   // Já em pontos percentuais (0 a 100) — nulo quando diasUteis é zero
   // (dashboard_aderencia_uso() decide isso no banco, nunca aqui).
   aderenciaPct: number | null
-  // "AAAA-MM-DD" ou nulo. Preenchido = mostrar o aviso "Coletando dados
-  // desde" (D-09) em vez do percentual; quem decide é o Postgres.
+  // "AAAA-MM-DD" ou nulo; quem decide é o Postgres. Preenchido durante a
+  // coleta (medição com menos de 28 dias). Com diasUteis maior que zero,
+  // diasUteis/diasUsados/aderenciaPct já vêm PARCIAIS, contados desde esta
+  // data (primeiro dia útil contado do vendedor, migration 0052). Preenchido
+  // com diasUteis zero = só o aviso "Coletando dados desde". Nulo = janela
+  // de 28 dias cheia (números completos).
   coletandoDesde: string | null
 }
 
 /**
  * ADER-01..03: leitura agregada, read-only, de dashboard_aderencia_uso()
- * (migration 0040, plano 30-02). Nenhuma checagem de papel aqui — a função
+ * (migration 0040, plano 30-02; conta parcial durante a coleta na migration
+ * 0052, quick 261008-mrf). Nenhuma checagem de papel aqui — a função
  * do banco já devolve zero linhas para quem não é Supervisor (D-08); esta
  * função roda como o chamador, sem elevação de privilégio, no mesmo molde
  * das demais leituras deste arquivo. dashboard_comparativo_vendedor() e

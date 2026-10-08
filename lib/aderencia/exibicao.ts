@@ -15,7 +15,8 @@ import type {
  *
  * Quem decide se a janela de 28 dias ainda está "coletando dados" é o
  * Postgres (coluna `coletando_desde`, dashboard_aderencia_uso() no plano
- * 30-02) — este módulo nunca calcula datas por conta própria; datas vindas
+ * 30-02; números parciais desde a migration 0052, quick 261008-mrf) — este
+ * módulo nunca calcula datas por conta própria; datas vindas
  * do banco são sempre lidas com `parseISO`, nunca com o construtor nativo de
  * Date (convenção do projeto — fuso incorreto).
  *
@@ -36,7 +37,7 @@ export type RotuloAderencia = {
 }
 
 export const TEXTO_TOOLTIP_ADERENCIA =
-  "Dias úteis (segunda a sexta) com uso do sistema nos últimos 28 dias — entrar no sistema, mover etapa, concluir tarefa ou visita, ou cadastrar ou editar cliente."
+  "Dias úteis (segunda a sexta) com uso do sistema nos últimos 28 dias — entrar no sistema, mover etapa, concluir tarefa ou visita, ou cadastrar ou editar cliente. Enquanto a medição ainda não tem 28 dias, o número aparece como (parcial) e conta só os dias úteis desde o início da medição — ou desde a entrada do vendedor no time, se for mais recente."
 
 const percentFormatter = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 1,
@@ -49,21 +50,45 @@ const TRAVESSAO: RotuloAderencia = {
   coletando: false,
 }
 
+/** "dia útil" no singular quando há exatamente 1, senão "dias úteis". */
+function unidadeDiasUteis(diasUteis: number): string {
+  return diasUteis === 1 ? "dia útil" : "dias úteis"
+}
+
 /**
- * Decide o que a célula de aderência mostra para um vendedor (D-09):
+ * Decide o que a célula de aderência mostra para um vendedor (D-09; quick
+ * 261008-mrf). Quem decide se o número é parcial é o banco (migration 0052):
+ * enquanto a medição tem menos de 28 dias, `coletandoDesde` vem preenchido e
+ * os números já vêm PARCIAIS (só dias úteis desde essa data); este módulo
+ * continua sem calcular data nenhuma.
  * - `null` (sem linha de aderência, ex: falha tolerada na ação) → travessão.
- * - `coletandoDesde` preenchido → aviso "Coletando dados desde DD/MM/AAAA",
- *   sem detalhe — vale tanto para janela ainda incompleta quanto para
- *   denominador zero (D-09 travado em conflitos_resolvidos item 9); vence
- *   sobre qualquer percentual eventualmente presente na mesma linha.
+ * - PARCIAL: `coletandoDesde` preenchido, `aderenciaPct` não nulo e
+ *   `diasUteis` maior que zero → "NN,N% (parcial)" com o detalhe
+ *   "N de M dias úteis desde dd/MM".
+ * - `coletandoDesde` preenchido sem dias úteis contados (denominador zero) →
+ *   aviso "Coletando dados desde DD/MM/AAAA", sem detalhe.
  * - `aderenciaPct` nulo (defensivo, sem coletandoDesde) → travessão.
- * - senão → percentual formatado em pt-BR (1 casa) + "%", com o detalhe
- *   "N de M dias úteis" (singular quando diasUteis é 1).
+ * - senão (janela de 28 dias cheia) → percentual formatado em pt-BR (1 casa)
+ *   + "%", com o detalhe "N de M dias úteis" (singular quando diasUteis é 1).
  */
 export function rotuloAderencia(
   aderencia: AderenciaUsoRow | null
 ): RotuloAderencia {
   if (aderencia === null) return TRAVESSAO
+
+  if (
+    aderencia.coletandoDesde !== null &&
+    aderencia.aderenciaPct !== null &&
+    aderencia.diasUteis > 0
+  ) {
+    return {
+      principal: `${percentFormatter.format(aderencia.aderenciaPct)}% (parcial)`,
+      detalhe: `${aderencia.diasUsados} de ${aderencia.diasUteis} ${unidadeDiasUteis(
+        aderencia.diasUteis
+      )} desde ${format(parseISO(aderencia.coletandoDesde), "dd/MM")}`,
+      coletando: false,
+    }
+  }
 
   if (aderencia.coletandoDesde !== null) {
     return {
@@ -78,11 +103,11 @@ export function rotuloAderencia(
 
   if (aderencia.aderenciaPct === null) return TRAVESSAO
 
-  const unidade = aderencia.diasUteis === 1 ? "dia útil" : "dias úteis"
-
   return {
     principal: `${percentFormatter.format(aderencia.aderenciaPct)}%`,
-    detalhe: `${aderencia.diasUsados} de ${aderencia.diasUteis} ${unidade}`,
+    detalhe: `${aderencia.diasUsados} de ${aderencia.diasUteis} ${unidadeDiasUteis(
+      aderencia.diasUteis
+    )}`,
     coletando: false,
   }
 }
