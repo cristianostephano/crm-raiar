@@ -34,6 +34,14 @@ import {
  * migrations 0038/0039/0040 no projeto hospedado. Durante a execução, as
  * linhas de fixture podem, por alguns segundos, antecipar o fim da coleta
  * no painel real — aceitável, e desfeito na limpeza (afterAll).
+ *
+ * Quick 261008-mrf (2026-10-08): a migration 0052 corta o calendário no
+ * início da medição; os números deste arquivo não mudam; só o
+ * coletando_desde de V3 e V6 no ramo de medição recente passa a ser o
+ * primeiro dia útil desde a própria entrada/reativação. ATENÇÃO: este
+ * arquivo grava acessos com data anterior ao início real da medição no
+ * banco de produção (muda o início da medição do time enquanto as linhas
+ * existirem) — não rodar sem decisão do dono.
  */
 
 type AderenciaRow = {
@@ -417,14 +425,18 @@ describe("Bloco A — cálculo antes de semear a borda da janela (ADER-01..03)",
     expect(linha!.coletando_desde).not.toBeNull()
   })
 
-  it("coletando-desde-coerente: o aviso de coleta é o mesmo dia (o menor já gravado) para toda fixture quando a medição é recente, e some para quem tem 28 dias completos quando não é", async () => {
+  it("coletando-desde-coerente: com a medição recente, V1/V2/V4/V5/V7 mostram o menor dia gravado e V3/V6 (entrada/reativação há 6 dias) o primeiro dia útil desde a própria entrada; com 28 dias completos o aviso some", async () => {
     const m = await menorDiaGlobal()
     const idsComJanelaCompleta = [v1.id, v2.id, v3.id, v4.id, v6.id, v7.id]
     if (m !== null && m > diaMenos(27)) {
+      // Quick 261008-mrf: V3 (admitido há 6 dias) e V6 (reativado há 6 dias)
+      // passam a mostrar o primeiro dia útil contado desde a própria
+      // entrada/reativação; os demais seguem com o menor dia gravado.
+      const primeiroDiaUtilV3V6 = diaMenos(diasUteisEntre(6, 1)[0])
       for (const id of [...idsComJanelaCompleta, v5.id]) {
         const linha = await linhaDe(id)
         expect(linha).toBeDefined()
-        expect(linha!.coletando_desde).toBe(m)
+        expect(linha!.coletando_desde).toBe(id === v3.id || id === v6.id ? primeiroDiaUtilV3V6 : m)
       }
     } else {
       for (const id of idsComJanelaCompleta) {
