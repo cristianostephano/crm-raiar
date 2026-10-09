@@ -17,8 +17,16 @@ import { createClient } from "@/lib/supabase/server"
  * dashboard_* function is SECURITY INVOKER, so RLS on clientes/historico
  * already scopes every result to the caller automatically (D-07, same
  * principle as getClientesAgrupadosPorEtapa's own "no manual responsavel
- * filter" comment). The list of ATIVO vendedores is also decided only in
- * SQL: this file never filters by `ativo`.
+ * filter" comment). The "ativo" filter of the aggregates is also decided only
+ * in SQL; the only reader here that filters by `ativo` is
+ * getVendedoresAtivosFiltro (the names list of the Dashboard vendor select).
+ *
+ * Optional vendor cut (quick 261009-npp, migration 0054): six readers accept
+ * an optional `vendedorId` as the LAST parameter. The cut is decided in SQL
+ * and only NARROWS the result - RLS stays the only boundary. With no vendedor
+ * ("Todos") the rpc call is exactly the one made before 0054 (no second
+ * argument / only { p_inicio, p_fim }); with a vendedor only `p_vendedor` is
+ * added. Desempenho, comparativo and aderencia are NOT cut.
  */
 
 // Postgres `bigint` columns come back from PostgREST as strings (to avoid
@@ -27,10 +35,30 @@ import { createClient } from "@/lib/supabase/server"
 
 export type ClientesPorEtapaRow = { etapa: EtapaKey; total: number }
 
-/** DSH-01/DSH-08: live snapshot, no period parameters. */
-export async function getClientesPorEtapa(): Promise<ClientesPorEtapaRow[]> {
+/** Arguments of the 3 readers without period: nothing when there is no vendedor. */
+function argsSemPeriodo(vendedorId: string | null): { p_vendedor: string } | undefined {
+  return vendedorId ? { p_vendedor: vendedorId } : undefined
+}
+
+/** Arguments of the 3 readers with period: p_vendedor only when chosen. */
+function argsComPeriodo(
+  inicio: Date,
+  fim: Date,
+  vendedorId: string | null
+): { p_inicio: string; p_fim: string; p_vendedor?: string } {
+  const base = { p_inicio: inicio.toISOString(), p_fim: fim.toISOString() }
+  return vendedorId ? { ...base, p_vendedor: vendedorId } : base
+}
+
+/** DSH-01/DSH-08: live snapshot, no period parameters; optional vendor cut. */
+export async function getClientesPorEtapa(
+  vendedorId: string | null = null
+): Promise<ClientesPorEtapaRow[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc("dashboard_clientes_por_etapa")
+  const args = argsSemPeriodo(vendedorId)
+  const { data, error } = args
+    ? await supabase.rpc("dashboard_clientes_por_etapa", args)
+    : await supabase.rpc("dashboard_clientes_por_etapa")
 
   if (error) {
     throw new Error(`Falha ao carregar clientes por etapa: ${error.message}`)
@@ -44,16 +72,17 @@ export async function getClientesPorEtapa(): Promise<ClientesPorEtapaRow[]> {
 
 export type GanhosPerdidosRow = { status: "ganho" | "perdido"; total: number }
 
-/** DSH-02/D-02: period filters by the date of the status-change historico row. */
+/** DSH-02/D-02: period filters by the date of the status-change historico row; optional vendor cut. */
 export async function getGanhosPerdidos(
   inicio: Date,
-  fim: Date
+  fim: Date,
+  vendedorId: string | null = null
 ): Promise<GanhosPerdidosRow[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc("dashboard_ganhos_perdidos", {
-    p_inicio: inicio.toISOString(),
-    p_fim: fim.toISOString(),
-  })
+  const { data, error } = await supabase.rpc(
+    "dashboard_ganhos_perdidos",
+    argsComPeriodo(inicio, fim, vendedorId)
+  )
 
   if (error) {
     throw new Error(`Falha ao carregar ganhos/perdidos: ${error.message}`)
@@ -106,16 +135,17 @@ export async function getDesempenhoVendedor(
 
 export type ProspeccaoRow = { id: string; nome: string; total: number }
 
-/** DSH-05/D-09: filters by clientes.criado_em (cadastro date), grouped by produto. */
+/** DSH-05/D-09: filters by clientes.criado_em (cadastro date), grouped by produto; optional vendor cut. */
 export async function getProspeccaoPorProduto(
   inicio: Date,
-  fim: Date
+  fim: Date,
+  vendedorId: string | null = null
 ): Promise<ProspeccaoRow[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc("dashboard_prospeccao_por_produto", {
-    p_inicio: inicio.toISOString(),
-    p_fim: fim.toISOString(),
-  })
+  const { data, error } = await supabase.rpc(
+    "dashboard_prospeccao_por_produto",
+    argsComPeriodo(inicio, fim, vendedorId)
+  )
 
   if (error) {
     throw new Error(`Falha ao carregar prospecção por produto: ${error.message}`)
@@ -130,18 +160,16 @@ export async function getProspeccaoPorProduto(
   )
 }
 
-/** DSH-05/D-09: filters by clientes.criado_em (cadastro date), grouped by categoria. */
+/** DSH-05/D-09: filters by clientes.criado_em (cadastro date), grouped by categoria; optional vendor cut. */
 export async function getProspeccaoPorCategoria(
   inicio: Date,
-  fim: Date
+  fim: Date,
+  vendedorId: string | null = null
 ): Promise<ProspeccaoRow[]> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc(
     "dashboard_prospeccao_por_categoria",
-    {
-      p_inicio: inicio.toISOString(),
-      p_fim: fim.toISOString(),
-    }
+    argsComPeriodo(inicio, fim, vendedorId)
   )
 
   if (error) {
@@ -172,10 +200,15 @@ export type FunilDetalhadoRow = {
   gargalo: boolean
 }
 
-/** FNL-01: live snapshot of all 7 etapas, no period parameters. */
-export async function getFunilDetalhado(): Promise<FunilDetalhadoRow[]> {
+/** FNL-01: live snapshot of all 7 etapas, no period parameters; optional vendor cut. */
+export async function getFunilDetalhado(
+  vendedorId: string | null = null
+): Promise<FunilDetalhadoRow[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc("dashboard_funil_detalhado")
+  const args = argsSemPeriodo(vendedorId)
+  const { data, error } = args
+    ? await supabase.rpc("dashboard_funil_detalhado", args)
+    : await supabase.rpc("dashboard_funil_detalhado")
 
   if (error) {
     throw new Error(`Falha ao carregar funil detalhado: ${error.message}`)
@@ -210,10 +243,15 @@ export type TempoAteFechamentoRow = {
   mediaDias: number
 }
 
-/** FNL-02: live snapshot (ganho/perdido separated), no period parameters. */
-export async function getTempoAteFechamento(): Promise<TempoAteFechamentoRow[]> {
+/** FNL-02: live snapshot (ganho/perdido separated), no period parameters; optional vendor cut. */
+export async function getTempoAteFechamento(
+  vendedorId: string | null = null
+): Promise<TempoAteFechamentoRow[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc("dashboard_tempo_ate_fechamento")
+  const args = argsSemPeriodo(vendedorId)
+  const { data, error } = args
+    ? await supabase.rpc("dashboard_tempo_ate_fechamento", args)
+    : await supabase.rpc("dashboard_tempo_ate_fechamento")
 
   if (error) {
     throw new Error(`Falha ao carregar tempo até fechamento: ${error.message}`)
@@ -320,6 +358,38 @@ export async function getAderenciaUso(): Promise<AderenciaUsoRow[]> {
       diasUteis: Number(row.dias_uteis),
       aderenciaPct: row.aderencia_pct === null ? null : Number(row.aderencia_pct),
       coletandoDesde: row.coletando_desde,
+    })
+  )
+}
+
+export type VendedorFiltroOpcao = { id: string; nome: string }
+
+/**
+ * Names list of the Dashboard vendor select (quick 261009-npp): only active
+ * vendedores, only id + nome + sobrenome (LGPD data minimization - no e-mail,
+ * no phone). Called only for the Supervisor by the page; throws on error like
+ * the other readers (the page turns a failure into an empty list).
+ */
+export async function getVendedoresAtivosFiltro(): Promise<VendedorFiltroOpcao[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, nome, sobrenome")
+    .eq("role", "vendedor")
+    .eq("ativo", true)
+    .order("nome", { ascending: true })
+
+  if (error) {
+    throw new Error(`Falha ao carregar vendedores: ${error.message}`)
+  }
+
+  return (data ?? []).map(
+    (row: { id: string; nome: string | null; sobrenome: string | null }) => ({
+      id: row.id,
+      nome: [row.nome, row.sobrenome]
+        .map((parte) => (parte ?? "").trim())
+        .filter((parte) => parte !== "")
+        .join(" "),
     })
   )
 }

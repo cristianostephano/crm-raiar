@@ -1,6 +1,7 @@
 "use server"
 
 import { mesclarAderencia, type ComparativoVendedorLinha } from "@/lib/aderencia/exibicao"
+import { normalizarVendedorFiltro } from "@/lib/dashboard/vendedorFiltro"
 import { createClient } from "@/lib/supabase/server"
 import {
   getAderenciaUso,
@@ -32,7 +33,20 @@ import {
  * — never a thrown exception across the Server Action boundary — so one
  * failed metric's error state never blanks the whole dashboard (UI-SPEC).
  * This phase is read-only: no revalidatePath anywhere in this file.
+ *
+ * Optional vendor cut (quick 261009-npp): six actions take an optional
+ * `vendedorId` as the LAST parameter. After the session check it is
+ * format-checked by normalizarVendedorFiltro (input hygiene, NOT
+ * authorization - RLS decides what each caller sees); a malformed id returns
+ * the usual fetch_falhou error without calling the reader; empty means "Todos"
+ * and reaches the reader as null. getDesempenhoVendedorAction and
+ * getComparativoVendedorAction are NOT cut.
  */
+
+const ERRO_FETCH = {
+  code: "fetch_falhou",
+  message: "Não foi possível carregar os dados do dashboard. Tente novamente.",
+} as const
 
 export type DashboardErrorCode = "unauthenticated" | "fetch_falhou"
 
@@ -40,8 +54,10 @@ export type GetClientesPorEtapaResult =
   | { data: ClientesPorEtapaRow[]; error?: undefined }
   | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
 
-/** DSH-01/DSH-08 — live snapshot, no period parameters. */
-export async function getClientesPorEtapaAction(): Promise<GetClientesPorEtapaResult> {
+/** DSH-01/DSH-08 — live snapshot, no period parameters; optional vendor cut (quick 261009-npp). */
+export async function getClientesPorEtapaAction(
+  vendedorId?: string | null
+): Promise<GetClientesPorEtapaResult> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -51,8 +67,13 @@ export async function getClientesPorEtapaAction(): Promise<GetClientesPorEtapaRe
     return { error: { code: "unauthenticated", message: "Sessão expirada." } }
   }
 
+  const vendedor = normalizarVendedorFiltro(vendedorId)
+  if (!vendedor.ok) {
+    return { error: { ...ERRO_FETCH } }
+  }
+
   try {
-    return { data: await getClientesPorEtapa() }
+    return { data: await getClientesPorEtapa(vendedor.vendedorId) }
   } catch {
     return {
       error: {
@@ -68,10 +89,11 @@ export type GetGanhosPerdidosResult =
   | { data: GanhosPerdidosRow[]; error?: undefined }
   | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
 
-/** DSH-02/DSH-04 — period filters by the status-change historico date (D-02). */
+/** DSH-02/DSH-04 — period filters by the status-change historico date (D-02); optional vendor cut (quick 261009-npp). */
 export async function getGanhosPerdidosAction(
   inicio: Date,
-  fim: Date
+  fim: Date,
+  vendedorId?: string | null
 ): Promise<GetGanhosPerdidosResult> {
   const supabase = await createClient()
   const {
@@ -82,8 +104,13 @@ export async function getGanhosPerdidosAction(
     return { error: { code: "unauthenticated", message: "Sessão expirada." } }
   }
 
+  const vendedor = normalizarVendedorFiltro(vendedorId)
+  if (!vendedor.ok) {
+    return { error: { ...ERRO_FETCH } }
+  }
+
   try {
-    return { data: await getGanhosPerdidos(inicio, fim) }
+    return { data: await getGanhosPerdidos(inicio, fim, vendedor.vendedorId) }
   } catch {
     return {
       error: {
@@ -130,10 +157,11 @@ export type GetProspeccaoPorProdutoResult =
   | { data: ProspeccaoRow[]; error?: undefined }
   | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
 
-/** DSH-05/D-09 — period filters by clientes.criado_em (cadastro date). */
+/** DSH-05/D-09 — period filters by clientes.criado_em (cadastro date); optional vendor cut (quick 261009-npp). */
 export async function getProspeccaoPorProdutoAction(
   inicio: Date,
-  fim: Date
+  fim: Date,
+  vendedorId?: string | null
 ): Promise<GetProspeccaoPorProdutoResult> {
   const supabase = await createClient()
   const {
@@ -144,8 +172,13 @@ export async function getProspeccaoPorProdutoAction(
     return { error: { code: "unauthenticated", message: "Sessão expirada." } }
   }
 
+  const vendedor = normalizarVendedorFiltro(vendedorId)
+  if (!vendedor.ok) {
+    return { error: { ...ERRO_FETCH } }
+  }
+
   try {
-    return { data: await getProspeccaoPorProduto(inicio, fim) }
+    return { data: await getProspeccaoPorProduto(inicio, fim, vendedor.vendedorId) }
   } catch {
     return {
       error: {
@@ -161,10 +194,11 @@ export type GetProspeccaoPorCategoriaResult =
   | { data: ProspeccaoRow[]; error?: undefined }
   | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
 
-/** DSH-05/D-09 — same criado_em date basis as getProspeccaoPorProdutoAction. */
+/** DSH-05/D-09 — same criado_em date basis as getProspeccaoPorProdutoAction; optional vendor cut (quick 261009-npp). */
 export async function getProspeccaoPorCategoriaAction(
   inicio: Date,
-  fim: Date
+  fim: Date,
+  vendedorId?: string | null
 ): Promise<GetProspeccaoPorCategoriaResult> {
   const supabase = await createClient()
   const {
@@ -175,8 +209,13 @@ export async function getProspeccaoPorCategoriaAction(
     return { error: { code: "unauthenticated", message: "Sessão expirada." } }
   }
 
+  const vendedor = normalizarVendedorFiltro(vendedorId)
+  if (!vendedor.ok) {
+    return { error: { ...ERRO_FETCH } }
+  }
+
   try {
-    return { data: await getProspeccaoPorCategoria(inicio, fim) }
+    return { data: await getProspeccaoPorCategoria(inicio, fim, vendedor.vendedorId) }
   } catch {
     return {
       error: {
@@ -192,8 +231,10 @@ export type GetFunilDetalhadoResult =
   | { data: FunilDetalhadoRow[]; error?: undefined }
   | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
 
-/** FNL-01 — live snapshot, no period parameter. */
-export async function getFunilDetalhadoAction(): Promise<GetFunilDetalhadoResult> {
+/** FNL-01 — live snapshot, no period parameter; optional vendor cut (quick 261009-npp). */
+export async function getFunilDetalhadoAction(
+  vendedorId?: string | null
+): Promise<GetFunilDetalhadoResult> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -203,8 +244,13 @@ export async function getFunilDetalhadoAction(): Promise<GetFunilDetalhadoResult
     return { error: { code: "unauthenticated", message: "Sessão expirada." } }
   }
 
+  const vendedor = normalizarVendedorFiltro(vendedorId)
+  if (!vendedor.ok) {
+    return { error: { ...ERRO_FETCH } }
+  }
+
   try {
-    return { data: await getFunilDetalhado() }
+    return { data: await getFunilDetalhado(vendedor.vendedorId) }
   } catch {
     return {
       error: {
@@ -220,8 +266,10 @@ export type GetTempoAteFechamentoResult =
   | { data: TempoAteFechamentoRow[]; error?: undefined }
   | { data?: undefined; error: { code: DashboardErrorCode; message: string } }
 
-/** FNL-02 — live snapshot, no period parameter. */
-export async function getTempoAteFechamentoAction(): Promise<GetTempoAteFechamentoResult> {
+/** FNL-02 — live snapshot, no period parameter; optional vendor cut (quick 261009-npp). */
+export async function getTempoAteFechamentoAction(
+  vendedorId?: string | null
+): Promise<GetTempoAteFechamentoResult> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -231,8 +279,13 @@ export async function getTempoAteFechamentoAction(): Promise<GetTempoAteFechamen
     return { error: { code: "unauthenticated", message: "Sessão expirada." } }
   }
 
+  const vendedor = normalizarVendedorFiltro(vendedorId)
+  if (!vendedor.ok) {
+    return { error: { ...ERRO_FETCH } }
+  }
+
   try {
-    return { data: await getTempoAteFechamento() }
+    return { data: await getTempoAteFechamento(vendedor.vendedorId) }
   } catch {
     return {
       error: {
