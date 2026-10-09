@@ -16,6 +16,7 @@ import {
   NotebookPen,
   PauseCircle,
   Settings,
+  Trophy,
   Users,
   UsersRound,
   type LucideIcon,
@@ -93,7 +94,9 @@ const MOSTRAR_AGENDA_ANTIGA_NO_MENU: boolean = false
  * Agenda, Agenda 2, Clientes, Perdidos, Encerrados, Dashboard. Desde a quick
  * 261005-ei4 a ordem VISÍVEL é Agenda (/agenda-2), Clientes, Perdidos,
  * Encerrados, Dashboard — a Agenda antiga (/agenda) fica fora do menu pela
- * flag MOSTRAR_AGENDA_ANTIGA_NO_MENU.
+ * flag MOSTRAR_AGENDA_ANTIGA_NO_MENU. Desde a quick 261008-rxw a ordem visível
+ * é Agenda (/agenda-2), Clientes, Ganhos, Perdidos, Encerrados, Dashboard —
+ * "Ganhos" entra entre Clientes e Perdidos.
  */
 const PRINCIPAL_SECTION: NavSection = {
   label: "Principal",
@@ -110,6 +113,10 @@ const PRINCIPAL_SECTION: NavSection = {
       icon: NotebookPen,
     },
     { href: "/clientes", label: "Clientes", icon: Users },
+    // Quick 261008-rxw: tela irmã de Perdidos (lista dos clientes ganhos);
+    // nunca recebe contador; Trophy é distinto de Archive (Perdidos),
+    // PauseCircle (Encerrados) e BadgeCheck (Importar Clientes Ativos).
+    { href: "/ganhos", label: "Ganhos", icon: Trophy },
     // D-01 (mesmo nível de Agenda/Clientes/Dashboard, não uma aba de
     // Clientes); D-02 (nunca recebe contador — perdido não é pendência
     // urgente, um número aqui soaria como alarme, decisão explícita do dono
