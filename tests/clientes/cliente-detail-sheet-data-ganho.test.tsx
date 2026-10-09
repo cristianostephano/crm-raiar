@@ -213,7 +213,9 @@ describe("ClienteDetailSheet - Data do ganho (quick 261008-rxw)", () => {
       data: buildCliente({ statusAcompanhamento: "ganho", ganhoEm: "2026-10-08" }),
     })
     fireEvent.click(status)
-    fireEvent.click(await screen.findByRole("option", { name: /^Ganho$/ }))
+    const opcaoGanho = await screen.findByRole("option", { name: /^Ganho$/ })
+    fireEvent.pointerDown(opcaoGanho)
+    fireEvent.click(opcaoGanho)
 
     fireEvent.click(await screen.findByRole("combobox", { name: "Frequência de visita" }))
     fireEvent.click(await screen.findByRole("option", { name: "Semanal" }))

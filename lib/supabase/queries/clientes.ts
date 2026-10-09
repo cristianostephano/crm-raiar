@@ -133,6 +133,10 @@ export type ClienteDetalhe = {
   nomeFantasia: string | null
   cnpj: string | null
   frequenciaPedidos: string | null
+  /** Data real do ganho (AAAA-MM-DD, migration 0053): preenchida sozinha ao
+   * virar ganho ou digitada na ficha; nula para cliente importado já ganho
+   * que ninguém preencheu (quick 261008-rxw). */
+  ganhoEm: string | null
 }
 
 type ClienteDetalheRow = {
@@ -162,6 +166,7 @@ type ClienteDetalheRow = {
   frequencia_pedidos: string | null
   dia_semana_visita: DiaSemanaVisita | null
   semana_do_mes_visita: SemanaDoMesVisita | null
+  ganho_em: string | null
 }
 
 /**
@@ -180,7 +185,7 @@ export async function getClienteById(
   const { data, error } = await supabase
     .from("clientes")
     .select(
-      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao, frequencia_visita, nome_fantasia, cnpj, frequencia_pedidos, dia_semana_visita, semana_do_mes_visita"
+      "id, razao_social, cep, rua, numero, complemento, cidade, estado, responsavel, profiles(nome, sobrenome), categoria_id, contato, telefone, email, numero_de_lojas, cliente_produtos(produto_id), etapa, status_acompanhamento, motivo_perda_id, observacao, frequencia_visita, nome_fantasia, cnpj, frequencia_pedidos, dia_semana_visita, semana_do_mes_visita, ganho_em"
     )
     .eq("id", id)
     .maybeSingle()
@@ -218,6 +223,7 @@ export async function getClienteById(
     frequenciaPedidos: row.frequencia_pedidos,
     diaSemanaVisita: row.dia_semana_visita,
     semanaDoMesVisita: row.semana_do_mes_visita,
+    ganhoEm: row.ganho_em,
   }
 }
 

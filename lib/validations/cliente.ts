@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { hojeEmSaoPaulo, validarDataDoGanho } from "@/lib/clientes/dataDoGanho"
 import { UFS } from "@/lib/clientes/ufs"
 
 /**
@@ -97,6 +98,14 @@ export type CreateClienteInput = z.infer<typeof createClienteSchema>
  * está explicitamente fora de escopo do projeto. A frequência de pedidos é
  * re-validada contra o vocabulário do banco no servidor (updateCliente),
  * não aqui — o zod não sabe o catálogo dinâmico.
+ *
+ * Quick 261008-rxw (D-17/P-14): `ganhoEm` é a "Data do ganho" (AAAA-MM-DD),
+ * opcional; "" significa limpar. A regra (formato, data de calendário real,
+ * não no futuro em São Paulo, a partir de 01/01/1990 — data anterior ao
+ * cadastro no CRM é aceita de propósito) mora em
+ * lib/clientes/dataDoGanho.ts e roda no superRefine do OBJETO abaixo, nunca
+ * como refine do campo (mesmo motivo do responsavel), valendo no navegador e
+ * no servidor. createClienteSchema NÃO tem este campo.
  */
 export const updateClienteSchema = z
   .object({
@@ -133,6 +142,8 @@ export const updateClienteSchema = z
     cnpj: z.string().optional(),
     // ATV-02: re-validado contra o vocabulário do banco em updateCliente().
     frequenciaPedidos: z.string().optional(),
+    // Quick 261008-rxw: "Data do ganho" (AAAA-MM-DD), validada no superRefine.
+    ganhoEm: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.responsavel === "") {
@@ -141,6 +152,12 @@ export const updateClienteSchema = z
         message: "Selecione o responsável.",
         path: ["responsavel"],
       })
+    }
+    if (typeof data.ganhoEm === "string") {
+      const mensagem = validarDataDoGanho(data.ganhoEm, hojeEmSaoPaulo())
+      if (mensagem) {
+        ctx.addIssue({ code: "custom", message: mensagem, path: ["ganhoEm"] })
+      }
     }
   })
 

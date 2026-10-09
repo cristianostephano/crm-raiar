@@ -183,6 +183,7 @@ export type UpdateClienteErrorCode =
   | "unauthenticated"
   | "not_found"
   | "duplicate_razao_social"
+  | "ganho_em_fora_de_ganho"
   | "generic"
 
 export type UpdateClienteResult =
@@ -261,6 +262,27 @@ export async function updateCliente(
     }
   }
 
+  // Quick 261008-rxw (P-18): a "Data do ganho" só é aceita quando o status
+  // ATUAL do cliente é ganho. A leitura usa o cliente Supabase da própria
+  // sessão (sujeito à RLS): sem linha = id inexistente OU fora do alcance de
+  // quem chama, mesma postura não reveladora de not_found. Só acontece quando
+  // ganhoEm vem no envio — qualquer outro salvamento mantém exatamente a
+  // mesma cadeia de chamadas e o mesmo custo de antes.
+  if (parsed.data.ganhoEm !== undefined) {
+    const { data: statusAtual } = await supabase
+      .from("clientes")
+      .select("status_acompanhamento")
+      .eq("id", parsed.data.id)
+      .maybeSingle()
+
+    if (!statusAtual) {
+      return { error: { code: "not_found" } }
+    }
+    if (statusAtual.status_acompanhamento !== "ganho") {
+      return { error: { code: "ganho_em_fora_de_ganho" } }
+    }
+  }
+
   // ATV-02: re-validar frequência de pedidos contra o catálogo COMPLETO do
   // vocabulário (ativos + inativos) — nunca getFrequenciasPedidoAtivas()
   // (plano 16-02), cujo próprio comentário avisa que ela é só para o campo
@@ -330,6 +352,13 @@ export async function updateCliente(
         : {}),
       ...(parsed.data.frequenciaPedidos !== undefined
         ? { frequencia_pedidos: frequenciaPedidosCanonica }
+        : {}),
+      // Quick 261008-rxw (P-15, P-18): mesmo padrão condicional da T-16-18 —
+      // a "Data do ganho" só entra no UPDATE quando veio no envio ("" vira
+      // nulo = limpar). Sem isso, um "Salvar alterações" qualquer apagaria a
+      // data que o gatilho do banco acabou de gravar.
+      ...(parsed.data.ganhoEm !== undefined
+        ? { ganho_em: parsed.data.ganhoEm || null }
         : {}),
     })
     .eq("id", parsed.data.id)

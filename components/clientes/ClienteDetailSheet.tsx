@@ -88,6 +88,7 @@ import {
 } from "@/lib/funil/frequencia"
 import { tarefaAtrasada } from "@/lib/funil/staleness"
 import { cn } from "@/lib/utils"
+import { hojeEmSaoPaulo } from "@/lib/clientes/dataDoGanho"
 import { nomeExibicaoCliente } from "@/lib/clientes/nomeExibicao"
 import { UFS, type Uf } from "@/lib/clientes/ufs"
 import {
@@ -106,6 +107,10 @@ import type {
 const DUPLICATE_RAZAO_SOCIAL_ERROR =
   "Já existe um cliente cadastrado com essa razão social."
 const GENERIC_ERROR = "Não foi possível salvar as alterações. Tente novamente."
+// Quick 261008-rxw (P-18): o servidor recusou a "Data do ganho" porque o
+// cliente não está ganho naquele momento.
+const GANHO_EM_FORA_DE_GANHO_ERROR =
+  "A data do ganho só pode ser informada para clientes ganhos."
 const SUCCESS_MESSAGE = "Cliente salvo com sucesso."
 const LOAD_ERROR =
   "Não foi possível carregar os dados do cliente. Tente novamente."
@@ -195,6 +200,9 @@ function toFormValues(cliente: ClienteDetalhe): UpdateClienteInput {
     nomeFantasia: cliente.nomeFantasia ?? "",
     cnpj: cliente.cnpj ?? "",
     frequenciaPedidos: cliente.frequenciaPedidos ?? "",
+    // Quick 261008-rxw: "Data do ganho" (AAAA-MM-DD). Só é ENVIADA quando o
+    // campo foi mexido (onSubmit), nunca por simples presença aqui.
+    ganhoEm: cliente.ganhoEm ?? "",
   }
 }
 
@@ -305,6 +313,7 @@ export function ClienteDetailSheet({
       nomeFantasia: "",
       cnpj: "",
       frequenciaPedidos: "",
+      ganhoEm: "",
     },
   })
 
@@ -409,6 +418,15 @@ export function ClienteDetailSheet({
     if (!result.error) setDiario(result.data)
   }
 
+  // Quick 261008-rxw (P-15): grava o valor da "Data do ganho" como o NOVO
+  // padrão do formulário (campo limpo, não mexido), mantendo os valores que a
+  // pessoa já digitou nos outros campos. É reset, e não resetField, porque o
+  // campo só é renderizado para cliente ganho: logo depois de marcar ganho ele
+  // ainda não está registrado e resetField não faria nada.
+  function sincronizarGanhoEm(valor: string) {
+    form.reset({ ...form.getValues(), ganhoEm: valor })
+  }
+
   async function handleStatusChange(
     novoStatus: StatusAcompanhamento,
     motivoPerdaId?: string,
@@ -472,6 +490,25 @@ export function ClienteDetailSheet({
       // sistema acabou de exigir (T-18-11).
       if (novoStatus === "ganho" && cnpjTrimmed) {
         form.setValue("cnpj", cnpjTrimmed)
+      }
+
+      // Quick 261008-rxw (P-15, mesma armadilha da T-18-11): o gatilho do
+      // banco acabou de gravar a "Data do ganho" (data de São Paulo), mas o
+      // formulário foi preenchido antes e ainda tem o campo vazio. Relê o
+      // cliente e mostra a data gravada SEM sujar o campo — assim um "Salvar
+      // alterações" logo em seguida não envia (nem apaga) a data. Falha nesta
+      // releitura é ignorada: a data só deixa de aparecer até reabrir a ficha.
+      if (novoStatus === "ganho") {
+        try {
+          const releitura = await getClienteDetalhe(cliente.id)
+          if (!releitura.error) {
+            const ganhoEmGravado = releitura.data.ganhoEm
+            setCliente((prev) => (prev ? { ...prev, ganhoEm: ganhoEmGravado } : prev))
+            sincronizarGanhoEm(ganhoEmGravado ?? "")
+          }
+        } catch {
+          // ignorado de propósito (ver comentário acima)
+        }
       }
 
       setIsSavingStatus(false)
@@ -694,20 +731,37 @@ export function ClienteDetailSheet({
     setFormError(null)
     setSuccessMessage(null)
 
+    // Quick 261008-rxw (P-15): a "Data do ganho" só vai para o servidor quando
+    // o campo foi mexido (e o cliente é ganho — fora disso o campo nem
+    // aparece). Um "Salvar alterações" qualquer nunca grava nem apaga a data.
+    const { ganhoEm, ...valoresSemGanhoEm } = values
+    const enviaGanhoEm =
+      cliente?.statusAcompanhamento === "ganho" &&
+      form.getFieldState("ganhoEm").isDirty
+    const envio: UpdateClienteInput = enviaGanhoEm ? values : valoresSemGanhoEm
+
     try {
-      const result = await updateCliente(values)
+      const result = await updateCliente(envio)
 
       if (result.error) {
         setFormError(
           result.error.code === "duplicate_razao_social"
             ? DUPLICATE_RAZAO_SOCIAL_ERROR
-            : GENERIC_ERROR
+            : result.error.code === "ganho_em_fora_de_ganho"
+              ? GANHO_EM_FORA_DE_GANHO_ERROR
+              : GENERIC_ERROR
         )
         return
       }
 
+      if (enviaGanhoEm) {
+        const salvo = ganhoEm ?? ""
+        setCliente((prev) => (prev ? { ...prev, ganhoEm: salvo || null } : prev))
+        sincronizarGanhoEm(salvo)
+      }
+
       setSuccessMessage(SUCCESS_MESSAGE)
-      onSaved(values)
+      onSaved(envio)
     } catch {
       setFormError(GENERIC_ERROR)
     }
@@ -1131,6 +1185,33 @@ export function ClienteDetailSheet({
                                 linhas um do outro, daí este comentário. */}
                             <p className="text-sm text-muted-foreground">
                               Informação de apoio — não gera alerta, cobrança ou tarefa na Agenda.
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Quick 261008-rxw (D-17/P-14): data real do ganho,
+                          só para cliente ganho. Entrada de data nativa (digitar
+                          uma data de anos atrás é mais rápido que folhear um
+                          calendário); a regra de validação é a mesma do
+                          servidor (lib/clientes/dataDoGanho.ts via schema). */}
+                      <FormField
+                        control={form.control}
+                        name="ganhoEm"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data do ganho</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="date"
+                                max={hojeEmSaoPaulo()}
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <p className="text-sm text-muted-foreground">
+                              Preenchida automaticamente quando o cliente vira ganho. Para clientes importados, informe a data real, se souber.
                             </p>
                             <FormMessage />
                           </FormItem>
