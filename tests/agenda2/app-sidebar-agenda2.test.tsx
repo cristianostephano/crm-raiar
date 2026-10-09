@@ -54,7 +54,8 @@ function expandSidebar() {
 }
 
 describe("AppSidebar - item Agenda (tela nova /agenda-2) no menu principal (Fase 31 + quick 261005-ei4)", () => {
-  it("ordem-d15: Vendedor e Supervisor veem Agenda (/agenda-2), Clientes, Perdidos, Encerrados, Dashboard nessa ordem, sem /agenda", () => {
+  // Quick 261008-rxw: Ganhos entra entre Clientes e Perdidos.
+  it("ordem-d15: Vendedor e Supervisor veem Agenda (/agenda-2), Clientes, Ganhos, Perdidos, Encerrados, Dashboard nessa ordem, sem /agenda", () => {
     for (const role of ["vendedor", "supervisor"] as const) {
       const { unmount } = renderSidebar(role)
       expandSidebar()
@@ -66,6 +67,7 @@ describe("AppSidebar - item Agenda (tela nova /agenda-2) no menu principal (Fase
           "/agenda",
           "/agenda-2",
           "/clientes",
+          "/ganhos",
           "/perdidos",
           "/encerrados",
           "/dashboard",
@@ -75,6 +77,7 @@ describe("AppSidebar - item Agenda (tela nova /agenda-2) no menu principal (Fase
       expect(principaisNaOrdem).toEqual([
         "/agenda-2",
         "/clientes",
+        "/ganhos",
         "/perdidos",
         "/encerrados",
         "/dashboard",

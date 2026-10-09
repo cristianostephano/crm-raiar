@@ -66,21 +66,28 @@ describe("AppSidebar - item Perdidos no menu principal (Fase 28)", () => {
     )
   })
 
-  it("ordem: entre os links principais, a ordem no documento é /agenda-2, /clientes, /perdidos, /dashboard, sem /agenda (quick 261005-ei4)", () => {
+  // Quick 261008-rxw: Ganhos entra entre Clientes e Perdidos.
+  it("ordem: entre os links principais, a ordem no documento é /agenda-2, /clientes, /ganhos, /perdidos, /dashboard, sem /agenda (quick 261005-ei4, 261008-rxw)", () => {
     renderSidebar("vendedor")
     expandSidebar()
 
     const links = screen.getAllByRole("link")
     const hrefs = links.map((link) => link.getAttribute("href"))
     const principaisNaOrdem = hrefs.filter((href) =>
-      ["/agenda", "/agenda-2", "/clientes", "/perdidos", "/dashboard"].includes(
-        href ?? ""
-      )
+      [
+        "/agenda",
+        "/agenda-2",
+        "/clientes",
+        "/ganhos",
+        "/perdidos",
+        "/dashboard",
+      ].includes(href ?? "")
     )
 
     expect(principaisNaOrdem).toEqual([
       "/agenda-2",
       "/clientes",
+      "/ganhos",
       "/perdidos",
       "/dashboard",
     ])

@@ -68,7 +68,8 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     )
   })
 
-  it("ordem: entre os links principais, a ordem no documento é /agenda-2, /clientes, /perdidos, /encerrados, /dashboard, sem /agenda (quick 261005-ei4)", () => {
+  // Quick 261008-rxw: Ganhos entra entre Clientes e Perdidos.
+  it("ordem: entre os links principais, a ordem no documento é /agenda-2, /clientes, /ganhos, /perdidos, /encerrados, /dashboard, sem /agenda (quick 261005-ei4, 261008-rxw)", () => {
     renderSidebar("vendedor")
     expandSidebar()
 
@@ -79,6 +80,7 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
         "/agenda",
         "/agenda-2",
         "/clientes",
+        "/ganhos",
         "/perdidos",
         "/encerrados",
         "/dashboard",
@@ -88,6 +90,7 @@ describe("AppSidebar - item Encerrados no menu principal (Fase 29)", () => {
     expect(principaisNaOrdem).toEqual([
       "/agenda-2",
       "/clientes",
+      "/ganhos",
       "/perdidos",
       "/encerrados",
       "/dashboard",
