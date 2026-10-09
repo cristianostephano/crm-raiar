@@ -10,7 +10,6 @@ files_modified:
   - supabase/migrations/0054_dashboard_filtro_vendedor.sql
   - supabase/rollbacks/0054_volta_dashboard_filtro_vendedor.sql
   - tests/dashboard/filtro-vendedor-migracao.test.ts
-  - tests/dashboard/filtro-vendedor-rpc.test.ts
   - lib/dashboard/vendedorFiltro.ts
   - lib/supabase/queries/dashboard.ts
   - app/actions/dashboard.ts
@@ -122,6 +121,19 @@ Escolhas do planejador (discricionárias, documentadas):
 Purpose: dar ao Supervisor, para a reunião de 13/10, a visão "o que cada vendedor tem" nos indicadores do Dashboard, sem dado novo e sem mexer em quem pode ver o quê.
 Output: migration 0054 + arquivo de volta + leitores/ações com recorte opcional + seletor no Dashboard + testes; aplicação feita pelo dono ANTES de publicar; gate final verde.
 </objective>
+
+<owner_answers>
+## Respostas do dono ao checkpoint da Tarefa 2 (2026-10-09, relatadas pelo orquestrador) e ADAPTACAO DO PLANO
+
+Resposta literal do dono: "1 aceito sem filtro nesses dois; 2 nao precisa de testes".
+- Decisao 1 = ACEITA: Comparativo por vendedor (com a Aderencia de uso) e Desempenho por vendedor continuam SEM o filtro, com o aviso na tela (P-01 confirmada).
+- Decisao 2 = RECUSADA: nenhum teste pode criar contas ou clientes temporarios, nem fazer login com contas criadas, nem gravar linhas no banco real (que e o mesmo da producao). Por instrucao do orquestrador, NAO ha replanejamento: o plano foi adaptado assim.
+
+Adaptacoes (substituem o texto antigo onde houver conflito):
+- O arquivo tests/dashboard/filtro-vendedor-rpc.test.ts (testes ao vivo, commit 36aaecf) foi REMOVIDO num commit novo (git rm, sem reescrever historico). Toda etapa que o roda, cria fixtures ou faz contagem antes/depois de residuo (P-12) esta CANCELADA: Tarefa 1 passo 3, Tarefa 6 passos 1 e 2 e a sequencia ANTES/DEPOIS do verify da Tarefa 6; os 7 casos ao vivo, o item (c) do SUMMARY e a ameaca T-npp-08 deixam de existir como teste. O arquivo tambem sai da lista de 18 arquivos da guarda de escopo (ficam 17).
+- A prova de corretude passa a ser: teste estrutural da 0054 (corpos = fontes + trocas listadas), testes de camada de dados e de tela (dubles), tsc/eslint/build, e a conferencia do PROPRIO DONO no Dashboard real depois de aplicar (com "Todos" tudo igual; escolhendo um vendedor, os numeros mudam). Opcional, fora da suite e a cargo do orquestrador: comparar, so por CONTAGENS agregadas somente leitura com o cliente de servico (sem imprimir linhas), o numero de clientes por vendedor com o que o filtro deve mostrar.
+- Registrar no SUMMARY, item (a), estas respostas e esta adaptacao.
+</owner_answers>
 
 <execution_context>
 @C:/Users/Cristiano Stephano/workspace/crm-raiar/.claude/gsd-core/workflows/execute-plan.md
