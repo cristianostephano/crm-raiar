@@ -11,30 +11,42 @@ import {
 } from "../helpers/supabase-test-clients"
 
 /**
- * Testes ao vivo da leitura clientes_ganhos (migration 0053, quick
- * 261008-rxw): quais clientes estao ganhos hoje, desde quando e de qual
- * vendedor. Prova a RLS (Vendedor so os proprios, Supervisor todos), a data
- * do ganho (registro mais recente de troca de status no historico, com a data
- * de CADASTRO como reserva - nunca a da ultima edicao), o recorte de periodo,
- * a paginacao e as 6 colunas minimas (LGPD).
+ * Testes ao vivo da coluna clientes.ganho_em, do gatilho que a preenche e da
+ * leitura clientes_ganhos (migration 0053 REESCRITA, quick 261008-rxw): quais
+ * clientes estao ganhos hoje, a data real do ganho e o vendedor. Prova a RLS
+ * (Vendedor so os proprios, Supervisor todos), o preenchimento automatico (so
+ * na troca de status, nunca sobrescreve), a edicao da data por quem ja edita a
+ * ficha, o recorte de periodo em data de Sao Paulo (cliente sem data so aparece
+ * sem recorte), a ordem (data mais recente primeiro, sem data por ultimo), a
+ * paginacao e as 6 colunas minimas (LGPD).
  *
  * O projeto Supabase de teste E o de producao, com dados reais de clientes.
  * Por isso este arquivo: usa so fixtures descartaveis (membros criados e
- * apagados aqui, nunca as contas semente antigas); NUNCA imprime linha lida
- * do banco no terminal; filtra TODA leitura da funcao, de qualquer sessao,
- * pelos ids de fixture no proprio PostgREST (nunca baixa a carteira real);
- * usa so razoes sociais, nomes fantasia e CNPJs inventados; nunca le nem
- * grava a tabela de registro de acesso diario da aderencia; e troca todo
- * status pelo cliente de servico (autor nulo no historico, entao nada conta
- * na aderencia de ninguem).
+ * apagados aqui, nunca as contas semente antigas); NUNCA imprime linha lida do
+ * banco no terminal; filtra TODA leitura da funcao, de qualquer sessao, pelos
+ * ids de fixture no proprio PostgREST (nunca baixa a carteira real); usa so
+ * razoes sociais, nomes fantasia e CNPJs inventados; nunca le nem grava a
+ * tabela de registro de acesso diario da aderencia; e troca todo status pelo
+ * cliente de servico (autor nulo no historico, entao nada conta na aderencia
+ * de ninguem).
  *
  * Duas autenticacoes no arquivo inteiro: Vendedor A e Supervisor. Vendedor B
- * nunca faz login - os ganhos dele sao semeados pelo cliente de servico
- * (rate limit conhecido de login por senha).
+ * nunca faz login - os ganhos dele sao semeados pelo cliente de servico (rate
+ * limit conhecido de login por senha).
  *
- * Fica VERMELHO (funcao inexistente no banco) ate o dono aplicar a 0053 pelo
- * SQL Editor. Esse vermelho e esperado e NAO foi medido na tarefa de
- * construcao: este arquivo so roda depois da aplicacao (Tarefa 6) - mesmo
+ * O gatilho e BEFORE UPDATE e nunca roda em INSERT. Por isso ha dois
+ * semeadores: seedGanhoDireto (INSERT ja ganho, com ganho_em exatamente igual
+ * ao informado, inclusive nulo) para todo caso que precisa de data conhecida
+ * ou vazia; e seedGanhoPorTroca (INSERT em andamento e UPDATE separado para
+ * ganho) so nos casos que provam o gatilho.
+ *
+ * O preenchimento unico pelo historico (backfill) roda so na aplicacao e NAO e
+ * testavel ao vivo com fixtures criadas depois: ele e provado pelo teste
+ * estrutural e o dono confere com uma contagem.
+ *
+ * Fica VERMELHO (coluna e funcao inexistentes no banco) ate o dono aplicar a
+ * 0053 pelo SQL Editor. Esse vermelho e esperado e NAO foi medido na tarefa de
+ * construcao: este arquivo so roda depois da aplicacao (Tarefa 6/7) - mesmo
  * procedimento da quick 261006-ncy.
  */
 
@@ -42,24 +54,9 @@ type GanhoRow = {
   cliente_id: string
   razao_social: string | null
   nome_fantasia: string | null
-  ganho_em: string
+  ganho_em: string | null
   responsavel: string
   responsavel_nome: string | null
-}
-
-type HistoricoRow = {
-  id: string
-  tipo: string
-  descricao: string
-  criado_em: string
-  autor_id: string | null
-}
-
-type ClienteRow = {
-  id: string
-  status_acompanhamento: string
-  criado_em: string
-  atualizado_em: string
 }
 
 const COLUNAS_ESPERADAS = [
@@ -84,6 +81,16 @@ function uniqueRazaoSocial(label: string): string {
 function uniqueCnpj(): string {
   cnpjCounter += 1
   return `${Date.now()}${cnpjCounter}`.slice(-14).padStart(14, "0")
+}
+
+/** Hoje em Sao Paulo, no formato AAAA-MM-DD. */
+function hojeSaoPaulo(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date())
 }
 
 function baseClienteFields(
@@ -205,8 +212,24 @@ async function atualizarCliente(clienteId: string, campos: Record<string, unknow
   }
 }
 
-/** Insere em primeira_venda/em_andamento e depois faz um UPDATE separado
- * para ganho - e o gatilho da 0002 que grava a troca no historico. */
+/** INSERT ja ganho (etapa primeira_venda) com ganho_em exatamente igual ao
+ * argumento (nulo grava nulo). O gatilho e so de UPDATE, entao nada altera o
+ * valor informado. */
+async function seedGanhoDireto(
+  responsavelId: string,
+  label: string,
+  ganhoEm: string | null
+): Promise<string> {
+  return seedCliente(responsavelId, label, {
+    etapa: "primeira_venda",
+    status_acompanhamento: "ganho",
+    ganho_em: ganhoEm,
+  })
+}
+
+/** INSERT em primeira_venda/em_andamento e UPDATE separado para ganho - e esse
+ * UPDATE que aciona o gatilho de preenchimento. Usado so nos casos que provam
+ * o gatilho. */
 async function seedGanhoPorTroca(responsavelId: string, label: string): Promise<string> {
   const id = await seedCliente(responsavelId, label, {
     etapa: "primeira_venda",
@@ -216,28 +239,15 @@ async function seedGanhoPorTroca(responsavelId: string, label: string): Promise<
   return id
 }
 
-async function historicoDoCliente(clienteId: string): Promise<HistoricoRow[]> {
-  const { data, error } = await serviceClient()
-    .from("historico")
-    .select("id, tipo, descricao, criado_em, autor_id")
-    .eq("cliente_id", clienteId)
-    .order("criado_em", { ascending: false })
-  if (error) throw new Error(`Falha ao ler historico: ${error.message}`)
-  return (data ?? []) as HistoricoRow[]
-}
-
-function linhasDeGanho(historico: HistoricoRow[]): HistoricoRow[] {
-  return historico.filter((h) => h.tipo === "status_acompanhamento" && h.descricao.includes('"ganho"'))
-}
-
-async function clientePorId(clienteId: string): Promise<ClienteRow> {
+/** Relê ganho_em pelo cliente de servico. */
+async function ganhoEmDe(clienteId: string): Promise<string | null> {
   const { data, error } = await serviceClient()
     .from("clientes")
-    .select("id, status_acompanhamento, criado_em, atualizado_em")
+    .select("ganho_em")
     .eq("id", clienteId)
     .single()
-  if (error || !data) throw new Error(`Falha ao ler cliente: ${error?.message}`)
-  return data as ClienteRow
+  if (error || !data) throw new Error(`Falha ao ler ganho_em: ${error?.message}`)
+  return (data as { ganho_em: string | null }).ganho_em
 }
 
 /** Toda leitura da funcao filtra pelos ids de fixture no proprio PostgREST. */
@@ -251,9 +261,9 @@ async function lerGanhos(
   return (data ?? []) as GanhoRow[]
 }
 
-describe("clientes_ganhos (0053, quick 261008-rxw)", () => {
+describe("clientes_ganhos e ganho_em (0053 reescrita, quick 261008-rxw)", () => {
   it("colunas-lgpd: as chaves de cada linha sao exatamente as 6 colunas combinadas, sem dado de contato", async () => {
-    const id = await seedGanhoPorTroca(vendedorA.id, "colunas-lgpd")
+    const id = await seedGanhoDireto(vendedorA.id, "colunas-lgpd", "2025-02-01")
 
     const linhas = await lerGanhos(clientA, [id])
     expect(linhas.length).toBe(1)
@@ -261,8 +271,8 @@ describe("clientes_ganhos (0053, quick 261008-rxw)", () => {
   })
 
   it("rls-vendedor: A recebe so o proprio ganho, nunca o de B", async () => {
-    const idA = await seedGanhoPorTroca(vendedorA.id, "rls-vendedor-a")
-    const idB = await seedGanhoPorTroca(vendedorB.id, "rls-vendedor-b")
+    const idA = await seedGanhoDireto(vendedorA.id, "rls-vendedor-a", "2025-03-01")
+    const idB = await seedGanhoDireto(vendedorB.id, "rls-vendedor-b", "2025-03-02")
 
     const linhas = await lerGanhos(clientA, [idA, idB])
     const ids = linhas.map((r) => r.cliente_id)
@@ -271,8 +281,8 @@ describe("clientes_ganhos (0053, quick 261008-rxw)", () => {
   })
 
   it("rls-supervisor: o Supervisor recebe os ganhos de A e de B, com o nome do vendedor", async () => {
-    const idA = await seedGanhoPorTroca(vendedorA.id, "rls-supervisor-a")
-    const idB = await seedGanhoPorTroca(vendedorB.id, "rls-supervisor-b")
+    const idA = await seedGanhoDireto(vendedorA.id, "rls-supervisor-a", "2025-03-01")
+    const idB = await seedGanhoDireto(vendedorB.id, "rls-supervisor-b", "2025-03-02")
 
     const linhas = await lerGanhos(supervisorClient, [idA, idB])
     const ids = linhas.map((r) => r.cliente_id)
@@ -284,88 +294,100 @@ describe("clientes_ganhos (0053, quick 261008-rxw)", () => {
     expect(linhaA!.responsavel_nome).toBe(`${vendedorA.nome} ${vendedorA.sobrenome}`)
   })
 
-  it("data-do-ganho: ganho_em e a data da troca de status no historico, nao a do cadastro", async () => {
-    const id = await seedCliente(vendedorA.id, "data-do-ganho", {
-      etapa: "primeira_venda",
-      status_acompanhamento: "em_andamento",
-    })
-    await atualizarCliente(id, {
-      criado_em: "2020-01-01T00:00:00.000Z",
-      etapa_alterada_em: "2020-01-01T00:00:00.000Z",
-    })
-    await atualizarCliente(id, { status_acompanhamento: "ganho" })
+  it("gatilho-preenche-ao-ganhar: ao virar ganho, ganho_em recebe a data de hoje em Sao Paulo", async () => {
+    const antes = hojeSaoPaulo()
+    const id = await seedGanhoPorTroca(vendedorA.id, "gatilho-preenche")
+    const depois = hojeSaoPaulo()
 
-    const ganhos = linhasDeGanho(await historicoDoCliente(id))
-    expect(ganhos.length).toBe(1)
+    const ganhoEm = await ganhoEmDe(id)
+    expect([antes, depois]).toContain(ganhoEm)
 
-    const janelaAntiga = await lerGanhos(clientA, [id], {
-      p_inicio: "2019-12-31T00:00:00.000Z",
-      p_fim: "2020-01-02T00:00:00.000Z",
-    })
-    expect(janelaAntiga.map((r) => r.cliente_id)).not.toContain(id)
-
-    const agora = Date.now()
-    const janelaAtual = await lerGanhos(clientA, [id], {
-      p_inicio: new Date(agora - 10 * 60_000).toISOString(),
-      p_fim: new Date(agora + 10 * 60_000).toISOString(),
-    })
-    const linha = janelaAtual.find((r) => r.cliente_id === id)
-    expect(linha).toBeDefined()
-    expect(new Date(linha!.ganho_em).getTime()).toBe(new Date(ganhos[0].criado_em).getTime())
+    const linhas = await lerGanhos(clientA, [id])
+    expect(linhas.length).toBe(1)
+    expect(linhas[0].ganho_em).toBe(ganhoEm)
   })
 
-  it("sem-historico-usa-cadastro: cliente inserido ja ganho usa a data de cadastro, e editar a ficha nao muda isso", async () => {
-    const agora = Date.now()
-    const id = await seedCliente(vendedorA.id, "sem-historico-usa-cadastro", {
-      etapa: "primeira_venda",
-      status_acompanhamento: "ganho",
-      criado_em: new Date(agora - 40 * DIA_MS).toISOString(),
-    })
-    // Edicao da ficha: renova atualizado_em, mas nao pode mexer em ganho_em.
-    await atualizarCliente(id, { observacao: "Observacao inventada para o teste de Ganhos" })
-
-    const historico = await historicoDoCliente(id)
-    expect(historico.filter((h) => h.tipo === "status_acompanhamento").length).toBe(0)
-
-    const cliente = await clientePorId(id)
-    const criadoEm = new Date(cliente.criado_em).getTime()
-    expect(new Date(cliente.atualizado_em).getTime()).not.toBe(criadoEm)
-
-    const todas = await lerGanhos(clientA, [id])
-    const linha = todas.find((r) => r.cliente_id === id)
-    expect(linha).toBeDefined()
-    expect(new Date(linha!.ganho_em).getTime()).toBe(criadoEm)
-    expect(new Date(linha!.ganho_em).getTime()).not.toBe(new Date(cliente.atualizado_em).getTime())
-
-    const ultimos30 = await lerGanhos(clientA, [id], {
-      p_inicio: new Date(agora - 30 * DIA_MS).toISOString(),
-    })
-    expect(ultimos30.map((r) => r.cliente_id)).not.toContain(id)
-
-    const ultimos41 = await lerGanhos(clientA, [id], {
-      p_inicio: new Date(agora - 41 * DIA_MS).toISOString(),
-    })
-    expect(ultimos41.map((r) => r.cliente_id)).toContain(id)
-  })
-
-  it("ultimo-ganho: cliente encerrado e reativado conta a data da reativacao", async () => {
-    const id = await seedGanhoPorTroca(vendedorA.id, "ultimo-ganho")
+  it("gatilho-nao-sobrescreve: uma data ja existente nunca e trocada ao reativar o cliente", async () => {
+    const id = await seedGanhoPorTroca(vendedorA.id, "gatilho-nao-sobrescreve")
+    await atualizarCliente(id, { ganho_em: "2025-03-15" })
     await atualizarCliente(id, {
       status_acompanhamento: "encerrado",
       motivo_encerramento_id: motivoEncerramentoId,
     })
     await atualizarCliente(id, { status_acompanhamento: "ganho" })
 
-    const ganhos = linhasDeGanho(await historicoDoCliente(id))
-    expect(ganhos.length).toBe(2)
-    const tempos = ganhos.map((h) => new Date(h.criado_em).getTime())
-    const maior = Math.max(...tempos)
-    const menor = Math.min(...tempos)
-    expect(maior).toBeGreaterThan(menor)
+    expect(await ganhoEmDe(id)).toBe("2025-03-15")
+  })
+
+  it("gatilho-so-na-troca: INSERT ja ganho e edicao sem trocar o status nao preenchem a data", async () => {
+    const id = await seedGanhoDireto(vendedorA.id, "gatilho-so-na-troca", null)
+    expect(await ganhoEmDe(id)).toBeNull()
+
+    await atualizarCliente(id, { observacao: "Observacao inventada para o teste de Ganhos" })
+    expect(await ganhoEmDe(id)).toBeNull()
 
     const linhas = await lerGanhos(clientA, [id])
     expect(linhas.length).toBe(1)
-    expect(new Date(linhas[0].ganho_em).getTime()).toBe(maior)
+    expect(linhas[0].ganho_em).toBeNull()
+  })
+
+  it("sem-data-so-em-tudo: cliente sem data aparece sem recorte e some de qualquer periodo", async () => {
+    const id = await seedGanhoDireto(vendedorA.id, "sem-data-so-em-tudo", null)
+
+    const tudo = await lerGanhos(clientA, [id])
+    expect(tudo.map((r) => r.cliente_id)).toContain(id)
+
+    const ultimos30 = await lerGanhos(clientA, [id], {
+      p_inicio: new Date(Date.now() - 30 * DIA_MS).toISOString(),
+    })
+    expect(ultimos30.map((r) => r.cliente_id)).not.toContain(id)
+
+    const personalizadoAmplo = await lerGanhos(clientA, [id], {
+      p_inicio: "1990-01-01T03:00:00Z",
+      p_fim: "2100-01-01T03:00:00Z",
+    })
+    expect(personalizadoAmplo.map((r) => r.cliente_id)).not.toContain(id)
+  })
+
+  it("edicao-supervisor-persiste: o Supervisor corrige a data de qualquer cliente ganho", async () => {
+    const idB = await seedGanhoDireto(vendedorB.id, "edicao-supervisor", null)
+
+    const { data, error } = await supervisorClient
+      .from("clientes")
+      .update({ ganho_em: "2024-05-20" })
+      .eq("id", idB)
+      .select("id")
+    expect(error).toBeNull()
+    expect((data ?? []).length).toBe(1)
+    expect(await ganhoEmDe(idB)).toBe("2024-05-20")
+
+    const maio = await lerGanhos(supervisorClient, [idB], {
+      p_inicio: "2024-05-01T03:00:00Z",
+      p_fim: "2024-06-01T03:00:00Z",
+    })
+    expect(maio.map((r) => r.cliente_id)).toContain(idB)
+  })
+
+  it("edicao-vendedor-so-proprio: o Vendedor corrige a data do proprio cliente e nao consegue mexer na de outro", async () => {
+    const idA = await seedGanhoDireto(vendedorA.id, "edicao-vendedor-a", "2022-01-10")
+    const idB = await seedGanhoDireto(vendedorB.id, "edicao-vendedor-b", "2022-02-10")
+
+    const proprio = await clientA
+      .from("clientes")
+      .update({ ganho_em: "2023-11-30" })
+      .eq("id", idA)
+      .select("id")
+    expect(proprio.error).toBeNull()
+    expect((proprio.data ?? []).length).toBe(1)
+    expect(await ganhoEmDe(idA)).toBe("2023-11-30")
+
+    const alheio = await clientA
+      .from("clientes")
+      .update({ ganho_em: "2023-11-30" })
+      .eq("id", idB)
+      .select("id")
+    expect((alheio.data ?? []).length).toBe(0)
+    expect(await ganhoEmDe(idB)).toBe("2022-02-10")
   })
 
   it("so-ganho-atual: em andamento, perdido e encerrado nao entram; so o ganho de hoje", async () => {
@@ -382,69 +404,60 @@ describe("clientes_ganhos (0053, quick 261008-rxw)", () => {
       status_acompanhamento: "encerrado",
       motivo_encerramento_id: motivoEncerramentoId,
     })
-    const idGanho = await seedGanhoPorTroca(vendedorA.id, "so-ganho-atual-ganho")
+    const idGanho = await seedGanhoDireto(vendedorA.id, "so-ganho-atual-ganho", "2025-04-01")
 
     const linhas = await lerGanhos(clientA, [idAndamento, idPerdido, idEncerrado, idGanho])
     expect(linhas.map((r) => r.cliente_id)).toEqual([idGanho])
   })
 
-  it("periodo: filtra pela janela ao redor de agora, com margem de tolerancia de relogio", async () => {
-    const id = await seedGanhoPorTroca(vendedorA.id, "periodo")
-    const agora = Date.now()
+  it("periodo-limites: o periodo vale em data de Sao Paulo, com inicio inclusivo e fim exclusivo", async () => {
+    const id = await seedGanhoDireto(vendedorA.id, "periodo-limites", "2026-01-31")
 
     const dentro = await lerGanhos(clientA, [id], {
-      p_inicio: new Date(agora - 10 * 60_000).toISOString(),
-      p_fim: new Date(agora + 10 * 60_000).toISOString(),
+      p_inicio: "2026-01-31T03:00:00Z",
+      p_fim: "2026-02-01T03:00:00Z",
     })
     expect(dentro.map((r) => r.cliente_id)).toContain(id)
 
-    const antesDaJanela = await lerGanhos(clientA, [id], {
-      p_inicio: new Date(agora + 60 * 60_000).toISOString(),
+    const fimExclusivo = await lerGanhos(clientA, [id], {
+      p_inicio: null,
+      p_fim: "2026-01-31T03:00:00Z",
+    })
+    expect(fimExclusivo.map((r) => r.cliente_id)).not.toContain(id)
+
+    const comecaDepois = await lerGanhos(clientA, [id], {
+      p_inicio: "2026-02-01T03:00:00Z",
       p_fim: null,
     })
-    expect(antesDaJanela.map((r) => r.cliente_id)).not.toContain(id)
-
-    const depoisDaJanela = await lerGanhos(clientA, [id], {
-      p_inicio: null,
-      p_fim: new Date(agora - 60 * 60_000).toISOString(),
-    })
-    expect(depoisDaJanela.map((r) => r.cliente_id)).not.toContain(id)
-
-    const semLimite = await lerGanhos(clientA, [id])
-    expect(semLimite.map((r) => r.cliente_id)).toContain(id)
+    expect(comecaDepois.map((r) => r.cliente_id)).not.toContain(id)
   })
 
-  it("paginacao: a mesma ordenacao (data desc, id asc) sustenta o recorte de pagina feito por fora", async () => {
-    const id1 = await seedGanhoPorTroca(vendedorA.id, "paginacao-1")
-    const id2 = await seedGanhoPorTroca(vendedorA.id, "paginacao-2")
+  it("ordem-nulos-por-ultimo: data mais recente primeiro, sem data por ultimo, e a paginacao nao repete linhas", async () => {
+    const idRecente = await seedGanhoDireto(vendedorA.id, "ordem-recente", "2025-06-10")
+    const idAntigo = await seedGanhoDireto(vendedorA.id, "ordem-antigo", "2025-01-10")
+    const idSemData = await seedGanhoDireto(vendedorA.id, "ordem-sem-data", null)
+    const ids = [idRecente, idAntigo, idSemData]
 
-    const pagina0 = await clientA
-      .rpc("clientes_ganhos", {})
-      .in("cliente_id", [id1, id2])
-      .order("ganho_em", { ascending: false })
-      .order("cliente_id", { ascending: true })
-      .range(0, 0)
-    expect(pagina0.error).toBeNull()
-    expect((pagina0.data ?? []).length).toBe(1)
+    const linhas = await lerGanhos(clientA, ids)
+    expect(linhas.map((r) => r.cliente_id)).toEqual([idRecente, idAntigo, idSemData])
 
-    const pagina1 = await clientA
-      .rpc("clientes_ganhos", {})
-      .in("cliente_id", [id1, id2])
-      .order("ganho_em", { ascending: false })
-      .order("cliente_id", { ascending: true })
-      .range(1, 1)
-    expect(pagina1.error).toBeNull()
-    expect((pagina1.data ?? []).length).toBe(1)
-
-    const idsPaginados = [
-      ...((pagina0.data ?? []) as GanhoRow[]),
-      ...((pagina1.data ?? []) as GanhoRow[]),
-    ].map((r) => r.cliente_id)
-    expect(new Set(idsPaginados)).toEqual(new Set([id1, id2]))
+    const paginados: string[] = []
+    for (const posicao of [0, 1, 2]) {
+      const pagina = await clientA
+        .rpc("clientes_ganhos", {})
+        .in("cliente_id", ids)
+        .order("ganho_em", { ascending: false, nullsFirst: false })
+        .order("cliente_id", { ascending: true })
+        .range(posicao, posicao)
+      expect(pagina.error).toBeNull()
+      expect((pagina.data ?? []).length).toBe(1)
+      paginados.push((pagina.data as GanhoRow[])[0].cliente_id)
+    }
+    expect(paginados).toEqual([idRecente, idAntigo, idSemData])
   })
 
   it("anonimo-sem-dados: sem login a leitura devolve erro ou zero linhas, nunca dados", async () => {
-    const id = await seedGanhoPorTroca(vendedorA.id, "anonimo-sem-dados")
+    const id = await seedGanhoDireto(vendedorA.id, "anonimo-sem-dados", "2025-02-01")
 
     const { data, error } = await anonClient().rpc("clientes_ganhos", {}).in("cliente_id", [id])
     if (error) {
