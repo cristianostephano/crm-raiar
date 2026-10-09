@@ -83,6 +83,8 @@ function buildCliente(overrides: Partial<ClienteDetalhe> = {}): ClienteDetalhe {
     nomeFantasia: "",
     cnpj: "12.345.678/0001-90",
     frequenciaPedidos: "",
+    // Quick 261008-rxw: ClienteDetalhe ganhou ganhoEm
+    ganhoEm: null,
     ...overrides,
   }
 }
