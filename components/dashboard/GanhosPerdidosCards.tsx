@@ -13,6 +13,8 @@ import type { GanhosPerdidosRow } from "@/lib/supabase/queries/dashboard"
 type GanhosPerdidosCardsProps = {
   inicio: Date
   fim: Date
+  /** Optional vendor cut (quick 261009-npp); null = "Todos". */
+  vendedorId?: string | null
 }
 
 type FetchState =
@@ -49,8 +51,16 @@ function formatConversao(rate: number | null): string {
  *
  * T-04-06: counts come straight from the RLS-scoped 04-01
  * getGanhosPerdidosAction — no client-side responsavel/role filtering here.
+ *
+ * Optional vendor cut (quick 261009-npp): `vendedorId` (null = "Todos") is a
+ * dependency of the fetch effect and the third action argument. The cut only
+ * narrows — RLS stays the boundary.
  */
-export function GanhosPerdidosCards({ inicio, fim }: GanhosPerdidosCardsProps) {
+export function GanhosPerdidosCards({
+  inicio,
+  fim,
+  vendedorId = null,
+}: GanhosPerdidosCardsProps) {
   const [state, setState] = useState<FetchState>({ status: "loading" })
   // Bumped by "Tentar novamente" to re-run the fetch effect below.
   const [reloadKey, setReloadKey] = useState(0)
@@ -63,7 +73,7 @@ export function GanhosPerdidosCards({ inicio, fim }: GanhosPerdidosCardsProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ status: "loading" })
 
-    getGanhosPerdidosAction(inicio, fim).then((result) => {
+    getGanhosPerdidosAction(inicio, fim, vendedorId).then((result) => {
       if (cancelled) return
 
       if (result.error) {
@@ -77,7 +87,7 @@ export function GanhosPerdidosCards({ inicio, fim }: GanhosPerdidosCardsProps) {
     return () => {
       cancelled = true
     }
-  }, [inicio, fim, reloadKey])
+  }, [inicio, fim, reloadKey, vendedorId])
 
   if (state.status === "loading") {
     return (

@@ -42,8 +42,16 @@ function formatMediaDias(mediaDias: number | null): string {
  * FNL-03: no role is read or received here — Vendedor and Supervisor render
  * exactly this same component, with visibility already resolved by RLS
  * inside the dashboard_tempo_ate_fechamento() RPC.
+ *
+ * Optional vendor cut (quick 261009-npp): `vendedorId` (null = "Todos") is a
+ * dependency of the fetch effect and is passed to the action as its only
+ * argument. The cut only narrows — RLS stays the boundary.
  */
-export function TempoAteFechamentoCards() {
+export function TempoAteFechamentoCards({
+  vendedorId = null,
+}: {
+  vendedorId?: string | null
+}) {
   const [state, setState] = useState<FetchState>({ status: "loading" })
   // Bumped by "Tentar novamente" to re-run the fetch effect below.
   const [reloadKey, setReloadKey] = useState(0)
@@ -56,7 +64,7 @@ export function TempoAteFechamentoCards() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ status: "loading" })
 
-    getTempoAteFechamentoAction().then((result) => {
+    getTempoAteFechamentoAction(vendedorId).then((result) => {
       if (cancelled) return
 
       if (result.error) {
@@ -70,9 +78,9 @@ export function TempoAteFechamentoCards() {
     return () => {
       cancelled = true
     }
-    // Only reloadKey — this RPC takes no period argument (FNL-02 is always
-    // whole-history), so there is no inicio/fim to depend on here.
-  }, [reloadKey])
+    // reloadKey and vendedorId — this RPC takes no period argument (FNL-02 is
+    // always whole-history), so there is no inicio/fim to depend on here.
+  }, [reloadKey, vendedorId])
 
   if (state.status === "loading") {
     return (

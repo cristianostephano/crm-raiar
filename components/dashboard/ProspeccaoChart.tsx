@@ -39,7 +39,13 @@ type ProspeccaoChartProps = {
   fim: Date
   /** getProspeccaoPorProdutoAction or getProspeccaoPorCategoriaAction — the
    * same shape lets this one component serve both blocks (DSH-05/D-09). */
-  action: (inicio: Date, fim: Date) => Promise<ProspeccaoActionResult>
+  action: (
+    inicio: Date,
+    fim: Date,
+    vendedorId: string | null
+  ) => Promise<ProspeccaoActionResult>
+  /** Optional vendor cut (quick 261009-npp); null = "Todos". */
+  vendedorId?: string | null
 }
 
 type FetchState =
@@ -66,6 +72,10 @@ function computeContentHeight(rowCount: number): number {
  * "Prospecção por X" blocks share one implementation instead of two
  * near-identical files (DSH-05). Owns its own loading/empty/error states,
  * mirroring ClientesPorEtapaChart/GanhosPerdidosCards' fetch-effect pattern.
+ *
+ * Optional vendor cut (quick 261009-npp): `vendedorId` (null = "Todos") is a
+ * dependency of the fetch effect and the third argument of `action`. The cut
+ * only narrows — RLS stays the boundary.
  */
 export function ProspeccaoChart({
   title,
@@ -73,6 +83,7 @@ export function ProspeccaoChart({
   inicio,
   fim,
   action,
+  vendedorId = null,
 }: ProspeccaoChartProps) {
   const [state, setState] = useState<FetchState>({ status: "loading" })
   // Bumped by "Tentar novamente" to re-run the fetch effect below.
@@ -83,7 +94,7 @@ export function ProspeccaoChart({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ status: "loading" })
 
-    action(inicio, fim).then((result) => {
+    action(inicio, fim, vendedorId).then((result) => {
       if (cancelled) return
 
       if (result.error) {
@@ -97,7 +108,7 @@ export function ProspeccaoChart({
     return () => {
       cancelled = true
     }
-  }, [inicio, fim, reloadKey, action])
+  }, [inicio, fim, reloadKey, action, vendedorId])
 
   const contentHeight =
     state.status === "ready"

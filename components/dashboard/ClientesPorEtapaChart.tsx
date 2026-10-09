@@ -52,8 +52,17 @@ function buildChartRows(data: ClientesPorEtapaRow[]): ChartRow[] {
  * Fetches independently on mount via the 04-01 Server Action, and owns its
  * own loading/empty/error states so a failure here never blanks the rest of
  * the dashboard (UI-SPEC per-card error handling).
+ *
+ * Optional vendor cut (quick 261009-npp): `vendedorId` (null = "Todos") is a
+ * dependency of the fetch effect and is passed to the action as its only
+ * argument; with a vendedor the empty state reads "Nenhum cliente deste
+ * vendedor.". The cut only narrows — RLS stays the boundary.
  */
-export function ClientesPorEtapaChart() {
+export function ClientesPorEtapaChart({
+  vendedorId = null,
+}: {
+  vendedorId?: string | null
+}) {
   const [state, setState] = useState<FetchState>({ status: "loading" })
   // Bumped by "Tentar novamente" to re-run the fetch effect below.
   const [reloadKey, setReloadKey] = useState(0)
@@ -67,7 +76,7 @@ export function ClientesPorEtapaChart() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ status: "loading" })
 
-    getClientesPorEtapaAction().then((result) => {
+    getClientesPorEtapaAction(vendedorId).then((result) => {
       if (cancelled) return
 
       if (result.error) {
@@ -81,7 +90,7 @@ export function ClientesPorEtapaChart() {
     return () => {
       cancelled = true
     }
-  }, [reloadKey])
+  }, [reloadKey, vendedorId])
 
   const totalClientes =
     state.status === "ready"
@@ -116,7 +125,7 @@ export function ClientesPorEtapaChart() {
           </div>
         ) : totalClientes === 0 ? (
           <div className="flex h-[280px] w-full items-center justify-center text-center text-sm text-muted-foreground">
-            Nenhum cliente cadastrado ainda.
+            {vendedorId ? "Nenhum cliente deste vendedor." : "Nenhum cliente cadastrado ainda."}
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[360px] w-full">

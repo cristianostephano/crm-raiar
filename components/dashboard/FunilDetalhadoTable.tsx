@@ -87,8 +87,17 @@ function buildRowsByEtapa(
  * FNL-03: this component takes no role prop and reads no role anywhere —
  * Vendedor and Supervisor render the exact same markup; visibility is
  * entirely resolved by RLS inside the dashboard_funil_detalhado() RPC.
+ *
+ * Optional vendor cut (quick 261009-npp): `vendedorId` (null = "Todos") is a
+ * dependency of the fetch effect and is passed to the action as its only
+ * argument; with a vendedor the empty state reads "Nenhum cliente deste
+ * vendedor.". The cut only narrows — RLS stays the boundary.
  */
-export function FunilDetalhadoTable() {
+export function FunilDetalhadoTable({
+  vendedorId = null,
+}: {
+  vendedorId?: string | null
+}) {
   const [state, setState] = useState<FetchState>({ status: "loading" })
   // Bumped by "Tentar novamente" to re-run the fetch effect below.
   const [reloadKey, setReloadKey] = useState(0)
@@ -102,7 +111,7 @@ export function FunilDetalhadoTable() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ status: "loading" })
 
-    getFunilDetalhadoAction().then((result) => {
+    getFunilDetalhadoAction(vendedorId).then((result) => {
       if (cancelled) return
 
       if (result.error) {
@@ -116,7 +125,7 @@ export function FunilDetalhadoTable() {
     return () => {
       cancelled = true
     }
-  }, [reloadKey])
+  }, [reloadKey, vendedorId])
 
   const totalQuantidade =
     state.status === "ready"
@@ -154,7 +163,7 @@ export function FunilDetalhadoTable() {
           </div>
         ) : totalQuantidade === 0 ? (
           <div className="flex h-[320px] w-full items-center justify-center text-center text-sm text-muted-foreground">
-            Nenhum cliente cadastrado ainda.
+            {vendedorId ? "Nenhum cliente deste vendedor." : "Nenhum cliente cadastrado ainda."}
           </div>
         ) : (
           <Table>

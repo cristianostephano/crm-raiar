@@ -14,10 +14,14 @@ import { GanhosPerdidosCards } from "@/components/dashboard/GanhosPerdidosCards"
 import { PeriodoFilter } from "@/components/dashboard/PeriodoFilter"
 import { ProspeccaoChart } from "@/components/dashboard/ProspeccaoChart"
 import { TempoAteFechamentoCards } from "@/components/dashboard/TempoAteFechamentoCards"
+import { VendedorFilter } from "@/components/dashboard/VendedorFilter"
 import { resolvePeriodo, type PeriodoPreset } from "@/lib/dashboard/periodo"
+import type { VendedorFiltroOpcao } from "@/lib/supabase/queries/dashboard"
 
 type DashboardClientProps = {
   isSupervisor: boolean
+  /** Active vendedores for the select (loaded only for the Supervisor). */
+  vendedorOptions?: VendedorFiltroOpcao[]
 }
 
 /**
@@ -34,9 +38,26 @@ type DashboardClientProps = {
  * (DSH-02/DSH-04), DesempenhoVendedorChart (DSH-03, Supervisor-only per
  * D-07) and the two ProspeccaoChart instances (DSH-05) are all
  * period-filtered via the same resolved `periodo`.
+ *
+ * Optional vendor cut (quick 261009-npp, Supervisor only): the "Vendedor"
+ * select holds `vendedorId` (null = "Todos os vendedores"). The effective
+ * vendor — always null for a Vendedor, who never sees the select nor sends a
+ * cut — is passed to the SIX blocks that are cut by vendedor:
+ * ClientesPorEtapaChart, FunilDetalhadoTable, TempoAteFechamentoCards,
+ * GanhosPerdidosCards and the two ProspeccaoChart. ComparativoVendedorTable
+ * and DesempenhoVendedorChart NEVER receive it (they already compare the
+ * vendedores; a notice says so while one vendedor is chosen). The cut only
+ * narrows what RLS already allows.
  */
-export function DashboardClient({ isSupervisor }: DashboardClientProps) {
+export function DashboardClient({
+  isSupervisor,
+  vendedorOptions = [],
+}: DashboardClientProps) {
   const [preset, setPreset] = useState<PeriodoPreset>("30dias")
+  const [vendedorEscolhido, setVendedorEscolhido] = useState<string | null>(null)
+  // The Vendedor role never sends a vendor cut (UX nicety over RLS).
+  const vendedorId = isSupervisor ? vendedorEscolhido : null
+  const nomeVendedor = vendedorOptions.find((v) => v.id === vendedorId)?.nome
   const [customRange, setCustomRange] = useState<
     { from: Date; to: Date } | undefined
   >(undefined)
@@ -51,20 +72,40 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
       <div className="flex flex-col gap-1">
         <h1 className="text-[28px] font-semibold">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          {isSupervisor ? "Números da equipe" : "Seus números de vendas"}
+          {!isSupervisor
+            ? "Seus números de vendas"
+            : nomeVendedor
+              ? `Números de ${nomeVendedor}`
+              : "Números da equipe"}
         </p>
       </div>
 
-      <PeriodoFilter
-        preset={preset}
-        customRange={customRange}
-        onPresetChange={setPreset}
-        onCustomRangeApply={setCustomRange}
-      />
+      <div className="flex flex-wrap items-end gap-4">
+        <PeriodoFilter
+          preset={preset}
+          customRange={customRange}
+          onPresetChange={setPreset}
+          onCustomRangeApply={setCustomRange}
+        />
+        {isSupervisor ? (
+          <VendedorFilter
+            vendedores={vendedorOptions}
+            vendedorId={vendedorId}
+            onVendedorChange={setVendedorEscolhido}
+          />
+        ) : null}
+      </div>
+
+      {vendedorId ? (
+        <p className="text-sm text-muted-foreground">
+          Comparativo por vendedor e Desempenho por vendedor continuam mostrando
+          todos os vendedores.
+        </p>
+      ) : null}
 
       <div className="flex flex-col gap-6">
         {/* DSH-01 — always-current snapshot, not period-filtered (D-08). */}
-        <ClientesPorEtapaChart />
+        <ClientesPorEtapaChart vendedorId={vendedorId} />
 
         {/*
           FNL-01/FNL-02 — "Funil de conversão detalhado" section. Both new
@@ -75,8 +116,8 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
           summary) — same detail-then-summary order as ClientesPorEtapaChart
           already has today relative to the KPI row.
         */}
-        <FunilDetalhadoTable />
-        <TempoAteFechamentoCards />
+        <FunilDetalhadoTable vendedorId={vendedorId} />
+        <TempoAteFechamentoCards vendedorId={vendedorId} />
 
         {/*
           "Comparativo por vendedor" — VEND-01, Supervisor-only. Whole-history
@@ -91,7 +132,11 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
 
         {/* KPI row (Ganhos / Perdidos / Taxa de conversão) — DSH-02/DSH-04,
           period-filtered via `periodo`. */}
-        <GanhosPerdidosCards inicio={periodo.inicio} fim={periodo.fim} />
+        <GanhosPerdidosCards
+          inicio={periodo.inicio}
+          fim={periodo.fim}
+          vendedorId={vendedorId}
+        />
 
         {/*
           "Desempenho por vendedor" — DSH-03/D-07, Supervisor-only. This is
@@ -114,6 +159,7 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
             inicio={periodo.inicio}
             fim={periodo.fim}
             action={getProspeccaoPorProdutoAction}
+            vendedorId={vendedorId}
           />
           <ProspeccaoChart
             title="Prospecção por categoria"
@@ -121,6 +167,7 @@ export function DashboardClient({ isSupervisor }: DashboardClientProps) {
             inicio={periodo.inicio}
             fim={periodo.fim}
             action={getProspeccaoPorCategoriaAction}
+            vendedorId={vendedorId}
           />
         </div>
       </div>
